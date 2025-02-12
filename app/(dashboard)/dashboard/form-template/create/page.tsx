@@ -1,4 +1,4 @@
-import CreateBlog from '@/app/(dashboard)/dashboard/blog/components/CreateBlog'
+
 import { Metadata } from 'next';
 import React from 'react';
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const Page = () => {
-    return <CreateBlog />;
+    return null;
 };
 
 export default Page;
