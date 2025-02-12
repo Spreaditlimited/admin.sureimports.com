@@ -4,13 +4,6 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-import ComponentsFormsSelectBasic from '@/components/forms/select2/components-forms-select-basic';
-import ComponentsFormsSelectDisablingOptions from '@/components/forms/select2/components-forms-select-disabling-options';
-import ComponentsFormsSelectMultiselect from '@/components/forms/select2/components-forms-select-multiselect';
-import ComponentsFormsSelectNested from '@/components/forms/select2/components-forms-select-nested';
-import ComponentsFormsSelectPlaceholder from '@/components/forms/select2/components-forms-select-placeholder';
-import ComponentsFormsSelectSearchable from '@/components/forms/select2/components-forms-select-searchable';
-import IconBell from '@/components/icon/icon-bell';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import React from 'react';

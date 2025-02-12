@@ -1,13 +1,12 @@
 'use client';
-import IconCaretDown from '@/components/icon/icon-caret-down';
-import PanelCodeHighlight from '@/components/panel-code-highlight';
+
 import React, { useEffect, useState } from 'react';
 import AnimateHeight from 'react-animate-height';
 import TableProcurementProducts from './TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useParams, useSearchParams } from 'next/navigation';
-import { random } from 'lodash';
 import { toast } from 'sonner';
+import { BookDown } from 'lucide-react';
 
 
 interface Product {
@@ -241,7 +240,7 @@ const ComponentsAccordionsBasic = () => {
                                         <b className='text-xl'>#{index + 1} : {datax.productName}</b> &nbsp; | ORDER ID: {datax.pidSpecialSourcing} 
                                         
                                         <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
-                                            <IconCaretDown />
+                                        <BookDown />
                                         </div>   
 
                                         <br /><hr />

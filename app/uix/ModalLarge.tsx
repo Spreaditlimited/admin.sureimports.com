@@ -1,0 +1,58 @@
+// components/Modal.tsx
+import React from 'react';
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900 bg-opacity-75">
+        <div className="w-full max-w-4xl rounded-lg bg-white p-6 shadow-xl">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-medium text-gray-900">...</h3>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-600"
+              onClick={onClose}
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div className="max-h-[80vh] overflow-y-auto">{children}</div>
+
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              className="rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Modal;
