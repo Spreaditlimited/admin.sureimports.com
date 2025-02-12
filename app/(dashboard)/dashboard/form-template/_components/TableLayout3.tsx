@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { PrismaClient } from '@prisma/client';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { unparse } from 'papaparse';
 
 // Define the type for table data
@@ -128,7 +128,7 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
   // Export to PDF
   const exportToPDF = () => {
     const doc = new jsPDF();
-    doc.autoTable({
+    autoTable(doc, {
       head: [['ID', 'Name', 'Email', 'Role', 'Status']],
       body: filteredData.map((item) => [item.id, item.name, item.email, item.role, item.status]),
     });
@@ -137,9 +137,7 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
 
   // Export to CSV
   const exportToCSV = () => {
-    const csv = unparse(filteredData, {
-      fields: ['id', 'name', 'email', 'role', 'status'],
-    });
+    const csv = unparse(filteredData);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
