@@ -2,9 +2,11 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import React from 'react';
 
+
 export const metadata: Metadata = {
     title: 'View Blog',
 };
+
 
 const Page = () => {
     return (
@@ -17,7 +19,6 @@ const Page = () => {
                 <div className="custom-select grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Basic */}
                     {/* <ComponentsFormsSelectBasic /> */}
-
                 </div>
             </div>
             
