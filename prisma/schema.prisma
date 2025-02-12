@@ -1,0 +1,721 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  //url      = "mysql://u324293482_printin:projectX2020@45.84.205.0:3306/u324293482_printin"
+  //url      = "mysql://root:@localhost:3306/u324293482_printin"
+}
+
+
+
+model blog {
+  id            Int       @id @default(autoincrement())
+  pidBlog       String    @unique(map: "Blog_pidBlog_key")
+  blogTitle     String    @db.VarChar(255)
+  blogContent   String?
+  blogSlug      String?
+  blogPublished Boolean   @default(false)
+  blogImage     String?
+  blogBy        String?
+  blogExt1      String?
+  blogExt2      String?
+  xStaus        String?
+  createdAt     DateTime?  @default(now())
+  updatedAt     DateTime?
+}
+
+
+model contact {
+  id               Int       @id @default(autoincrement())
+  pidContact       String    @unique(map: "Contact_pidContact_key")
+  contactSubject   String?
+  contactName      String?
+  contactEmail     String?
+  contactPhone     String?
+  contactMessage   String?
+  contactStatus    String?
+  contactExt1      String?
+  contactExt2      String?
+  xStaus           String?
+  createdAt        DateTime?  @default(now())
+  updatedAt        DateTime?
+}
+
+
+model faqs {
+  id          Int       @id @default(autoincrement())
+  pidFaq      String    @unique(map: "Faqs_pidFaq_key")
+  faqQuestion String?
+  faqAnswer   String?
+  faqStatus   String?
+  faqExt1     String?
+  faqExt2     String?
+  xStatus     String?
+  createdAt   DateTime?  @default(now())
+  updatedAt   DateTime?
+}
+
+
+
+model admin {
+  id                   Int       @id @default(autoincrement())
+  pidUser              String    @unique()
+  userFirstname        String?
+  userLastname         String?
+  userEmail            String    @unique()
+  userPassword         String?
+  userSession          String?
+  userPhone            Int?
+  userCid              String?
+  userStatus           String?
+  userAffiliateCode    String?
+  userAffiliateRef     String?
+  userImage            String?
+  userFile             String?
+  userExt1             String?
+  userExt2             String?
+  xStaus               String?
+  createdAt            DateTime?  @default(now())
+  updatedAt            DateTime?
+  //posts     Post[]
+}
+
+
+
+model users {
+    id                   Int       @id @default(autoincrement())
+    pidUser              String    @unique()
+    userFirstname        String?
+    userLastname         String?
+    userEmail            String    @unique()
+    userPassword         String?
+    userSession          String?
+    cidStatus            String?
+    loginStatus          String?
+    loginKey             String?
+    loginStamp           String?
+    gender               String?
+    dob                  String?
+    email                String?
+    phone                String?
+    address              String?
+    country              String?
+    bank_name            String?
+    bank_account_number  String?
+    bank_account_name    String?
+    ref_id               String?
+    userPhone            String?
+    userCid              String?
+    userShippingAddress  String?
+    userShippingAddress2 String?
+    userCountry          String?
+    userState            String?
+    userAffiliateCode    String?
+    userAffiliateRef     String?
+    userStatus           String?
+    userImage            String?
+    userFile             String?
+    userExt1             String?
+    userExt2             String?
+    xStatus              String?
+    createdAt            DateTime?  @default(now())
+    updatedAt            DateTime?
+}
+
+
+
+model payments {
+  id                   Int       @id @default(autoincrement())
+  pidPayment           String    @unique()
+  pidUser              String
+  payerName            String
+  txID                 String
+  txRef                String
+  paymentStatus        String?
+  paymentType          String?
+  currency             String?
+  amount               Float
+  serviceID            String?
+  serviceName          String?
+  serviceDescription   String?
+  bankName             String?
+  bankNumber           String?
+  depositorName        String?
+  affiliatePayStatus   String?
+  affiliateRefId       String?
+  txDateProcesser      String?
+  txDateServer         String?
+  status1              String?
+  status2              String?
+  paymentExt1          String?
+  paymentExt2          String?
+  xStatus               String?
+  createdAt            DateTime?  @default(now())
+  updatedAt            DateTime?
+}
+
+
+
+model subscriptions {
+  id                 Int       @id @default(autoincrement())
+  pidSubscription    String    @unique()
+  subEmail           String?
+  subStatus          String?
+  subExt1            String?
+  subExt2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model special_sourcing {
+  id                    Int       @id @default(autoincrement())
+  pidSpecialSourcing    String    @unique()
+  pidUser               String?
+  productName           String?
+  whatsappNumber        String?
+  productQualityRatings String?
+  targetUnitPrice       String?
+  productDescription    String?
+  productImage          String?
+  status                String?
+  xStatus               String?
+  ext1                  String?
+  ext2                  String?
+  createdAt             DateTime?  @default(now())
+  updatedAt             DateTime?
+}
+
+
+
+model pay_supplier {
+  id                          Int       @id @default(autoincrement())
+  pidPaySupplier              String    @unique()
+  pidUser                     String?
+  supplierName                String?
+  supplierPhone               String?
+  supplierEmail                String?
+  aliPayAccountQRCodeImage    String?
+  weChatAccountQRCodeImage    String?
+  proformaInvoiceImage        String?
+  supplierBankAccountDetails  String?
+  amountToPayInYuan           String?
+  amountToPayInNaira          String?
+  serviceCharge               String?
+  account_details1                String?
+  account_details2                String?
+  bank_account_details                String?
+  amount_to_pay                String?
+  additional_info                String?
+  service_charge                String?
+  vat                String?
+  buy_rate                String?
+  sell_rate                String?
+  admin                String?
+  admin_last                String?
+  status                      String?
+  xStatus                     String?
+  ext1                        String?
+  ext2                        String?
+  createdAt                   DateTime?  @default(now())
+  updatedAt                   DateTime?
+}
+
+
+
+model shipping_only {
+  id                              Int       @id @default(autoincrement())
+  pidShippingOnly                 String    @unique()
+  pidUser                         String?
+  whatsappNumber                  String?
+  shippingName                    String?
+  shippingTo                      String?
+  grossWeight                     String?
+  trackingNumber                  String?
+  shippingPlan                    String?
+  expectedShipments               String?
+  wantProductVerification         Boolean?
+  wantConsolidation               Boolean?
+  multipleSuppliers               Boolean?
+  description                     String?
+  status                          String?
+  xStatus                         String?
+  ext1                            String?
+  ext2                            String?
+  createdAt                       DateTime?  @default(now())
+  updatedAt                       DateTime?
+}
+
+
+
+model verify_supplier {
+  id                              Int       @id @default(autoincrement())
+  pidVerifySupplier               String    @unique()
+  pidUser                         String?
+  supplierName                    String?
+  supplierPhone                   String?
+  supplierAddress                 String?
+  supplierProduct                 String?
+  supplierDetails                 String?
+  supplierWebsite                 String?
+  status                          String?
+  xStatus                         String?
+  ext1                            String?
+  ext2                            String?
+  createdAt                       DateTime?  @default(now())
+  updatedAt                       DateTime?
+}
+
+
+
+model affiliates {
+  id                      Int       @id @default(autoincrement())
+  pidUser                 String    @unique()
+  username                String?
+  password                String?
+  cid_status              String?
+  login_status            String?
+  login_key               String?
+  login_stamp             String?
+  first_name              String?
+  last_name               String?
+  gender                  String?
+  dob_day                 String?
+  dob_month               String?
+  dob_year                String?
+  email                   String?
+  phone                   String?
+  address                 String?
+  bank_name               String?
+  bank_account_number     String?
+  bank_account_name       String?
+  affiliate_id            String?
+  payout_request          String?
+  status                  String?
+  xStatus                 String?
+  ext1                    String?
+  ext2                    String?
+  createdAt               DateTime?  @default(now())
+  updatedAt               DateTime?
+}
+
+
+
+model payment_records {
+  id                 Int       @id @default(autoincrement())
+  pidPayment String    @unique()
+  pid_user    String?
+  pid_order    String?
+  tx_code    String?
+  payment_status    String?
+  payment_type    String?
+  currency_type    String?
+  amount    String?
+  affiliate_pay_status    String?
+  service_type    String?
+  ref_id    String?
+  tx_date_processor    String?
+  tx_date_server    String?
+  ext1               String?
+  ext2               String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+model refund_records {
+  id  Int       @id @default(autoincrement())
+  pidRefund String    @unique()
+  pidUser    String?
+  pidOrder    String?
+  amount    String?
+  refundStatus    String?
+  serviceType    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model products {
+  id                 Int       @id @default(autoincrement())
+  pidProduct String    @unique()
+  pidOrder    String
+  pidUser    String?
+  productName    String?
+  productLink    String?
+  productCategory    String?
+  productPrice    String?
+  productWeight    String?
+  productQuantity    String?
+  productInfo    String?
+
+  productStatus    String?
+  pidAdmin    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  orders             orders  @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
+}
+
+
+
+
+model orders {
+  id                 Int       @id @default(autoincrement())
+  pidOrder String    @unique()
+  pidUser    String 
+  orderName    String?
+  destinationCountry    String?
+  currencyType    String?
+  shippingPlan    String?
+  orderCategory    String?
+  shippingAddress    String?
+
+  orderShippingCost    String?
+  orderTotalCost    String?
+  orderWeight    String?
+  orderStatus    String?
+  orderType    String?
+  orderPriority    String?
+  vat    String?
+  serviceCharge    String?
+  exchangeRate1    String?
+  exchangeRate2    String?
+  exchangeRate3    String?
+  shippingCost1    String?
+  shippingCost2    String?
+  shippingCost3    String?
+  orderNote    String?
+  pidAdmin    String?
+  pidAdminLast    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  products           products[]
+}
+
+
+
+model bank_payment {
+  id  Int   @id @default(autoincrement())
+  pidBankPayment String  @unique()
+  pidUser    String?
+  pidBank    String?
+  pidOrder    String?
+  amount    String?
+  currency  String?
+  depositorName    String?
+  trxNumber    String?
+  serviceType    String?
+  bankStatus    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model chats {
+  id                 Int       @id @default(autoincrement())
+  pidChat String    @unique()
+  pidOrder    String?
+  pidFrom    String?
+  pidTo    String?
+  fullName    String?
+  messageTitle    String?
+  messageContent    String?
+  messageStatus    String?
+  messageStatusUser    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model messages {
+  id                 Int       @id @default(autoincrement())
+  pidMessage String    @unique()
+  pidOrder    String?
+  pidFrom    String?
+  pidTo    String?
+  fullName    String?
+  messageTitle    String?
+  messageContent    String?
+  messageStatus    String?
+  messageStatusUser    String?
+  delStatus    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+model exchange_rate {
+  id                 Int       @id @default(autoincrement())
+  settings_name     String?
+  currency_name1    String?
+  currency_sign1    String?
+  currency_name2    String?
+  currency_sign2    String?
+  currency_name3    String?
+  currency_sign3    String?
+  service_charge    String?
+  vat               String?
+  exNairaToDollar   String?
+  exYuanToDollar    String?
+  exNairaToYuan    String?
+  status          String
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model settings_financial {
+  id                 Int       @id @default(autoincrement())
+  settings_name     String?
+  currency_name1    String?
+  currency_sign1    String?
+  currency_name2    String?
+  currency_sign2    String?
+  currency_name3    String?
+  currency_sign3    String?
+  service_charge    String?
+  vat    String?
+  exchange_rate1    String?
+  exchange_rate2    String?
+  exchange_rate3    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model settings_pay_supplier {
+  id                 Int       @id @default(autoincrement())
+  service_charge    String?
+  vat    String?
+  buy_rate    String?
+  sell_rate    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model settings_shipping {
+  id                 Int       @id @default(autoincrement())
+  settings_name String
+  shipping_company_name    String?
+  shipping_company_pid    String?
+  shipping_company_info    String?
+  shipping_name1    String?
+  pid_shipping1    String?
+  shipping_cost1    String?
+  shipping_cost_suffix1    String?
+  shipping_info1    String?
+  shipping_name2    String?
+  pid_shipping2    String?
+  shipping_cost2    String?
+  shipping_cost_suffix2    String?
+  shipping_info2    String?
+  shipping_name3    String?
+  pid_shipping3    String?
+  shipping_cost3    String?
+  shipping_cost_suffix3    String?
+  shipping_info3    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model settings_weight {
+  id                 Int       @id @default(autoincrement())
+  settings_name    String?
+  minimum_weight    String?
+  maximum_weight    String?
+  additional_cost    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model coupon {
+  id                 Int       @id @default(autoincrement())
+  pidCoupon String    @unique()
+  pid_user    String?
+  pid_order    String?
+  coupon_code    String?
+  coupon_value    String?
+  coupon_value_amount    String?
+  coupon_code_ref    String?
+  coupon_type    String?
+  coupon_status    String?
+  coupon_validity    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model country_shipping_rate {
+  id                 Int       @id @default(autoincrement())
+  country_slug    String?
+  country_name    String?
+  shipping_rate    String?
+  shipping_rate_cbm    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+model banks {
+  id                 Int       @id @default(autoincrement())
+  pidBank String    @unique()
+  bankName           String?
+  bankAccountName           String?
+  bankAccountNumber           String?
+  accountType           String?
+  generalInfo           String?
+  admin           String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+
+model faq {
+  id                 Int       @id @default(autoincrement())
+  pidFaq            String    @unique()
+  slug              String?
+  question           String?
+  content           String?
+  category           String?
+  video_id           String?
+  admin           String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
+
+
+model posts {
+  id                 Int       @id @default(autoincrement())
+  pidPost            String    @unique()
+  slug               String
+  title              String?
+  content            String?
+  category           String?
+  tags               String?
+  image              String?
+  author             String?
+  status             String?
+  ext1               String?
+  ext2               String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+model country {
+  id          Int       @id @default(autoincrement())
+  pidCountry  String         @unique()
+  countrySlug String?
+  countryName String?        @unique()
+  ext1        String?
+  ext2        String?
+  status      String?
+  createdAt   DateTime?      @default(now())
+  updatedAt   DateTime?      @default(now())
+  shippingPlans shippingplan[]
+}
+
+model shippingplan {
+  id               Int      @id @default(autoincrement())
+  pidShippingPlan  String   @unique()
+  countryId        String
+  shippingPlanSlug String?
+  shippingPlanName String?
+  shippingPlanRate Float?
+  ext1             String?
+  ext2             String?
+  status           String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime?
+  country          country  @relation(fields: [countryId], references: [pidCountry])
+}
+
+
