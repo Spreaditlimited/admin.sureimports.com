@@ -112,6 +112,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
       const res = await fetch(`/api/get-data/procurement-product-data?pidOrder=${pidOrder}`);
       const data = await res.json();
 
+      //alert(JSON.stringify(data));
+
       //TABLE RECORDS
       setProductALL(data.productsGetAll);
 
@@ -300,153 +302,171 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm border-collapse border border-gray-200 dark:border-gray-300">
+        <table className="min-w-full text-sm border-collapse border border-gray-200 dark:border-gray-300">
+  <thead>
+    <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-primary-light">
+      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">S/N</th>
+      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Product Name</th>
+      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Unit Price (¥)</th>
+      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Quantity</th>
+      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Weight (Kg)</th>
+      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Total Price (¥)</th>
+    </tr>
+  </thead>
 
-
-            <thead>
-              <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-primary-light">
-                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">S/N</th>
-                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
-                  Product Name
-                </th>
-                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
-                  Unit Price (¥)
-                </th>
-                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Quantity</th>
-                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
-                  Weight (Kg)
-                </th>
-                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
-                  Total Price (¥)
-                </th>
-              </tr>
-            </thead>
-
-
-
-
-            <tbody>
-
-              {
-                productALL.map(
-                  (datax:Product, index:number) => {
-                    return(
-                      <>
-                          <tr className="dark:text-gray-100">
-                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-                              {index+1}
-                            </td>
-                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
-                              <p className="text-dark"><Link href={datax.productLink} target="blank"><b>{datax.productName}</b></Link></p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Info: {datax.productInfo}</p>
-                            </td>
-                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-                            {datax.productPrice}
-                            </td>
-                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-                            {datax.productQuantity}
-                            </td>
-                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-                            {datax.productWeight}
-                            </td>
-                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-                            {0}
-                            </td>
-                          </tr>
-                      </>
-                    )
-                  }
-                )
-              }
-
-
-
-            </tbody>
-          </table>
+  <tbody>
+    {productALL.map((datax: Product, index: number) => (
+      <tr key={index + 1} className="dark:text-gray-100">
+        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+          {index + 1}
+        </td>
+        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+          <p className="text-dark">
+            <Link href={datax.productLink} target="blank">
+              <b>{datax.productName}</b>
+            </Link>
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Info: {datax.productInfo}</p>
+        </td>
+        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+          {datax.productPrice}
+        </td>
+        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+          {datax.productQuantity}
+        </td>
+        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+          {datax.productWeight}
+        </td>
+        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+          {0}
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
           {/* <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Showing 1 to 1 of 1 entries (filtered from 7 total entries)
           </p> */}
         </div>
 
-        
-
-        {/* Cost Details */}
-        <div className="space-y-4 text-gray-600 dark:text-gray-300">
-          <div className="text-xs">
-
-          <hr />
-
-
-          {/******************* TOTAL COST DISPLAY BLOCK STARTS *******************/}
-          <p className="p-2">
-            <span className="text-base font-medium dark:text-gray-200"><b>Total Cost of Order: &nbsp;</b></span> 
-            {
-            (currencyType == 'USD') && 
-              <>
-              {'$'}{parseFloat(productsTotalPrice.toFixed(2))}{' USD'}&nbsp;
-              </>
-            }
-
-            {/* CYN TO USD */}
-            {
-            (currencyType == 'CNY') && 
-              <>
-              {'¥'}{parseFloat(productsTotalPrice.toFixed(2))}{' Yuan'}&nbsp;
-              {' or '}
-              {'$'}{parseFloat((productsTotalPrice / exYuanToDollar).toFixed(2))}{' USD'}&nbsp;
-              </>
-            }
-
-            {/* NAIRA TO USD for Nigerian Destinations*/}
-            {
-            ((destinationCountry == 'Nigeria') && (currencyType == 'USD')) && 
-              <>
-              {' or '}{'₦'}{(productsTotalPrice * exNairaToDollar).toFixed(2)}{'Naira'}&nbsp;
-              </>
-            }
-
-            {/* NAIRA TO CYN for Nigerian Destinations*/}
-            {
-            ((destinationCountry == 'Nigeria') && (currencyType == 'CNY')) && 
-              <>
-              {' or '}{'₦'}{(productsTotalPrice * exNairaToYuan).toFixed(2)}{' Naira'}&nbsp;
-              </>
-            }
-            
-          </p>
-          {/******************* TOTAL COST DISPLAY BLOCK ENDS *******************/}
+      
 
 
 
-          <hr /><br />
 
-            <p className="">
-              <span className="font-medium dark:text-gray-200"><b>Estimated Shipping Cost of Order:</b></span>
-            </p>
-            <ul className="pl-5 list-disc">
-              <li><b>Domestic Shipping Cost within China:</b> ${domesticShippingCost}</li>
-              <li><b>International Shipping Cost:</b> ${internationalShippingCost}</li>
-              <li><b>Total Shipping Cost:</b> 
-              ${estimatedShippingCost.toFixed(2)} Yuan or ₦{(estimatedShippingCost * exNairaToDollar).toFixed(2)} Naira
-              </li>
-            </ul>
-          </div>
+{/* Cost Details */}
+<div className="space-y-4 text-gray-600 dark:text-gray-300">
+  <div className="text-xs">
+    <hr />
 
-          
-          <p className="text-sm">
-          <b>Estimated Total Weight of Order:</b>{" "}
-            <span className="font-medium dark:text-gray-200 text-sm">{productsTotalWeight} Kg</span>
-          </p>
+    {/******************* TOTAL COST DISPLAY BLOCK STARTS *******************/}
+    <p className="p-2">
+      <span className="text-base font-medium dark:text-gray-200">
+        <b>Total Cost of Order: &nbsp;</b>
+      </span>
+      {currencyType === 'USD' && (
+        <>
+          {'$'}
+          {productsTotalPrice ? parseFloat(productsTotalPrice.toFixed(2)) : 0} USD&nbsp;
+        </>
+      )}
 
-          <hr />
-          
-          <p className="text-xl">
-            <b>Grand Total Cost:</b> <span className="font-medium dark:text-gray-200">¥{grandTotalCost.toFixed(2)} Yuan</span> or{" "}
-              <span className="font-medium dark:text-gray-200">${(grandTotalCost / exYuanToDollar).toFixed(2)} USD</span> or{" "}
-              <span className="font-medium dark:text-gray-200">₦{(grandTotalCost * exNairaToDollar).toFixed(2)} Naira</span>
-            </p>
-          <hr />
-        </div>
+      {/* CNY TO USD */}
+      {currencyType === 'CNY' && (
+        <>
+          {'¥'}
+          {productsTotalPrice ? parseFloat(productsTotalPrice.toFixed(2)) : 0} Yuan&nbsp;
+          {' or '}
+          {'$'}
+          {productsTotalPrice && exYuanToDollar
+            ? parseFloat((productsTotalPrice / exYuanToDollar).toFixed(2))
+            : 0}{' '}
+          USD&nbsp;
+        </>
+      )}
+
+      {/* NAIRA TO USD for Nigerian Destinations */}
+      {destinationCountry === 'Nigeria' && currencyType === 'USD' && (
+        <>
+          {' or '}
+          {'₦'}
+          {productsTotalPrice && exNairaToDollar
+            ? (productsTotalPrice * exNairaToDollar).toFixed(2)
+            : 0}{' '}
+          Naira&nbsp;
+        </>
+      )}
+
+      {/* NAIRA TO CNY for Nigerian Destinations */}
+      {destinationCountry === 'Nigeria' && currencyType === 'CNY' && (
+        <>
+          {' or '}
+          {'₦'}
+          {productsTotalPrice && exNairaToYuan
+            ? (productsTotalPrice * exNairaToYuan).toFixed(2)
+            : 0}{' '}
+          Naira&nbsp;
+        </>
+      )}
+    </p>
+    {/******************* TOTAL COST DISPLAY BLOCK ENDS *******************/}
+
+    <hr />
+    <br />
+
+    <p className="">
+      <span className="font-medium dark:text-gray-200">
+        <b>Estimated Shipping Cost of Order:</b>
+      </span>
+    </p>
+    <ul className="pl-5 list-disc">
+      <li>
+        <b>Domestic Shipping Cost within China:</b> $
+        {domesticShippingCost ? domesticShippingCost.toFixed(2) : 0}
+      </li>
+      <li>
+        <b>International Shipping Cost:</b> $
+        {internationalShippingCost ? internationalShippingCost.toFixed(2) : 0}
+      </li>
+      <li>
+        <b>Total Shipping Cost:</b> $
+        {estimatedShippingCost ? estimatedShippingCost.toFixed(2) : 0} Yuan or ₦
+        {estimatedShippingCost && exNairaToDollar
+          ? (estimatedShippingCost * exNairaToDollar).toFixed(2)
+          : 0}{' '}
+        Naira
+      </li>
+    </ul>
+  </div>
+
+  <p className="text-sm">
+    <b>Estimated Total Weight of Order:</b>{' '}
+    <span className="font-medium dark:text-gray-200 text-sm">
+      {productsTotalWeight ? productsTotalWeight : 0} Kg
+    </span>
+  </p>
+
+  <hr />
+
+  <p className="text-xl">
+    <b>Grand Total Cost:</b>{' '}
+    <span className="font-medium dark:text-gray-200">
+      ¥{grandTotalCost ? grandTotalCost.toFixed(2) : 0} Yuan
+    </span>{' '}
+    or{' '}
+    <span className="font-medium dark:text-gray-200">
+      ${grandTotalCost && exYuanToDollar ? (grandTotalCost / exYuanToDollar).toFixed(2) : 0} USD
+    </span>{' '}
+    or{' '}
+    <span className="font-medium dark:text-gray-200">
+      ₦{grandTotalCost && exNairaToDollar ? (grandTotalCost * exNairaToDollar).toFixed(2) : 0} Naira
+    </span>
+    </p>
+    <hr />
+  </div>
+
+
+
 
 
 

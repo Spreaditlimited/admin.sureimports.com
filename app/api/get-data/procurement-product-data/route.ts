@@ -9,6 +9,7 @@ function replaceNullWithZero<T>(value: T | null): T | number {
 export async function GET(request: NextRequest) {
   const pidOrder = request.nextUrl.searchParams.get('pidOrder');
 
+  console.log('=============$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$=============' + pidOrder);
   try {
     //TOTAL PRODUCTS PRICE
     const price: any = await prisma.$queryRaw`
@@ -38,124 +39,181 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    //ORDER CURRENCY TYPE
+    //ORDER CURRENCY, COUNTRY AND SHIPPING PLAN
     const orderRecord = await prisma.orders.findUnique({
       where: { pidOrder: pidOrder as string | undefined },
       select: {
         currencyType: true,
         destinationCountry: true,
+        shippingPlan: true,
       },
     });
 
+    //DESTINATION COUNTRY
+    const destinationCountry: any = await prisma.country.findUnique({
+      where: {
+        pidCountry: orderRecord?.destinationCountry as string | undefined,
+      },
+      select: {
+        countryName: true,
+      },
+    });
 
-        //EXCHANGE RATE
-        const exRate = await prisma.exchange_rate.findUnique({
-          where: { id: 1 as number },
-          select: {
-            currency_name1: true,
-            currency_sign1: true,
-            currency_name2: true,
-            currency_sign2: true,
-            currency_name3: true,
-            currency_sign3: true,
-            service_charge: true,
-            vat: true,
-            exNairaToDollar: true,
-            exYuanToDollar: true,
-            exNairaToYuan: true,
-          },
-        });
+    //SHIPPING RATE
+    const shippingRate: any = await prisma.shippingplan.findUnique({
+      where: {
+        countryId: orderRecord?.destinationCountry,
+        pidShippingPlan: orderRecord?.shippingPlan,
+      } as any,
+      select: {
+        shippingPlanRate: true,
+      },
+    });
 
+    //EXCHANGE RATE
+    const exRate = await prisma.exchange_rate.findUnique({
+      where: { id: 1 as number },
+      select: {
+        currency_name1: true,
+        currency_sign1: true,
+        currency_name2: true,
+        currency_sign2: true,
+        currency_name3: true,
+        currency_sign3: true,
+        service_charge: true,
+        vat: true,
+        exNairaToDollar: true,
+        exYuanToDollar: true,
+        exNairaToYuan: true,
+      },
+    });
 
-
-    const totalPrice = replaceNullWithZero(price[0].totalPricex);
+    const totalPriceValue = replaceNullWithZero(price[0].totalPricex);
     const totalWeight = replaceNullWithZero(weight[0].totalWeightx);
     const totalCount = replaceNullWithZero(count);
 
-    console.log('JESUS CHRIST IS GREAT! ' + totalWeight);
+    //CURRENCY UPDATE
+    let totalPrice = totalPriceValue;
 
+    if (orderRecord?.currencyType == 'USD') {
+      totalPrice = totalPriceValue;
+    }
+    if (orderRecord?.currencyType == 'CNY') {
+      totalPrice = totalPriceValue / parseFloat(exRate?.exYuanToDollar as any);
+    }
+
+    console.log('JESUS CHRIST IS GREAT!!!');
 
     //CURRENCY UPDATE
     let currencyName = '';
     let currencyLogo = '';
 
     //currency name
-    if(orderRecord?.currencyType == 'USD') {currencyName = 'USD'};
-    if(orderRecord?.currencyType == 'CNY') {currencyName = 'Yuan'};
-    if(orderRecord?.currencyType == 'NGN') {currencyName = 'Naira'};
+    if (orderRecord?.currencyType == 'USD') {
+      currencyName = 'USD';
+    }
+    if (orderRecord?.currencyType == 'CNY') {
+      currencyName = 'Yuan';
+    }
+    if (orderRecord?.currencyType == 'NGN') {
+      currencyName = 'Naira';
+    }
 
     //currency logo
-    if(orderRecord?.currencyType == 'USD') {currencyLogo = '$'};
-    if(orderRecord?.currencyType == 'CNY') {currencyLogo = '¥'};
-    if(orderRecord?.currencyType == 'NGN') {currencyLogo = '₦'};
+    if (orderRecord?.currencyType == 'USD') {
+      currencyLogo = '$';
+    }
+    if (orderRecord?.currencyType == 'CNY') {
+      currencyLogo = '¥';
+    }
+    if (orderRecord?.currencyType == 'NGN') {
+      currencyLogo = '₦';
+    }
 
-    //shipping plans and rates
-    let normalShipping = 10; //$10 per kg
-    let specialShipping = 11; //$11 per kg
-    let expressShipping = 15; //$15 per kg
-    let seaShipping = 0; //N500,000/CBM (FOR ONLY NIGERIAN BOUND SHIPPING) *defaults to zero rate per kg
-
-    //currency logo
-    // if(orderRecord?.currencyType == 'NORMAL_SHIPPING') {currencyLogo = '$'};
-    // if(orderRecord?.currencyType == 'SPECIAL_SHIPPIING') {currencyLogo = '¥'};
-    // if(orderRecord?.currencyType == 'EXPRESS_SHIPPING') {currencyLogo = '₦'};
-    // if(orderRecord?.currencyType == 'SEA_SHIPPING') {currencyLogo = '₦'};
-
-    
-    // setProductsGrandTotalPriceNAIRA(
-    //   totalPrice * exNairToDollar +
-    //     serviceChargeNAIRA * exNairToDollar +
-    //     vatValueNAIRA * exNairToDollar +
-    //     estimatedShippingCost * exNairToDollar,
-    // );
+    //Shipping Plan Name
+    let shippingPlanName = orderRecord?.shippingPlan; //value in USD
 
     //Shipping rate per KG
-    let shippingRate = 10; //value in USD
+    let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
 
     //Domestic Shipping Cost within China
-    let domesticShippingCost = 10; //value in USD
+    let domesticShippingCost = 2; //value in USD
 
     //International Shipping Cost
-    let internationalShippingCost = totalWeight * shippingRate;
+    let internationalShippingCost =
+      totalWeight * parseFloat(shippingRate.shippingPlanRate);
 
     //Estimated Total Weight of Order
-    let estimatedShippingCost = internationalShippingCost + domesticShippingCost;
+    let estimatedTotalShippingCost =
+      internationalShippingCost + domesticShippingCost;
 
     //Service Charge
-    let serviceChargeValue = totalPrice * (parseFloat(exRate?.service_charge as any) / 100);
+    let serviceChargeValue =
+      totalPrice * (parseFloat(exRate?.service_charge as any) / 100);
 
     //vat value
-    let vatValue = serviceChargeValue * parseFloat(exRate?.vat as any);
+    let vatValue = serviceChargeValue * (parseFloat(exRate?.vat as any) / 100);
 
     //Grand Total Cost
-    let grandTotalCost = parseFloat(totalPrice + estimatedShippingCost + serviceChargeValue + vatValue);
+    let grandTotalCost = parseFloat(
+      totalPrice + estimatedTotalShippingCost + serviceChargeValue + vatValue,
+    );
 
+    //--------------------------------//RESPONSE//--------------------------------//
+    return NextResponse.json({
+      //PRODUCTS RECORD TABLE
+      productsGetAll: products,
 
+      //TOTAL PRICE
+      productsTotalPrice: totalPrice,
 
-    //RESPONSE
-    const box = NextResponse.json({
-          productsGetAll: products,
-          productsTotalPrice: totalPrice,
-          productsTotalWeight: totalWeight,
-          productsTotalCount: totalCount,
-          currencyType: orderRecord?.currencyType,
-          currencyName: currencyName,
-          currencyLogo: currencyLogo,
-          exNairaToDollar: exRate?.exNairaToDollar,
-          exYuanToDollar: exRate?.exYuanToDollar,
-          exNairaToYuan: exRate?.exNairaToYuan,
-          serviceCharge: exRate?.service_charge,
-          vat: exRate?.vat,
-          serviceChargeValue: serviceChargeValue,
-          vatValue: vatValue,
-          grandTotalCost: grandTotalCost,
-          domesticShippingCost: domesticShippingCost,
-          internationalShippingCost: internationalShippingCost,
-          estimatedShippingCost: estimatedShippingCost,
-          destinationCountry: orderRecord?.destinationCountry,
+      //PRODUCTS TOTAL COUNT
+      productsTotalCount: totalCount,
+
+      //TOTAL WEIGHT
+      productsTotalWeight: totalWeight,
+
+      //CURRENCY TYPE, NAME & LOGO
+      currencyType: orderRecord?.currencyType,
+      currencyName: currencyName,
+      currencyLogo: currencyLogo,
+
+      //NAIRA TO DOLLAR EX-RATE
+      exNairaToDollar: exRate?.exNairaToDollar,
+
+      //YUAN TO DOLLAR EX-RATE
+      exYuanToDollar: exRate?.exYuanToDollar,
+
+      //NAIRA TO YUAN EX-RATE
+      exNairaToYuan: exRate?.exNairaToYuan,
+
+      //SERVICE CHARGE PERCENTAGE & VALUE
+      serviceCharge: exRate?.service_charge,
+      serviceChargeValue: serviceChargeValue,
+
+      //VAT PERCENTAGE & VALUE
+      vat: exRate?.vat,
+      vatValue: vatValue,
+
+      //SHIPPING DESTINATION COUNTRY
+      destinationCountry: destinationCountry.countryName,
+
+      //SHIPPING PLAN NAME & RATE
+      shippingPlanName: shippingPlanName,
+      shippingPlanRate: shippingPlanRate,
+
+      //DOMESTIC SHIPPING COST
+      domesticShippingCost: domesticShippingCost,
+
+      //INTERNATIONAL SHIPPING COST
+      internationalShippingCost: internationalShippingCost,
+
+      //ESTIMATED TOTAL SHIPPING COST
+      estimatedTotalShippingCost: estimatedTotalShippingCost,
+
+      //GRAND TOTAL COST IN DOLLARS
+      grandTotalCost: grandTotalCost,
     });
-
-console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'+JSON.stringify(box));
   } catch (error) {
     console.error('Error calculating total amount:', error);
     return NextResponse.json(

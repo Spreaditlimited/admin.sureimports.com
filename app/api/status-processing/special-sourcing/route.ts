@@ -8,7 +8,7 @@ import fileFilter from '@/utils/fileFilter';
 import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/utils/slugGenerator';
-import xMail from '@/lib/email_OLD2/xMail2';
+import xMail from '@/lib/email/xMail2';
 
 const prisma = new PrismaClient();
 
