@@ -289,7 +289,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             isCollapsed ? "opacity-0" : "opacity-100"
           }`}
         >
-          Hi {user?.userFirstname || user?.userEmail}
+          <i>Hi {user?.userFirstname || user?.userEmail}</i>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 space-y-6 custom-scrollbar">

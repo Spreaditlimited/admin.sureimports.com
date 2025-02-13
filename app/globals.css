@@ -82,6 +82,7 @@
   }
 
   .custom-scrollbar-rounded {
+    border-radius: 10px;
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted)) transparent;
   }
