@@ -1,0 +1,868 @@
+import Loader from "@/app/uix/Loader";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
+
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
+interface Product {
+    id: number;
+    pidProduct: string;
+    pidOrder: string;
+    pidUser: string;
+    productName: string;
+    productLink: string; 
+    productCategory: string;
+    productPrice: string;
+    productWeight: string;
+    productQuantity: string;
+    productInfo: string;
+    productStatus: string;
+}
+
+interface ProductProps {
+  pidOrder: string;
+  pidUser: string;
+  orderName: string;
+  shippingAddress: string;
+}
+
+// USER DATA
+interface User {
+  pidUser: string;
+  email: string;
+  name: string;
+}
+
+//API RESPONSE
+interface ApiResponse {
+  responsex: any;
+  successx: boolean;
+  userx: User;
+}
+
+
+  
+
+const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, orderName, shippingAddress}) => {
+
+  //initialize alert system
+  const navigateWithAlert = useNavigationWithAlert();
+
+
+  //status
+  const status = useSearchParams().get('status') || 'none';
+  let newStatus:string = '';
+
+
+  //important variables
+  const [loading, setLoading] = useState<boolean>(true);
+  const [productALL, setProductALL] = useState<Product[]>([]);
+  const [message, setMessage] = useState<any>('');
+  const [actionType, setActionType] = useState<string>('');
+  //const [newStatus, setNewStatus] = useState<string>('');
+
+
+
+  //************************************ CALCULATIONS ************************************//
+  const [productsTotalPrice, setProductsTotalPrice] = useState<number>(0);
+  const [currencyType, setCurrencyType] = useState<string>('');
+  const [currencyLogo, setCurrencyLogo] = useState<string>('');
+  const [currencyName, setCurrencyName] = useState<string>('');
+
+  //exchange rate
+  const [exNairaToDollar, setExNairaToDollar] = useState<number>(1);
+  const [exYuanToDollar, setExYuanToDollar] = useState<number>(1);
+  const [exNairaToYuan, setExNairaToYuan] = useState<number>(1);
+
+  //other charges
+  const [serviceCharge, setServiceCharge] = useState<number>(1);
+  const [vat, setVat] = useState<number>(1);
+  const [domesticShippingCost, setDomesticShippingCost] = useState<number>(1);
+  const [internationalShippingCost, setInternationalShippingCost] = useState<number>(1);
+  const [estimatedShippingCost, setEstimatedShippingCost] = useState<number>(1);
+  const [serviceChargeValue, setServiceChargeValue] = useState<number>(1);
+  const [vatValue, setVatValue] = useState<number>(1);
+
+  //selected shipping rate
+  const [shippingRatePerKG, setShippingRate] = useState<number>(5); //10.5 usd per kg
+  const [shippingType, setShippingType] = useState<string>('NORMAL_SHIPPING');
+
+  //destination country
+  const [destinationCountry, setDestinationCountry] = useState<string>('');
+
+  //total products weight
+  const [productsTotalWeight, setProductsTotalWeight] =  useState<string>('');
+
+  //grand total
+  const [grandTotalCost, setGrandTotalCost] = useState<number>(1);
+
+
+
+
+  
+
+  async function fetchData() {
+    try {
+      
+      // Pull Records from database
+      const res = await fetch(`/api/get-data/procurement-product-data?pidOrder=${pidOrder}`);
+      const data = await res.json();
+
+      //TABLE RECORDS
+      setProductALL(data.productsGetAll);
+
+      //TOTAL COST
+      setProductsTotalPrice(data.productsTotalPrice);
+
+      //CURRENCY
+      setCurrencyType(data.currencyType);
+
+      //CURRENCY NAME
+      setCurrencyName(data.currencyName);
+
+      //CURRENCY LOGO
+      setCurrencyLogo(data.currencyLogo);
+
+      //DESTINATION COUNTRY
+      setDestinationCountry(data.destinationCountry);
+      
+      //EXCHANGE RATE
+      setExNairaToDollar(data.exNairaToDollar);
+      setExYuanToDollar(data.exYuanToDollar);
+      setExNairaToYuan(data.exNairaToYuan);
+
+      //OTHER CHARGES
+      setServiceCharge(data.serviceCharge);
+      setVat(data.vat);
+      setDomesticShippingCost(data.domesticShippingCost);
+      setInternationalShippingCost(data.internationalShippingCost);
+      setEstimatedShippingCost(data.estimatedShippingCost);
+      
+      //TOTAL WEIGHT
+      setProductsTotalWeight(data.productsTotalWeight);
+
+      //SERVICE CHARGE
+      setServiceChargeValue(data.serviceChargeValue);
+
+      //VAT CHARGE
+      setVatValue(data.vatValue);
+
+      //GRAND TOTAL
+      setGrandTotalCost(data.grandTotalCost);
+
+
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      // Handle the error appropriately (e.g., display an error message)
+    } finally {
+       setLoading(false); // Set loading to false when done
+    }
+}
+
+
+
+
+
+      //FETCH ORDERS AND PRODUCTS
+      useEffect(() => {
+          fetchData();
+      },[]); // Empty dependency array to run only once on mount
+
+
+
+
+   //LOADER & EMPTY RECORD PROCESSING 
+   if (loading) {return <Loader />;} //show loader
+   if (productALL.length === 0) {
+    return (
+      <div className="m-7 flex border-spacing-1 items-center justify-center p-7 font-bold">
+        <div className="rounded border-2 border-dotted border-gray-500 p-4">
+          <p className="text-center text-gray-500">No {status} orders available</p>
+        </div>
+      </div>
+    ); 
+  }
+
+//alert(currencyType);
+
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    let pidMessage = 'MSG' + new Date().getTime().toString();
+    let currentStatus = status;
+    // toast.info('ProcessingX . . .'+actionType);return;
+    // if (actionType === 'decline') {
+    //       //PROCESS NEW STATUS
+    //       if(status == 'pending'){newStatus = 'on-hold';}
+    //       if(status == 'pay-for-shipping'){newStatus = 'on-hold';}
+    // }
+    // if (actionType === 'approve') {
+    //       //PROCESS NEW STATUS
+    //       if(status == 'pending'){newStatus = 'approved';}
+    //       if(status == 'approved'){newStatus = 'pay-for-shipping';}
+    //       if(status == 'pay-for-shipping'){newStatus = 'in-transit';}
+    //       if(status == 'in-transit'){newStatus = 'ready-for-pickup';}
+    //       if(status == 'ready-for-pickup'){newStatus = 'completed';}
+    //       if(status == 'bank-pending-saved-orders'){newStatus = 'pending';}
+    //       if(status == 'bank-pending-shipping-orders'){newStatus = 'in-transit';}
+    // }
+    // if (actionType === 'message') {
+    //   //PROCESS NEW STATUS
+    //   if(status == 'saved'){newStatus = 'saved';}
+    //   if(status == 'pending'){newStatus = 'on-hold';}
+    //   if(status == 'pay-for-shipping'){newStatus = 'on-hold';}
+    // }
+    
+          const formData = new FormData(event.currentTarget);
+          formData.append('pidOrder', pidOrder);
+          formData.append('pidUser', pidUser);
+          formData.append('currentStatus', currentStatus);
+          formData.append('newStatus', actionType);
+          formData.append('message', message);
+          formData.append('pidMessage', pidMessage);
+
+
+      //MAKE REQUEST ATTEMPT
+      try {
+        toast.info('Processing . . .');
+        //MAKE REQUEST
+        const res = await fetch('/api/status-processing/procurement', {
+          method: 'POST',
+          body: formData,
+        });
+  
+        // GET & PROCESS RESPONSE FROM API
+        const data: ApiResponse = await res.json();
+  
+        if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+newStatus, 'success', 'Process update was successful, order has been moved to '+newStatus);}
+        if (data.responsex.status == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+newStatus);}
+        if (data.responsex.status == 'SUCCESSX') {
+          toast.success(data.responsex.message);
+        }
+        if (data.responsex.status == 'ACTION_FAILED') {
+          toast.warning(data.responsex.message);
+        }
+        if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
+          toast.warning(data.responsex.message);
+        }
+      } catch (error: any) {
+          console.log(error.message);
+      } finally {
+        //setLoading(false);
+      }
+
+
+  }
+
+
+
+
+  return (
+    <div className="bg-gray-600 dark:bg-gray-900 min-h-screen p-0 flex flex-col items-center divide-gray-800">
+      <div className="max-w-5xl w-full bg-yellow dark:bg-red-900 rounded-lg shadow-md p-6 space-y-6">
+        
+
+        {/* Header Section */}
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          <h1 className="text-lg font-bold dark:text-gray-200">SUPER ADMIN (ATL-L0)</h1>
+         
+        </div>
+
+
+
+        {/* Order Info */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold dark:text-gray-200">{orderName}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              ORDER ID: {pidOrder}
+            </p>
+            <p>
+            <span className="font-medium dark:text-gray-300"><b>Delivery Address:</b></span> {shippingAddress}
+            </p>
+          </div>
+          {/* <div className="flex space-x-4">
+            <button className="bg-red-500 text-white text-sm py-2 px-4 rounded hover:bg-red-600">
+              Take Charge of Order
+            </button>
+            <button className="bg-blue-500 text-white text-sm py-2 px-4 rounded hover:bg-blue-600">
+              Generate Invoice
+            </button>
+          </div> */}
+        </div>
+
+
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm border-collapse border border-gray-200 dark:border-gray-300">
+
+
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-primary-light">
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">S/N</th>
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                  Product Name
+                </th>
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                  Unit Price (¥)
+                </th>
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Quantity</th>
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                  Weight (Kg)
+                </th>
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                  Total Price (¥)
+                </th>
+              </tr>
+            </thead>
+
+
+
+
+            <tbody>
+
+              {
+                productALL.map(
+                  (datax:Product, index:number) => {
+                    return(
+                      <>
+                          <tr className="dark:text-gray-100">
+                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                              {index+1}
+                            </td>
+                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
+                              <p className="text-dark"><Link href={datax.productLink} target="blank"><b>{datax.productName}</b></Link></p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Info: {datax.productInfo}</p>
+                            </td>
+                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                            {datax.productPrice}
+                            </td>
+                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                            {datax.productQuantity}
+                            </td>
+                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                            {datax.productWeight}
+                            </td>
+                            <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                            {0}
+                            </td>
+                          </tr>
+                      </>
+                    )
+                  }
+                )
+              }
+
+
+
+            </tbody>
+          </table>
+          {/* <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Showing 1 to 1 of 1 entries (filtered from 7 total entries)
+          </p> */}
+        </div>
+
+        
+
+        {/* Cost Details */}
+        <div className="space-y-4 text-gray-600 dark:text-gray-300">
+          <div className="text-xs">
+
+          <hr />
+
+
+          {/******************* TOTAL COST DISPLAY BLOCK STARTS *******************/}
+          <p className="p-2">
+            <span className="text-base font-medium dark:text-gray-200"><b>Total Cost of Order: &nbsp;</b></span> 
+            {
+            (currencyType == 'USD') && 
+              <>
+              {'$'}{parseFloat(productsTotalPrice.toFixed(2))}{' USD'}&nbsp;
+              </>
+            }
+
+            {/* CYN TO USD */}
+            {
+            (currencyType == 'CNY') && 
+              <>
+              {'¥'}{parseFloat(productsTotalPrice.toFixed(2))}{' Yuan'}&nbsp;
+              {' or '}
+              {'$'}{parseFloat((productsTotalPrice / exYuanToDollar).toFixed(2))}{' USD'}&nbsp;
+              </>
+            }
+
+            {/* NAIRA TO USD for Nigerian Destinations*/}
+            {
+            ((destinationCountry == 'Nigeria') && (currencyType == 'USD')) && 
+              <>
+              {' or '}{'₦'}{(productsTotalPrice * exNairaToDollar).toFixed(2)}{'Naira'}&nbsp;
+              </>
+            }
+
+            {/* NAIRA TO CYN for Nigerian Destinations*/}
+            {
+            ((destinationCountry == 'Nigeria') && (currencyType == 'CNY')) && 
+              <>
+              {' or '}{'₦'}{(productsTotalPrice * exNairaToYuan).toFixed(2)}{' Naira'}&nbsp;
+              </>
+            }
+            
+          </p>
+          {/******************* TOTAL COST DISPLAY BLOCK ENDS *******************/}
+
+
+
+          <hr /><br />
+
+            <p className="">
+              <span className="font-medium dark:text-gray-200"><b>Estimated Shipping Cost of Order:</b></span>
+            </p>
+            <ul className="pl-5 list-disc">
+              <li><b>Domestic Shipping Cost within China:</b> ${domesticShippingCost}</li>
+              <li><b>International Shipping Cost:</b> ${internationalShippingCost}</li>
+              <li><b>Total Shipping Cost:</b> 
+              ${estimatedShippingCost.toFixed(2)} Yuan or ₦{(estimatedShippingCost * exNairaToDollar).toFixed(2)} Naira
+              </li>
+            </ul>
+          </div>
+
+          
+          <p className="text-sm">
+          <b>Estimated Total Weight of Order:</b>{" "}
+            <span className="font-medium dark:text-gray-200 text-sm">{productsTotalWeight} Kg</span>
+          </p>
+
+          <hr />
+          
+          <p className="text-xl">
+            <b>Grand Total Cost:</b> <span className="font-medium dark:text-gray-200">¥{grandTotalCost.toFixed(2)} Yuan</span> or{" "}
+              <span className="font-medium dark:text-gray-200">${(grandTotalCost / exYuanToDollar).toFixed(2)} USD</span> or{" "}
+              <span className="font-medium dark:text-gray-200">₦{(grandTotalCost * exNairaToDollar).toFixed(2)} Naira</span>
+            </p>
+          <hr />
+        </div>
+
+
+
+        {/* Service Charges */}
+        <div className="text-xs text-gray-600 dark:text-gray-300">
+          <p>
+          <b>{serviceCharge}% Service Charge of</b>{" "}
+            <span className="font-medium dark:text-gray-200">
+              ¥{serviceChargeValue.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string} Yuan</span> or{" "}
+            <span className="font-medium dark:text-gray-200">
+              ${(serviceChargeValue/exYuanToDollar).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string} USD</span> inclusive.
+          </p>
+          <p>
+          <b>{vat}% VAT of </b><span className="font-medium dark:text-gray-200">
+            ¥{vatValue.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string} Yuan</span> or{" "}
+            <span className="font-medium dark:text-gray-200">
+            ${(vatValue.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string)} USD</span> inclusive.
+          </p>
+          <p>
+          <b>Exchange Rate (Yuan):</b> $1 USD ={" "}
+            <span className="font-medium dark:text-gray-200">¥{exYuanToDollar} Yuan</span>
+          </p>
+          <p>
+          <b>Exchange Rate (Naira):</b> $1 USD ={" "}
+            <span className="font-medium dark:text-gray-200">₦{exNairaToDollar} Naira</span>
+          </p>
+        </div>
+
+
+
+
+ <form onSubmit={handleSubmit}>
+
+        {/* Confirm Action */}
+        <div className="space-y-4">
+          <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="confirm"
+              className="rounded border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
+              required
+            />
+            <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300">
+              Check this box to confirm your action
+            </label>
+          </div>
+        </div>
+
+
+
+        {/* Message to Buyer */}
+        <div>
+          <textarea
+            className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            rows={3}
+            placeholder="Send Message to Buyer"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          ></textarea>
+        </div><br />
+
+
+        {status == 'approved' && (
+          <>
+        {/* Weight and Cost Input */}
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            <label
+              htmlFor="weight"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Weight of Order
+            </label>
+            <input
+              type="text"
+              id="weight"
+              placeholder="Weight in (Kg)Kilograms"
+              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            />
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+              *Note: This value must be in (Kg)Kilograms
+            </p>
+          </div>
+
+
+
+
+          {/* TOTAL COST */}
+
+          <div className="flex-1">
+            <label
+              htmlFor="totalCost"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Total Cost of Order
+            </label>
+            <input
+              type="text"
+              id="totalCost"
+              placeholder="Total Cost of Order in (¥)Yuan"
+              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            />
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+              *Note: This value must be in (¥)Yuan
+            </p>
+          </div>
+        </div><br />
+        </>
+        )
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+{/* ******************************************* ACTION BUTTONS ************************************************* */}
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ SAVED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'saved') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">       
+            <div className="w-full md:w-1/1">
+                <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  Send Message
+                </button>
+                <small>You may remind the buyer by sending a message to this order</small>
+            </div>
+        </div>
+        </>
+ )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ PENDING - APPROVED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'pending') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="approved" onClick={() => setActionType('approved')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE (Move to Approved)
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ APPROVED - READY TO SHIP ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'approved') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="ready-to-ship" onClick={() => setActionType('ready-to-ship')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE (Move to Ready to Ship)
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ PAY FOR SHIPPING - IN TRANSIT ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'pay-for-shipping') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            {/* <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="in-transit" onClick={() => setActionType('in-transit')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div> */}
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ IN TRANSIT - READY FOR PICKUP ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'in-transit') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('ready-for-pickup')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE (Move to Ready for Pickup)
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ READY FOR PICKUP - COMPLETED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'ready-for-pickup') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="completed" onClick={() => setActionType('completed')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE (Move to Completed)
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ COMPLETED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'completed') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            {/* <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="approve" onClick={() => setActionType('completed')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div> */}
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ ON HOLD - PENDING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'on-hold') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="pending" onClick={() => setActionType('pending')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  Move back to Pending
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ BANK PENDING (SAVED) - PENDING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'bank-pending-saved-orders') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="saved" onClick={() => setActionType('saved')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Move back to Saved Order)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="pending" onClick={() => setActionType('pending')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE (Move to Pending Order)
+                </button>
+                <small>Approve this Order for further processing if Payment has been confirmed</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ BANK PENDING (SHIPPING) - PAY FOR SHIPPING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'bank-pending-shipping-orders') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="pay-for-shipping" onClick={() => setActionType('pay-for-shipping')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Move back to Pay for Shipiing)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="in-transit" onClick={() => setActionType('in-transit')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                 APPROVED (Move Order to In-Transit)
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ CANCELLED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'cancelled') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            
+            {/* <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  DECLINE (Place On-Hold)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="approve" onClick={() => setActionType('approcacve')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div> */}
+        </div>
+        </>
+   )}
+
+
+
+
+</form>
+
+
+
+
+
+      </div>
+    </div>
+  );
+};
+
+export default TableProcurementProducts;

@@ -1,5 +1,5 @@
 import { DashboardLayout } from "../../dashboard/components/dashboard-layout"
-import { ProcurementContent } from "./components/page-content"
+import { ProcurementContent } from "./components/PageContent"
 
 export default function DashboardPage() {
   return (

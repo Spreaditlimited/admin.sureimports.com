@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import "./globals.css"
+import { AuthProvider } from "@/lib/AuthContext"
+import { AlertProvider } from "./context/AlertContext"
 
 export const metadata: Metadata = {
   title: "SureImports | Admin Dashboard",
@@ -29,7 +31,11 @@ export default function RootLayout({
           `,
           }}
         />
-        {children}
+        <AuthProvider>
+          <AlertProvider>
+            {children}
+          </AlertProvider>
+        </AuthProvider>
       </body>
     </html>
   )

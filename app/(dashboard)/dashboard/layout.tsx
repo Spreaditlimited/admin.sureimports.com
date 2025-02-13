@@ -1,3 +1,4 @@
+
 import { AuthProvider } from "@/lib/AuthContext"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
@@ -16,7 +17,8 @@ export default async function ProtectedLayout({
   }
 
   return <>
-    <AuthProvider>
-        {children}
-    </AuthProvider></>
+          <AuthProvider>
+              {children}
+          </AuthProvider>
+         </>
 }

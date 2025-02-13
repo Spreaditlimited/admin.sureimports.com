@@ -1,3 +1,6 @@
+import CounterBoxProcurement from "./CounterBoxProcurement"
+import OrdersBoxProcurement from "./OrdersBoxProcurement"
+
 interface StatCardProps {
     title: string
     value: number
@@ -20,9 +23,15 @@ interface StatCardProps {
   export function ProcurementContent() {
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          Page Content
+
+        <div className="p-3">
+            <CounterBoxProcurement />
         </div>
+
+        <div className="p-3">
+            <OrdersBoxProcurement />
+        </div>
+
       </>
     )
   }
