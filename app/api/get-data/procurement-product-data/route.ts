@@ -134,14 +134,15 @@ export async function GET(request: NextRequest) {
     let shippingPlanName = orderRecord?.shippingPlan; //value in USD
 
     //Shipping rate per KG
-    let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
-
+    //let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
+    let shippingPlanRate = 10; //value in USD
+    console.log('=============RATERATERATERATERATERATERATERATERATERATE=============' + shippingPlanRate);
     //Domestic Shipping Cost within China
     let domesticShippingCost = 2; //value in USD
 
     //International Shipping Cost
     let internationalShippingCost =
-      totalWeight * parseFloat(shippingRate.shippingPlanRate);
+      totalWeight * parseFloat(shippingPlanRate as any);
 
     //Estimated Total Weight of Order
     let estimatedTotalShippingCost =
