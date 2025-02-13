@@ -49,8 +49,8 @@ const CounterBoxProcurement = () => {
   return (
     <>
 
-<div className="w-full overflow-x-auto scrollbar-hide scrollbar-thin">
-      <div className="flex space-x-2 px-4 py-2">
+<div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-indigo-500 scrollbar-track-gray-100 custom-scrollbar-rounded">
+  <div className="flex space-x-2 px-4 py-2">
         {/* Buttons with one-line text */}
         <button type="button" onClick={()=>handleClick('saved')} className="whitespace-nowrap btn btn-dark my-4 bg-indigo-700 text-white px-3 py-1 text-sm rounded-full hover:bg-indigo-800 flex items-center justify-between min-w-120px">
           <span>Saved </span>&nbsp;&nbsp;
