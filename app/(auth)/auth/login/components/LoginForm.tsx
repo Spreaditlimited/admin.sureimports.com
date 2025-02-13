@@ -136,7 +136,7 @@ export default function LoginForm() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 text-white text-sm font-semibold rounded-lg bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="w-full py-2.5 px-4 text-white text-sm font-semibold rounded-lg bg-gradient-to-r from-orange-300 to-blue-600 hover:from-orange-500 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
               >
                 SIGN IN
               </button>
