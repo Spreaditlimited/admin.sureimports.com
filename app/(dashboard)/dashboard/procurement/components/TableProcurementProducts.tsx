@@ -266,7 +266,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   return (
     <div className="bg-gray-600 dark:bg-gray-900 min-h-screen p-0 flex flex-col items-center divide-gray-800">
-      <div className="max-w-5xl w-full bg-yellow dark:bg-red-900 rounded-lg shadow-md p-6 space-y-6">
+      <div className="w-full bg-yellow bg-gray-200 dark:bg-gray-900 shadow-md p-6 space-y-6">
         
 
         {/* Header Section */}
@@ -304,7 +304,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         <div className="overflow-x-auto">
         <table className="min-w-full text-sm border-collapse border border-gray-200 dark:border-gray-300">
   <thead>
-    <tr className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-primary-light">
+    <tr className="bg-gray-100 dark:bg-gray-700 text-gray-100 dark:text-primary-light">
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">S/N</th>
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Product Name</th>
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Unit Price (¥)</th>
@@ -501,7 +501,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
  <form onSubmit={handleSubmit}>
 
         {/* Confirm Action */}
-        <div className="space-y-4">
+        <div className="space-y-4 pb-5">
           <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
           <div className="flex items-center space-x-2">
             <input
@@ -510,12 +510,11 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               className="rounded border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
               required
             />
-            <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
               Check this box to confirm your action
             </label>
           </div>
         </div>
-
 
 
         {/* Message to Buyer */}

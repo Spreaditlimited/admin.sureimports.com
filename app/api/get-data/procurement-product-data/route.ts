@@ -59,10 +59,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
+
     //SHIPPING RATE
     const shippingRate: any = await prisma.shippingplan.findUnique({
       where: {
-        countryId: orderRecord?.destinationCountry,
+        //countryId: orderRecord?.destinationCountry,
         pidShippingPlan: orderRecord?.shippingPlan,
       } as any,
       select: {
@@ -134,9 +135,8 @@ export async function GET(request: NextRequest) {
     let shippingPlanName = orderRecord?.shippingPlan; //value in USD
 
     //Shipping rate per KG
-    //let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
-    let shippingPlanRate = 10; //value in USD
-    console.log('=============RATERATERATERATERATERATERATERATERATERATE=============' + shippingPlanRate);
+    let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
+
     //Domestic Shipping Cost within China
     let domesticShippingCost = 2; //value in USD
 
