@@ -76,10 +76,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto bg-background p-6"><Suspense fallback={<Loading />}>{children}</Suspense></main>
+        <main className="flex-1 overflow-y-auto bg-background p-6">{children}</main>
       </div>
       
-      
+
     </div>
   )
 }
