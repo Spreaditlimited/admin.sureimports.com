@@ -1,8 +1,9 @@
 "use client"
 import { useAuth } from "@/lib/AuthContext"
-import { useState, useEffect, type ReactNode } from "react"
+import { useState, useEffect, type ReactNode, Suspense } from "react"
 import { Sidebar } from "./sidebar"
 import { Search, Sun, Moon, ChevronDown } from "lucide-react"
+import Loading from "@/components/layouts/loading"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -75,8 +76,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto bg-background p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-background p-6"><Suspense fallback={<Loading />}>{children}</Suspense></main>
       </div>
+      
     </div>
   )
 }

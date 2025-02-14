@@ -31,7 +31,7 @@ interface StatCardProps {
             subtitle="Active Customers"
             className="bg-yellow-50 dark:bg-yellow-950"
           />
-          <StatCard title="Orders" value={(67).toLocaleString("en-US") as any} subtitle="Active Orders" className="bg-green-50 dark:bg-green-950" />
+          <StatCard title="Orders" value={(49).toLocaleString("en-US") as any} subtitle="Active Orders" className="bg-green-50 dark:bg-green-950" />
           <StatCard title="Products" value={(46).toLocaleString("en-US") as any} subtitle="All Products" className="bg-red-50 dark:bg-red-950" />
           <StatCard
             title="Services"
