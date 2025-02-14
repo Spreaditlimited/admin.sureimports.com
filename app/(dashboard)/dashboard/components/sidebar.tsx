@@ -290,12 +290,13 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           )}
         </div>
 
+
         <div
-          className={`mt-2 text-sm text-muted-foreground px-4 overflow-hidden whitespace-nowrap transition-all duration-300 ${
+          className={`mt-2 text-sm text-orange-500 text-muted-foreground px-4 overflow-hidden whitespace-nowrap transition-all duration-300 ${
             isCollapsed ? "opacity-0" : "opacity-100"
           }`}
         >
-          <i>Hi {user?.userFirstname || user?.userEmail}</i>
+          <i>{user?.userFirstname && 'Hi'} {user?.userFirstname || user?.userEmail}</i>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 space-y-6 custom-scrollbar">
