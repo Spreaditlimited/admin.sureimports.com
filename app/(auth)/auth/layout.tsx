@@ -8,7 +8,7 @@
 
 // export default AuthLayout;
 
-import { AuthProvider } from "@/lib/AuthContext"
+import { AuthProvider } from "@/lib/XAuthContext"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type React from "react" // Import React

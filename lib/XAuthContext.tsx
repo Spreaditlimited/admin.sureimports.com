@@ -5,17 +5,16 @@ import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 interface User {
-  id: string
+  pidUser: string
   userEmail: string
-  userFirstName?: string
+  userFirstname?: string
 }
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
+  login: (userEmail: string, userPassword: string) => Promise<void>
   logout: () => Promise<void>
-  register: (email: string, password: string, firstName?: string) => Promise<void>
-  checkAuth: () => Promise<boolean>
+  register: (userEmail: string, userPassword: string, userFirstname?: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -24,41 +23,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
-  const checkAuth = async () => {
-    try {
-      const res = await fetch("/api/auth/me", {
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      })
-      if (!res.ok) {
-        setUser(null)
-        return false
-      }
-      const data = await res.json()
-      if (data.user) {
-        setUser(data.user)
-        return true
-      } else {
-        setUser(null)
-        return false
-      }
-    } catch (error) {
-      console.error("Error checking auth:", error)
-      setUser(null)
-      return false
-    }
-  }
-
   useEffect(() => {
-    checkAuth()
-  }, []) //This was the line that needed to be updated to include the dependency
+    // Check if the user is already logged in
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user)
+        }
+      })
+      .catch((error) => console.error("Error fetching user:", error))
+  }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (userEmail: string, userPassword: string) => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ userEmail, userPassword }),
     })
     const data = await res.json()
     if (res.ok) {
@@ -72,14 +53,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
     setUser(null)
-    router.push("/login")
+    router.push("/auth/login")
   }
 
-  const register = async (email: string, password: string, firstName?: string) => {
+  const register = async (userEmail: string, userPassword: string, userFirstname?: string) => {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, firstName }),
+      body: JSON.stringify({ userEmail, userPassword, userFirstname }),
     })
     const data = await res.json()
     if (res.ok) {
@@ -90,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, login, logout, register, checkAuth }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, login, logout, register }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

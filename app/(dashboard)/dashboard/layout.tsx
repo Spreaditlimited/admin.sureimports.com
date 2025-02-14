@@ -1,5 +1,6 @@
 
-import { AuthProvider } from "@/lib/AuthContext"
+import { TokenValidator } from "@/lib/TokenValidator"
+import { AuthProvider } from "@/lib/XAuthContext"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type React from "react" // Import React
@@ -17,8 +18,10 @@ export default async function ProtectedLayout({
   }
 
   return <>
-          <AuthProvider>
-              {children}
-          </AuthProvider>
+                  <AuthProvider>
+                      <TokenValidator>
+                            {children}
+                      </TokenValidator>                                             
+                  </AuthProvider>
          </>
 }

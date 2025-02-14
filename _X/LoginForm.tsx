@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/lib/AuthContext"
+import { useAuth } from "@/lib/XAuthContext"
 import Link from "next/link"
 
 export default function Login() {

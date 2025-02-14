@@ -1,8 +1,9 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import "./globals.css"
-import { AuthProvider } from "@/lib/AuthContext"
+import { AuthProvider } from "@/lib/XAuthContext"
 import { AlertProvider } from "./context/AlertContext"
+import { TokenValidator } from "@/lib/TokenValidator"
 
 export const metadata: Metadata = {
   title: "SureImports | Admin Dashboard",
@@ -32,9 +33,11 @@ export default function RootLayout({
           }}
         />
         <AuthProvider>
-          <AlertProvider>
-            {children}
-          </AlertProvider>
+            <TokenValidator>
+                    <AlertProvider>
+                      {children}
+                    </AlertProvider>
+              </TokenValidator>                                             
         </AuthProvider>
       </body>
     </html>
