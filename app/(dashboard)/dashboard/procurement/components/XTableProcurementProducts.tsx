@@ -68,126 +68,113 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
   //************************************ CALCULATIONS ************************************//
-  //------------------------- PRODUCTS DATA FOR CALCULATIONS --------------------------//
-  //const [pidOrder, setPidOrder] = useState<string>(products[0]?.pidOrder || '');
-
-  const [getAllProducts, setGetAllProducts] = useState<any[]>([]) as any;
   const [productsTotalPrice, setProductsTotalPrice] = useState<number>(0);
-  const [productsTotalCount, setProductsTotalCount] = useState<number>(0);
-  const [productsTotalWeight, setProductsTotalWeight] = useState<number>(0);
+  const [currencyType, setCurrencyType] = useState<string>('');
+  const [currencyLogo, setCurrencyLogo] = useState<string>('');
+  const [currencyName, setCurrencyName] = useState<string>('');
 
-  const [currencyType, setCurrencyType] = useState<string>('...');
-  const [currencyName, setCurrencyName] = useState<string>('...');
-  const [currencyLogo, setCurrencyLogo] = useState<string>('...');
+  //exchange rate
+  const [exNairaToDollar, setExNairaToDollar] = useState<number>(1);
+  const [exYuanToDollar, setExYuanToDollar] = useState<number>(1);
+  const [exNairaToYuan, setExNairaToYuan] = useState<number>(1);
 
-  const [exNairaToDollar, setExNairaToDollar] = useState<number>(0);
-  const [exYuanToDollar, setExYuanToDollar] = useState<number>(0);
-  const [exNairaToYuan, setExNairaToYuan] = useState<number>(0);
+  //other charges
+  const [serviceCharge, setServiceCharge] = useState<number>(1);
+  const [vat, setVat] = useState<number>(1);
+  const [domesticShippingCost, setDomesticShippingCost] = useState<number>(1);
+  const [internationalShippingCost, setInternationalShippingCost] = useState<number>(1);
+  const [estimatedShippingCost, setEstimatedShippingCost] = useState<number>(1);
+  const [serviceChargeValue, setServiceChargeValue] = useState<number>(1);
+  const [vatValue, setVatValue] = useState<number>(1);
 
-  const [serviceCharge, setServiceCharge] = useState<number>(0);
-  const [serviceChargeValue, setServiceChargeValue] = useState<number>(0);
-  const [vat, setVat] = useState<number>(0);
-  const [vatValue, setVatValue] = useState<number>(0);
+  //selected shipping rate
+  const [shippingRatePerKG, setShippingRate] = useState<number>(5); //10.5 usd per kg
+  const [shippingType, setShippingType] = useState<string>('NORMAL_SHIPPING');
 
-  const [destinationCountry, setDestinationCountry] = useState<string>('...');
+  //destination country
+  const [destinationCountry, setDestinationCountry] = useState<string>('');
 
-  const [shippingPlanName, setShippingPlanName] = useState<string>('...');
-  const [shippingPlanRate, setShippingPlanRate] = useState<number>(0);
-  const [domesticShippingCost, setDomesticShippingCost] = useState<number>(0);
-  const [internationalShippingCost, setInternationalShippingCost] =
-    useState<number>(0);
-  const [estimatedTotalShippingCost, setEstimatedTotalShippingCost] =
-    useState<number>(0);
+  //total products weight
+  const [productsTotalWeight, setProductsTotalWeight] =  useState<string>('');
 
-  const [grandTotalCost, setGrandTotalCost] = useState<number>(0);
-
-  //================OTHER VALUES===============//
-  const [amountNaira, setAmountNaira] = useState<number>(0);
-  const [amountPounds, setAmountPounds] = useState<number>(0);
-
+  //grand total
+  const [grandTotalCost, setGrandTotalCost] = useState<number>(1);
 
 
 
-  //REPLACE NULL VALUES WITH ZERO
-  function replaceNullWithZero<T>(value: T | null): T | number {
-    return value === null ? 0 : value;
-  }
 
+  
 
-
-  //------------------------- GET ALL PRODUCTS DATA & CALCULATIONS FUNCTION --------------------------//
-  async function getProductsDetails() {
+  async function fetchData() {
     try {
-      setLoading(true);
-      const res = await fetch(
-        `/api/get-data/procurement-product-data?pidOrder=${pidOrder}`,
-        { cache: 'no-store' },
-      );
-
-      if (!res.ok) {
-        //throw new Error('Failed to fetch data');
-        return <div>No Records</div>;
-      }
-
+      
+      // Pull Records from database
+      const res = await fetch(`/api/get-data/procurement-product-data?pidOrder=${pidOrder}`);
       const data = await res.json();
 
-      // Check if data.productsGetAll is empty or not
-      if (data.productsGetAll && data.productsGetAll.length > 0) {
+      //alert(JSON.stringify(data));
 
-        setProductALL(data.productsGetAll);
-        setGetAllProducts(data.productsGetAll) as any;
-        setProductsTotalPrice(replaceNullWithZero(data.productsTotalPrice));
-        setProductsTotalCount(replaceNullWithZero(data.productsTotalCount));
-        setProductsTotalWeight(replaceNullWithZero(data.productsTotalWeight));
+      //TABLE RECORDS
+      setProductALL(data.productsGetAll);
 
-        setCurrencyType(data.currencyType);
-        setCurrencyName(data.currencyName);
-        setCurrencyLogo(data.currencyLogo);
+      //TOTAL COST
+      setProductsTotalPrice(data.productsTotalPrice);
 
-        setExNairaToDollar(replaceNullWithZero(data.exNairaToDollar));
-        setExYuanToDollar(replaceNullWithZero(data.exYuanToDollar));
-        setExNairaToYuan(replaceNullWithZero(data.exNairaToYuan));
+      //CURRENCY
+      setCurrencyType(data.currencyType);
 
-        setServiceCharge(replaceNullWithZero(data.serviceCharge));
-        setServiceChargeValue(replaceNullWithZero(data.serviceChargeValue));
-        setVat(replaceNullWithZero(data.vat));
-        setVatValue(replaceNullWithZero(data.vatValue));
+      //CURRENCY NAME
+      setCurrencyName(data.currencyName);
 
-        setDestinationCountry(data.destinationCountry);
+      //CURRENCY LOGO
+      setCurrencyLogo(data.currencyLogo);
 
-        setShippingPlanName(data.shippingPlanName);
-        setShippingPlanRate(replaceNullWithZero(data.shippingPlanRate));
-        setDomesticShippingCost(replaceNullWithZero(data.domesticShippingCost));
-        setInternationalShippingCost(
-          replaceNullWithZero(data.internationalShippingCost),
-        );
-        setEstimatedTotalShippingCost(
-          replaceNullWithZero(data.estimatedTotalShippingCost),
-        );
+      //DESTINATION COUNTRY
+      setDestinationCountry(data.destinationCountry);
+      
+      //EXCHANGE RATE
+      setExNairaToDollar(data.exNairaToDollar);
+      setExYuanToDollar(data.exYuanToDollar);
+      setExNairaToYuan(data.exNairaToYuan);
 
-        setAmountNaira(
-          replaceNullWithZero(data.grandTotalCost) *
-            replaceNullWithZero(data.exNairaToDollar),
-        );
-        setAmountPounds(replaceNullWithZero(data.grandTotalCost) * 0.8);
+      //OTHER CHARGES
+      setServiceCharge(data.serviceCharge);
+      setVat(data.vat);
+      setDomesticShippingCost(data.domesticShippingCost);
+      setInternationalShippingCost(data.internationalShippingCost);
+      setEstimatedShippingCost(data.estimatedShippingCost);
+      
+      //TOTAL WEIGHT
+      setProductsTotalWeight(data.productsTotalWeight);
 
-        setGrandTotalCost(replaceNullWithZero(data.grandTotalCost));
-      } else {
-        // Set to an empty array if no records are found
-        setGetAllProducts([]);
-      }
+      //SERVICE CHARGE
+      setServiceChargeValue(data.serviceChargeValue);
+
+      //VAT CHARGE
+      setVatValue(data.vatValue);
+
+      //GRAND TOTAL
+      setGrandTotalCost(data.grandTotalCost);
+
+
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // console.error('Error fetching data:', error);
       // Handle the error appropriately (e.g., display an error message)
     } finally {
-      setLoading(false); // Set loading to false when done
+       setLoading(false); // Set loading to false when done
     }
-  }
+}
 
-  //------------------------- RUN THE GET PRODUCT DETAILS FUNCTION --------------------------//
-  useEffect(() => {
-    getProductsDetails();
-  }, []);
+
+
+
+
+      //FETCH ORDERS AND PRODUCTS
+      useEffect(() => {
+          fetchData();
+      },[]); // Empty dependency array to run only once on mount
+
+
 
 
    //LOADER & EMPTY RECORD PROCESSING 
@@ -210,7 +197,29 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
     let pidMessage = 'MSG' + new Date().getTime().toString();
     let currentStatus = status;
- 
+    // toast.info('ProcessingX . . .'+actionType);return;
+    // if (actionType === 'decline') {
+    //       //PROCESS NEW STATUS
+    //       if(status == 'pending'){newStatus = 'on-hold';}
+    //       if(status == 'pay-for-shipping'){newStatus = 'on-hold';}
+    // }
+    // if (actionType === 'approve') {
+    //       //PROCESS NEW STATUS
+    //       if(status == 'pending'){newStatus = 'approved';}
+    //       if(status == 'approved'){newStatus = 'pay-for-shipping';}
+    //       if(status == 'pay-for-shipping'){newStatus = 'in-transit';}
+    //       if(status == 'in-transit'){newStatus = 'ready-for-pickup';}
+    //       if(status == 'ready-for-pickup'){newStatus = 'completed';}
+    //       if(status == 'bank-pending-saved-orders'){newStatus = 'pending';}
+    //       if(status == 'bank-pending-shipping-orders'){newStatus = 'in-transit';}
+    // }
+    // if (actionType === 'message') {
+    //   //PROCESS NEW STATUS
+    //   if(status == 'saved'){newStatus = 'saved';}
+    //   if(status == 'pending'){newStatus = 'on-hold';}
+    //   if(status == 'pay-for-shipping'){newStatus = 'on-hold';}
+    // }
+    
           const formData = new FormData(event.currentTarget);
           formData.append('pidOrder', pidOrder);
           formData.append('pidUser', pidUser);
@@ -295,7 +304,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         <div className="overflow-x-auto">
         <table className="min-w-full text-sm border-collapse border border-gray-200 dark:border-gray-300">
   <thead>
-    <tr className="bg-gray-100 dark:bg-gray-400 text-gray-700 dark:text-primary-light">
+    <tr className="bg-gray-100 dark:bg-gray-100 text-gray-700 dark:text-primary-light">
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">S/N</th>
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Product Name</th>
       <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Unit Price (¥)</th>
@@ -344,412 +353,147 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-        {/****************************** TOTAL COST OF ORDER *****************************/}
-        <div className="flex flex-col gap-4 rounded-lg border border-slate-400 p-[25px]">
-          <div>
-            <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-              Total Cost of Products
-            </div>
-            <div className="text-base text-slate-600 dark:text-slate-300 lg:flex lg:gap-3">
-              {/* IF IN YAUN DOLLAR VALUE */}
-              {currencyType == 'USD' && (
-                <>
-                  <span className="font-medium text-slate-600">
-                    <span className="font font-bold text-gray-800 dark:text-blue-400">
-                      {' '}
-                      $
-                      {
-                        (productsTotalPrice as number)
-                          .toFixed(2)
-                          .toString()
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                      }{' '}
-                      USD
-                    </span>
-                  </span>
-                </>
-              )}
 
-              {/* IF IN YAUN DOLLAR VALUE */}
-              {currencyType == 'CNY' && (
-                <>
-                  <span className="font-medium text-slate-600">
-                    <span className="font font-bold text-gray-800 dark:text-blue-400">
-                      {' '}
-                      ¥
-                      {
-                        (((productsTotalPrice as number) / 1) * exYuanToDollar)
-                          .toFixed(2)
-                          .toString()
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                      }{' '}
-                      Yuan
-                    </span>
+{/* Cost Details */}
+<div className="space-y-4 text-gray-600 dark:text-gray-300">
+  <div className="text-xs">
+    <hr />
 
-                    <>
-                      {'  |  '}
-                      <span className="font-medium text-slate-600 dark:text-gray-400">
-                        {' '}
-                        $
-                        {
-                          ((productsTotalPrice as number) / 1)
-                            .toFixed(2)
-                            .toString()
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                        }{' '}
-                        USD
-                      </span>
-                    </>
-                  </span>
-                </>
-              )}
+    {/******************* TOTAL COST DISPLAY BLOCK STARTS *******************/}
+    <p className="p-2">
+      <span className="text-base font-medium dark:text-gray-200">
+        <b>Total Cost of Order: &nbsp;</b>
+      </span>
+      {currencyType === 'USD' && (
+        <>
+          {'$'}
+          {productsTotalPrice ? parseFloat(productsTotalPrice.toFixed(2)) : 0} USD&nbsp;
+        </>
+      )}
 
-              {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
-              {destinationCountry == 'Nigeria' && (
-                <>
-                  {'  |  '}
-                  <span className="font-medium text-slate-600 dark:text-gray-400">
-                    {' '}
-                    ₦
-                    {
-                      (((productsTotalPrice as number) / 1) * exNairaToDollar)
-                        .toFixed(2)
-                        .toString()
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                    }{' '}
-                    Naira
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        
+      {/* CNY TO USD */}
+      {currencyType === 'CNY' && (
+        <>
+          {'¥'}
+          {productsTotalPrice ? parseFloat(productsTotalPrice.toFixed(2)) : 0} Yuan&nbsp;
+          {' or '}
+          {'$'}
+          {productsTotalPrice && exYuanToDollar
+            ? parseFloat((productsTotalPrice / exYuanToDollar).toFixed(2))
+            : 0}{' '}
+          USD&nbsp;
+        </>
+      )}
 
+      {/* NAIRA TO USD for Nigerian Destinations */}
+      {destinationCountry === 'Nigeria' && currencyType === 'USD' && (
+        <>
+          {' or '}
+          {'₦'}
+          {productsTotalPrice && exNairaToDollar
+            ? (productsTotalPrice * exNairaToDollar).toFixed(2)
+            : 0}{' '}
+          Naira&nbsp;
+        </>
+      )}
 
+      {/* NAIRA TO CNY for Nigerian Destinations */}
+      {destinationCountry === 'Nigeria' && currencyType === 'CNY' && (
+        <>
+          {' or '}
+          {'₦'}
+          {productsTotalPrice && exNairaToYuan
+            ? (productsTotalPrice * exNairaToYuan).toFixed(2)
+            : 0}{' '}
+          Naira&nbsp;
+        </>
+      )}
+    </p>
+    {/******************* TOTAL COST DISPLAY BLOCK ENDS *******************/}
 
+    <hr />
+    <br />
 
-        {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Estimated Shipping Cost of Order
-          </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-20 text-base text-slate-950 dark:text-white">
-              <p className="w-72">Domestic Shipping Cost within China:</p> $
-              {
-                ((domesticShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-            </div>
-            <div className="flex gap-20 text-base text-slate-950 dark:text-white">
-              <p className="w-72">International Shipping Cost:</p> $
-              {
-                ((internationalShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-            </div>
+    <p className="">
+      <span className="font-medium dark:text-gray-200">
+        <b>Estimated Shipping Cost of Order:</b>
+      </span>
+    </p>
+    <ul className="pl-5 list-disc">
+      <li>
+        <b>Domestic Shipping Cost within China:</b> $
+        {domesticShippingCost ? domesticShippingCost.toFixed(2) : 0}
+      </li>
+      <li>
+        <b>International Shipping Cost:</b> $
+        {internationalShippingCost ? internationalShippingCost.toFixed(2) : 0}
+      </li>
+      <li>
+        <b>Total Shipping Cost:</b> $
+        {estimatedShippingCost ? estimatedShippingCost.toFixed(2) : 0} Yuan or ₦
+        {estimatedShippingCost && exNairaToDollar
+          ? (estimatedShippingCost * exNairaToDollar).toFixed(2)
+          : 0}{' '}
+        Naira
+      </li>
+    </ul>
+  </div>
 
-            <hr />
+  <p className="text-sm">
+    <b>Estimated Total Weight of Order:</b>{' '}
+    <span className="font-medium dark:text-gray-200 text-sm">
+      {productsTotalWeight ? productsTotalWeight : 0} Kg
+    </span>
+  </p>
 
-            <div className="flex gap-4 text-base text-slate-600 dark:text-white">
-              <span className="font-semibold">
-                $
-                <b>
-                  {
-                    ((estimatedTotalShippingCost as number) / 1)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }
-                </b>
-                USD
-              </span>
+  <hr />
 
-              <span className="font-semibold">
-                {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
-                {destinationCountry == 'Nigeria' && (
-                  <>
-                    {'  |  '}&nbsp;
-                    <span className="">
-                      ₦
-                      {
-                        (
-                          ((estimatedTotalShippingCost as number) / 1) *
-                          exNairaToDollar
-                        )
-                          .toFixed(2)
-                          .toString()
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                      }{' '}
-                      Naira
-                    </span>
-                  </>
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
+  <p className="text-xl">
+    <b>Grand Total Cost:</b>{' '}
+    <span className="font-medium dark:text-gray-200">
+      ¥{grandTotalCost ? grandTotalCost.toFixed(2) : 0} Yuan
+    </span>{' '}
+    or{' '}
+    <span className="font-medium dark:text-gray-200">
+      ${grandTotalCost && exYuanToDollar ? (grandTotalCost / exYuanToDollar).toFixed(2) : 0} USD
+    </span>{' '}
+    or{' '}
+    <span className="font-medium dark:text-gray-200">
+      ₦{grandTotalCost && exNairaToDollar ? (grandTotalCost * exNairaToDollar).toFixed(2) : 0} Naira
+    </span>
+    </p>
+    <hr />
+  </div>
 
 
 
 
-        {/****************************** SHIPPING DETAILS *****************************/}
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Shipping Details:
-          </div>
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Estimated Total Weight of Order:</p>{' '}
-            <p>
-              {
-                ((productsTotalWeight as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              {' Kg'}
-            </p>
-          </div>
-
-          {/* SHIPPING DETAILS 1 */}
-          {shippingPlanName == 'NORMAL_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Normal Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (per Kg)</p>
-              </div>
-            </>
-          )}
-
-          {/* SHIPPING DETAILS 2 */}
-          {shippingPlanName == 'EXPRESS_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Express Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (per Kg)</p>
-              </div>
-            </>
-          )}
-
-          {/* SHIPPING DETAILS 3 */}
-          {shippingPlanName == 'SPECIAL_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Special Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (per Kg)</p>
-              </div>
-            </>
-          )}
-
-          {/* SHIPPING DETAILS 4 */}
-          {shippingPlanName == 'SEA_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Sea Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (N500,000/CBM)</p>
-              </div>
-            </>
-          )}
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Destination Country:</p>
-            <p>{destinationCountry}</p>
-          </div>
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Port of Exit:</p>
-            <p>HONG KONG</p>
-          </div>
-        </div>
 
 
-
-
-        {/****************************** SERVICE AND VAT CHARGES *****************************/}
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Service Charge & VAT
-          </div>
+        {/* Service Charges */}
+        <div className="text-xs text-gray-600 dark:text-gray-300">
           <p>
-            {serviceCharge}% Service Charge of{' '}
-            <span className="font-semibold text-slate-600 dark:text-slate-500">
-              $
-              {
-                ((serviceChargeValue as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }{' '}
-              USD
-            </span>{' '}
-            inclusive.<span></span>
+          <b>{serviceCharge}% Service Charge of</b>{" "}
+            <span className="font-medium dark:text-gray-200">
+              ¥{serviceChargeValue.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string} Yuan</span> or{" "}
+            <span className="font-medium dark:text-gray-200">
+              ${(serviceChargeValue/exYuanToDollar).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string} USD</span> inclusive.
           </p>
-
           <p>
-            {vat}% VAT of{' '}
-            <span className="font-semibold text-slate-600 dark:text-slate-500">
-              $
-              {
-                (vatValue as number)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }{' '}
-              USD
-            </span>{' '}
-            inclusive.
+          <b>{vat}% VAT of </b><span className="font-medium dark:text-gray-200">
+            ¥{vatValue.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string} Yuan</span> or{" "}
+            <span className="font-medium dark:text-gray-200">
+            ${(vatValue.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string)} USD</span> inclusive.
           </p>
-
-
-          {/* EXCHANGE RATE FOR USD | YUAN */}
-          {currencyType == 'CNY' && (
-            <p>
-              Exchange Rate (USD | Yuan):
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                $1 USD{' '}
-              </span>
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                = ¥{exYuanToDollar} Yuan
-              </span>
-            </p>
-          )}
-
-
-          {/* EXCHANGE RATE FOR USD | NAIRA */}
-          {destinationCountry == 'Nigeria' && (
-            <p>
-              Exchange Rate (USD | Naira):
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                $1 USD{' '}
-              </span>
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                = ₦{exNairaToDollar} Naira
-              </span>
-            </p>
-          )}
+          <p>
+          <b>Exchange Rate (Yuan):</b> $1 USD ={" "}
+            <span className="font-medium dark:text-gray-200">¥{exYuanToDollar} Yuan</span>
+          </p>
+          <p>
+          <b>Exchange Rate (Naira):</b> $1 USD ={" "}
+            <span className="font-medium dark:text-gray-200">₦{exNairaToDollar} Naira</span>
+          </p>
         </div>
-
-
-
-
-
-        {/***************************** GRAND TOTAL COST ***************************/}
-        <div className="flex items-center gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <p className="text-xl font-bold md:pr-[84px]">Grand Total Cost :</p>
-          <div>
-            {/* GRAND TOTAL */}
-
-            {/* IF IN YAUN DOLLAR VALUE */}
-            {currencyType == 'USD' && (
-              <>
-                <span className="text-2xl font-bold dark:text-blue-400">
-                  {' '}
-                  $
-                  {
-                    (grandTotalCost as number)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  USD
-                </span>
-              </>
-            )}
-
-            {/* IF IN YAUN DOLLAR VALUE */}
-            {currencyType == 'CNY' && (
-              <>
-                <span className="text-2xl font-bold dark:text-blue-400">
-                  {' '}
-                  ¥
-                  {
-                    ((grandTotalCost as number) * exYuanToDollar)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  Yuan
-                </span>{' '}
-                {'  |  '}
-                <span className="text-xl font-bold text-gray-500 dark:text-gray-200">
-                  {' '}
-                  $
-                  {
-                    (grandTotalCost as number)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  USD
-                </span>{' '}
-              </>
-            )}
-
-            {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
-            {destinationCountry == 'Nigeria' && (
-              <>
-                {'  |  '}
-                <span className="text-xl font-bold text-gray-500 dark:text-gray-200">
-                  {' '}
-                  ₦
-                  {
-                    ((grandTotalCost as number) * exNairaToDollar)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  Naira
-                </span>{' '}
-              </>
-            )}
-
-            {/* IF DESTINATION COUNTRY United Kingdom, SHOW VALUE IN Pounds */}
-            {destinationCountry == 'United Kingdom' && (
-              <>
-                {'  |  '}
-                <span className="text-xl font-bold text-gray-500 dark:text-gray-200">
-                  {' '}
-                  £
-                  {
-                    (amountPounds as number)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  Pounds
-                </span>{' '}
-              </>
-            )}
-
-            {/* EXTRA CHARGES */}
-          </div>
-        </div>
-
-
 
 
 
@@ -810,7 +554,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-          {/****************************** TOTAL COST OF ORDER *****************************/}
+          {/* TOTAL COST */}
+
           <div className="flex-1">
             <label
               htmlFor="totalCost"
