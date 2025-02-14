@@ -10,14 +10,19 @@ export default function LoginForm() {
   const [userPassword, setUserPassword] = useState("")
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      setIsLoading(true);
       await login(userEmail, userPassword)
     } catch (err) {
+      setIsLoading(false);
       setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -136,9 +141,10 @@ export default function LoginForm() {
 
               <button
                 type="submit"
+                disabled={isLoading}
                 className="w-full py-2.5 px-4 text-white text-sm font-semibold rounded-lg bg-gradient-to-r from-orange-300 to-blue-600 hover:from-orange-500 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
               >
-                SIGN IN
+                {isLoading ? 'Connecting...' : 'Sign In'}
               </button>
             </form>
           </div>
