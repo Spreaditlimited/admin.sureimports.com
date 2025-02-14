@@ -24,7 +24,7 @@ export function TokenValidator({ children }: { children: React.ReactNode }) {
     }
 
     validateToken()
-  }, [checkAuth, router, pathname])
+  }, [])
 
   return <>{children}</>
 }

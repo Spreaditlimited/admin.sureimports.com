@@ -1,5 +1,5 @@
 "use client"
-import { useAuth } from "@/lib/XAuthContext"
+import { useAuth } from "@/lib/AuthContext"
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -25,6 +25,7 @@ import {
   HandCoins,
   UserCheck,
   Ship,
+  MonitorSmartphone,
 } from "lucide-react"
 import type React from "react"
 
@@ -50,6 +51,11 @@ const features: MenuItem[] = [
     title: "Procurement",
     icon: ShoppingCart,
     path: "/dashboard/procurement?status=saved",
+  },
+  {
+    title: "Buy Phones & Laptops",
+    icon: MonitorSmartphone,
+    path: "/dashboard/buy-phones-laptops",
   },
   // {
   //   title: "Special Sourcing",

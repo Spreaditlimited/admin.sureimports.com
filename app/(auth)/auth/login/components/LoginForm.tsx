@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/lib/XAuthContext"
+import { useAuth } from "@/_X/XAuthContext"
 import Image from "next/image"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 

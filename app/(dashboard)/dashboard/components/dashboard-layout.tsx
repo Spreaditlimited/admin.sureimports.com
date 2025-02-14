@@ -1,5 +1,5 @@
 "use client"
-import { useAuth } from "@/lib/XAuthContext"
+import { useAuth } from "@/lib/AuthContext"
 import { useState, useEffect, type ReactNode } from "react"
 import { Sidebar } from "./sidebar"
 import { Search, Sun, Moon, ChevronDown } from "lucide-react"

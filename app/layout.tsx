@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import "./globals.css"
-import { AuthProvider } from "@/lib/XAuthContext"
+import { AuthProvider } from "@/lib/AuthContext"
 import { AlertProvider } from "./context/AlertContext"
 import { TokenValidator } from "@/lib/TokenValidator"
 
@@ -33,7 +33,7 @@ export default function RootLayout({
           }}
         />
         <AuthProvider>
-            <TokenValidator>
+              <TokenValidator>
                     <AlertProvider>
                       {children}
                     </AlertProvider>

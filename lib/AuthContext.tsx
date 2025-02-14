@@ -5,16 +5,16 @@ import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 interface User {
-  id: string
+  pidUser: string
   userEmail: string
-  userFirstName?: string
+  userFirstname?: string
 }
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
+  login: (userEmail: string, userPassword: string) => Promise<void>
   logout: () => Promise<void>
-  register: (email: string, password: string, firstName?: string) => Promise<void>
+  register: (userEmail: string, userPassword: string, userFirstname?: string) => Promise<void>
   checkAuth: () => Promise<boolean>
 }
 
@@ -54,11 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, []) //This was the line that needed to be updated to include the dependency
 
-  const login = async (email: string, password: string) => {
+  const login = async (userEmail: string, userPassword: string) => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ userEmail, userPassword }),
     })
     const data = await res.json()
     if (res.ok) {
@@ -72,14 +72,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
     setUser(null)
-    router.push("/login")
+    router.push("/auth/login")
   }
 
-  const register = async (email: string, password: string, firstName?: string) => {
+  const register = async (userEmail: string, userPassword: string, userFirstname?: string) => {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, firstName }),
+      body: JSON.stringify({ userEmail, userPassword, userFirstname }),
     })
     const data = await res.json()
     if (res.ok) {
