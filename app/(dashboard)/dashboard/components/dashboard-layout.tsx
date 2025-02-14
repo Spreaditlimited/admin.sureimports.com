@@ -79,6 +79,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <main className="flex-1 overflow-y-auto bg-background p-6"><Suspense fallback={<Loading />}>{children}</Suspense></main>
       </div>
       
+      
     </div>
   )
 }
