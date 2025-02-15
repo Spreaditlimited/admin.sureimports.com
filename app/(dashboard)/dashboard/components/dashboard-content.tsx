@@ -21,7 +21,7 @@ interface StatCardProps {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Customers"
-            value={(36336).toLocaleString("en-US") as any}
+            value={(36340).toLocaleString("en-US") as any}
             subtitle="All Registered Customers"
             className="bg-blue-50 dark:bg-blue-950"
           />

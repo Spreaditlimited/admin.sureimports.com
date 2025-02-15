@@ -61,16 +61,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </button>
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-lg py-1 z-10">
-              <a href="#" className="block px-4 py-2 text-sm hover:bg-secondary">
+              <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-700">
                   Profile<br />
                   <small>{user?.userEmail}</small>
                 </a>
-                <a href="#" className="block px-4 py-2 text-sm hover:bg-secondary">
+                <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-700">
                   Settings
                 </a>
-                <a type="button" className="block px-4 py-2 text-sm hover:bg-secondary" onClick={logout}>
+                <button type="button" className="w-full text-left block px-4 py-2 text-sm hover:bg-gray-200 dark:hover:bg-gray-700" onClick={logout}>
                   Logout
-                </a>
+                </button>
                 </div>
               )}
             </div>

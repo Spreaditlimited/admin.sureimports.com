@@ -483,15 +483,15 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                     &nbsp;{' | '}&nbsp;
                     <span className="">
                     ₦
-              {
-                  (
-                    ((estimatedTotalShippingCost as number) / 1) *
-                    exNairaToDollar
-                  )
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
+                  {
+                      (
+                        ((estimatedTotalShippingCost as number) / 1) *
+                        exNairaToDollar
+                      )
+                      .toFixed(2)
+                      .toString()
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                  }
               &nbsp; Naira
             </span>
                   </>

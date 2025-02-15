@@ -274,7 +274,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       `}
       >
         
-        <div className={`p-4 border-b flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
+        <div className={`p-5 border-b flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
           <div className={`flex items-center space-x-2 overflow-hidden ${isCollapsed ? "w-0" : "w-auto"}`}>
             <img
               src="/assets/images/logo2.png"
@@ -299,7 +299,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           <i>{user?.userFirstname && 'Hi'} {user?.userFirstname || user?.userEmail}</i>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-2 space-y-6 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto p-2 space-y-6 custom-scrollbar pt-7">
           <div>
             <h2
               className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
