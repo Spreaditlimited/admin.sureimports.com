@@ -434,66 +434,71 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Estimated Shipping Cost of Order
           </div><hr />
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-20 text-base text-slate-950 dark:text-white">
-              <p className="w-72">Domestic Shipping Cost within China:</p> $
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Domestic Shipping Cost within China:</p>
+            <p>
+            $
               {
                 ((domesticShippingCost as number) / 1)
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
               }
-            </div>
-            <div className="flex gap-20 text-base text-slate-950 dark:text-white">
-              <p className="w-72">International Shipping Cost:</p> $
+              &nbsp; USD
+            </p>
+          </div>
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">International Shipping Cost:</p>
+            <p>
+            $
               {
                 ((internationalShippingCost as number) / 1)
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
               }
-            </div>
+              &nbsp; USD
+            </p>
+          </div>
 
-            <hr />
+          <div className="flex max-md:justify-between md:gap-3">
+            <p className="md:w-64"><b>Total Cost:</b></p>
+            <span className="font-semibold">
+              $<b>
+              {
+                ((estimatedTotalShippingCost as number) / 1)
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              </b>
+              &nbsp; USD
+            </span>
 
-            <div className="flex gap-4 text-base text-slate-600 dark:text-white">
-              <span className="font-semibold">
-                $
-                <b>
-                  {
-                    ((estimatedTotalShippingCost as number) / 1)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }
-                </b>
-                USD
-              </span>
-
-              <span className="font-semibold">
                 {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
                 {destinationCountry == 'Nigeria' && (
                   <>
-                    {'  |  '}&nbsp;
+                    &nbsp;{' | '}&nbsp;
                     <span className="">
-                      ₦
-                      {
-                        (
-                          ((estimatedTotalShippingCost as number) / 1) *
-                          exNairaToDollar
-                        )
-                          .toFixed(2)
-                          .toString()
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                      }{' '}
-                      Naira
-                    </span>
+                    ₦
+              {
+                  (
+                    ((estimatedTotalShippingCost as number) / 1) *
+                    exNairaToDollar
+                  )
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              &nbsp; Naira
+            </span>
                   </>
                 )}
-              </span>
-            </div>
           </div>
         </div>
+
 
 
 
@@ -501,7 +506,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         {/****************************** SHIPPING DETAILS *****************************/}
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Shipping Details:
+            Shipping Details
           </div><hr />
           <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Estimated Total Weight of Order:</p>{' '}
@@ -585,6 +590,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
+
         {/****************************** SERVICE AND VAT CHARGES *****************************/}
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
@@ -652,6 +658,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </p>
           )}
         </div>
+
 
 
 
@@ -754,6 +761,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
+
+{/*************************** FORM ***************************/}
  <form onSubmit={handleSubmit}>
 
         {/* Confirm Action */}
