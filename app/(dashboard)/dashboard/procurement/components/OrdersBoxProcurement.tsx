@@ -182,6 +182,9 @@ const ComponentsAccordionsBasic = () => {
                                                       <p className="md:w-64">Email : {datax.user.userEmail ?? 'NA'}</p>
                                                     </div>
                                                     <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Gender : {datax.user.gender ?? 'NA'}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
                                                       <p className="md:w-64">Phone : {datax.user.userPhone ?? 'NA'}</p>
                                                     </div>
                                                     <div className="flex max-md:justify-between md:gap-20">
@@ -189,12 +192,6 @@ const ComponentsAccordionsBasic = () => {
                                                     </div>
                                                     <div className="flex max-md:justify-between md:gap-20">
                                                       <p className="md:w-64">Address : {datax.user.address ?? 'NA'}</p>
-                                                    </div>
-                                                    <div className="flex max-md:justify-between md:gap-20">
-                                                      <p className="md:w-64">Gender : {datax.user.gender ?? 'NA'}</p>
-                                                    </div>
-                                                    <div className="flex max-md:justify-between md:gap-20">
-                                                      <p className="md:w-64">Shipping Address : {datax.user.userShippingAddress ?? 'NA'}</p>
                                                     </div>
                                                 </div>
 

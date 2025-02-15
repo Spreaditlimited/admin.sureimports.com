@@ -260,14 +260,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
       <div className="w-full bg-yellow bg-gray-200 dark:bg-gray-900 shadow-md p-6 space-y-6">
         
 
-        {/* Header Section */}
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          <h1 className="text-lg font-bold dark:text-gray-200">SUPER ADMIN (ATL-L0)</h1>
-         
-        </div>
-
-
-
         {/* Order Info */}
         <div className="flex justify-between items-center">
           <div>
