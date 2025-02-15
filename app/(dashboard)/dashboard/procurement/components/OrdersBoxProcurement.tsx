@@ -164,7 +164,40 @@ const ComponentsAccordionsBasic = () => {
                                     </button>
                                     <div>
                                         <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
+  
                                             <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] text-white-dark dark:border-[#1b2e4b]">
+
+                                                {/****************************** SHIPPING DETAILS *****************************/}
+                                                <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
+                                                    <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                                                      Customer Details
+                                                    </div><hr />
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">ID : {datax.user.pidUser}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Name : {datax.user.userFirstname} &nbsp; {datax.user.userLastname}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Email : {datax.user.userEmail ?? 'NA'}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Phone : {datax.user.userPhone ?? 'NA'}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Country : {datax.user.userCountry ?? 'NA'}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Address : {datax.user.address ?? 'NA'}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Gender : {datax.user.gender ?? 'NA'}</p>
+                                                    </div>
+                                                    <div className="flex max-md:justify-between md:gap-20">
+                                                      <p className="md:w-64">Shipping Address : {datax.user.userShippingAddress ?? 'NA'}</p>
+                                                    </div>
+                                                </div>
+
                                                 <TableProcurementProducts pidOrder={datax.pidOrder} pidUser={datax.pidUser} orderName={datax.orderName} shippingAddress={datax.shippingAddress}  />
                                             </div>
                                         </AnimateHeight>

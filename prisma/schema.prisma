@@ -129,6 +129,70 @@ model users {
     xStatus              String?
     createdAt            DateTime?  @default(now())
     updatedAt            DateTime?
+    orders               orders[]
+}
+
+
+
+model products {
+  id                 Int       @id @default(autoincrement())
+  pidProduct String    @unique()
+  pidOrder    String
+  pidUser    String?
+  productName    String?
+  productLink    String?
+  productCategory    String?
+  productPrice    String?
+  productWeight    String?
+  productQuantity    String?
+  productInfo    String?
+  productStatus    String?
+  pidAdmin    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  orders             orders  @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
+}
+
+
+
+model orders {
+  id                 Int       @id @default(autoincrement())
+  pidOrder String    @unique()
+  pidUser    String 
+  orderName    String?
+  destinationCountry    String?
+  currencyType    String?
+  shippingPlan    String?
+  orderCategory    String?
+  shippingAddress    String?
+  orderShippingCost    String?
+  orderTotalCost    String?
+  orderWeight    String?
+  orderStatus    String?
+  orderType    String?
+  orderPriority    String?
+  vat    String?
+  serviceCharge    String?
+  exchangeRate1    String?
+  exchangeRate2    String?
+  exchangeRate3    String?
+  shippingCost1    String?
+  shippingCost2    String?
+  shippingCost3    String?
+  orderNote    String?
+  pidAdmin    String?
+  pidAdminLast    String?
+  status          String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  products           products[]
+  user               users     @relation(fields: [pidUser ], references: [pidUser ])
 }
 
 
@@ -352,68 +416,6 @@ model refund_records {
 
 
 
-model products {
-  id                 Int       @id @default(autoincrement())
-  pidProduct String    @unique()
-  pidOrder    String
-  pidUser    String?
-  productName    String?
-  productLink    String?
-  productCategory    String?
-  productPrice    String?
-  productWeight    String?
-  productQuantity    String?
-  productInfo    String?
-
-  productStatus    String?
-  pidAdmin    String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  orders             orders  @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
-}
-
-
-
-
-model orders {
-  id                 Int       @id @default(autoincrement())
-  pidOrder String    @unique()
-  pidUser    String 
-  orderName    String?
-  destinationCountry    String?
-  currencyType    String?
-  shippingPlan    String?
-  orderCategory    String?
-  shippingAddress    String?
-
-  orderShippingCost    String?
-  orderTotalCost    String?
-  orderWeight    String?
-  orderStatus    String?
-  orderType    String?
-  orderPriority    String?
-  vat    String?
-  serviceCharge    String?
-  exchangeRate1    String?
-  exchangeRate2    String?
-  exchangeRate3    String?
-  shippingCost1    String?
-  shippingCost2    String?
-  shippingCost3    String?
-  orderNote    String?
-  pidAdmin    String?
-  pidAdminLast    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  products           products[]
-}
 
 
 

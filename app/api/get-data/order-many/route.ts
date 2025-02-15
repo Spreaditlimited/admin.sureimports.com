@@ -9,20 +9,24 @@ export async function GET(request: NextRequest) {
           take: 20, 
           where: { status }, // Filter by userId   
           orderBy: { createdAt: 'desc' },
-          select: {
-              id: true,
-              pidOrder: true,
-              pidUser: true,
-              orderName: true,
-              destinationCountry: true,
-              currencyType: true,
-              shippingPlan: true,
-              orderCategory: true,
-              shippingAddress: true,
-              status: true,
-              createdAt: true,
-              products: true,
+          include: {
+            user: true, // Include associated user data
           },
+          // select: {
+          //     id: true,
+          //     pidOrder: true,
+          //     pidUser: true,
+          //     orderName: true,
+          //     destinationCountry: true,
+          //     currencyType: true,
+          //     shippingPlan: true,
+          //     orderCategory: true,
+          //     shippingAddress: true,
+          //     status: true,
+          //     createdAt: true,
+          //     products: true,
+          // },
+          
         });
   return NextResponse.json(orderALL);
 }
