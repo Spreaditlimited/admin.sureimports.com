@@ -349,7 +349,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <div>
             <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
               Total Cost of Products
-            </div>
+            </div><hr />
             <div className="text-base text-slate-600 dark:text-slate-300 lg:flex lg:gap-3">
               {/* IF IN YAUN DOLLAR VALUE */}
               {currencyType == 'USD' && (
@@ -433,7 +433,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Estimated Shipping Cost of Order
-          </div>
+          </div><hr />
           <div className="flex flex-col gap-3">
             <div className="flex gap-20 text-base text-slate-950 dark:text-white">
               <p className="w-72">Domestic Shipping Cost within China:</p> $
@@ -502,7 +502,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Shipping Details:
-          </div>
+          </div><hr />
           <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Estimated Total Weight of Order:</p>{' '}
             <p>
@@ -589,7 +589,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Service Charge & VAT
-          </div>
+          </div><hr />
           <p>
             {serviceCharge}% Service Charge of{' '}
             <span className="font-semibold text-slate-600 dark:text-slate-500">
