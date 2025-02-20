@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 //   return NextResponse.json(product)
 // }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  await prisma.products.delete({ where: { id: parseInt(params.id) } })
-  return new NextResponse(null, { status: 204 })
-}
+// export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+//   await prisma.products.delete({ where: { id: parseInt(params.id) } })
+//   return new NextResponse(null, { status: 204 })
+// }
