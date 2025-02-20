@@ -135,16 +135,16 @@ model users {
 
 
 model products {
-  id                 Int       @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   pidProduct String    @unique()
   pidOrder    String
   pidUser    String?
   productName    String?
   productLink    String?
   productCategory    String?
-  productPrice    String?
-  productWeight    String?
-  productQuantity    String?
+  productPrice    Float?
+  productWeight    Float?
+  productQuantity    Float?
   productInfo    String?
   productStatus    String?
   pidAdmin    String?
@@ -654,16 +654,16 @@ model banks {
 
 model faq {
   id                 Int       @id @default(autoincrement())
-  pidFaq            String    @unique()
-  slug              String?
+  pidFaq             String    @unique()
+  slug               String?
   question           String?
-  content           String?
+  content            String?
   category           String?
   video_id           String?
-  admin           String?
-  status          String?
-  ext1            String?
-  ext2            String?
+  admin              String?
+  status             String?
+  ext1               String?
+  ext2               String?
   xStatus            String?
   createdAt          DateTime?  @default(now())
   updatedAt          DateTime?
@@ -705,6 +705,7 @@ model country {
   shippingPlans shippingplan[]
 }
 
+
 model shippingplan {
   id               Int      @id @default(autoincrement())
   pidShippingPlan  String   @unique()
@@ -721,3 +722,36 @@ model shippingplan {
 }
 
 
+model buy_products {
+  id         Int       @id @default(autoincrement())
+  pidProduct String    @unique()
+  pidCategory    String
+  pidUser    String?
+  productName    String?      
+  productPrice    Float?                                     
+  productInfo    String?
+  productStatus    String?
+  pidAdmin    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  buy_category       buy_category  @relation(fields: [pidCategory], references: [pidCategory], onDelete: Cascade)
+}
+
+
+model buy_category {
+  id         Int       @id @default(autoincrement())
+  pidCategory String    @unique()
+  pidUser    String?
+  categoryName    String?                                    
+  categoryInfo    String?
+  categoryStatus    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  buy_products           buy_products[]
+}

@@ -54,8 +54,14 @@ const features: MenuItem[] = [
   },
   {
     title: "Buy Phones & Laptops",
-    icon: MonitorSmartphone,
-    path: "/dashboard/buy-phones-laptops",
+    icon: MonitorSmartphone ,
+    path: "/orders",
+    submenu: [
+      { title: "Buy Phones & Laptops", path: "/dashboard/buy-phones-laptops" },
+      { title: "Add Devices", path: "/dashboard/buy-phones-laptops/add-devices" },
+      { title: "Add Categories", path: "/dashboard/buy-phones-laptops/add-category" },
+      { title: "View Categories", path: "/dashboard/buy-phones-laptops/view-category" },
+    ],
   },
   // {
   //   title: "Special Sourcing",

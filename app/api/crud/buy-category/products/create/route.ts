@@ -1,0 +1,203 @@
+// app/api/upload/route.ts
+import { PrismaClient } from '@prisma/client';
+import { random } from 'lodash';
+import { getR2Client } from '@/app/utils/r2Client';
+import { Upload } from '@aws-sdk/lib-storage';
+import getFileExt from '@/app/utils/fileExt'
+import fileFilter from '@/app/utils/fileFilter'
+import randomGenerator from "@/lib/helpers/randomGenerator";
+import { NextResponse } from 'next/server';
+import { generateSlug } from '@/app/utils/slugGenerator'
+
+const prisma = new PrismaClient();
+
+
+export async function POST(request: Request) {
+
+    const formData = await request.formData();
+    const productImage = formData.get('file') as File;
+    const pidProduct = formData.get('pidProduct') as string;
+    const pidCategory = formData.get('pidCategory') as string;
+    const productName = formData.get('productName') as string;
+    const productDescription = formData.get('productDescription') as string;
+    const productCategory = formData.get('productCategory') as string;
+    const productPrice = formData.get('productPrice') as string;
+    const productPriceInfo = formData.get('productPriceInfo') as string;
+    const productGeneralInfo = formData.get('productGeneralInfo') as string;
+    const productMOQ = formData.get('productMOQ') as string;
+    const unitLabel = formData.get('unitLabel') as string;
+    const productVAT = formData.get('productVAT') as string;
+    const productAdditionalCost = formData.get('productAdditionalCost') as string;
+    const productAdditionalDescription = formData.get('productAdditionalDescription') as string;
+    const productStatus = formData.get('productStatus') as string;
+    
+
+console.log('**************************************:::'+pidCategory);
+    // Process price ranges
+    const priceRanges: { minRange: number; maxRange: number, rangePrice: number; rangeInfo: string  }[] = []
+    let index = 0
+    
+    while (formData.has(`priceRanges[${index}][minRange]`)) {
+            const minRange = formData.get(`priceRanges[${index}][minRange]`) as string
+            const maxRange = formData.get(`priceRanges[${index}][maxRange]`) as string
+            const rangePrice = formData.get(`priceRanges[${index}][rangePrice]`) as string
+            const rangeInfo = formData.get(`priceRanges[${index}][rangeInfo]`) as string
+            
+            priceRanges.push({
+              minRange: parseFloat(minRange),
+              maxRange: parseFloat(maxRange),
+              rangePrice: parseFloat(rangePrice),
+              rangeInfo: parseFloat(rangeInfo) as any
+            })
+            
+            index++
+    }
+
+  //GET FILE FROM FROM
+  const file = formData.get('file') as File;
+
+  //CHECK IF FILE IS UPLOADED
+  if (!file) {
+    const responsex = {
+      message:
+        'No Image file has been selected',
+      status: 'NO_IMAGE_SELECTED',
+    };
+    return NextResponse.json(
+      { responsex, successx: true, userx: null },
+      { status: 401 },
+    );
+  }
+  
+  //const productCode:string = randomGenerator(20);
+  const productCode:string = pidProduct;
+
+  //SET FILE NAME & GET FILE PARAMS
+  const originalFileName = file.name;
+  const fileType = file.type;
+  const fileExt = getFileExt(originalFileName);
+  const fileSize = file.size;
+  const newFileName = "IMG"+productCode;
+
+  //CHECK FILE VALIDITY
+  const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG'];//enter only permitted extensions
+  const fileOK = fileFilter(fileExt, allowedExt);
+
+  if(fileOK){}else{
+        const responsex = {
+          message:
+            'Please select only valid images '+fileExt+' is not allowed',
+          status: 'INVALID_IMAGE_UPLOAD',
+        };
+        return NextResponse.json(
+          { responsex, successx: true, userx: null },
+          { status: 401 },
+        );
+  }
+
+
+  //GENERATE PRODUCT ID AND SLUG STRING
+  const productSlug = generateSlug(productName);
+
+
+  //UPLOAD PRODUCT DETAILS
+  const product = await prisma.products.create({
+    data: { 
+            pidProduct: pidProduct, 
+            pidCategory: pidCategory,
+            productName: productName, 
+            productDescription: productDescription,
+            productCategory: productCategory,
+            productSlug: productSlug,
+            productPrice: parseFloat(productPrice),
+            productPriceInfo: productPriceInfo,
+            productGeneralInfo: productGeneralInfo,
+            productMOQ: parseFloat(productMOQ),
+            unitLabel: unitLabel,
+            productStatus: productStatus,
+            priceRanges: {
+                  create: priceRanges.map(range => ({
+                      minRange: range.minRange,
+                      maxRange: range.maxRange,
+                      rangePrice: range.rangePrice,
+                      rangeInfo: range.rangeInfo
+              }))
+            },
+            productVAT: parseFloat(productVAT), 
+            productAdditionalCost: parseFloat(productAdditionalCost),
+            productAdditionalDescription: productAdditionalDescription,
+            productImage: newFileName,
+            productImageType: fileType,
+            productImageExt: fileExt,
+            createdAt: new Date(),
+         }
+  })
+
+
+      //CHECK IF PRODUCT DETAILS HAVE BEEN SUCCESSFULY UPLOADED THEN UPLOAD IMAGE
+      if(product && product.id)
+          {
+
+
+                ///////////// IMAGE UPLOAD TO R2 STARTS /////////////
+                try {
+                        //GET FILE PAYLOAD
+                        const buffer = await file.arrayBuffer();
+
+                        //FILE UPLOAD DETAILS
+                        const upload = new Upload({
+                                client: getR2Client(),
+                                params: {
+                                          Bucket: process.env.R2_BUCKET_NAME,
+                                          Key: newFileName,
+                                          Body: Buffer.from(buffer),
+                                          ContentType: fileType,
+                                        },
+                                });
+
+                        //UPLOAD FILE
+                        await upload.done();
+
+                        //RETURN SUCCESS ON FILE UPLOAD
+                        const responsex = {
+                          message:
+                            'Product was successfuly added',
+                          status: 'SUCCESS',
+                        };
+                        return NextResponse.json(
+                          { responsex, successx: true, userx: null },
+                          { status: 200 },
+                        );
+
+                } catch (error) {
+                        //CATCH ANY ERRORS ON FAILED UPLOAD
+                        const responsex = {
+                          message:
+                            'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error,
+                          status: 'IMAGE_UPLOAD_FAILED',
+                        };
+                        return NextResponse.json(
+                          { responsex, successx: true, userx: null },
+                          { status: 401 },
+                        );
+                }
+              ///////////// IMAGE UPLOAD TO R2 STOPS /////////////
+
+          }else{
+                //GET RESPONSE MESSAGE FOR THE FORM FEEDBACK
+                const responsex = {
+                  message:
+                    'Failed saving record! Please contact the admin.',
+                  status: 'ACTION_FAILED',
+                };
+                return NextResponse.json(
+                  { responsex, successx: true, userx: null },
+                  { status: 401 },
+                );
+          }
+ 
+
+
+
+  //END
+}

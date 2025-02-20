@@ -1,30 +1,49 @@
-'use client'
+
+'use client';
 import { useState, useEffect, useRef } from 'react';
+import { PrismaClient } from '@prisma/client';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { unparse } from 'papaparse';
 
 // Define the type for table data
 type TableData = {
   id: number;
-  name: string;
-  email: string;
-  role: string;
+  categoryName: string;
+  categoryInfo: string;
   status: string;
 };
 
-// Sample data for the table
-const initialData: TableData[] = [
-  { id: 1, name: "John Doe", email: "john.doe@example.com", role: "Developer", status: "Active" },
-  { id: 2, name: "Jane Smith", email: "jane.smith@example.com", role: "Designer", status: "Inactive" },
-  { id: 3, name: "Alice Johnson", email: "alice.johnson@example.com", role: "Manager", status: "Active" },
-  { id: 4, name: "Bob Brown", email: "bob.brown@example.com", role: "Developer", status: "Active" },
-  { id: 5, name: "Charlie Davis", email: "charlie.davis@example.com", role: "Tester", status: "Inactive" },
-  { id: 6, name: "David Wilson", email: "david.wilson@example.com", role: "Developer", status: "Active" },
-  { id: 7, name: "Eva Green", email: "eva.green@example.com", role: "Designer", status: "Inactive" },
-  { id: 8, name: "Frank White", email: "frank.white@example.com", role: "Manager", status: "Active" },
-  { id: 9, name: "Grace Black", email: "grace.black@example.com", role: "Developer", status: "Active" },
-  { id: 10, name: "Henry Brown", email: "henry.brown@example.com", role: "Tester", status: "Inactive" },
-];
+// Fetch data from the database
+// export async function getServerSideProps() {
+//   const prisma = new PrismaClient();
+//   const users = await prisma.user.findMany();
+//   await prisma.$disconnect();
 
-export default function AdvancedTable() {
+//   return {
+//     props: {
+//       initialData: users,
+//     },
+//   };
+// }
+
+
+// const initialData: TableData[] = [
+//   { id: 1, name: "EmJohn Doe", email: "john.doe@example.com", role: "Developer", status: "Active" },
+//   { id: 2, name: "Jane Smith", email: "jane.smith@example.com", role: "Designer", status: "Inactive" },
+//   { id: 3, name: "Alice Johnson", email: "alice.johnson@example.com", role: "Manager", status: "Active" },
+//   { id: 4, name: "Bob Brown", email: "bob.brown@example.com", role: "Developer", status: "Active" },
+//   { id: 5, name: "Charlie Davis", email: "charlie.davis@example.com", role: "Tester", status: "Inactive" },
+//   { id: 6, name: "David Wilson", email: "david.wilson@example.com", role: "Developer", status: "Active" },
+//   { id: 7, name: "Eva Green", email: "eva.green@example.com", role: "Designer", status: "Inactive" },
+//   { id: 8, name: "Frank White", email: "frank.white@example.com", role: "Manager", status: "Active" },
+//   { id: 9, name: "Grace Black", email: "grace.black@example.com", role: "Developer", status: "Active" },
+//   { id: 10, name: "Henry Brown", email: "henry.brown@example.com", role: "Tester", status: "Inactive" },
+// ];
+
+
+export default function AdvancedTable({ initialData }: { initialData: TableData[] }) {
+  
   const [data, setData] = useState<TableData[]>(initialData);
   const [sortConfig, setSortConfig] = useState<{ key: keyof TableData; direction: 'asc' | 'desc' } | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -57,8 +76,6 @@ export default function AdvancedTable() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  
 
   // Handle sorting
   const handleSort = (key: keyof TableData) => {
@@ -104,14 +121,50 @@ export default function AdvancedTable() {
 
   // Handle action button clicks
   const handleAction = (action: string, item: TableData) => {
-    alert(`${action} clicked for ${item.name}`);
+    alert(`${action} clicked for ${item.categoryName}`);
     setOpenDropdownId(null); // Close dropdown after action
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    autoTable(doc, {
+      head: [['ID', 'Name', 'Email', 'Role', 'Status']],
+      body: filteredData.map((item) => [item.id, item.categoryName, item.categoryInfo, item.status]),
+    });
+    doc.save('table.pdf');
+  };
+
+  // Export to CSV
+  const exportToCSV = () => {
+    const csv = unparse(filteredData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'table.csv';
+    link.click();
   };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Advanced Table</h1>
+
+        {/* Export Buttons */}
+        <div className="flex space-x-4 mb-6">
+          <button
+            onClick={exportToPDF}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none"
+          >
+            Export to PDF
+          </button>
+          <button
+            onClick={exportToCSV}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none"
+          >
+            Export to CSV
+          </button>
+        </div>
 
         {/* Search Box */}
         <div className="mb-6">
@@ -136,23 +189,18 @@ export default function AdvancedTable() {
                   ID {sortConfig?.key === 'id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
-                  onClick={() => handleSort('name')}
+                  onClick={() => handleSort('categoryName')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 >
-                  Name {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  Name {sortConfig?.key === 'categoryName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
-                  onClick={() => handleSort('email')}
+                  onClick={() => handleSort('categoryInfo')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 >
-                  Email {sortConfig?.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  Category Info {sortConfig?.key === 'categoryInfo' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
-                <th
-                  onClick={() => handleSort('role')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
-                >
-                  Role {sortConfig?.key === 'role' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </th>
+
                 <th
                   onClick={() => handleSort('status')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
@@ -171,13 +219,13 @@ export default function AdvancedTable() {
                     {item.id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {item.name}
+                    {item.categoryName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {item.email}
+                    {item.categoryInfo}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {item.role}
+                    {item.status}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span
