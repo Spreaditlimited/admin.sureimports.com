@@ -48,9 +48,9 @@ const initialData: TableData[] = [
 
                 <div className="custom-select grid grid-cols-1 gap-6 lg:grid-cols-1">
                     <FormLayout />
-                    <FormElements />
-                    <Table3 initialData={initialData}  />
-                    <Table2 />
+                        <FormElements />
+                            <Table3 initialData={initialData}  />
+                        <Table2 />
                     <Table />
                 </div>
 

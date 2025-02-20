@@ -43,7 +43,7 @@ type TableData = {
 
 
 export default function AdvancedTable({ initialData }: { initialData: TableData[] }) {
-  
+
   const [data, setData] = useState<TableData[]>(initialData);
   const [sortConfig, setSortConfig] = useState<{ key: keyof TableData; direction: 'asc' | 'desc' } | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -146,8 +146,8 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
-      <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+    // <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6s">
+      <div className="min-h-screen max-w-full mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Advanced Table</h1>
 
         {/* Export Buttons */}
@@ -180,20 +180,27 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
         {/* Responsive Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            
+            
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
+
                 <th
                   onClick={() => handleSort('id')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 >
                   ID {sortConfig?.key === 'id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
+
+
                 <th
                   onClick={() => handleSort('categoryName')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 >
                   Name {sortConfig?.key === 'categoryName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
+
+
                 <th
                   onClick={() => handleSort('categoryInfo')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
@@ -207,26 +214,36 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
                 >
                   Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
+
+
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
+
               </tr>
             </thead>
+
+
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {currentItems.map((item) => (
                 <tr key={item.id}>
+
+                  
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {item.id}
                   </td>
+
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {item.categoryName}
                   </td>
+
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {item.categoryInfo}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {item.status}
-                  </td>
+
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -238,6 +255,8 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
                       {item.status}
                     </span>
                   </td>
+
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white relative">
                     {/* Dropdown Button */}
                     <button
@@ -323,6 +342,6 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
           </button>
         </div>
       </div>
-    </div>
+    // </div>
   );
 }
