@@ -306,6 +306,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-2 space-y-6 custom-scrollbar pt-7">
+          
+          
           <div>
             <h2
               className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
@@ -320,6 +322,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               ))}
             </div>
           </div>
+
 
           <div>
             <h2
@@ -336,6 +339,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             </div>
           </div>
         </nav>
+
+
 
         <div className="border-t p-4">
           <button
@@ -357,6 +362,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             © 2025. All rights reserved.
           </div>
         </div>
+
+        
       </aside>
     </>
   )

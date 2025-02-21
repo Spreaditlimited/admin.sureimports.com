@@ -5,7 +5,7 @@ import TableProcurementProducts from './TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useParams, useSearchParams } from 'next/navigation';
 import { BaggageClaim, CornerRightDown } from 'lucide-react';
-
+import { getTimeDifference } from '@/lib/getTimeDifference';
 
 
 interface Product {
@@ -151,7 +151,7 @@ const ComponentsAccordionsBasic = () => {
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.orderName}</b>&nbsp; | ORDER ID: {datax.pidOrder} 
+                                        <b className='text-xl'>#{index + 1} : {datax.orderName}</b>&nbsp; | &nbsp; ORDER ID: {datax.pidOrder} &nbsp; | &nbsp; {getTimeDifference(datax.createdAt)}
                                         
                                         &nbsp; &nbsp;
 
