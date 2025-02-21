@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const orderALL = await prisma.orders.findMany({
           take: 20, 
           where: { status }, // Filter by userId   
-          orderBy: { createdAt: 'desc' },
+          orderBy: { updatedAt: 'desc' },
           include: {
             user: true, // Include associated user data
           },
