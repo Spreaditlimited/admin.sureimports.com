@@ -202,8 +202,13 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
     ); 
   }
 
-//alert(currencyType);
 
+
+
+
+
+
+  ///////////////////////////////// HANDLE FORM SUBMISSION /////////////////////////////////
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -219,7 +224,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           formData.append('message', message);
           formData.append('pidMessage', pidMessage);
 
-
       //MAKE REQUEST ATTEMPT
       try {
         toast.info('Processing . . .');
@@ -230,27 +234,26 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         });
   
         // GET & PROCESS RESPONSE FROM API
-        const data: ApiResponse = await res.json();
+        const data:any = await res.json();
   
-        if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+newStatus, 'success', 'Process update was successful, order has been moved to '+newStatus);}
-        if (data.responsex.status == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+newStatus);}
-        if (data.responsex.status == 'SUCCESSX') {
-          toast.success(data.responsex.message);
+        if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+newStatus, 'success', 'Process update was successful, order has been moved to '+newStatus);}
+        if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+newStatus);}
+        if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
+        } catch (error: any) {
+            console.log(error.message);
+        } finally {
+          //setLoading(false);
         }
-        if (data.responsex.status == 'ACTION_FAILED') {
-          toast.warning(data.responsex.message);
-        }
-        if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
-          toast.warning(data.responsex.message);
-        }
-      } catch (error: any) {
-          console.log(error.message);
-      } finally {
-        //setLoading(false);
-      }
 
 
   }
+
+
+
+
+
+
+
 
 
 
@@ -833,6 +836,11 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         </>
         )
       }
+
+
+
+
+
 
 
 

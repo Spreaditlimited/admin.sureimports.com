@@ -14,6 +14,7 @@ const prisma = new PrismaClient();
 
 
 export async function POST(request: Request) {
+  console.log('++++++++++++++++++++++++++mmmmm+++++++++++++++++++++++++++=');
   //GET FORM DATA
   const formData = await request.formData();
   const pidUser = formData.get('pidUser') as string;
@@ -24,28 +25,11 @@ export async function POST(request: Request) {
   const pidMessage = formData.get('pidMessage') as string;
 
 
+// return NextResponse.json(
+//   { statusx: 'SUCCESS_MESSAGE', message: 'TEST 123 Order has been successfully moved to Pending.'+currentStatus},
+//   { status: 200 },
+// );
 
-console.log('++++++++++++++++++++++++++'+pidUser); 
-
-const responsex = {
-  message:
-    'TEST 123 Order has been successfully moved to Pending.',
-  status: 'SUCCESS_MESSAGE',
-};
-return NextResponse.json(
-  { responsex, successx: true, userx: null },
-  { status: 200 },
-);
-
-  // const responsex = {
-  //   message:
-  //     'JESUS IS REX!!!'+newStatus,
-  //   status: 'SUCCESSX',
-  // };
-  // return NextResponse.json(
-  //   { responsex, successx: true, userx: null },
-  //   { status: 200 },
-  // );
 
   //CHECK IF USER PID AND CID EXISTS
   const user = await prisma.users.findUnique({
@@ -54,8 +38,6 @@ return NextResponse.json(
       //userEmail: email,
     },
   });
-
-
 
 
 
@@ -70,32 +52,17 @@ return NextResponse.json(
       fullName: user?.userFirstname,
       messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
       messageContent: message,
-      messageStatus:    'unread'
-      // messageStatusUser    String?
-      // delStatus    String?
-      // status          String?
-      // ext1            String?
-      // ext2            String?
-      // xStatus            String?
-      // createdAt          DateTime  @default(now())
-      // updatedAt          DateTime?
+      messageStatus:    'unread',
+      createdAt:       new Date(),
+      updatedAt:       new Date(),
       },
     });
 
-              //success update
-              console.log('Message was Successfully sent!');
-
-              //success update
-              const responsex = {
-                  message:
-                    'Order has been successfully moved to Pending.',
-                  status: 'SUCCESS_MESSAGE',
-                };
-                return NextResponse.json(
-                  { responsex, successx: true, userx: null },
-                  { status: 200 },
-                );
-
+    //success update
+    return NextResponse.json(
+      { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pending.' },
+      { status: 200 },
+    );
   }
 
 
@@ -104,22 +71,16 @@ return NextResponse.json(
   //SEND GENERAL MESSAGE
   const messagex = await prisma.messages.create({
     data: {
-    pidMessage: pidMessage,
-    pidOrder: pidOrder,
-    pidFrom: 'admin@sureimports.com',
-    pidTo: user?.userEmail,
-    fullName: user?.userFirstname,
-    messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
-    messageContent: message,
-    messageStatus:    'unread'
-    // messageStatusUser    String?
-    // delStatus    String?
-    // status          String?
-    // ext1            String?
-    // ext2            String?
-    // xStatus            String?
-    // createdAt          DateTime  @default(now())
-    // updatedAt          DateTime?
+      pidMessage: pidMessage,
+      pidOrder: pidOrder,
+      pidFrom: 'admin@sureimports.com',
+      pidTo: user?.userEmail,
+      fullName: user?.userFirstname,
+      messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
+      messageContent: message,
+      messageStatus:    'unread',
+      createdAt:       new Date(),
+      updatedAt:       new Date(),
     },
   });
 
@@ -146,9 +107,6 @@ return NextResponse.json(
     if(updatex) {
     //SEND EMAIL TO USER
   try {
-    ////////////////////// SEND BANK PAYMENT EMAIL BLOCK STARTS //////////////////////
-    //import { xMail } from '@/lib/email/xMail';
-
     // .................... ON-HOLD(DECLINED) STAGE MAIL ....................//
     if(newStatus == "on-hold"){
     const xEmail = user?.userEmail as string;
@@ -171,20 +129,16 @@ return NextResponse.json(
       xButtonTitle,
       xButtonLink,
     });
-    ////////////////////// SEND REGISTRATION EMAIL BLOCK STARTS //////////////////////
-    console.log('Email was Successfully sent!');
-
-        //success update
-        const responsex = {
-            message:
-              'Order has been successfully moved to Pending.',
-            status: 'SUCCESS',
-          };
-          return NextResponse.json(
-            { responsex, successx: true, userx: null },
-            { status: 200 },
-          );
+    //success update
+    return NextResponse.json(
+      { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pending.' },
+      { status: 200 },
+    );
     }
+
+
+
+
 
 
 
@@ -230,20 +184,16 @@ return NextResponse.json(
               xButtonTitle,
               xButtonLink,
             });
-            ////////////////////// SEND REGISTRATION EMAIL BLOCK STARTS //////////////////////
-            console.log('Email was Successfully sent!');
-        
-                //success update
-                const responsex = {
-                    message:
-                      'Order has been successfully moved to Approved.',
-                    status: 'SUCCESS',
-                  };
-                  return NextResponse.json(
-                    { responsex, successx: true, userx: null },
-                    { status: 200 },
-                  );
+              //success update
+              return NextResponse.json(
+                { statusx: 'SUCCESS', message: 'Order has been successfully moved to Approved.' },
+                { status: 200 },
+              );
             }
+
+
+
+
 
 
     // .................... PAY FOR SHIPPING STAGE MAIL ....................//
@@ -268,20 +218,16 @@ return NextResponse.json(
           xButtonTitle,
           xButtonLink,
         });
-        ////////////////////// SEND REGISTRATION EMAIL BLOCK STARTS //////////////////////
-        console.log('Email was Successfully sent!');
-    
-            //success update
-            const responsex = {
-                message:
-                  'Order has been successfully moved to Pending.',
-                status: 'SUCCESS',
-              };
-              return NextResponse.json(
-                { responsex, successx: true, userx: null },
-                { status: 200 },
-              );
+          //success update
+          return NextResponse.json(
+            { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pay for Shipping.' },
+            { status: 200 },
+          );
         }
+
+
+
+
 
 
     // .................... IN-TRANSIT STAGE MAIL ....................//
@@ -306,20 +252,16 @@ return NextResponse.json(
           xButtonTitle,
           xButtonLink,
         });
-        ////////////////////// SEND REGISTRATION EMAIL BLOCK STARTS //////////////////////
-        console.log('Email was Successfully sent!');
-    
-            //success update
-            const responsex = {
-                message:
-                  'Order has been successfully moved to Pending.',
-                status: 'SUCCESS',
-              };
-              return NextResponse.json(
-                { responsex, successx: true, userx: null },
-                { status: 200 },
-              );
+          //success update
+          return NextResponse.json(
+            { statusx: 'SUCCESS', message: 'Order has been successfully moved to In-Transit.' },
+            { status: 200 },
+          );
         }
+
+
+
+
 
 
             // .................... READY FOR PICKUP STAGE MAIL ....................//
@@ -328,9 +270,9 @@ return NextResponse.json(
                 const xTitle = `Order is Ready for PickUp`;
                 const xBodyTitle = `Order is now Ready for PickUp`;
                 const xBody1 = `Hello ` + user?.userFirstname + `,` +
-                `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
-                <p>You will have to review and update this order.</p>
-                <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+                `<p>Congratulations!, your order with ID :<b>`+pidOrder+`</b> is now <b>ready for Pickup</b>.</p>
+                <p>Log into your Spreadit account, go to <b>ready for Pickup</b> to view this order.</p>` +
+                `<br><b> - The Spreadit Order Review Team</b><br>`+
                 `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
                 const xBody2 = ``;
                 const xButtonTitle = '';
@@ -344,20 +286,51 @@ return NextResponse.json(
                   xButtonTitle,
                   xButtonLink,
                 });
-                ////////////////////// SEND REGISTRATION EMAIL BLOCK STARTS //////////////////////
-                console.log('Email was Successfully sent!');
-            
-                    //success update
-                    const responsex = {
-                        message:
-                          'Order has been successfully moved to Pending.',
-                        status: 'SUCCESS',
-                      };
-                      return NextResponse.json(
-                        { responsex, successx: true, userx: null },
-                        { status: 200 },
-                      );
+                  //success update
+                  return NextResponse.json(
+                    { statusx: 'SUCCESS', message: 'Order has been successfully moved to Ready for Pickup.' },
+                    { status: 200 },
+                  );
                 }
+
+
+
+
+
+
+
+            // .................... CANCELLED STAGE MAIL ....................//
+            if(newStatus == "cancelled"){
+              const xEmail = user?.userEmail as string;
+              const xTitle = `Order is Ready for PickUp`;
+              const xBodyTitle = `Order is now Ready for PickUp`;
+              const xBody1 = `Hello ` + user?.userFirstname + `,` +
+              `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
+              <p>You will have to review and update this order.</p>
+              <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+              `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
+              const xBody2 = ``;
+              const xButtonTitle = '';
+              const xButtonLink = '';
+              await xMail({
+                xEmail,
+                xTitle,
+                xBodyTitle,
+                xBody1,
+                xBody2,
+                xButtonTitle,
+                xButtonLink,
+              });
+                //success update
+                return NextResponse.json(
+                  { statusx: 'SUCCESS', message: 'Order has been successfully moved to Cancelled Order.' },
+                  { status: 200 },
+                );
+              }
+
+
+
+
 
 
 
@@ -383,53 +356,30 @@ return NextResponse.json(
                   xButtonTitle,
                   xButtonLink,
                 });
-                ////////////////////// SEND REGISTRATION EMAIL BLOCK STARTS //////////////////////
-                console.log('Email was Successfully sent!');
-            
-                    //success update
-                    const responsex = {
-                        message:
-                          'Order has been successfully moved to Pending.',
-                        status: 'SUCCESS',
-                      };
-                      return NextResponse.json(
-                        { responsex, successx: true, userx: null },
-                        { status: 200 },
-                      );
+                ////////////////////// SEND REGISTRATION EMAIL BLOCK ENDS //////////////////////
+                  //success update
+                  return NextResponse.json(
+                    { statusx: 'SUCCESS', message: 'Order has been successfully moved to Completed.' },
+                    { status: 200 },
+                  );
                 }
 
 
-
-
-
-
-
-
-  } catch (error) {
-    console.error('Failed to send email:', error);
-    const responsex = {
-        message:
-          'Action Failed! You may need to try again, or contact the Admin.',
-        status: 'ACTION_FAILED',
-      };
-      return NextResponse.json(
-        { responsex, successx: true, userx: null },
-        { status: 401 },
-      );
-  }
-
+        } catch (error) {
+                //success update
+                return NextResponse.json(
+                  { statusx: 'ACTION_FAILED', message: 'Action Failed! You may need to try again, or contact the Admin. Error MSG:'+error },
+                  { status: 401 },
+                );
+        }
 
 
   } else {
-    const responsex = {
-      message:
-        'Action Failed! You may need to try again, or contact the Admin.',
-      status: 'ACTION_FAILED',
-    };
-    return NextResponse.json(
-      { responsex, successx: true, userx: null },
-      { status: 401 },
-    );
+          //success update
+          return NextResponse.json(
+            { statusx: 'ACTION_FAILED', message: 'Action Failed! You may need to try again, or contact the Admin.' },
+            { status: 401 },
+          );
   }
 
   //END
