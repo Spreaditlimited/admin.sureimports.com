@@ -54,9 +54,7 @@ export const mailTemplate: React.FC<Props> = ({
           <hr />
           <tr>
           <td align="center" style="padding: 0 20px;">
-          <img src="` +
-    process.env.ROOT_URL +
-    `/images/logo.png" height='35px' />
+          <img src="` +`https://sureimports.com/images/logo.png" height='35px' />
           <p style="margin-top: 10px; color: #666666; line-height: 1.6;"><i>Start your importation with peace of mind</i></p>
           
             <p style="margin-top: 10px; color: #666666; font-size:10px; line-height: 1.6;">
