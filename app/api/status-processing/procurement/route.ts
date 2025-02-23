@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 
 
 export async function POST(request: Request) {
-  console.log('++++++++++++++++++++++++++mmmmm+++++++++++++++++++++++++++=');
+
   //GET FORM DATA
   const formData = await request.formData();
   const pidUser = formData.get('pidUser') as string;
@@ -24,11 +24,6 @@ export async function POST(request: Request) {
   const message = formData.get('message') as string;
   const pidMessage = formData.get('pidMessage') as string;
 
-
-// return NextResponse.json(
-//   { statusx: 'SUCCESS_MESSAGE', message: 'TEST 123 Order has been successfully moved to Pending.'+currentStatus},
-//   { status: 200 },
-// );
 
 
   //CHECK IF USER PID AND CID EXISTS
@@ -57,16 +52,45 @@ export async function POST(request: Request) {
       updatedAt:       new Date(),
       },
     });
-
-    //success update
-    return NextResponse.json(
-      { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pending.' },
-      { status: 200 },
-    );
+ 
+  
+    // .................... ON-HOLD(DECLINED) STAGE MAIL ....................//
+      const xEmail = user?.userEmail as string;
+      const xTitle = `SureImports`;
+      const xBodyTitle = `Special Admin Message`;
+      const xBody1 = `Hello ` + user?.userFirstname + `,` +
+  `<p>Find the admin message below for your order with ID :<b>`+pidOrder+`</b>. This is a special Admin Message.</p>
+  <p>You may contact the admin fo further clarification.</p>
+  <p>You may also Log into your Spreadit account, go to the dashboard to view the specific order.</p>` +
+  `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
+      const xBody2 = ``;
+      const xButtonTitle = '';
+      const xButtonLink = '';
+      await xMail({
+        xEmail,
+        xTitle,
+        xBodyTitle,
+        xBody1,
+        xBody2,
+        xButtonTitle,
+        xButtonLink,
+      });
+      //success update
+      return NextResponse.json(
+        { statusx: 'SUCCESS_MESSAGE', message: 'Message has been successfuly sent!' },
+        { status: 200 },
+      );
   }
 
 
 
+
+
+
+
+
+
+  
 
   //SEND GENERAL MESSAGE
   const messagex = await prisma.messages.create({
