@@ -265,9 +265,9 @@ export async function POST(request: Request) {
         const xTitle = `Pay for Shipping`;
         const xBodyTitle = `Pay for Order Shippment`;
         const xBody1 = `Hello ` + user?.userFirstname + `,` +
-        `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
-        <p>You will have to review and update this order.</p>
-        <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+        `<p>Your order with ID :<b>`+pidOrder+`</b> has been cleared for <b>Shipping Payment</b>.</p>
+        <p>Your updated shipping cost has been calculated for payment.</p>
+        <p>Log into your Spreadit account, go to <b>Pay for Shipping</b> to view this order.</p>` +
         `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
         const xBody2 = ``;
         const xButtonTitle = '';
@@ -403,9 +403,7 @@ export async function POST(request: Request) {
                 const xTitle = `Order process is Completed!`;
                 const xBodyTitle = `Order process has not been Completed`;
                 const xBody1 = `Hello ` + user?.userFirstname + `,` +
-                `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process.</p>
-                <p>You will have to review and update this order.</p>
-                <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+                `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process.</p>` +
                 `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
                 const xBody2 = ``;
                 const xButtonTitle = '';
@@ -426,6 +424,11 @@ export async function POST(request: Request) {
                     { status: 200 },
                   );
                 }
+
+
+
+
+
 
 
         } catch (error) {

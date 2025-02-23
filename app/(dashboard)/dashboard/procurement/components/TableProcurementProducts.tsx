@@ -917,7 +917,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </div>
             
             <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="ready-to-ship" onClick={() => setActionType('ready-to-ship')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                <button type="submit" name="action" value="ready-to-ship" onClick={() => setActionType('pay-for-shipping')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
                   APPROVE (Move to Ready to Ship)
                 </button>
                 <small>Approve this Order for further processing</small>
@@ -934,7 +934,13 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <>
         {/* Action Buttons */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
+        <div className="w-full md:w-1/2">
+            <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  Send Message
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+
             {/* <div className="w-full md:w-1/2">
                 <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
                   DECLINE (Place On-Hold)
