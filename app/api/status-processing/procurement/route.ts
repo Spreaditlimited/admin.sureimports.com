@@ -195,6 +195,38 @@ export async function POST(request: Request) {
 
 
 
+    // .................... PENDING STAGE MAIL ....................//
+    if(newStatus == "pending"){
+      const xEmail = user?.userEmail as string;
+      const xTitle = `Payment Verified`;
+      const xBodyTitle = `Order moved to Pending`;
+      const xBody1 = `Hello ` + user?.userFirstname + `,` +
+      `<p>Congratulations! Your Bank Payment for order with ID: <b>`+pidOrder+`</b> has been verified and confirmed, the order is now in <b>Pending Stage</b> awaiting approval.</p>
+      <p>Log into your Spreadit account, go to <b>Pending Stage</b> to view this order.</p>` +
+      `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
+      const xBody2 = ``;
+      const xButtonTitle = '';
+      const xButtonLink = '';
+      await xMail({
+        xEmail,
+        xTitle,
+        xBodyTitle,
+        xBody1,
+        xBody2,
+        xButtonTitle,
+        xButtonLink,
+      });
+        //success update
+        return NextResponse.json(
+          { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pay for Shipping.' },
+          { status: 200 },
+        );
+      }
+
+
+
+
+
 
     // .................... PAY FOR SHIPPING STAGE MAIL ....................//
     if(newStatus == "pay-for-shipping"){
@@ -305,9 +337,9 @@ export async function POST(request: Request) {
               const xTitle = `Order is Ready for PickUp`;
               const xBodyTitle = `Order is now Ready for PickUp`;
               const xBody1 = `Hello ` + user?.userFirstname + `,` +
-              `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
-              <p>You will have to review and update this order.</p>
-              <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+              `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Cancelled</b>.</p>
+              <p>You will be getting a refund for this order within 48hours.</p>
+              <p>Log into your Spreadit account, go to <b>Cancelled Orders</b> to view this order.</p>` +
               `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
               const xBody2 = ``;
               const xButtonTitle = '';
