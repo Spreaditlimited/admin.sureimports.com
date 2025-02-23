@@ -140,6 +140,37 @@ export async function POST(request: Request) {
 
 
 
+    
+            // .................... SAVED STAGE MAIL ....................//
+            if(newStatus == "saved"){
+              const xEmail = user?.userEmail as string;
+              const xTitle = `Order is Ready for PickUp`;
+              const xBodyTitle = `Order is now Ready for PickUp`;
+              const xBody1 = `Hello ` + user?.userFirstname + `,` +
+              `<p>Unfortunately Your Bank Payment for order with ID :<b>`+pidOrder+`</b> has been declined, the order has been sent back to <b>Saved Stage</b> awaiting your review.</p>
+              <p>You may be required to confirm this payment transaction with your processing bank.</p>
+              <p>Log into your Spreadit account, go back to <b>Saved Orders</b> to view this order.</p>` +
+              `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
+              const xBody2 = ``;
+              const xButtonTitle = '';
+              const xButtonLink = '';
+              await xMail({
+                xEmail,
+                xTitle,
+                xBodyTitle,
+                xBody1,
+                xBody2,
+                xButtonTitle,
+                xButtonLink,
+              });
+                //success update
+                return NextResponse.json(
+                  { statusx: 'SUCCESS', message: 'Order has been successfully moved to Cancelled Order.' },
+                  { status: 200 },
+                );
+              }
+
+
 
 
         // .................... APPROVED STAGE MAIL ....................//
@@ -268,9 +299,9 @@ export async function POST(request: Request) {
         const xTitle = `Order In-Transit`;
         const xBodyTitle = `Order now In-Transit`;
         const xBody1 = `Hello ` + user?.userFirstname + `,` +
-        `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
+        `<p>Congratulations!, Your Bank Payment for order with ID :<b>`+pidOrder+`</b> has been verified and confirmed, the order is now <b>In-Transit </b>.</p>
         <p>You will have to review and update this order.</p>
-        <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+        <p>Log into your Spreadit account, go back to <b>Readty to Ship Orders</b> to view this order.</p>` +
         `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
         const xBody2 = ``;
         const xButtonTitle = '';
@@ -372,7 +403,7 @@ export async function POST(request: Request) {
                 const xTitle = `Order process is Completed!`;
                 const xBodyTitle = `Order process has not been Completed`;
                 const xBody1 = `Hello ` + user?.userFirstname + `,` +
-                `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
+                `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process.</p>
                 <p>You will have to review and update this order.</p>
                 <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
                 `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');

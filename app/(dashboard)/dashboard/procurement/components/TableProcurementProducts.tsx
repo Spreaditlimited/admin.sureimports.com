@@ -1040,10 +1040,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
             
             <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
+                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('cancelled')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  Cancel Order (Refund Customer)
                 </button>
-                <small>Decline Order if there are issues</small>
+                <small>Cancel Order if persisting issue cannot be resolved</small>
             </div>
             
             <div className="w-full md:w-1/2">
@@ -1052,6 +1052,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                 </button>
                 <small>Approve this Order for further processing</small>
             </div>
+            
         </div>
         </>
    )}
@@ -1069,14 +1070,14 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                 <button type="submit" name="action" value="saved" onClick={() => setActionType('saved')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
                   DECLINE (Move back to Saved Order)
                 </button>
-                <small>Decline Order if there are issues</small>
+                <small>Decline Order if Bank Payment failed confirmation</small>
             </div>
             
             <div className="w-full md:w-1/2">
                 <button type="submit" name="action" value="pending" onClick={() => setActionType('pending')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
                   APPROVE (Move to Pending Order)
                 </button>
-                <small>Approve this Order for further processing if Payment has been confirmed</small>
+                <small>Approve this Order for further processing if Bank Payment has been confirmed</small>
             </div>
         </div>
         </>
@@ -1095,14 +1096,14 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                 <button type="submit" name="action" value="pay-for-shipping" onClick={() => setActionType('pay-for-shipping')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
                   DECLINE (Move back to Pay for Shipiing)
                 </button>
-                <small>Decline Order if there are issues</small>
+                <small>Decline Order if Bank Payment failed confirmation</small>
             </div>
             
             <div className="w-full md:w-1/2">
                 <button type="submit" name="action" value="in-transit" onClick={() => setActionType('in-transit')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
                  APPROVED (Move Order to In-Transit)
                 </button>
-                <small>Approve this Order for further processing</small>
+                <small>Approve this Order for further processing if Bank Payment has been confirmed</small>
             </div>
         </div>
         </>
