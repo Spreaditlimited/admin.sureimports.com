@@ -236,7 +236,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         // GET & PROCESS RESPONSE FROM API
         const data:any = await res.json();
   
-        if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+newStatus, 'success', 'Process update was successful, order has been moved to '+newStatus);}
+        if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+newStatus);}
         if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+newStatus);}
         if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
         } catch (error: any) {
