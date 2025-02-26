@@ -165,9 +165,10 @@ const Page = () => {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           ></textarea>
         </div>
+        
 
         {/* Submit Button */}
-        div className="flex justify-end">
+        <div className="flex justify-end">
           <button
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
@@ -175,6 +176,8 @@ const Page = () => {
             <Save /> &nbsp; Submit
           </button>
         </div>
+
+
       </div>
     </div>
 </form>

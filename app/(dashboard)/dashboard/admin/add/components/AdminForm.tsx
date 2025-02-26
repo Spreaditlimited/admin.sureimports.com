@@ -150,7 +150,7 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Account Name *</label>
           <input
             name='accountName'
-            onChange={(e) => setCategoryName(e.target.value)}
+            onChange={(e) => setAccountName(e.target.value)}
             type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -163,7 +163,7 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
           <input
             name='firstName'
-            onChange={(e) => setCategoryName(e.target.value)}
+            onChange={(e) => setFirstName(e.target.value)}
             type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -176,7 +176,7 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name *</label>
           <input
             name='lastName'
-            onChange={(e) => setCategoryName(e.target.value)}
+            onChange={(e) => setLastName(e.target.value)}
             type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -189,7 +189,7 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
           <input
             name='email'
-            onChange={(e) => setCategoryName(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -202,7 +202,7 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number *</label>
           <input
             name='phone'
-            onChange={(e) => setCategoryName(e.target.value)}
+            onChange={(e) => setPhone(e.target.value)}
             type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -215,7 +215,7 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Admin Password *</label>
           <input
             name='password'
-            onChange={(e) => setCategoryName(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -228,6 +228,8 @@ const Page = () => {
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Authorization Level *</label>
           <select
+            name='authorizationLevel'
+            onChange={(e) => setAuthorizationLevel(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value=""> - Level - </option>
@@ -236,19 +238,6 @@ const Page = () => {
             <option value="L3">Regular Admin L3 </option>
           </select>
         </div>
-
-
-
-        {/* Single Column */}
-        {/* <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
-          <input
-            onChange={(e) => setCategoryName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-        </div> */}
 
 
         {/* Submit Button */}
