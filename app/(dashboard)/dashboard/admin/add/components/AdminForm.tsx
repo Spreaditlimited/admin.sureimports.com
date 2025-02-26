@@ -142,7 +142,7 @@ const Page = () => {
 <form className="space-y-5" onSubmit={handleSubmit} >
     <div className="">
       <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Admin Users</h1>
+        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Admin Users Form</h2>
 
 
         {/* Single Column */}
@@ -224,16 +224,17 @@ const Page = () => {
 
 
 
-        {/* Single Column */}
-        div className="mb-6">
+        {/* Dropdown (Select) */}
+        <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Authorization Level *</label>
-          <input
-            name='authorizationLevel'
-            onChange={ (e) => setCategoryName(e.target.value) }
-            type="text"
-            required
+          <select
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+          >
+            <option value=""> - Level - </option>
+            <option value="L1">Super Admin L1</option>
+            <option value="L2">Regular Admin L2 </option>
+            <option value="L3">Regular Admin L3 </option>
+          </select>
         </div>
 
 
@@ -256,9 +257,11 @@ const Page = () => {
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
           >
-            <Save /> &nbsp; Submit
+            <Save /> &nbsp; Create Admin
           </button>
         </div>
+
+
       </div>
     </div>
 </form>

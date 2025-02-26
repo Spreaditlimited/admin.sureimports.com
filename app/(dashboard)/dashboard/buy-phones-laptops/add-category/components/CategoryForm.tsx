@@ -167,7 +167,7 @@ const Page = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end">
+        div className="flex justify-end">
           <button
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
