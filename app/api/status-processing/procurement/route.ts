@@ -24,6 +24,17 @@ export async function POST(request: Request) {
   const message = formData.get('message') as string;
   const pidMessage = formData.get('pidMessage') as string;
 
+  //INITIAL DETAILS
+  const orderShippingCost = formData.get('orderShippingCost') as string;
+  const orderTotalCost = formData.get('orderTotalCost') as string;
+  const vat = formData.get('vat') as string;
+  const serviceCharge = formData.get('serviceCharge') as string;
+  const exchangeRate1 = formData.get('exchangeRate1') as string;
+  const exchangeRate2 = formData.get('exchangeRate2') as string;
+  const exchangeRate3 = formData.get('exchangeRate3') as string;
+
+
+
 
 
   //CHECK IF USER PID AND CID EXISTS
@@ -90,7 +101,7 @@ export async function POST(request: Request) {
 
 
 
-  
+
 
   //SEND GENERAL MESSAGE
   const messagex = await prisma.messages.create({
@@ -131,34 +142,39 @@ export async function POST(request: Request) {
     if(updatex) {
     //SEND EMAIL TO USER
   try {
-    // .................... ON-HOLD(DECLINED) STAGE MAIL ....................//
-    if(newStatus == "on-hold"){
-    const xEmail = user?.userEmail as string;
-    const xTitle = `Order is Declined`;
-    const xBodyTitle = `Order has been placed On-Hold`;
-    const xBody1 = `Hello ` + user?.userFirstname + `,` +
-`<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
-<p>You will have to review and update this order.</p>
-<p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
-`<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
-    const xBody2 = ``;
-    const xButtonTitle = '';
-    const xButtonLink = '';
-    await xMail({
-      xEmail,
-      xTitle,
-      xBodyTitle,
-      xBody1,
-      xBody2,
-      xButtonTitle,
-      xButtonLink,
-    });
-    //success update
-    return NextResponse.json(
-      { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pending.' },
-      { status: 200 },
-    );
-    }
+
+    
+
+
+
+              // .................... ON-HOLD(DECLINED) STAGE MAIL ....................//
+              if(newStatus == "on-hold"){
+              const xEmail = user?.userEmail as string;
+              const xTitle = `Order is Declined`;
+              const xBodyTitle = `Order has been placed On-Hold`;
+              const xBody1 = `Hello ` + user?.userFirstname + `,` +
+          `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
+          <p>You will have to review and update this order.</p>
+          <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+          `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
+              const xBody2 = ``;
+              const xButtonTitle = '';
+              const xButtonLink = '';
+              await xMail({
+                xEmail,
+                xTitle,
+                xBodyTitle,
+                xBody1,
+                xBody2,
+                xButtonTitle,
+                xButtonLink,
+              });
+              //success update
+              return NextResponse.json(
+                { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pending.' },
+                { status: 200 },
+              );
+              }
 
 
 
@@ -193,6 +209,8 @@ export async function POST(request: Request) {
                   { status: 200 },
                 );
               }
+
+
 
 
 
@@ -250,8 +268,28 @@ export async function POST(request: Request) {
 
 
 
+
     // .................... PENDING STAGE MAIL ....................//
     if(newStatus == "pending"){
+
+          //UPDATE SERVICE STATUS 
+          const updatex = await prisma.orders.update({
+            where: {  
+                      pidUser: pidUser, 
+                      pidOrder: pidOrder 
+                  },
+            data: {
+              orderShippingCost: orderShippingCost,
+              orderTotalCost: orderTotalCost,
+              vat: vat,
+              serviceCharge: serviceCharge,
+              exchangeRate1: exchangeRate1,
+              exchangeRate2: exchangeRate2,
+              exchangeRate3: exchangeRate3,
+              updatedAt: new Date(),
+            },
+          });
+
       const xEmail = user?.userEmail as string;
       const xTitle = `Payment Verified`;
       const xBodyTitle = `Order moved to Pending`;
@@ -277,6 +315,7 @@ export async function POST(request: Request) {
           { status: 200 },
         );
       }
+
 
 
 
@@ -317,6 +356,7 @@ export async function POST(request: Request) {
 
 
 
+
     // .................... IN-TRANSIT STAGE MAIL ....................//
     if(newStatus == "in-transit"){
         const xEmail = user?.userEmail as string;
@@ -345,6 +385,7 @@ export async function POST(request: Request) {
             { status: 200 },
           );
         }
+
 
 
 

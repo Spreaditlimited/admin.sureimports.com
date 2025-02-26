@@ -9,7 +9,7 @@ function replaceNullWithZero<T>(value: T | null): T | number {
 export async function GET(request: NextRequest) {
   const pidOrder = request.nextUrl.searchParams.get('pidOrder');
 
-  console.log('=============$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$=============' + pidOrder);
+
   try {
     //TOTAL PRODUCTS PRICE
     const price: any = await prisma.$queryRaw`

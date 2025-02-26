@@ -1,0 +1,173 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { MdAddToPhotos } from 'react-icons/md';
+
+// interface User {
+//   id: number;
+//   name: string;
+//   email: string;
+// }
+
+interface CategoryProps {
+      id: number;
+      pidCategory: string; 
+      categorySeq: number; 
+      categoryName: string;
+      categorySlug: string; 
+      categoryDescription: string; 
+      categoryAdditionalInfo: string; 
+      categoryTags: string;
+      categoryImage: string;
+      categoryImageType: string;
+      categoryImageExt: string;
+  }
+
+export default function ProductsTable() {
+  const [category, setCategory] = useState<CategoryProps[]>([]);
+  const [search, setSearch] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  const getCategories = async (search: string, page: number) => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
+                const response = await fetch(`/api/get-records/categories?search=${search}&page=${page}&limit=5`);
+                const data = await response.json();
+                setCategory(data.category);
+                setTotalPages(data.totalPages);
+            } catch (error) {
+                setError('Failed to fetch users');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+  useEffect(() => {
+    getCategories(search, page);
+  }, [search, page]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
+    setPage(1); // Reset to first page on new search
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+  const router = useRouter();
+
+  return (
+
+    <>
+    <div className="w-full overflow-x-auto shadow-md sm:rounded-lg">
+
+            <div>
+                <button type="button" onClick={() => { router.push('/dashboard/category/create');}} className="btn btn-dark w-full"><MdAddToPhotos /> &nbsp; Add New Category</button>
+            </div>
+
+    <h1 className="text-base font-bold m-2 p-3">View Category Records</h1>
+      {/* Search Input */}
+      <input
+        type="text"
+        value={search}
+        onChange={handleSearchChange}
+        placeholder="Search by name..."
+        className="border border-gray-300 p-3 m-3 mb-4 w-fullx rounded-md dark:text-white-700 dark:bg-gray-700"
+      />
+
+      {/* Table */}
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : (
+      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <tr>
+            <th scope="col" className="px-6 py-3">ID</th>
+            <th scope="col" className="px-6 py-3">Image</th>
+            <th scope="col" className="px-6 py-3">Category Name</th>
+            <th scope="col" className="px-6 py-3">Slug</th>
+            <th scope="col" className="px-6 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        {category.length ? (
+              category.map((cat, index) => (
+          <tr key={index} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+            <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+            {index + 1}
+            </td>
+            <td className="px-6 py-4">
+                    <div className="w-20 h-20 bg-gray-100 relative">
+                        <Image
+                            src={process.env.NEXT_PUBLIC_R2_PUBLIC_URL+'/'+`${cat.categoryImage}` as string}
+                            alt="Category"
+                            width={100} // specify width
+                            height={100} // specify height
+                            className="absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl"
+                        />
+                    </div>
+            </td>
+            <td className="px-6 py-4">{cat.categoryName}</td>
+            <td className="px-6 py-4">{cat.categorySlug}</td>
+            <td className="px-6 py-4">
+              <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
+              <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp;
+              <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Delete</a>
+            </td>
+          </tr>
+                        ))
+                      ) : (
+                        <tr className="flex border p-5 m-5 text-center justify-center">
+                          {/* <td className="border p-2 text-center" colSpan={3}> */}
+                            No categories found.
+                          {/* </td> */}
+                        </tr>
+                      )}
+        </tbody>
+      </table>
+      )}
+    </div>
+    
+
+
+    <div className="max-w-4xlx mx-autox w-full p-4">
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={() => handlePageChange(page - 1)}
+          disabled={page === 1}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md disabled:bg-gray-300 dark:text-white-700 dark:bg-gray-700"
+        >
+          Previous
+        </button>
+
+        <p>
+          Page {page} of {totalPages}
+        </p>
+
+        <button
+          onClick={() => handlePageChange(page + 1)}
+          disabled={page === totalPages}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md disabled:bg-gray-300 dark:text-white-700 dark:bg-gray-700"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+    </>
+  );
+}

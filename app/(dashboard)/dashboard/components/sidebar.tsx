@@ -124,16 +124,16 @@ const features: MenuItem[] = [
 ]
 
 const systemSettings: MenuItem[] = [
-  // {
-  //   title: "Admin Mgt.",
-  //   icon: UserCog,
-  //   path: "/admin",
-  //   submenu: [
-  //     { title: "All Admins", path: "/admin" },
-  //     { title: "Add Admin", path: "/admin/add" },
-  //     { title: "Roles", path: "/admin/roles" },
-  //   ],
-  // },
+  {
+    title: "Admin Mgt.",
+    icon: UserCog,
+    path: "/admin",
+    submenu: [
+      { title: "All Admins", path: "/dashbaord/admin" },
+      { title: "Add Admin", path: "/dashboard/admin/add" },
+      // { title: "Roles", path: "/admin/roles" },
+    ],
+  },
   // {
   //   title: "User Mgt.",
   //   icon: User,
@@ -363,7 +363,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </div>
         </div>
 
-        
+
       </aside>
     </>
   )

@@ -213,8 +213,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    let pidMessage = 'MSG' + new Date().getTime().toString();
-    let currentStatus = status;
+          let pidMessage = 'MSG' + new Date().getTime().toString();
+          let currentStatus = status;
  
           const formData = new FormData(event.currentTarget);
           formData.append('pidOrder', pidOrder);
@@ -224,20 +224,29 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           formData.append('message', message);
           formData.append('pidMessage', pidMessage);
 
-      //MAKE REQUEST ATTEMPT
-      try {
-        toast.info('Processing . . .');
-        //MAKE REQUEST
-        const res = await fetch('/api/status-processing/procurement', {
-          method: 'POST',
-          body: formData,
-        });
+          formData.append('orderShippingCost', estimatedTotalShippingCost.toString());
+          formData.append('orderTotalCost', grandTotalCost.toString());
+          formData.append('vat', vat.toString());
+          formData.append('serviceCharge', serviceCharge.toString());
+          formData.append('exchangeRate1', exNairaToDollar.toString());
+          formData.append('exchangeRate2', exYuanToDollar.toString());
+          formData.append('exchangeRate3', exNairaToYuan.toString());
+
+
+          //MAKE REQUEST ATTEMPT
+          try {
+            toast.info('Processing . . .');
+            //MAKE REQUEST
+            const res = await fetch('/api/status-processing/procurement', {
+              method: 'POST',
+              body: formData,
+            });
   
         // GET & PROCESS RESPONSE FROM API
         const data:any = await res.json();
   
-        if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+newStatus);}
-        if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+newStatus);}
+        if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+actionType);}
+        if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+actionType);}
         if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
         } catch (error: any) {
             console.log(error.message);
