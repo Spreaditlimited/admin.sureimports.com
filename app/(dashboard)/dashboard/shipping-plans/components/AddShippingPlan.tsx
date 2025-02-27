@@ -329,7 +329,7 @@ const Page = ({ initialData }: { initialData: TableData[] }) => {
                   name='shippingRate' 
                   type="number" 
                   placeholder="Enter Shipping Rate" 
-                  className="form-input" 
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   onChange={(e) => setShippingRate(e.target.value)}
                   required 
                 />
@@ -337,7 +337,7 @@ const Page = ({ initialData }: { initialData: TableData[] }) => {
     </div>
 
 {/* POST BLOG */}
-    <button type="submit" className="btn btn-dark !mt-6" disabled={isLoading}>
+    <button type="submit" className="block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" disabled={isLoading}>
         <MdBook /> &nbsp; {isLoading ? 'Adding Plan...' : 'Add Shipping Plan'} 
     </button>
 
