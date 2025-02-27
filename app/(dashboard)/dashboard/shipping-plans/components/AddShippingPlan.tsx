@@ -290,7 +290,7 @@ const Page = ({ initialData }: { initialData: TableData[] }) => {
             <div className="md:col-span-2">
                 <select 
                     //key={random(999)}
-                    className="form-select text-white-dark" 
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     id='shippingPlan' 
                     name='shippingPlan'
                     value={shippingPlan} 
