@@ -76,16 +76,19 @@ const Page = () => {
 
 
     //SET FORM DATA
-    let categoryID = 'CAT' + new Date().getTime().toString();
-    const [pidUser, setPidUser] = useState(user?.pidUser as string);
-    const [pidCategory, setPidCategory] = useState(categoryID);
-    const [categoryName, setCategoryName] = useState('');
-    const [categoryInfo, setCategoryInfo] = useState('');
-    //const [categoryImage, setCategoryImage] = useState('');
-
+    let AdminUserID = 'ADM' + new Date().getTime().toString();
+    //const [pidUser, setPidUser] = useState(user?.pidUser as string);
+    const [pidAdminUser, setAdminUser] = useState(AdminUserID);
+    const [accountName, setAccountName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [password, setPassword] = useState('');
+    const [authorizationLevel, setAuthorizationLevel] = useState('');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                toast.success('Adding Category . . .');
+                toast.info('Adding Admin User . . .');
                 e.preventDefault();
                 setIsLoading(true);
 
@@ -94,10 +97,15 @@ const Page = () => {
                 //collecting form data
                 const formData = new FormData();
                 //formData.append('file', file);
-                formData.append('pidUser', pidUser);
-                formData.append('pidCategory', pidCategory);
-                formData.append('categoryName', categoryName);
-                formData.append('categoryInfo', categoryInfo);
+                //formData.append('pidUser', pidUser);
+                formData.append('pidAdminUser', pidAdminUser);
+                formData.append('accountName', accountName);
+                formData.append('firstName', firstName);
+                formData.append('lastName', lastName);
+                formData.append('email', email);
+                formData.append('phone', phone);
+                formData.append('password', password);
+                formData.append('authorizationLevel', authorizationLevel);
 
                 //formData.append('categoryImage', categoryImage);
 
@@ -116,10 +124,8 @@ const Page = () => {
                     //PROCESS POST RESPONSE
                     const data: any = await res.json();
                     //if (data.responsex.status == 'SUCCESS'){toast.success(data.responsex.message);}
-                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/buy-phones-laptops', 'success', 'Action was successfully!');}
-                    //if (data.responsex.status == 'NO_IMAGE_SELECTED'){toast.warning(data.responsex.message);}
-                    //if (data.responsex.status == 'INVALID_IMAGE_UPLOAD'){toast.warning(data.responsex.message);}
-                    //if (data.responsex.status == 'IMAGE_UPLOAD_FAILED'){toast.warning(data.responsex.message);}
+                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', 'Admin User was successfully created!');}
+                    if (data.statusx == 'USER_EXISTS'){toast.error(data.message);}
                     if (data.statusx == 'FAILED'){toast.error(data.responsex.message);}
 
             } catch (error: any) {
@@ -141,7 +147,7 @@ const Page = () => {
 
 <form className="space-y-5" onSubmit={handleSubmit} >
     <div className="">
-      <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+      <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
         <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Admin Users Form</h2>
 
 
@@ -158,8 +164,10 @@ const Page = () => {
         </div>
 
 
-        {/* Single Column */}
-        <div className="mb-6">
+
+        {/* Double Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
           <input
             name='firstName'
@@ -168,11 +176,8 @@ const Page = () => {
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
-        </div>
-
-
-        {/* Single Column */}
-        <div className="mb-6">
+          </div>
+          <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name *</label>
           <input
             name='lastName'
@@ -181,11 +186,13 @@ const Page = () => {
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
+          </div>
         </div>
 
 
-        {/* Single Column */}
-        <div className="mb-6">
+         {/* Double Column */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
           <input
             name='email'
@@ -194,11 +201,8 @@ const Page = () => {
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
-        </div>
-
-
-        {/* Single Column */}
-        <div className="mb-6">
+          </div>
+          <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number *</label>
           <input
             name='phone'
@@ -207,7 +211,9 @@ const Page = () => {
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
+          </div>
         </div>
+
 
 
         {/* Single Column */}

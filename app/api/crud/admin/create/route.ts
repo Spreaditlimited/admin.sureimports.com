@@ -8,7 +8,7 @@ import fileFilter from '@/app/utils/fileFilter'
 import randomGenerator from "@/lib/helpers/randomGenerator";
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/app/utils/slugGenerator'
-
+import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient();
 
@@ -17,14 +17,16 @@ export async function POST(request: Request) {
 
         const formData = await request.formData();
         const pidUser = formData.get('pidUser') as string;
-        const pidCategory = formData.get('pidCategory') as string;
-        const categoryName = formData.get('categoryName') as string;
-        const categoryInfo = formData.get('categoryInfo') as string;
-        // const categorySeq = formData.get('categorySeq') as string;
-        // const categoryAdditionalInfo = formData.get('categoryAdditionalInfo') as string;
-        // const categoryTags = formData.get('categoryTags') as string;
+        const pidAdminUser = formData.get('pidAdminUser') as string;
+        const accountName = formData.get('accountName') as string;
+        const firstName = formData.get('firstName') as string;
+        const lastName = formData.get('lastName') as string;
+        const email = formData.get('email') as string;
+        const phone = formData.get('phone') as any;
+        const password = formData.get('password') as string;
+        const authorizationLevel = formData.get('authorizationLevel') as string;
 
-
+console.log(formData)
 
   //GET FILE FROM FROM
   //const file = formData.get('file') as File;
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
   //   );
   // }
 
-  const productCode:string = randomGenerator(20);
+  //const productCode:string = randomGenerator(20);
 
   //SET FILE NAME & GET FILE PARAMS
   // const originalFileName = file.name;
@@ -73,28 +75,43 @@ export async function POST(request: Request) {
   //const categorySlug = generateSlug(categoryName);
 
 
+const existingUser = await prisma.admin.findUnique({ where: { userEmail:email } })
+if (existingUser) {
+            return NextResponse.json(
+              { statusx:'USER_EXISTS', message: 'Admin User already exists!'},
+              { status: 401 },
+            );
+}
+
+
+const hashedPassword = await bcrypt.hash(password, 10)
+
   //UPLOAD PRODUCT DETAILS
-  const category = await prisma.buy_category.create({
+  const admin = await prisma.admin.create({
     data: { 
-            pidUser: pidUser, 
-            pidCategory: productCode, 
-            categoryName: categoryName, 
-            categoryInfo: categoryInfo, 
+            pidUser: pidAdminUser, 
+            userFirstname: firstName, 
+            userLastname: lastName, 
+            userEmail: email, 
+            userPhone: parseInt(phone), 
+            userPassword: hashedPassword, 
+            userStatus: authorizationLevel, 
+            userExt1: accountName,
             createdAt: new Date(),
          }
   })
 
 
       //CHECK IF PRODUCT DETAILS HAVE BEEN SUCCESSFULY UPLOADED THEN UPLOAD IMAGE
-      if(category && category.id)
+      if(admin && admin.id)
           {
               return NextResponse.json(
-              { statusx:'SUCCESS', message: 'Category was successfuly created.'},
+              { statusx:'SUCCESS', message: 'Admin User was successfuly created.'},
               { status: 200 },
             );
           }else{
             return NextResponse.json(
-              { statusx:'FAILED', message: 'Category Creation Failed!'},
+              { statusx:'FAILED', message: 'Admin User Creation Failed!'},
               { status: 401 },
             );
           }

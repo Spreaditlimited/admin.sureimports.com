@@ -52,17 +52,17 @@ const features: MenuItem[] = [
     icon: ShoppingCart,
     path: "/dashboard/procurement?status=saved",
   },
-  {
-    title: "Buy Phones & Laptops",
-    icon: MonitorSmartphone ,
-    path: "/orders",
-    submenu: [
-      { title: "Buy Phones & Laptops", path: "/dashboard/buy-phones-laptops" },
-      { title: "Add Devices", path: "/dashboard/buy-phones-laptops/add-devices" },
-      { title: "Add Categories", path: "/dashboard/buy-phones-laptops/add-category" },
-      { title: "View Categories", path: "/dashboard/buy-phones-laptops/view-category" },
-    ],
-  },
+  // {
+  //   title: "Buy Phones & Laptops",
+  //   icon: MonitorSmartphone ,
+  //   path: "/orders",
+  //   submenu: [
+  //     { title: "Buy Phones & Laptops", path: "/dashboard/buy-phones-laptops" },
+  //     { title: "Add Devices", path: "/dashboard/buy-phones-laptops/add-devices" },
+  //     { title: "Add Categories", path: "/dashboard/buy-phones-laptops/add-category" },
+  //     { title: "View Categories", path: "/dashboard/buy-phones-laptops/view-category" },
+  //   ],
+  // },
   // {
   //   title: "Special Sourcing",
   //   icon: ShoppingBag,
@@ -129,7 +129,7 @@ const systemSettings: MenuItem[] = [
     icon: UserCog,
     path: "/admin",
     submenu: [
-      { title: "All Admins", path: "/dashbaord/admin" },
+      { title: "Manage Admins", path: "/dashboard/admin/view" },
       { title: "Add Admin", path: "/dashboard/admin/add" },
       // { title: "Roles", path: "/admin/roles" },
     ],
@@ -144,6 +144,16 @@ const systemSettings: MenuItem[] = [
   //     { title: "User Roles", path: "/users/roles" },
   //   ],
   // },
+  {
+    title: "Shipping Plans",
+    icon: Ship,
+    path: "/shipping-plans",
+    submenu: [
+      { title: "Shipping Plans", path: "/dashboard/shipping-plans/add" },
+      // { title: "Add Shipping Plan", path: "/dashboard/shipping-plans/add" },
+      // { title: "Roles", path: "/admin/roles" },
+    ],
+  },
   // { title: "Blog", icon: FileText, path: "/blog" },
   // {
   //   title: "Settings & Config.",
