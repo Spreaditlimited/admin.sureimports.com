@@ -9,12 +9,6 @@ export const metadata: Metadata = {
 };
 
 
-
-
-
-
-
-
 const Table = () => {
 
 
