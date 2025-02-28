@@ -1,4 +1,3 @@
-import PageX from './components/PageTitle';
 import ViewShippingPlan from './components/ViewShippingPlan';
 import { Metadata } from 'next';
 import React from 'react';

@@ -18,7 +18,7 @@ import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
 import axios from 'axios';
 //import Editor from '@/componentsx/Editor/Editor';
-import Table3 from '../components/TableLayout3';
+//import Table3 from '../../../../../_X/_TableLayout3';
 import { PrismaClient } from '@prisma/client';
 import { random } from 'lodash';
 // import ReactQuill from 'react-quill';
