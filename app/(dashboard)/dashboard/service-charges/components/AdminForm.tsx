@@ -57,12 +57,11 @@ interface ProductFormProps {
   }
 
 
-  const Page: React.FC<any> = ({ rates }) => {
-//const Page = (rates:any) => {
+
+const Page = () => {
     const {user} = useAuth();
     //initialize alert system
     const navigateWithAlert = useNavigationWithAlert();
-    //const box = JSON.stringify(rates['vat']);
 
     //SET VARIABLES DATA
     const router = useRouter();
@@ -77,14 +76,19 @@ interface ProductFormProps {
 
 
     //SET FORM DATA
-    //let AdminUserID = 'ADM' + new Date().getTime().toString();
+    let AdminUserID = 'ADM' + new Date().getTime().toString();
     //const [pidUser, setPidUser] = useState(user?.pidUser as string);
-    const [nairaToDollar, setExNairaToDollar] = useState<number>(rates.exNairaToDollar);
-    const [yuanToDollar, setExYuanToDollar] = useState<number>(rates.exYuanToDollar);
-    const [nairaToYuan, setExNairaToYuan] = useState<number>(rates.exNairaToYuan);
+    const [pidAdminUser, setAdminUser] = useState(AdminUserID);
+    const [accountName, setAccountName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [password, setPassword] = useState('');
+    const [authorizationLevel, setAuthorizationLevel] = useState('');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                toast.info('Updating Exchange Rates . . .');
+                toast.info('Adding Admin User . . .');
                 e.preventDefault();
                 setIsLoading(true);
 
@@ -94,29 +98,35 @@ interface ProductFormProps {
                 const formData = new FormData();
                 //formData.append('file', file);
                 //formData.append('pidUser', pidUser);
-                formData.append('nairaToDollar', nairaToDollar as any);
-                formData.append('yuanToDollar', yuanToDollar as any);
-                formData.append('nairaToYuan', nairaToYuan as any);
-
+                formData.append('pidAdminUser', pidAdminUser);
+                formData.append('accountName', accountName);
+                formData.append('firstName', firstName);
+                formData.append('lastName', lastName);
+                formData.append('email', email);
+                formData.append('phone', phone);
+                formData.append('password', password);
+                formData.append('authorizationLevel', authorizationLevel);
 
                 //formData.append('categoryImage', categoryImage);
 
                 //MAKE REQUEST ATTEMPT
                 try {
                     //MAKE REQUEST
-                            const res = await fetch('/api/crud/exchange-rate/update', {
-                            method: 'PUT',
+                            const res = await fetch('/api/crud/admin/create', {
+                            method: 'POST',
                             //headers: { 'Content-Type': 'application/json' },
                             //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             //headers: { 'Content-Type': 'multipart/form-data' },
                             body: formData,
                     });
 
+
                     //PROCESS POST RESPONSE
                     const data: any = await res.json();
-                    if (data.statusx == 'SUCCESS'){toast.success(data.message);}
-                    //if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', data.message);}
-                    if (data.statusx == 'FAILED'){toast.error(data.message);}
+                    //if (data.responsex.status == 'SUCCESS'){toast.success(data.responsex.message);}
+                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', 'Admin User was successfully created!');}
+                    if (data.statusx == 'USER_EXISTS'){toast.error(data.message);}
+                    if (data.statusx == 'FAILED'){toast.error(data.responsex.message);}
 
             } catch (error: any) {
                 toast.error(error.message);
@@ -138,56 +148,102 @@ interface ProductFormProps {
 <form className="space-y-5" onSubmit={handleSubmit} >
     <div className="">
       <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Update Rates </h2>
+        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Admin Users Form</h2>
 
 
         {/* Single Column */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Naira to Dollar (NGN - USD)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Account Name *</label>
           <input
-            step="0.01"
-            defaultValue={rates.exNairaToDollar}
-            name='exNairaToDollar'
-            onChange={(e) => setExNairaToDollar(Number(e.target.value))}
-            type="number"
+            name='accountName'
+            onChange={(e) => setAccountName(e.target.value)}
+            type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
 
 
-        {/* Single Column */}
-         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Yuan to Dollar (CNY - USD)</label>
+
+        {/* Double Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
           <input
-            step="0.01"
-            defaultValue={rates.exYuanToDollar}
-            name='exNairaToDollar'
-            onChange={(e) => setExYuanToDollar(Number(e.target.value))}
-            type="number"
+            name='firstName'
+            onChange={(e) => setFirstName(e.target.value)}
+            type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
+          </div>
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name *</label>
+          <input
+            name='lastName'
+            onChange={(e) => setLastName(e.target.value)}
+            type="text"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
         </div>
 
+
+         {/* Double Column */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
+          <input
+            name='email'
+            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number *</label>
+          <input
+            name='phone'
+            onChange={(e) => setPhone(e.target.value)}
+            type="text"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+        </div>
 
 
 
         {/* Single Column */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Naira to Yuan (NGN - CNY) </label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Admin Password *</label>
           <input
-            step="0.01"
-            defaultValue={rates.exNairaToYuan}
-            name='exNairaToYuan'
-            onChange={(e) => setExNairaToYuan(Number(e.target.value))}
-            type="number"
+            name='password'
+            onChange={(e) => setPassword(e.target.value)}
+            type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
 
 
+
+        {/* Dropdown (Select) */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Authorization Level *</label>
+          <select
+            name='authorizationLevel'
+            onChange={(e) => setAuthorizationLevel(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value=""> - Level - </option>
+            <option value="L1">Super Admin L1</option>
+            <option value="L2">Regular Admin L2 </option>
+            <option value="L3">Regular Admin L3 </option>
+          </select>
+        </div>
 
 
         {/* Submit Button */}
@@ -196,7 +252,7 @@ interface ProductFormProps {
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
           >
-            <Save /> &nbsp; Update Exchange Rates
+            <Save /> &nbsp; Create Admin
           </button>
         </div>
 

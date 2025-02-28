@@ -79,12 +79,11 @@ interface ProductFormProps {
     //SET FORM DATA
     //let AdminUserID = 'ADM' + new Date().getTime().toString();
     //const [pidUser, setPidUser] = useState(user?.pidUser as string);
-    const [nairaToDollar, setExNairaToDollar] = useState<number>(rates.exNairaToDollar);
-    const [yuanToDollar, setExYuanToDollar] = useState<number>(rates.exYuanToDollar);
-    const [nairaToYuan, setExNairaToYuan] = useState<number>(rates.exNairaToYuan);
+    const [serviceCharge, setServiceCharge] = useState<number>(rates.service_charge);
+    const [vat, setVat] = useState<number>(rates.vat);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                toast.info('Updating Exchange Rates . . .');
+                toast.info('Updating Service Charge & VAT . . .');
                 e.preventDefault();
                 setIsLoading(true);
 
@@ -93,10 +92,9 @@ interface ProductFormProps {
                 //collecting form data
                 const formData = new FormData();
                 //formData.append('file', file);
-                //formData.append('pidUser', pidUser);
-                formData.append('nairaToDollar', nairaToDollar as any);
-                formData.append('yuanToDollar', yuanToDollar as any);
-                formData.append('nairaToYuan', nairaToYuan as any);
+                formData.append('serviceCharge', serviceCharge as any);
+                formData.append('vat', vat as any);
+
 
 
                 //formData.append('categoryImage', categoryImage);
@@ -104,7 +102,7 @@ interface ProductFormProps {
                 //MAKE REQUEST ATTEMPT
                 try {
                     //MAKE REQUEST
-                            const res = await fetch('/api/crud/exchange-rate/update', {
+                            const res = await fetch('/api/crud/service-charges/update', {
                             method: 'PUT',
                             //headers: { 'Content-Type': 'application/json' },
                             //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -138,17 +136,17 @@ interface ProductFormProps {
 <form className="space-y-5" onSubmit={handleSubmit} >
     <div className="">
       <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Update Rates </h2>
+        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Update Charges & VAT </h2>
 
 
         {/* Single Column */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Naira to Dollar (NGN - USD)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Service Charge</label>
           <input
             step="0.01"
-            defaultValue={rates.exNairaToDollar}
+            defaultValue={rates.service_charge}
             name='exNairaToDollar'
-            onChange={(e) => setExNairaToDollar(Number(e.target.value))}
+            onChange={(e) => setServiceCharge(Number(e.target.value))}
             type="number"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -158,29 +156,12 @@ interface ProductFormProps {
 
         {/* Single Column */}
          <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Yuan to Dollar (CNY - USD)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Value Added Tax (VAT)</label>
           <input
             step="0.01"
-            defaultValue={rates.exYuanToDollar}
+            defaultValue={rates.vat}
             name='exNairaToDollar'
-            onChange={(e) => setExYuanToDollar(Number(e.target.value))}
-            type="number"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-        </div>
-
-
-
-
-        {/* Single Column */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Naira to Yuan (NGN - CNY) </label>
-          <input
-            step="0.01"
-            defaultValue={rates.exNairaToYuan}
-            name='exNairaToYuan'
-            onChange={(e) => setExNairaToYuan(Number(e.target.value))}
+            onChange={(e) => setVat(Number(e.target.value))}
             type="number"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -196,7 +177,7 @@ interface ProductFormProps {
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
           >
-            <Save /> &nbsp; Update Exchange Rates
+            <Save /> &nbsp; Update Service Charge
           </button>
         </div>
 
