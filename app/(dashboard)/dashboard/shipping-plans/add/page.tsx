@@ -18,9 +18,10 @@ const Page = async () => {
             <>
                 <DashboardLayout>
                     <h1 className="text-2xl font-bold mb-6">Shipping Plan</h1>
+                    <AddShippingPlan initialData={countries} />
                     {/* <PageTitle title="Add Shipping Plan"  /> */}
                     <CountryTable countries={countries} />
-                    <AddShippingPlan initialData={countries} />
+                    
                 </DashboardLayout>
             </>
            );

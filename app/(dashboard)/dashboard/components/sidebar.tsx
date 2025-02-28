@@ -26,6 +26,7 @@ import {
   UserCheck,
   Ship,
   MonitorSmartphone,
+  ChartCandlestick,
 } from "lucide-react"
 import type React from "react"
 
@@ -151,6 +152,16 @@ const systemSettings: MenuItem[] = [
     submenu: [
       { title: "Shipping Plans", path: "/dashboard/shipping-plans/add" },
       // { title: "Add Shipping Plan", path: "/dashboard/shipping-plans/add" },
+      // { title: "Roles", path: "/admin/roles" },
+    ],
+  },
+  {
+    title: "Exchanges & Rates",
+    icon: ChartCandlestick ,
+    path: "/exchange-rates",
+    submenu: [
+      { title: "Exchange Rates", path: "/dashboard/exchange-rates" },
+      { title: "Service Charge & VAT", path: "/dashboard/service-charges" },
       // { title: "Roles", path: "/admin/roles" },
     ],
   },

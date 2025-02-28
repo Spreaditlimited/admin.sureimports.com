@@ -17,7 +17,7 @@ import ImageBox from '@/componentsx/ImageBox';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
 import axios from 'axios';
-import Editor from '@/componentsx/Editor/Editor';
+//import Editor from '@/componentsx/Editor/Editor';
 import Table3 from '../components/TableLayout3';
 import { PrismaClient } from '@prisma/client';
 import { random } from 'lodash';
@@ -25,6 +25,7 @@ import { random } from 'lodash';
 // import 'react-quill/dist/quill.snow.css';
 import { CountryDataFetcher } from "../components/CountryDataFetcher"
 import { CountryTable } from "../components/CountryTable"
+import { Save } from 'lucide-react';
 
 
 export const metadata: Metadata = {
@@ -232,26 +233,22 @@ const Page = ({ initialData }: { initialData: TableData[] }) => {
 
 
 
-<div className="space-y-8 pt-5">
-        <div className="pt-10 pl-20 panel flex items-center overflow-x-auto whitespace-nowrap p-28 text-dark">
+<div className="space-y-8 pt-1">
+        <div className="pt-3 pl-20 panel flex items-center overflow-x-auto whitespace-nowrap p-10 text-dark">
 
 
 
-{/* -------------------------- PRODUCT FORM -------------------------- */}
-<form className="space-y-5" onSubmit={handleSubmit} >
-
-
-
-
-    {/* COUNTRIES */}
-    <div>
-        <label htmlFor="gridAddress1"><b>Country</b></label>
-        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4">
-            
-            <div className="md:col-span-2">
-                <select 
+{/* -------------------------- SHIPPING FORM -------------------------- */}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Column 1 */}
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+              Shipping Country
+            </label>
+            <select 
                     //key={random(999)}
-                    className="form-select text-white-dark" 
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     id='country' 
                     name='country'
                     value={country} 
@@ -267,28 +264,40 @@ const Page = ({ initialData }: { initialData: TableData[] }) => {
                                 )
                             }
                 </select>
-            </div>
-
-            {/* <div>
-                <button type="button" onClick={() => {router.push('/dashboard/blog/category/create');}} className="btn btn-dark w-full"><MdAddToPhotos /> &nbsp; Add New Category</button>
-            </div> */}
+          </div>
 
         </div>
-    </div>
 
+        {/* Column 2 */}
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+              Shipping Rate
+            </label>
+            <input 
+                  id="shippingRate" 
+                  name='shippingRate' 
+                  type="number" 
+                  placeholder="Enter Shipping Rate" 
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  onChange={(e) => setShippingRate(e.target.value)}
+                  required 
+                />
+          </div>
+          <div>
 
+          </div>
+        </div>
 
+        {/* Column 3 */}
+        <div className="space-y-4">
 
-
-
-
-    {/* SELECT SHIPPING PLAN */}
-    <div>
-        <label htmlFor="gridAddress1"><b>Shipping Plan</b></label>
-        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4">
-            
-            <div className="md:col-span-2">
-                <select 
+          <div>
+            <div>
+            <label htmlFor="ShippingPlan" className="block text-sm font-medium text-gray-700">
+              Shipping Plan
+            </label>
+            <select 
                     //key={random(999)}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     id='shippingPlan' 
@@ -306,46 +315,38 @@ const Page = ({ initialData }: { initialData: TableData[] }) => {
                             }
 
                 </select>
-            </div>
-
-            {/* <div>
-                <button type="button" onClick={() => {router.push('/dashboard/blog/category/create');}} className="btn btn-dark w-full"><MdAddToPhotos /> &nbsp; Add Shipping Plan</button>
-            </div> */}
-
+          </div>
+          </div>
         </div>
-    </div>
 
+        {/* Column 4 */}
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+             
+            </label>
 
+          </div>
+        {/* Submit Button */}
+        <div className="">
+          <button
+            type="submit"
+            className="btn !mt-6x inline-flex justify-center py-3 px-4 border border-transparent shadow-sm  w-full bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          >
+            <Save /> &nbsp; Add Shipping Plan
+          </button>
 
-
-
-
-{/* TITLE */}
-<div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
-        <div>
-            <label htmlFor="productName"><b>Shipping Rate (USD)</b></label>
-            <input 
-                  id="shippingRate" 
-                  name='shippingRate' 
-                  type="number" 
-                  placeholder="Enter Shipping Rate" 
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  onChange={(e) => setShippingRate(e.target.value)}
-                  required 
-                />
+          {/* <button
+            type="submit"
+            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
+          >
+            <Save /> &nbsp; Add Shipping
+          </button> */}
         </div>
-    </div>
+        </div>
+        
 
-{/* POST BLOG */}
-    <button type="submit" className="block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" disabled={isLoading}>
-        <MdBook /> &nbsp; {isLoading ? 'Adding Plan...' : 'Add Shipping Plan'} 
-    </button>
-
-    
-
-
-</form>
-{/* ----------------------FORM ENDS---------------------- */}
+      </form>
 
 
 

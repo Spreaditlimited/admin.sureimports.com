@@ -22,7 +22,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
   return (
     <table className="min-w-full bg-white border border-gray-300 text-gray-800">
       <thead>
-        <tr className="bg-gray-100 dark:text-gray-300 text-gray-800">
+        <tr className="bg-gray-100 dark:text-gray-600 text-gray-800">
           <th className="py-2 px-4 border-b">S/N</th>
           <th className="py-2 px-4 border-b">Country Name</th>
           <th className="py-2 px-4 border-b">Shipping Plans</th>
@@ -47,9 +47,10 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                   <table className="min-w-full bg-gray-50">
                     <thead>
                       <tr>
-                        <th className="py-2 px-4 border-b dark:text-gray-300">Shipping Plan ID</th>
-                        <th className="py-2 px-4 border-b dark:text-gray-300">Shipping Plan Name</th>
-                        <th className="py-2 px-4 border-b dark:text-gray-300">Shipping Plan Rate (USD)</th>
+                        <th className="py-2 px-4 border-b dark:text-gray-500">Shipping Plan ID</th>
+                        <th className="py-2 px-4 border-b dark:text-gray-500">Shipping Plan Name</th>
+                        <th className="py-2 px-4 border-b dark:text-gray-500">Shipping Plan Rate (USD)</th>
+                        <th className="py-2 px-4 border-b dark:text-gray-500">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -58,6 +59,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                           <td className="py-2 px-4 border-b">{plan.pidShippingPlan}</td>
                           <td className="py-2 px-4 border-b">{plan.shippingPlanName}</td>
                           <td className="py-2 px-4 border-b">${plan.shippingPlanRate}</td>
+                          <td className="py-2 px-4 border-b">Delete</td>
                         </tr>
                       ))}
                     </tbody>
