@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import type { ReactNode } from "react"
+import { Suspense, type ReactNode } from "react"
 import "./globals.css"
 import { AuthProvider } from "@/lib/AuthContext"
 import { AlertProvider } from "./context/AlertContext"
@@ -32,6 +32,7 @@ export default function RootLayout({
           `,
           }}
         />
+        <Suspense fallback={<div>Loading...</div>}>  
         <AuthProvider>
               <TokenValidator>
                     <AlertProvider>
@@ -39,6 +40,7 @@ export default function RootLayout({
                     </AlertProvider>
               </TokenValidator>                                             
         </AuthProvider>
+        </Suspense>
       </body>
     </html>
   )
