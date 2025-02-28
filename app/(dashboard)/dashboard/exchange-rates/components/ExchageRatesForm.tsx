@@ -79,9 +79,9 @@ interface ProductFormProps {
     //SET FORM DATA
     //let AdminUserID = 'ADM' + new Date().getTime().toString();
     //const [pidUser, setPidUser] = useState(user?.pidUser as string);
-    const [nairaToDollar, setExNairaToDollar] = useState<number>(rates.exNairaToDollar);
-    const [yuanToDollar, setExYuanToDollar] = useState<number>(rates.exYuanToDollar);
-    const [nairaToYuan, setExNairaToYuan] = useState<number>(rates.exNairaToYuan);
+    const [nairaToDollar, setExNairaToDollar] = useState<number>(0);
+    const [yuanToDollar, setExYuanToDollar] = useState<number>(0);
+    const [nairaToYuan, setExNairaToYuan] = useState<number>(0);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 toast.info('Updating Exchange Rates . . .');
@@ -105,7 +105,7 @@ interface ProductFormProps {
                 try {
                     //MAKE REQUEST
                             const res = await fetch('/api/crud/exchange-rate/update', {
-                            method: 'POST',
+                            method: 'PUT',
                             //headers: { 'Content-Type': 'application/json' },
                             //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             //headers: { 'Content-Type': 'multipart/form-data' },
@@ -114,8 +114,8 @@ interface ProductFormProps {
 
                     //PROCESS POST RESPONSE
                     const data: any = await res.json();
-                    //if (data.responsex.status == 'SUCCESS'){toast.success(data.responsex.message);}
-                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', data.message);}
+                    if (data.statusx == 'SUCCESS'){toast.success(data.message);}
+                    //if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', data.message);}
                     if (data.statusx == 'FAILED'){toast.error(data.message);}
 
             } catch (error: any) {
