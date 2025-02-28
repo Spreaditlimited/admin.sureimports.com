@@ -183,29 +183,7 @@ interface ProductFormProps {
         </div>
 
 
-        {/* Double Column */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
-          <input
-            name='firstName'
-            onChange={(e) => setFirstName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name *</label>
-          <input
-            name='lastName'
-            onChange={(e) => setLastName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-        </div> */}
+
 
         {/* Submit Button */}
         <div className="flex justify-end">
