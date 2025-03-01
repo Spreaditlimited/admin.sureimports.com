@@ -161,12 +161,6 @@ export async function GET(request: NextRequest) {
     let grandTotalCost = parseFloat(
       totalPrice + estimatedTotalShippingCost + serviceChargeValue + vatValue,
 
-
-
-
-
-      
-
     //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
     const orderNew = await prisma.orders.findUnique({
       where: { pidOrder: pidOrder as string | undefined },
