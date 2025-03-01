@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get('status');
 
   const orderALL = await prisma.orders.findMany({
-          take: 50, 
+          take: 100, 
           where: { status }, // Filter by userId   
           orderBy: { updatedAt: 'desc' },
           include: {

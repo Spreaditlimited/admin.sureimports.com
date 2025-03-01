@@ -148,7 +148,6 @@ export async function GET(request: NextRequest) {
     let estimatedTotalShippingCost =
       internationalShippingCost + domesticShippingCost;
 
-
       
     //Service Charge
     let serviceChargeValue =
