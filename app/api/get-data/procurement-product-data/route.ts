@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
 
 
     //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
-    const orderddd = await prisma.orders.findUnique({
+    const orderNew = await prisma.orders.findUnique({
       where: { pidOrder: pidOrder as string | undefined },
       select: {
         orderShippingCost: true,
