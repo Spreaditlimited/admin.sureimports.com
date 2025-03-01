@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
 
 
     //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
-    const order = await prisma.orders.findUnique({
+    const orderddd = await prisma.orders.findUnique({
       where: { pidOrder: pidOrder as string | undefined },
       select: {
         orderShippingCost: true,
@@ -178,11 +178,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold') {
-      //grandTotalCost = grandTotalCost * parseFloat(exRate?.exYuanToDollar as any);
-    }else{
-      grandTotalCost = order?.orderTotalCost as any;
-    }
+    
+
+    // if (orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold') {
+    //   //grandTotalCost = grandTotalCost * parseFloat(exRate?.exYuanToDollar as any);
+    // }else{
+    //   grandTotalCost = order?.orderTotalCost as any;
+    // }
     
     );
 
