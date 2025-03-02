@@ -807,9 +807,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               htmlFor="weight"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Weight of Order
+              Actual Weight of Order
             </label>
             <input
+              name="weight"
               type="text"
               id="weight"
               placeholder="Weight in (Kg)Kilograms"
@@ -829,9 +830,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               htmlFor="totalCost"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Total Cost of Order
+              Actual Shipping Cost of Order
             </label>
             <input
+              name="totalCost"
               type="text"
               id="totalCost"
               placeholder="Total Cost of Order in (¥)Yuan"
@@ -912,7 +914,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ APPROVED - READY TO SHIP ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ APPROVED - PAY FOR SHIPPING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
 {(status == 'approved') && (
           <>
         {/* Action Buttons */}

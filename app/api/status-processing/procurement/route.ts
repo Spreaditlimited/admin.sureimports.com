@@ -297,28 +297,26 @@ export async function POST(request: Request) {
             },
           });
 
+          const xEmail = user?.userEmail as string;
+          const xTitle = `Payment Verified`;
+          const xBodyTitle = `Order moved to Pending`;
+          const xBody1 = `Hello ` + user?.userFirstname + `,` +
+          `<p>Congratulations! Your Bank Payment for order with ID: <b>`+pidOrder+`</b> has been verified and confirmed, the order is now in <b>Pending Stage</b> awaiting approval.</p>
+          <p>Log into your Spreadit account, go to <b>Pending Stage</b> to view this order.</p>` +
+          `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
+          const xBody2 = ``;
+          const xButtonTitle = '';
+          const xButtonLink = '';
+          await xMail({
+            xEmail,
+            xTitle,
+            xBodyTitle,
+            xBody1,
+            xBody2,
+            xButtonTitle,
+            xButtonLink,
+          });
 
-
-
-      const xEmail = user?.userEmail as string;
-      const xTitle = `Payment Verified`;
-      const xBodyTitle = `Order moved to Pending`;
-      const xBody1 = `Hello ` + user?.userFirstname + `,` +
-      `<p>Congratulations! Your Bank Payment for order with ID: <b>`+pidOrder+`</b> has been verified and confirmed, the order is now in <b>Pending Stage</b> awaiting approval.</p>
-      <p>Log into your Spreadit account, go to <b>Pending Stage</b> to view this order.</p>` +
-      `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
-      const xBody2 = ``;
-      const xButtonTitle = '';
-      const xButtonLink = '';
-      await xMail({
-        xEmail,
-        xTitle,
-        xBodyTitle,
-        xBody1,
-        xBody2,
-        xButtonTitle,
-        xButtonLink,
-      });
         //success update
         return NextResponse.json(
           { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pay for Shipping.' },
