@@ -787,6 +787,34 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           </div><hr />
 
           <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Actual (Real) Weight of Order:</p>
+            <p>
+              {
+                ((actualWeightValue as number)/1)
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              &nbsp; Kg
+            </p>
+          </div>
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Selected Shipping Plan Rate:</p>
+            <p>
+              {
+                ((shippingPlanRate as number)/1)
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              &nbsp; Kg
+            </p>
+          </div>
+
+          <hr />
+
+          <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Actual Domestic Shipping Cost within China:</p>
             <p>
             $
@@ -799,6 +827,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               &nbsp; USD
             </p>
           </div>
+
 
           <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Actual International Shipping Cost:</p>
@@ -814,12 +843,13 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </p>
           </div>
 
+
           <div className="flex max-md:justify-between md:gap-3">
-            <p className="md:w-64"><b>Total Cost:</b></p>
+            <p className="md:w-64"><b>Actual Total Shipping Cost:</b></p>
             <span className="font-semibold">
               $<b>
               {
-                ((estimatedTotalShippingCost as number) / 1)
+                (((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number)/1)
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
@@ -836,7 +866,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                     ₦
                   {
                       (
-                        ((estimatedTotalShippingCost as number) / 1) *
+                        (((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number)/1) *
                         exNairaToDollar
                       )
                       .toFixed(2)
