@@ -186,8 +186,8 @@ export async function GET(request: NextRequest) {
     });
 
     
-
-    if (orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold') {
+       
+    if (orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold' || orderRecord?.status == 'bank-pending-saved-orders' || orderRecord?.status == 'bank-pending-shipping-orders') {
       //user the above dynamic values from
     }else{
         grandTotalCost = order?.orderTotalCost as any;
