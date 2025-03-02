@@ -33,7 +33,14 @@ export async function POST(request: Request) {
   const exchangeRate2 = formData.get('exchangeRate2') as string;
   const exchangeRate3 = formData.get('exchangeRate3') as string;
 
-
+// console.log('SHIPPING COST: '+orderShippingCost);
+// console.log('TOTAL COST: '+orderTotalCost);
+// console.log('VAT: '+vat);
+// console.log('SERVICE CHARGE: '+serviceCharge);
+// console.log('EXCHANGE RATE 1: '+exchangeRate1);
+// console.log('EXCHANGE RATE 2: '+exchangeRate2);
+// console.log('EXCHANGE RATE 3: '+exchangeRate3);
+// return;
 
 
 
@@ -272,23 +279,26 @@ export async function POST(request: Request) {
     // .................... PENDING STAGE MAIL ....................//
     if(newStatus == "pending"){
 
-          //UPDATE SERVICE STATUS 
+          //UPDATE AND BAKE ORDER DETAILS
           const updatex = await prisma.orders.update({
             where: {  
                       pidUser: pidUser, 
                       pidOrder: pidOrder 
                   },
             data: {
-              orderShippingCost: orderShippingCost,
-              orderTotalCost: orderTotalCost,
-              vat: vat,
-              serviceCharge: serviceCharge,
-              exchangeRate1: exchangeRate1,
-              exchangeRate2: exchangeRate2,
-              exchangeRate3: exchangeRate3,
-              updatedAt: new Date(),
+                      orderShippingCost: orderShippingCost,
+                      orderTotalCost: orderTotalCost,
+                      vat: vat,
+                      serviceCharge: serviceCharge,
+                      exchangeRate1: exchangeRate1,
+                      exchangeRate2: exchangeRate2,
+                      exchangeRate3: exchangeRate3,
+                      updatedAt: new Date(),
             },
           });
+
+
+
 
       const xEmail = user?.userEmail as string;
       const xTitle = `Payment Verified`;
