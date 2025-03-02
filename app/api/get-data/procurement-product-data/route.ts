@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
         currencyType: true,
         destinationCountry: true,
         shippingPlan: true,
+        orderWeight: true,
+        shippingCost1: true,
         status: true,
       },
     });
@@ -169,6 +171,9 @@ export async function GET(request: NextRequest) {
     let exYuanToDollar = exRate?.exYuanToDollar;
     let exNairaToYuan = exRate?.exNairaToYuan;
 
+    let actualWeight = orderRecord?.orderWeight;
+    let actualDomesticShippingCost = orderRecord?.shippingCost1;
+
 
     //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
     const order = await prisma.orders.findUnique({
@@ -185,7 +190,7 @@ export async function GET(request: NextRequest) {
         status: true,
       },
     });
-    
+
 
     
        
@@ -200,6 +205,7 @@ export async function GET(request: NextRequest) {
         exNairaToDollar = order?.exchangeRate1 as any;
         exYuanToDollar = order?.exchangeRate2 as any;
         exNairaToYuan = order?.exchangeRate3 as any;
+        actualWeight = order?.orderWeight as any;
     }
     
     
@@ -217,6 +223,12 @@ export async function GET(request: NextRequest) {
 
       //TOTAL WEIGHT
       productsTotalWeight: totalWeight,
+
+      //ACTUAL WEIGHT
+      actualWeight: actualWeight,
+
+      //ACTUAL DOMESTIC SHIPPING COST
+      actualDomesticShippingCost: actualDomesticShippingCost,
 
       //CURRENCY TYPE, NAME & LOGO
       currencyType: orderRecord?.currencyType,
