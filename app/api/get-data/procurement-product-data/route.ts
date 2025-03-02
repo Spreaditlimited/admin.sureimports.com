@@ -182,9 +182,16 @@ export async function GET(request: NextRequest) {
     
 
     if (orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold') {
-      //grandTotalCost = grandTotalCost * parseFloat(exRate?.exYuanToDollar as any);
+      //user the above dynamic values from
     }else{
       grandTotalCost = order?.orderTotalCost as any;
+      orderShippingCost = order?.orderShippingCost;
+      orderWeight = order?.orderWeight as any;
+      vat = order?.vat as any;
+      serviceCharge = order?.serviceCharge as any;
+      exchangeRate1 = order?.exchangeRate1 as any;
+      exchangeRate2 = order?.exchangeRate2 as any;
+      exchangeRate3 = order?.exchangeRate3 as any;
     }
     
     
