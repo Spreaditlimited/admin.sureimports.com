@@ -33,6 +33,11 @@ export async function POST(request: Request) {
   const exchangeRate2 = formData.get('exchangeRate2') as string;
   const exchangeRate3 = formData.get('exchangeRate3') as string;
 
+  const actualWeight = formData.get('actualWeight') as string;
+  const actualDomesticShippingCost = formData.get('actualDomesticShippingCost') as string;
+
+
+
 // console.log('SHIPPING COST: '+orderShippingCost);
 // console.log('TOTAL COST: '+orderTotalCost);
 // console.log('VAT: '+vat);
@@ -40,7 +45,9 @@ export async function POST(request: Request) {
 // console.log('EXCHANGE RATE 1: '+exchangeRate1);
 // console.log('EXCHANGE RATE 2: '+exchangeRate2);
 // console.log('EXCHANGE RATE 3: '+exchangeRate3);
-// return;
+console.log('ACTUAL WEIGHT: '+actualWeight);
+console.log('ACTUAL DOMESTIC SHIPPING COST: '+actualDomesticShippingCost); 
+return;
 
 
 

@@ -89,6 +89,9 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [vat, setVat] = useState<number>(0);
   const [vatValue, setVatValue] = useState<number>(0);
 
+  const [actualWeight, setActualWeight] = useState<number>(0);
+  const [actualDomesticShippingCost, setActualDomesticShippingCost] = useState<number>(0);
+
   const [destinationCountry, setDestinationCountry] = useState<string>('...');
 
   const [shippingPlanName, setShippingPlanName] = useState<string>('...');
@@ -211,7 +214,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   ///////////////////////////////// HANDLE FORM SUBMISSION /////////////////////////////////
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+          event.preventDefault();
 
           let pidMessage = 'MSG' + new Date().getTime().toString();
           let currentStatus = status;
@@ -231,6 +234,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           formData.append('exchangeRate1', exNairaToDollar.toString());
           formData.append('exchangeRate2', exYuanToDollar.toString());
           formData.append('exchangeRate3', exNairaToYuan.toString());
+
+          formData.append('actualWeight', actualWeight.toString());
+          formData.append('actualDomesticShippingCost', actualDomesticShippingCost.toString());
+          
 
 
           //MAKE REQUEST ATTEMPT
@@ -798,9 +805,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         </div><br />
 
 
+
         {status == 'approved' && (
           <>
-        {/* Weight and Cost Input */}
+        {/****************************** ACTUAL WEIGHT OF ORDER *****************************/}
         <div className="flex flex-col md:flex-row gap-6">
           <div className="flex-1">
             <label
@@ -810,9 +818,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               Actual Weight of Order
             </label>
             <input
+              required
               name="actualWeight"
               type="text"
-              id="weight"
+              id="actualWeight"
               placeholder="Weight in (Kg)Kilograms"
               className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             />
@@ -824,7 +833,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-          {/****************************** TOTAL COST OF ORDER *****************************/}
+          {/****************************** ACTUAL DOMESTIC SHIPPING COST OF ORDER *****************************/}
           <div className="flex-1">
             <label
               htmlFor="totalCost"
@@ -833,9 +842,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               Actual Shipping Cost of Order
             </label>
             <input
-              name="domesticShippingCost"
+              required
+              name="actualDomesticShippingCost"
               type="text"
-              id="totalCost"
+              id="actualDomesticShippingCost"
               placeholder="Total Cost of Order in (¥)Yuan"
               className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             />
