@@ -810,7 +810,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               Actual Weight of Order
             </label>
             <input
-              name="weight"
+              name="actualWeight"
               type="text"
               id="weight"
               placeholder="Weight in (Kg)Kilograms"
@@ -833,7 +833,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               Actual Shipping Cost of Order
             </label>
             <input
-              name="totalCost"
+              name="domesticShippingCost"
               type="text"
               id="totalCost"
               placeholder="Total Cost of Order in (¥)Yuan"
@@ -929,7 +929,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             
             <div className="w-full md:w-1/2">
                 <button type="submit" name="action" value="ready-to-ship" onClick={() => setActionType('pay-for-shipping')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE (Move to Ready to Ship)
+                  APPROVE (Move to Pay-for-Shipping)
                 </button>
                 <small>Approve this Order for further processing</small>
             </div>
