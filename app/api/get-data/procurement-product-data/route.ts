@@ -190,14 +190,14 @@ export async function GET(request: NextRequest) {
     if (orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold') {
       //user the above dynamic values from
     }else{
-      grandTotalCost = order?.orderTotalCost as any;
-      estimatedTotalShippingCost = order?.orderShippingCost as any;
-      //orderWeight = order?.orderWeight as any;
-      vat = order?.vat as any;
-      serviceCharge = order?.serviceCharge as any;
-      exNairaToDollar = order?.exchangeRate1 as any;
-      exYuanToDollar = order?.exchangeRate2 as any;
-      exNairaToYuan = order?.exchangeRate3 as any;
+        grandTotalCost = order?.orderTotalCost as any;
+        estimatedTotalShippingCost = order?.orderShippingCost as any;
+        //orderWeight = order?.orderWeight as any;
+        vat = order?.vat as any;
+        serviceCharge = order?.serviceCharge as any;
+        exNairaToDollar = order?.exchangeRate1 as any;
+        exYuanToDollar = order?.exchangeRate2 as any;
+        exNairaToYuan = order?.exchangeRate3 as any;
     }
     
     
