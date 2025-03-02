@@ -162,6 +162,12 @@ export async function GET(request: NextRequest) {
       totalPrice + estimatedTotalShippingCost + serviceChargeValue + vatValue,
     );
 
+    //SERVICE CHARGES, EXCHANGE RATES & VAT
+    let vat = exRate?.vat;
+    let serviceCharge = exRate?.service_charge;
+    let exNairaToDollar = exRate?.exNairaToDollar;
+    let exYuanToDollar = exRate?.exYuanToDollar;
+    let exNairaToYuan = exRate?.exNairaToYuan;
 
     //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
     const order = await prisma.orders.findUnique({
@@ -185,13 +191,13 @@ export async function GET(request: NextRequest) {
       //user the above dynamic values from
     }else{
       grandTotalCost = order?.orderTotalCost as any;
-      orderShippingCost = order?.orderShippingCost;
-      orderWeight = order?.orderWeight as any;
+      estimatedTotalShippingCost = order?.orderShippingCost as any;
+      //orderWeight = order?.orderWeight as any;
       vat = order?.vat as any;
       serviceCharge = order?.serviceCharge as any;
-      exchangeRate1 = order?.exchangeRate1 as any;
-      exchangeRate2 = order?.exchangeRate2 as any;
-      exchangeRate3 = order?.exchangeRate3 as any;
+      exNairaToDollar = order?.exchangeRate1 as any;
+      exYuanToDollar = order?.exchangeRate2 as any;
+      exNairaToYuan = order?.exchangeRate3 as any;
     }
     
     
@@ -229,7 +235,7 @@ export async function GET(request: NextRequest) {
       serviceChargeValue: serviceChargeValue,
 
       //VAT PERCENTAGE & VALUE
-      vat: exRate?.vat,
+      vat: vat,
       vatValue: vatValue,
 
       //SHIPPING DESTINATION COUNTRY
