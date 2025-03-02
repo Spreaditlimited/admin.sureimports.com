@@ -45,9 +45,9 @@ export async function POST(request: Request) {
 // console.log('EXCHANGE RATE 1: '+exchangeRate1);
 // console.log('EXCHANGE RATE 2: '+exchangeRate2);
 // console.log('EXCHANGE RATE 3: '+exchangeRate3);
-console.log('ACTUAL WEIGHT: '+actualWeight);
-console.log('ACTUAL DOMESTIC SHIPPING COST: '+actualDomesticShippingCost); 
-return;
+// console.log('ACTUAL WEIGHT: '+ actualWeight);
+// console.log('ACTUAL DOMESTIC SHIPPING COST: '+actualDomesticShippingCost); 
+// return;
 
 
 
@@ -65,18 +65,18 @@ return;
   if(newStatus == 'message'){
     const messagex = await prisma.messages.create({
       data: {
-      pidMessage: pidMessage,
-      pidOrder: pidOrder,
-      pidFrom: 'admin@sureimports.com',
-      pidTo: user?.userEmail,
-      fullName: user?.userFirstname,
-      messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
-      messageContent: message,
-      messageStatus:    'unread',
-      createdAt:       new Date(),
-      updatedAt:       new Date(),
-      },
-    });
+              pidMessage: pidMessage,
+              pidOrder: pidOrder,
+              pidFrom: 'admin@sureimports.com',
+              pidTo: user?.userEmail,
+              fullName: user?.userFirstname,
+              messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
+              messageContent: message,
+              messageStatus:    'unread',
+              createdAt:       new Date(),
+              updatedAt:       new Date(),
+            },
+          });
  
   
     // .................... ON-HOLD(DECLINED) STAGE MAIL ....................//
@@ -300,6 +300,8 @@ return;
                       exchangeRate1: exchangeRate1,
                       exchangeRate2: exchangeRate2,
                       exchangeRate3: exchangeRate3,
+                      orderWeight: actualWeight,
+                      shippingCost1: actualDomesticShippingCost,
                       updatedAt: new Date(),
             },
           });
@@ -339,6 +341,29 @@ return;
 
     // .................... PAY FOR SHIPPING STAGE MAIL ....................//
     if(newStatus == "pay-for-shipping"){
+
+        //UPDATE AND BAKE ORDER DETAILS
+        const updatex = await prisma.orders.update({
+          where: {  
+                    pidUser: pidUser, 
+                    pidOrder: pidOrder 
+                },
+          data: {
+                    // orderShippingCost: orderShippingCost,
+                    // orderTotalCost: orderTotalCost,
+                    // vat: vat,
+                    // serviceCharge: serviceCharge,
+                    // exchangeRate1: exchangeRate1,
+                    // exchangeRate2: exchangeRate2,
+                    // exchangeRate3: exchangeRate3,
+                    // orderWeight: actualWeight,
+                    shippingCost1: actualDomesticShippingCost,
+                    updatedAt: new Date(),
+          },
+        });
+
+        if(updatex){
+          //SEND EMAIL TO USER
         const xEmail = user?.userEmail as string;
         const xTitle = `Pay for Shipping`;
         const xBodyTitle = `Pay for Order Shippment`;
@@ -364,6 +389,15 @@ return;
             { statusx: 'SUCCESS', message: 'Order has been successfully moved to Pay for Shipping.' },
             { status: 200 },
           );
+        }else{
+          //success update
+          return NextResponse.json(
+            { statusx: 'ACTION_FAILED', message: 'Action Failed! You may need to try again, or contact the Admin.' },
+            { status: 401 },
+          );
+        }
+
+
         }
 
 

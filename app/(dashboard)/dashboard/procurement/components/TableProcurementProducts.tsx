@@ -806,6 +806,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
+
         {status == 'approved' && (
           <>
         {/****************************** ACTUAL WEIGHT OF ORDER *****************************/}
