@@ -146,8 +146,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         setProductsTotalCount(replaceNullWithZero(data.productsTotalCount));
         setProductsTotalWeight(replaceNullWithZero(data.productsTotalWeight));
 
-        setActualWeight(replaceNullWithZero(data.actualWeight));
-        setActualDomesticShippingCost(replaceNullWithZero(data.actualDomesticShippingCost));
+        setActualWeightValue(replaceNullWithZero(data.actualWeight));
+        setActualDomesticShippingCostValue(replaceNullWithZero(data.actualDomesticShippingCost));
 
         setCurrencyType(data.currencyType);
         setCurrencyName(data.currencyName);
@@ -803,13 +803,14 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Selected Shipping Plan Rate:</p>
             <p>
+            $
               {
                 ((shippingPlanRate as number)/1)
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
               }
-              &nbsp; Kg
+              &nbsp; / Kg
             </p>
           </div>
 
@@ -844,13 +845,14 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </p>
           </div>
 
+          <hr />
 
           <div className="flex max-md:justify-between md:gap-3">
             <p className="md:w-64"><b>Actual Total Shipping Cost:</b></p>
             <span className="font-semibold">
               $<b>
               {
-                ((((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number))/1)
+                ((((actualWeightValue as number) * shippingPlanRate)/1 + (actualDomesticShippingCostValue as number)/1 ))
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
@@ -867,7 +869,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                     ₦
                   {
                       (
-                        (((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number)/1) *
+                        ((((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number))/1) *
                         exNairaToDollar
                       )
                       .toFixed(2)
