@@ -76,9 +76,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [productsTotalCount, setProductsTotalCount] = useState<number>(0);
   const [productsTotalWeight, setProductsTotalWeight] = useState<number>(0);
 
-  const [actualWeightValue, setActualWeightValue] = useState<number>(0);
-  const [actualDomesticShippingCostValue, setActualDomesticShippingCostValue] = useState<number>(0);
-
   const [currencyType, setCurrencyType] = useState<string>('...');
   const [currencyName, setCurrencyName] = useState<string>('...');
   const [currencyLogo, setCurrencyLogo] = useState<string>('...');
@@ -91,6 +88,9 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [serviceChargeValue, setServiceChargeValue] = useState<number>(0);
   const [vat, setVat] = useState<number>(0);
   const [vatValue, setVatValue] = useState<number>(0);
+
+  const [actualWeightValue, setActualWeightValue] = useState<number>(0);
+  const [actualDomesticShippingCostValue, setActualDomesticShippingCostValue] = useState<number>(0);
 
   const [actualWeight, setActualWeight] = useState<number>(0);
   const [actualDomesticShippingCost, setActualDomesticShippingCost] = useState<number>(0);
@@ -1215,7 +1215,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <>
         {/* Action Buttons */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/1">
             <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
                   Send Message
                 </button>

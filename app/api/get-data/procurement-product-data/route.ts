@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
         exNairaToYuan: true,
       },
     });
+    
 
     const totalPriceValue = replaceNullWithZero(price[0].totalPricex);
     const totalWeight = replaceNullWithZero(weight[0].totalWeightx);
