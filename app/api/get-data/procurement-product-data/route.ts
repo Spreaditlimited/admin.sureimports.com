@@ -165,15 +165,18 @@ export async function GET(request: NextRequest) {
     );
 
     //SERVICE CHARGES, EXCHANGE RATES & VAT
-    let vat = exRate?.vat;
-    let serviceCharge = exRate?.service_charge;
-    let exNairaToDollar = exRate?.exNairaToDollar;
-    let exYuanToDollar = exRate?.exYuanToDollar;
-    let exNairaToYuan = exRate?.exNairaToYuan;
+    let vat = exRate?.vat ?? 7;
+    let serviceCharge = exRate?.service_charge ?? 15;
+    let exNairaToDollar = exRate?.exNairaToDollar ?? 1550;
+    let exYuanToDollar = exRate?.exYuanToDollar ?? 7.5;
+    let exNairaToYuan = exRate?.exNairaToYuan ?? 205;
 
     //ACTUAL WEIGHT & DOMESTIC SHIPPING COST
     let actualWeight = orderRecord?.orderWeight;
-    let actualDomesticShippingCost = orderRecord?.shippingCost1;
+    let actualDomesticShippingCost = parseFloat(orderRecord?.shippingCost1 as any ?? 0) / parseFloat(exYuanToDollar as any ?? 0);
+    let actualInternationalShippingCost = parseFloat(actualWeight as any ?? 0) * parseFloat(shippingPlanRate as any ?? 0);
+    let actualTotalShippingCost = actualDomesticShippingCost + actualInternationalShippingCost;
+    let costDifference = actualTotalShippingCost - estimatedTotalShippingCost;
 
 console.log('JESUS CHRIST IS GREAT!!!');
 
@@ -233,6 +236,15 @@ console.log('JESUS CHRIST IS GREAT!!!');
 
       //ACTUAL DOMESTIC SHIPPING COST
       actualDomesticShippingCost: actualDomesticShippingCost,
+
+      //ACTUAL INTERNATIONAL SHIPPING COST
+      actualInternationalShippingCost: actualInternationalShippingCost,
+
+      //ACTUAL TOTAL SHIPPING COST
+      actualTotalShippingCost: actualTotalShippingCost,
+
+      //COST DIFFERENCE
+      costDifference: costDifference,
 
       //CURRENCY TYPE, NAME & LOGO
       currencyType: orderRecord?.currencyType,

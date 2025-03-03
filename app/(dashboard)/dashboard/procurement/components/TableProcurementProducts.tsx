@@ -94,6 +94,9 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const [actualWeight, setActualWeight] = useState<number>(0);
   const [actualDomesticShippingCost, setActualDomesticShippingCost] = useState<number>(0);
+  const [actualInternationalShippingCost, setActualInternationalShippingCost] = useState<number>(0);
+  const [actualTotalShippingCost, setActualTotalShippingCost] = useState<number>(0);
+  const [costDifference, setCostDifference] = useState<number>(0);
 
   const [destinationCountry, setDestinationCountry] = useState<string>('...');
 
@@ -148,6 +151,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
         setActualWeightValue(replaceNullWithZero(data.actualWeight));
         setActualDomesticShippingCostValue(replaceNullWithZero(data.actualDomesticShippingCost));
+        setActualInternationalShippingCost(replaceNullWithZero(data.actualInternationalShippingCost));
+        setActualTotalShippingCost(replaceNullWithZero(data.actualTotalShippingCost));
+        setCostDifference(replaceNullWithZero(data.costDifference));
+
 
         setCurrencyType(data.currencyType);
         setCurrencyName(data.currencyName);
@@ -836,7 +843,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             <p>
             $
               {
-                ((actualWeightValue as number) * shippingPlanRate)
+                (actualInternationalShippingCost as number)
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
@@ -850,16 +857,147 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <div className="flex max-md:justify-between md:gap-3">
             <p className="md:w-64"><b>Actual Total Shipping Cost:</b></p>
             <span className="font-semibold">
-              $<b>
+              $
+              <b>
+                {
+                  (((actualTotalShippingCost as number)/1 ))
+                    .toFixed(2)
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                }
+              </b>
+              &nbsp; USD
+            </span>
+
+                {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
+                {destinationCountry == 'Nigeria' && (
+                  <>
+                    &nbsp;{' | '}&nbsp;
+                    <span className="">
+                    ₦
+                  {
+                      (
+                        (((actualTotalShippingCost as number)/1 )) *
+                        exNairaToDollar
+                      )
+                      .toFixed(2)
+                      .toString()
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                  }
+              &nbsp; Naira
+            </span>
+                  </>
+                )}
+          </div>
+        </div>
+        </>
+   )}
+
+
+
+{/*------------------ ACTUAL TOTAL SHIPPING COST -----------------*/}
+{(status == 'pay-for-shipping') && (
+          <>
+        {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
+        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
+          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
+            Actual Calculated Total Shipping Cost
+          </div><hr />
+
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Actual (Real) Shipping Cost:</p>
+            <p>
+            $
               {
-                ((((actualWeightValue as number) * shippingPlanRate)/1 + (actualDomesticShippingCostValue as number)/1 ))
+                (((actualTotalShippingCost as number)/1 ))
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
               }
+              &nbsp; USD
+            </p>
+          </div>
+
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Initial Estimated Shipping Cost:</p>
+            <p>
+            $
+              {
+                ((estimatedTotalShippingCost as number)/1)
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              &nbsp; USD
+            </p>
+          </div>
+
+          <hr />
+
+          <div className="flex max-md:justify-between md:gap-3">
+
+
+            { costDifference > 0 && (
+              <>
+            <p className="md:w-64"><b>Amount to Pay:</b></p>
+            <span className="font-semibold">
+              $
+              <b>
+                {
+                  ((costDifference as number)/1)
+                    .toFixed(2)
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                }
               </b>
               &nbsp; USD
             </span>
+            </>
+          )}
+
+
+
+            { costDifference < 0 && (
+            <>
+            <p className="md:w-64"><b>Shipping Refund Balance:</b></p>
+            <span className="font-semibold">
+              $
+              <b>
+                {
+                  ((costDifference as number)/1)
+                    .toFixed(2)
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                }
+              </b>
+              &nbsp; USD
+            </span>
+            </>
+          )}
+
+
+
+        { costDifference == 0 && (
+            <>
+            <p className="md:w-64"><b>No Payment is Required </b></p>
+            {/* <span className="font-semibold">
+              $
+              <b>
+                {
+                  ((costDifference as number)/1)
+                    .toFixed(2)
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                }
+              </b>
+              &nbsp; USD
+            </span> */}
+            </>
+          )}
+
+
 
                 {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
                 {destinationCountry == 'Nigeria' && (
@@ -884,9 +1022,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         </div>
         </>
    )}
-
-
-
 
 
 
