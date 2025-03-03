@@ -356,7 +356,7 @@ export async function POST(request: Request) {
                     // exchangeRate1: exchangeRate1,
                     // exchangeRate2: exchangeRate2,
                     // exchangeRate3: exchangeRate3,
-                    // orderWeight: actualWeight,
+                    orderWeight: actualWeight,
                     shippingCost1: actualDomesticShippingCost,
                     updatedAt: new Date(),
           },

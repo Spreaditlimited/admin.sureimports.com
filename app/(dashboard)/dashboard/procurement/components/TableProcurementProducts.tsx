@@ -799,6 +799,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </p>
           </div>
 
+
           <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Selected Shipping Plan Rate:</p>
             <p>
@@ -849,7 +850,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             <span className="font-semibold">
               $<b>
               {
-                (((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number)/1)
+                ((((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number))/1)
                   .toFixed(2)
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string

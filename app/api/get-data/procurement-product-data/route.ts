@@ -171,9 +171,14 @@ export async function GET(request: NextRequest) {
     let exYuanToDollar = exRate?.exYuanToDollar;
     let exNairaToYuan = exRate?.exNairaToYuan;
 
+    //ACTUAL WEIGHT & DOMESTIC SHIPPING COST
     let actualWeight = orderRecord?.orderWeight;
     let actualDomesticShippingCost = orderRecord?.shippingCost1;
 
+console.log('JESUS CHRIST IS GREAT!!!');
+
+// console.log('ACTUAL WEIGHT:', actualWeight);
+// console.log('ACTUAL DOMESTIC SHIPPING COST:', actualDomesticShippingCost);
 
     //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
     const order = await prisma.orders.findUnique({
@@ -205,7 +210,6 @@ export async function GET(request: NextRequest) {
         exNairaToDollar = order?.exchangeRate1 as any;
         exYuanToDollar = order?.exchangeRate2 as any;
         exNairaToYuan = order?.exchangeRate3 as any;
-        actualWeight = order?.orderWeight as any;
     }
     
     
