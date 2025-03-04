@@ -268,7 +268,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+actionType);}
         if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+actionType);}
         if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
-        if (data.statusx == 'REVERT_TO_APPROVED') {toast.warning(data.message);  router.push('/dashboard/procurement?status=approved');}
+        if (data.statusx == 'REVERT_TO_APPROVED') {toast.success(data.message);  router.push('/dashboard/procurement?status=approved');}
         } catch (error: any) {
             console.log(error.message);
         } finally {
