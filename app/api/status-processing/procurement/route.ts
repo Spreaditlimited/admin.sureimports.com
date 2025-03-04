@@ -533,9 +533,9 @@ export async function POST(request: Request) {
             if(newStatus == "completed"){
                 const xEmail = user?.userEmail as string;
                 const xTitle = `Order process is Completed!`;
-                const xBodyTitle = `Order process has not been Completed`;
+                const xBodyTitle = `Order Process has been Completed Successfully!`;
                 const xBody1 = `Hello ` + user?.userFirstname + `,` +
-                `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process.</p>` +
+                `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process successfully!.</p>` +
                 `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
                 const xBody2 = ``;
                 const xButtonTitle = '';
