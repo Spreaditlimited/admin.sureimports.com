@@ -70,7 +70,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   //************************************ CALCULATIONS ************************************//
   //------------------------- PRODUCTS DATA FOR CALCULATIONS --------------------------//
   //const [pidOrder, setPidOrder] = useState<string>(products[0]?.pidOrder || '');
-
+  const router = useRouter();
   const [getAllProducts, setGetAllProducts] = useState<any[]>([]) as any;
   const [productsTotalPrice, setProductsTotalPrice] = useState<number>(0);
   const [productsTotalCount, setProductsTotalCount] = useState<number>(0);
@@ -228,7 +228,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
           event.preventDefault();
-
+          toast.info('XProcessing . . .');
           let pidMessage = 'MSG' + new Date().getTime().toString();
           let currentStatus = status;
  
@@ -251,7 +251,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           formData.append('actualWeight', actualWeight.toString());
           formData.append('actualDomesticShippingCost', actualDomesticShippingCost.toString());
           
-          const router = useRouter();
+          
 
           //MAKE REQUEST ATTEMPT
           try {
@@ -1100,12 +1100,14 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {/****************************** ACTUAL DOMESTIC SHIPPING COST OF ORDER *****************************/}
           <div className="flex-1">
+
             <label
               htmlFor="totalCost"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
               Actual Domestic Shipping Cost
             </label>
+
             <input
               required
               name="actualDomesticShippingCost"
@@ -1114,6 +1116,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               placeholder="Total Cost of Order in (¥)Yuan"
               className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             />
+
             <p className="text-sm text-red-600 dark:text-red-400 mt-1">
               *Note: This value must be in (¥)Yuan
             </p>
