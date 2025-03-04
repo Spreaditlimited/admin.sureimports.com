@@ -1,6 +1,6 @@
 import Loader from "@/app/uix/Loader";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
@@ -251,7 +251,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           formData.append('actualWeight', actualWeight.toString());
           formData.append('actualDomesticShippingCost', actualDomesticShippingCost.toString());
           
-
+          const router = useRouter();
 
           //MAKE REQUEST ATTEMPT
           try {
@@ -268,12 +268,13 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+actionType);}
         if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+actionType);}
         if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
+        if (data.statusx == 'REVERT_TO_APPROVED') {toast.warning(data.message);  router.push('/dashboard/procurement?status=approved');}
         } catch (error: any) {
             console.log(error.message);
         } finally {
           //setLoading(false);
         }
-
+        
 
   }
 
@@ -559,6 +560,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </>
           )}
 
+
           {/* SHIPPING DETAILS 2 */}
           {shippingPlanName == 'EXPRESS_SHIPPING' && (
             <>
@@ -572,6 +574,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               </div>
             </>
           )}
+
 
           {/* SHIPPING DETAILS 3 */}
           {shippingPlanName == 'SPECIAL_SHIPPING' && (
@@ -587,6 +590,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </>
           )}
 
+
           {/* SHIPPING DETAILS 4 */}
           {shippingPlanName == 'SEA_SHIPPING' && (
             <>
@@ -600,6 +604,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               </div>
             </>
           )}
+
 
           <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Destination Country:</p>
@@ -1099,7 +1104,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               htmlFor="totalCost"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Actual Shipping Cost of Order
+              Actual Domestic Shipping Cost
             </label>
             <input
               required
@@ -1219,7 +1224,14 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
                   Send Message
                 </button>
-                <small>Approve this Order for further processing</small>
+                <small>Send message to the the customer of this order</small>
+            </div>
+
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="decline" onClick={() => setActionType('revert_to_approved')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  Revert (Back to Approved)
+                </button>
+                <small>Revert Order if there are issues</small>
             </div>
 
             {/* <div className="w-full md:w-1/2">

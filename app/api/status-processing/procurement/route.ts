@@ -149,7 +149,6 @@ export async function POST(request: Request) {
 
 
 
-
               
                 
  //*************************************** MESSAGING BLOCK STARTS ***************************************//
@@ -157,7 +156,27 @@ export async function POST(request: Request) {
     //SEND EMAIL TO USER
   try {
 
-    
+            // .................... REVERT TO APPROVED (REVERT) STAGE ....................//
+            if(newStatus == "revert_to_approved"){
+
+              //UPDATE SERVICE STATUS 
+              const updatex = await prisma.orders.update({
+                where: {  
+                          pidUser: pidUser, 
+                          pidOrder: pidOrder 
+                      },
+                data: {
+                  status: 'approved',
+                  updatedAt: new Date(),
+                },
+              });
+
+              //success update
+              return NextResponse.json(
+                { statusx: 'REVERT_TO_APPROVED', message: 'Order has been successfully reverted to Approved Stage.' },
+                { status: 200 },
+              );
+              }
 
 
 
