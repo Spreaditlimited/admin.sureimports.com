@@ -228,7 +228,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
           event.preventDefault();
-          toast.info('XProcessing . . .');
+
           let pidMessage = 'MSG' + new Date().getTime().toString();
           let currentStatus = status;
  
