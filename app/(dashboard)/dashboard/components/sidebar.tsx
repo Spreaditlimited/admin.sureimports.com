@@ -51,7 +51,7 @@ const features: MenuItem[] = [
   {
     title: "Procurement",
     icon: ShoppingCart,
-    path: "/dashboard/procurement?status=saved",
+    path: "/dashboard/procurement?status=pending",
   },
   // {
   //   title: "Buy Phones & Laptops",

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       const xBody1 = `Hello ` + user?.userFirstname + `,` +
   `<p>Find the admin message below for your order with ID :<b>`+pidOrder+`</b>. This is a special Admin Message.</p>
   <p>You may contact the admin fo further clarification.</p>
-  <p>You may also Log into your Spreadit account, go to the dashboard to view the specific order.</p>` +
+  <p>You may also Log into your SureImports account, go to the dashboard to view the specific order.</p>` +
   `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
       const xBody2 = ``;
       const xButtonTitle = '';
@@ -188,7 +188,7 @@ export async function POST(request: Request) {
               const xBody1 = `Hello ` + user?.userFirstname + `,` +
           `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Declined and Placed On-Hold</b>.</p>
           <p>You will have to review and update this order.</p>
-          <p>Log into your Spreadit account, go to <b>On-Hold Orders</b> to view this order.</p>` +
+          <p>Log into your SureImports account, go to <b>On-Hold Orders</b> to view this order.</p>` +
           `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
               const xBody2 = ``;
               const xButtonTitle = '';
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
               const xBody1 = `Hello ` + user?.userFirstname + `,` +
               `<p>Unfortunately Your Bank Payment for order with ID :<b>`+pidOrder+`</b> has been declined, the order has been sent back to <b>Saved Stage</b> awaiting your review.</p>
               <p>You may be required to confirm this payment transaction with your processing bank.</p>
-              <p>Log into your Spreadit account, go back to <b>Saved Orders</b> to view this order.</p>` +
+              <p>Log into your SureImports account, go back to <b>Saved Orders</b> to view this order.</p>` +
               `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
               const xBody2 = ``;
               const xButtonTitle = '';
@@ -330,7 +330,7 @@ export async function POST(request: Request) {
           const xBodyTitle = `Order moved to Pending`;
           const xBody1 = `Hello ` + user?.userFirstname + `,` +
           `<p>Congratulations! Your Bank Payment for order with ID: <b>`+pidOrder+`</b> has been verified and confirmed, the order is now in <b>Pending Stage</b> awaiting approval.</p>
-          <p>Log into your Spreadit account, go to <b>Pending Stage</b> to view this order.</p>` +
+          <p>Log into your SureImports account, go to <b>Pending Stage</b> to view this order.</p>` +
           `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
           const xBody2 = ``;
           const xButtonTitle = '';
@@ -389,7 +389,7 @@ export async function POST(request: Request) {
         const xBody1 = `Hello ` + user?.userFirstname + `,` +
         `<p>Your order with ID :<b>`+pidOrder+`</b> has been cleared for <b>Shipping Payment</b>.</p>
         <p>Your updated shipping cost has been calculated for payment.</p>
-        <p>Log into your Spreadit account, go to <b>Pay for Shipping</b> to view this order.</p>` +
+        <p>Log into your SureImports account, go to <b>Pay for Shipping</b> to view this order.</p>` +
         `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
         const xBody2 = ``;
         const xButtonTitle = '';
@@ -432,8 +432,7 @@ export async function POST(request: Request) {
         const xBodyTitle = `Order now In-Transit`;
         const xBody1 = `Hello ` + user?.userFirstname + `,` +
         `<p>Congratulations!, Your Bank Payment for order with ID :<b>`+pidOrder+`</b> has been verified and confirmed, the order is now <b>In-Transit </b>.</p>
-        <p>You will have to review and update this order.</p>
-        <p>Log into your Spreadit account, go back to <b>Readty to Ship Orders</b> to view this order.</p>` +
+        <p>Log into your SureImports account to view this order and its progress.</p>` +
         `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
         const xBody2 = ``;
         const xButtonTitle = '';
@@ -467,8 +466,8 @@ export async function POST(request: Request) {
                 const xBodyTitle = `Order is now Ready for PickUp`;
                 const xBody1 = `Hello ` + user?.userFirstname + `,` +
                 `<p>Congratulations!, your order with ID :<b>`+pidOrder+`</b> is now <b>ready for Pickup</b>.</p>
-                <p>Log into your Spreadit account, go to <b>ready for Pickup</b> to view this order.</p>` +
-                `<br><b> - The Spreadit Order Review Team</b><br>`+
+                <p>Log into your SureImports account, go to <b>ready for Pickup</b> to view this order.</p>` +
+                `<br><b> - The SureImports Order Review Team</b><br>`+
                 `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
                 const xBody2 = ``;
                 const xButtonTitle = '';
@@ -503,7 +502,7 @@ export async function POST(request: Request) {
               const xBody1 = `Hello ` + user?.userFirstname + `,` +
               `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Cancelled</b>.</p>
               <p>You will be getting a refund for this order within 48hours.</p>
-              <p>Log into your Spreadit account, go to <b>Cancelled Orders</b> to view this order.</p>` +
+              <p>Log into your SureImports account, go to <b>Cancelled Orders</b> to view this order.</p>` +
               `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
               const xBody2 = ``;
               const xButtonTitle = '';
