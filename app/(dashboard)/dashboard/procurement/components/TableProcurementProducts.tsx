@@ -795,7 +795,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Actual Shipping Cost of Order
+          Actual Shipping Cost of Order Details
           </div><hr />
 
           <div className="flex max-md:justify-between md:gap-20">
@@ -906,12 +906,12 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Actual Calculated Total Shipping Cost
+          Shipping Refund or Balance Payment Calculation
           </div><hr />
 
 
           <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Actual (Real) Shipping Cost:</p>
+            <p className="md:w-64">Actual Total Shipping Cost:</p>
             <p>
             $
               {
@@ -1012,7 +1012,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                     ₦
                   {
                       (
-                        ((((actualWeightValue as number) * shippingPlanRate) + (actualDomesticShippingCostValue as number))/1) *
+                        (costDifference) *
                         exNairaToDollar
                       )
                       .toFixed(2)
@@ -1040,6 +1040,9 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 {/*************************** FORM ***************************/}
  <form onSubmit={handleSubmit}>
 
+
+ {status != 'completed' && (
+  <>
         {/* Confirm Action */}
         <div className="space-y-4 pb-5">
           <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
@@ -1067,6 +1070,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             onChange={(e) => setMessage(e.target.value)}
           ></textarea>
         </div><br />
+        </>
+        )}
 
 
 
