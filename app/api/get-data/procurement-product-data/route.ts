@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
 
     //Domestic Shipping Cost within China
-    let domesticShippingCost = 2; //value in USD
+    let domesticShippingCost = 5; //value in USD
 
     //International Shipping Cost
     let internationalShippingCost =
