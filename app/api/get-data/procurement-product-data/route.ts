@@ -135,6 +135,8 @@ export async function GET(request: NextRequest) {
       currencyLogo = '₦';
     }
 
+    
+
     //Shipping Plan Name
     let shippingPlanName = orderRecord?.shippingPlan; //value in USD
 
