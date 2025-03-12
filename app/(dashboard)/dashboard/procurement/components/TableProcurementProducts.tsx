@@ -1319,7 +1319,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
     name="additionalCost"
     type="text"
     id="additionalCost"
-    placeholder="Enter Tracking Number"
+    placeholder="Provide any Additional Cost"
     className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
   />
   {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
