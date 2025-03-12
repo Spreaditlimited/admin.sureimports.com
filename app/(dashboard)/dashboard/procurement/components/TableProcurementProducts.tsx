@@ -1268,68 +1268,90 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 {/* TRACKING NUMBER */}
-<div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+<div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6 pb-10">
 
-  <div className="w-full md:w-2/3">
-  <div className="flex-1">
-    <label
-      htmlFor="weight"
-      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-    >
-      Order Tracking Number
-    </label>
-    <input
-      required
-      name="trackingNumber"
-      type="text"
-      id="trackingNumber"
-      placeholder="Enter Tracking Number"
-      className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-    />
-    {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-      *Provide Tracking Numger for this Order if availave
-    </p> */}
-  </div>
-            </div>
+          <div className="w-full md:w-2/3">
+              <div className="flex-1">
+                <label
+                  htmlFor="weight"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Order Tracking Number
+                </label>
+                <input
+                  required
+                  name="trackingNumber"
+                  type="text"
+                  id="trackingNumber"
+                  placeholder="Enter Tracking Number"
+                  className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+                {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  *Provide Tracking Numger for this Order if availave
+                </p> */}
+              </div>
+          </div>
             
-            <div className="w-full md:w-1/3">
-                <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('tracking-number-update')} className="btn btn-secondary mt-4 w-full bg-gray-600 dark:bg-gray-500 text-white py-3 rounded-md text-sm shadow hover:bg-gray-700 dark:hover:bg-gray-600">
-                  Update Tracking Number
-                </button>
-                {/* <small>Approve this Order for further processing</small> */}
-            </div>
+          <div className="w-full md:w-1/3">
+              <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('tracking-number-update')} className="btn btn-secondary mt-4 w-full bg-gray-600 dark:bg-gray-500 text-white py-3 rounded-md text-sm shadow hover:bg-gray-700 dark:hover:bg-gray-600">
+                Update Tracking Number
+              </button>
+              {/* <small>Approve this Order for further processing</small> */}
+          </div>
 
   </div>
 
 
 
 {/* ADDITIONAL COST */}
-  <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+        <div className="flex flex-col md:flex-row gap-6">
 
-<div className="w-full md:w-2/3">
-<div className="flex-1">
-  <label
-    htmlFor="weight"
-    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-  >
-    Provide Any additional cost
-  </label>
-  <input
-    required
-    name="additionalCost"
-    type="text"
-    id="additionalCost"
-    placeholder="Provide any Additional Cost"
-    className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-  />
-  {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-    *Provide Tracking Numger for this Order if availave
-  </p> */}
-</div>
-</div>
+          {/******************* ADDITIONAL COST *******************/}
+          <div className="flex-1">
+            <label
+              htmlFor="weight"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Additional Cost (USD)
+            </label>
+            <input
+              required
+              name="additionalCost"
+              type="text"
+              id="additionalCost"
+              placeholder="Enter Additional Cost in USD"
+              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            />
+            {/* <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              Provide Additional Cost for this Order if available
+            </p> */}
+          </div>
 
-</div>
 
+          {/******************* DESCRIPTION *******************/}
+          <div className="flex-1">
+
+            <label
+              htmlFor="totalCost"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Description
+            </label>
+
+            <input
+              required
+              name="additionalCostDescription"
+              type="text"
+              id="additionalCostDescription"
+              placeholder="Enter Description of Additional Cost"
+              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            />
+
+            {/* <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              Describe the Additional Cost
+            </p> */}
+          </div>
+        </div><br />
 
 
 
