@@ -1292,7 +1292,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                  Tracking Company
                 </label>
                 <input
-                  required
+                  //required
                   name="trackingCompany"
                   type="text"
                   id="trackingCompany"
@@ -1315,7 +1315,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                   Order Tracking Number
                 </label>
                 <input
-                  required
+                  //required
                   name="trackingNumber"
                   type="text"
                   id="trackingNumber"
@@ -1337,7 +1337,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                  Tracking Link
                 </label>
                 <input
-                  required
+                  //required
                   name="trackingLink"
                   type="text"
                   id="trackingLink"

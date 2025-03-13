@@ -36,6 +36,12 @@ export async function POST(request: Request) {
   const actualWeight = formData.get('actualWeight') as string;
   const actualDomesticShippingCost = formData.get('actualDomesticShippingCost') as string;
 
+  const trackingCompany = formData.get('trackingCompany') as string;
+  const trackingNumber = formData.get('trackingNumber') as string;
+  const trackingLink = formData.get('trackingLink') as string;
+
+  const additionalCost = formData.get('additionalCost') as string;
+  const additionalCostDescription = formData.get('additionalCostDescription') as string;
 
 
 // console.log('SHIPPING COST: '+orderShippingCost);
@@ -112,11 +118,35 @@ export async function POST(request: Request) {
 
     // .................... TACKING NUMBER UPDATE ....................//
     if(newStatus == "tracking-number-update"){
+
+        //CHECK IF USER PID AND CID EXISTS
+        // const user = await prisma.users.findUnique({
+        //   where: {
+        //     pidUser: pidUser,
+        //     //userEmail: email,
+        //   },
+        // });
+
+
+          //UPDATE SERVICE STATUS 
+          const updatex = await prisma.orders.update({
+            where: {  
+                      pidOrder: pidOrder 
+                  },
+            data: {
+              trackingCompany: trackingCompany,
+              trackingNumber: trackingNumber,
+              trackingLink: trackingLink,
+              updatedAt: new Date(),
+            },
+          });
+
       const xEmail = user?.userEmail as string;
       const xTitle = `Order Tracking Number!`;
       const xBodyTitle = `Tracking Number`;
       const xBody1 = `Hello ` + user?.userFirstname + `,` +
-      `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process successfully!.</p>` +
+      `<p>You can Track your Order with ID :<b>`+pidOrder+`</b> using Tracking Number <b>`+trackingNumber+`</b> via <b>`+trackingCompany+`</b> Link : <a href="`+trackingLink+`>"<b>Track Order</b></a>.</p>` +
+      `<br /> Thank you.`+
       `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
       const xBody2 = ``;
       const xButtonTitle = '';
