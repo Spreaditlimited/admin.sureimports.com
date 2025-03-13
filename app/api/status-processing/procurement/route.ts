@@ -110,7 +110,33 @@ export async function POST(request: Request) {
 
 
 
-
+    // .................... TACKING NUMBER UPDATE ....................//
+    if(newStatus == "tracking-number-update"){
+      const xEmail = user?.userEmail as string;
+      const xTitle = `Order Tracking Number!`;
+      const xBodyTitle = `Tracking Number`;
+      const xBody1 = `Hello ` + user?.userFirstname + `,` +
+      `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process successfully!.</p>` +
+      `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
+      const xBody2 = ``;
+      const xButtonTitle = '';
+      const xButtonLink = '';
+      await xMail({
+        xEmail,
+        xTitle,
+        xBodyTitle,
+        xBody1,
+        xBody2,
+        xButtonTitle,
+        xButtonLink,
+      });
+      ////////////////////// SEND REGISTRATION EMAIL BLOCK ENDS //////////////////////
+        //success update
+        return NextResponse.json(
+          { statusx: 'SUCCESS_TRACKING_NUMBER', message: 'tracking Number has been successfully updated and sent to customer' },
+          { status: 200 },
+        );
+      }
 
 
 

@@ -183,6 +183,11 @@ model orders {
   shippingCost2    String?
   shippingCost3    String?
   orderNote    String?
+  trackingCompany String?
+  trackingNumber String?
+  trackingLink   String?
+  additionalCost String?
+  additionalCostDescription String?
   pidAdmin    String?
   pidAdminLast    String?
   status          String?

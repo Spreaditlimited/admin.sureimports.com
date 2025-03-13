@@ -108,7 +108,13 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [estimatedTotalShippingCost, setEstimatedTotalShippingCost] =
     useState<number>(0);
 
+  const [trackingNumber, setTrackingNumber] = useState<string>('');
+  const [additionalCost, setAdditionalCost] = useState<number>(0);
+  const [additionalCostDescription, setAdditionalCostDescription] = useState<string>('');
+
   const [grandTotalCost, setGrandTotalCost] = useState<number>(0);
+
+  
 
   //================OTHER VALUES===============//
   const [amountNaira, setAmountNaira] = useState<number>(0);
@@ -250,6 +256,11 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           formData.append('actualWeight', actualWeight.toString());
           formData.append('actualDomesticShippingCost', actualDomesticShippingCost.toString());
+
+          formData.append('trackingNumber', trackingNumber.toString());
+          formData.append('additionalCost', additionalCost.toString());
+          formData.append('additionalCostDescription', additionalCostDescription.toString());
+
           
           
 
@@ -269,6 +280,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+actionType);}
         if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
         if (data.statusx == 'REVERT_TO_APPROVED') {toast.success(data.message);  router.push('/dashboard/procurement?status=approved');}
+        if (data.statusx == 'SUCCESS_TRACKING_NUMBER') {toast.info(data.message);}
         } catch (error: any) {
             console.log(error.message);
         } finally {
@@ -1270,7 +1282,31 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 {/* TRACKING NUMBER */}
 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6 pb-10">
 
-          <div className="w-full md:w-2/3">
+
+          <div className="w-full md:w-1/5">
+              <div className="flex-1">
+                <label
+                  htmlFor="weight"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                 Tracking Company
+                </label>
+                <input
+                  required
+                  name="trackingCompany"
+                  type="text"
+                  id="trackingCompany"
+                  placeholder="Enter Tracking Company Name"
+                  className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+                {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  *Provide Tracking Numger for this Order if availave
+                </p> */}
+              </div>
+          </div>
+
+
+          <div className="w-full md:w-1/5">
               <div className="flex-1">
                 <label
                   htmlFor="weight"
@@ -1291,8 +1327,30 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                 </p> */}
               </div>
           </div>
-            
+
           <div className="w-full md:w-1/3">
+              <div className="flex-1">
+                <label
+                  htmlFor="weight"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                 Tracking Link
+                </label>
+                <input
+                  required
+                  name="trackingLink"
+                  type="text"
+                  id="trackingLink"
+                  placeholder="Enter Tracking Link"
+                  className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+                {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  *Provide Tracking Numger for this Order if availave
+                </p> */}
+              </div>
+          </div>
+            
+          <div className="w-full md:w-1/5">
               <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('tracking-number-update')} className="btn btn-secondary mt-4 w-full bg-gray-600 dark:bg-gray-500 text-white py-3 rounded-md text-sm shadow hover:bg-gray-700 dark:hover:bg-gray-600">
                 Update Tracking Number
               </button>
@@ -1315,7 +1373,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               Additional Cost (USD)
             </label>
             <input
-              required
+              //required
               name="additionalCost"
               type="text"
               id="additionalCost"
@@ -1339,7 +1397,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </label>
 
             <input
-              required
+              //required
               name="additionalCostDescription"
               type="text"
               id="additionalCostDescription"
