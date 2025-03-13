@@ -108,7 +108,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [estimatedTotalShippingCost, setEstimatedTotalShippingCost] =
     useState<number>(0);
 
+  const [trackingCompany, setTrackingCompany] = useState<string>('');
   const [trackingNumber, setTrackingNumber] = useState<string>('');
+  const [trackingLink, setTrackingLink] = useState<string>('');
+
   const [additionalCost, setAdditionalCost] = useState<number>(0);
   const [additionalCostDescription, setAdditionalCostDescription] = useState<string>('');
 
@@ -160,7 +163,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         setActualInternationalShippingCost(replaceNullWithZero(data.actualInternationalShippingCost));
         setActualTotalShippingCost(replaceNullWithZero(data.actualTotalShippingCost));
         setCostDifference(replaceNullWithZero(data.costDifference));
-
 
         setCurrencyType(data.currencyType);
         setCurrencyName(data.currencyName);
@@ -281,7 +283,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
         if (data.statusx == 'REVERT_TO_APPROVED') {toast.success(data.message);  router.push('/dashboard/procurement?status=approved');}
         if (data.statusx == 'SUCCESS_TRACKING_NUMBER') {toast.info(data.message);}
-        if (data.statusx == 'EMPTY_TRACKING_DATA') {toast.info(data.message);}
+        if (data.statusx == 'EMPTY_TRACKING_DATA') {toast.warning(data.message);}
         
         } catch (error: any) {
             console.log(error.message);
@@ -1295,6 +1297,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                 </label>
                 <input
                   //required
+                  defaultValue={trackingCompany}
                   name="trackingCompany"
                   type="text"
                   id="trackingCompany"

@@ -64,26 +64,26 @@ const features: MenuItem[] = [
   //     { title: "View Categories", path: "/dashboard/buy-phones-laptops/view-category" },
   //   ],
   // },
-  // {
-  //   title: "Special Sourcing",
-  //   icon: ShoppingBag,
-  //   path: "/dashboard/special-sourcing?status=pending",
-  // },
-  // {
-  //   title: "Pay Supplier",
-  //   icon: HandCoins,
-  //   path: "/dashboard/pay-supplier",
-  // },
-  // {
-  //   title: "Shipping Only",
-  //   icon: Ship,
-  //   path: "/dashboard/shipping-only?status=request-received",
-  // },
-  // {
-  //   title: "Verify Supplier",
-  //   icon: UserCheck,
-  //   path: "/dashboard/verify-supplier?status=pending-payment",
-  // },
+  {
+    title: "Special Sourcing",
+    icon: ShoppingBag,
+    path: "/dashboard/special-sourcing?status=pending",
+  },
+  {
+    title: "Pay Supplier",
+    icon: HandCoins,
+    path: "/dashboard/pay-supplier",
+  },
+  {
+    title: "Shipping Only",
+    icon: Ship,
+    path: "/dashboard/shipping-only?status=request-received",
+  },
+  {
+    title: "Verify Supplier",
+    icon: UserCheck,
+    path: "/dashboard/verify-supplier?status=pending-payment",
+  },
   // {
   //   title: "Dashboard",
   //   icon: LayoutDashboard,

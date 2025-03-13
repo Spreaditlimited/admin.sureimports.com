@@ -43,7 +43,6 @@ export async function POST(request: Request) {
   const additionalCost = formData.get('additionalCost') as string;
   const additionalCostDescription = formData.get('additionalCostDescription') as string;
 
-
 // console.log('SHIPPING COST: '+orderShippingCost);
 // console.log('TOTAL COST: '+orderTotalCost);
 // console.log('VAT: '+vat);
@@ -127,7 +126,7 @@ export async function POST(request: Request) {
         //   },
         // });
 
-        if(trackingCompany || trackingNumber || trackingLink == ''){
+        if(trackingCompany == '' || trackingNumber == '' || trackingLink == ''){
         return NextResponse.json(
           { statusx: 'EMPTY_TRACKING_DATA', message: 'Tracking details cannot be empty' },
           { status: 200 },
