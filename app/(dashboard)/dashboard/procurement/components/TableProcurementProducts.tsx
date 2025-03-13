@@ -281,6 +281,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
         if (data.statusx == 'REVERT_TO_APPROVED') {toast.success(data.message);  router.push('/dashboard/procurement?status=approved');}
         if (data.statusx == 'SUCCESS_TRACKING_NUMBER') {toast.info(data.message);}
+        if (data.statusx == 'EMPTY_TRACKING_DATA') {toast.info(data.message);}
+        
         } catch (error: any) {
             console.log(error.message);
         } finally {

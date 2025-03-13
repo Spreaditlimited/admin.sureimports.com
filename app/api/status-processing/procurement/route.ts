@@ -127,6 +127,13 @@ export async function POST(request: Request) {
         //   },
         // });
 
+        if(trackingCompany || trackingNumber || trackingLink == ''){
+        return NextResponse.json(
+          { statusx: 'EMPTY_TRACKING_DATA', message: 'Tracking details cannot be empty' },
+          { status: 200 },
+        );
+      }
+
 
           //UPDATE SERVICE STATUS 
           const updatex = await prisma.orders.update({
