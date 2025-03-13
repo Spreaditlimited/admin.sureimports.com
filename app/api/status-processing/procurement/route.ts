@@ -143,9 +143,10 @@ export async function POST(request: Request) {
 
       const xEmail = user?.userEmail as string;
       const xTitle = `Order Tracking Number!`;
-      const xBodyTitle = `Tracking Number`;
+      const xBodyTitle = `Order Tracking Number`;
       const xBody1 = `Hello ` + user?.userFirstname + `,` +
-      `<p>You can Track your Order with ID :<b>`+pidOrder+`</b> using Tracking Number <b>`+trackingNumber+`</b> via <b>`+trackingCompany+`</b> Link : <a href="`+trackingLink+`>"<b>Track Order</b></a>.</p>` +
+      `<p>You can track your order with ID: <b>`+pidOrder+`</b> using Tracking Number: <b>`+trackingNumber+`</b> via <b>`+trackingCompany+`</b> Link : <a href="`+trackingLink+`"><b>Track Order</b></a>.</p>` +
+      `<br /> Or you can copy and paste this link in your browser Link: .`+trackingLink+`<br />`+
       `<br /> Thank you.`+
       `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
       const xBody2 = ``;
@@ -163,7 +164,7 @@ export async function POST(request: Request) {
       ////////////////////// SEND REGISTRATION EMAIL BLOCK ENDS //////////////////////
         //success update
         return NextResponse.json(
-          { statusx: 'SUCCESS_TRACKING_NUMBER', message: 'tracking Number has been successfully updated and sent to customer' },
+          { statusx: 'SUCCESS_TRACKING_NUMBER', message: 'Tracking Number has been successfully updated and sent to customer' },
           { status: 200 },
         );
       }
