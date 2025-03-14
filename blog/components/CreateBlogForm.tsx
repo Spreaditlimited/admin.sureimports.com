@@ -25,8 +25,8 @@ import axios from 'axios';
 
 
 export const metadata: Metadata = {
-    title: 'Printin Admin Dashboard',
-    description: 'Printin'
+    title: 'Sure Imports Admin Dashboard',
+    description: 'Sure Imports'
 };
 
 //USER DATA
