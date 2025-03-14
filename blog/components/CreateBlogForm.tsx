@@ -17,7 +17,7 @@ import ImageBox from '@/componentsx/ImageBox';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
 import axios from 'axios';
-import Editor from '@/componentsx/Editor/Editor';
+//import Editor from '@/componentsx/Editor/Editor';
 // import ReactQuill from 'react-quill';
 // import 'react-quill/dist/quill.snow.css';
 
