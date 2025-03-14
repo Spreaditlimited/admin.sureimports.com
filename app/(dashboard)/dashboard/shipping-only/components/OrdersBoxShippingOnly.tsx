@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import AnimateHeight from 'react-animate-height';
-import TableProcurementProducts from './TableProcurementProducts';
+import TableProcurementProducts from '../../../../../componentsx/dashboard/TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';

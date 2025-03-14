@@ -4,6 +4,7 @@ import "./globals.css"
 import { AuthProvider } from "@/lib/AuthContext"
 import { AlertProvider } from "./context/AlertContext"
 import { TokenValidator } from "@/lib/TokenValidator"
+import Head from "next/head"
 
 export const metadata: Metadata = {
   title: "SureImports | Admin Dashboard",
@@ -17,6 +18,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+
+      {/* <Head>
+        <link rel="icon" href="/favicon.ico" />
+      </Head> */}
+      
       <body className="antialiased">
         <script
           dangerouslySetInnerHTML={{

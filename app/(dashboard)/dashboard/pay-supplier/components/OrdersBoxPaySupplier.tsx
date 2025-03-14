@@ -1,12 +1,13 @@
 'use client';
 
+
 import React, { useEffect, useState } from 'react';
 import AnimateHeight from 'react-animate-height';
-import TableProcurementProducts from './TableProcurementProducts';
+import TableProcurementProducts from '../../../../../componentsx/dashboard/TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { BookDown } from 'lucide-react';
+import { BookDown, Icon } from 'lucide-react';
 
 
 interface Product {
@@ -26,18 +27,21 @@ interface Product {
   
 
 interface Order {
-    id: any;
-    pidOrder: string;
+    id: number;
+    pidPaySupplier: string;
     pidUser: string;
-    orderName: string;
-    destinationCountry: string;
-    currencyType: string;
-    shippingPlan: string;
-    orderCategory: string;
-    shippingAddress: string;
+    supplierName: string;
+    supplierPhone: string;
+    supplierEmail: string;
+    aliPayAccountQRCodeImage: string;
+    weChatAccountQRCodeImage: string;
+    proformaInvoiceImage: string;
+    supplierBankAccountDetails: string;
+    amountToPayInYuan: string;
+    amountToPayInNaira: string;
+    serviceCharge: string;
     status: string;
     createdAt: string;
-    products: Product[]
   }
 
 
@@ -77,6 +81,7 @@ interface Order {
   }
 
 
+
 //USER DATA
 interface User {
     pidUser: string;
@@ -110,6 +115,8 @@ const ComponentsAccordionsBasic = () => {
     const status = useSearchParams().get('status') || 'none'; // Get the current 'status' value
     const [orderALL, setOrderALL] = useState<Order[]>([]);
     const [message, setMessage] = useState<String>('');
+    
+
 
 
     //GET RECORDS FROM DATABASE
@@ -117,7 +124,7 @@ const ComponentsAccordionsBasic = () => {
         try {
            // Pull Records from database
            //const res = await fetch(`/api/get-data/order-all?pidOrder=${pidOrder}&pidUser=${pidUser}`);
-           const res = await fetch(`/api/get-data/special-sourcing-many?status=${status}`);
+           const res = await fetch(`/api/get-data/pay-supplier-many?status=${status}`);
            const data = await res.json();
            setOrderALL(data);
         } catch (error) {
@@ -141,6 +148,8 @@ const ComponentsAccordionsBasic = () => {
     function setActionType(value:string) {
         alert(value);
     }
+
+
 
 
 
@@ -178,7 +187,7 @@ const ComponentsAccordionsBasic = () => {
           try {
             toast.info('Processing . . .');
             //MAKE REQUEST
-            const res = await fetch('/api/stage-processing/special-sourcing', {
+            const res = await fetch('/api/stage-processing/pay-supplier', {
               method: 'POST',
               body: formData,
             });
@@ -204,6 +213,8 @@ const ComponentsAccordionsBasic = () => {
     
     
       }
+
+
 
 
 
@@ -237,7 +248,7 @@ const ComponentsAccordionsBasic = () => {
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.productName}</b> &nbsp; | ORDER ID: {datax.pidSpecialSourcing} 
+                                        <b className='text-xl'>#{index + 1} : {datax.supplierName}</b> &nbsp; | ORDER ID: {datax.pidPaySupplier}
                                         
                                         <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
                                         <BookDown />
@@ -250,19 +261,25 @@ const ComponentsAccordionsBasic = () => {
                                         <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
                                             <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] text-white-dark dark:border-[#1b2e4b]">
                                                 {/* <TableProcurementProducts pidOrder={datax.pidOrder} orderName={datax.orderName} shippingAddress={datax.shippingAddress}  /> */}
-                                                Product ID: {datax.pidSpecialSourcing}
+                                                Service ID: {datax.pidPaySupplier}
                                                 <hr />
-                                                Product Name: {datax.productName}
+                                                Supplier Name: {datax.supplierName}
                                                 <hr />
-                                                WhatsApp Number: {datax.whatsappNumber}
+                                                Supplier Number: {datax.supplierPhone}
                                                 <hr />
-                                                Quantity: {datax.productQualityRatings}
+                                                Supplier Email: {datax.supplierEmail}
                                                 <hr />
-                                                Unit Price: {datax.targetUnitPrice}
+                                                Supplier Bank Details: {datax.supplierBankAccountDetails}
                                                 <hr />
-                                                Product Description: {datax.productName}
+                                                Amount to pay in Yuan: {datax.amountToPayInYuan}
+                                                <hr />
+                                                Amount to pay in Naira: {datax.amountToPayInNaira}
                                                 <hr />
                                             </div>
+
+
+
+
 
                                             <form onSubmit={handleSubmit}>
                                                     {/* Confirm Action */}
@@ -284,7 +301,7 @@ const ComponentsAccordionsBasic = () => {
 
 
                                                     {/* Message to Buyer */}
-                                                    <div className='p-5'>
+                                                    <div className=' p-5'>
                                                     <textarea
                                                         className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                                                         rows={3}
@@ -293,7 +310,6 @@ const ComponentsAccordionsBasic = () => {
                                                         onChange={(e) => setMessage(e.target.value)}
                                                     ></textarea>
                                                     </div><br />
-                                                    
 
                                                     {/* Action Buttons */}
                                                     <div className="p-7 flex flex-col md:flex-row items-center justify-between gap-4 mt-6">

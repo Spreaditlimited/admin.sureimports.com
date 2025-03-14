@@ -5,7 +5,7 @@ import { BiSolidShoppingBags, BiUser } from 'react-icons/bi';
 import { HiShoppingBag } from 'react-icons/hi2';
 import { MdPayment } from 'react-icons/md';
 import { RiShipFill } from 'react-icons/ri';
-import StatisticsBox from './StatisticsBox';
+import StatisticsBox from '../../../../../componentsx/dashboard/StatisticsBox';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 

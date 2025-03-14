@@ -2,29 +2,41 @@
 
 import React, { useEffect, useState } from 'react';
 import AnimateHeight from 'react-animate-height';
-import TableProcurementProducts from './TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useParams, useSearchParams } from 'next/navigation';
-import Link from "next/link";
-import { toast } from "sonner";
-import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
+import { toast } from 'sonner';
 import { BookDown } from 'lucide-react';
 
 
+interface Product {
+    id: number;
+    pidProduct: string;
+    pidOrder: string;
+    pidUser: string;
+    productName: string;
+    productLink: string;
+    productCategory: string;
+    productPrice: string;
+    productWeight: string;
+    productQuantity: string;
+    productInfo: string;
+    productStatus: string;
+  }
+  
 
 interface Order {
-    id: number;
-    pidVerifySupplier: string;
+    id: any;
+    pidOrder: string;
     pidUser: string;
-    supplierName: string;
-    supplierPhone: string;
-    supplierAddress: string;
-    supplierProduct: string;
-    supplierDetails: string;
-    supplierWebsite: string;
+    orderName: string;
+    destinationCountry: string;
+    currencyType: string;
+    shippingPlan: string;
+    orderCategory: string;
+    shippingAddress: string;
     status: string;
-    xStatus: string;
     createdAt: string;
+    products: Product[]
   }
 
 
@@ -104,7 +116,7 @@ const ComponentsAccordionsBasic = () => {
         try {
            // Pull Records from database
            //const res = await fetch(`/api/get-data/order-all?pidOrder=${pidOrder}&pidUser=${pidUser}`);
-           const res = await fetch(`/api/get-data/verify-supplier-many?status=${status}`);
+           const res = await fetch(`/api/get-data/special-sourcing-many?status=${status}`);
            const data = await res.json();
            setOrderALL(data);
         } catch (error) {
@@ -113,70 +125,6 @@ const ComponentsAccordionsBasic = () => {
         } finally {
            setLoading(false); // Set loading to false when done
         }
-  }
-
-
-
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const formData = new FormData(event.currentTarget);
-    // const buttonClicked = formData.get('action');
-    // alert(buttonClicked);
-    // if (buttonClicked === 'approve') {
-    //   alert('APPROVED');
-    // } else if (buttonClicked === 'decline') {
-    //   alert('DECLINE');
-    // } else {
-    //   //setResult('Unknown action!');
-    // }
-
-    // if (actionType === 'save') {
-    //   setMessage('Save button clicked! Performing save action...');
-    //   // Perform save logic here
-    // } else if (actionType === 'delete') {
-    //   setMessage('Delete button clicked! Performing delete action...');
-    //   // Perform delete logic here
-    // } else {
-    //   setMessage('Unknown action!');
-    // }
-
-
-
-          //formData.append('message', message);
-          //formData.append('pidOrder', pidOrder);
-          formData.append('status', status);
-
-      //MAKE REQUEST ATTEMPT
-      try {
-        toast.info('Processing . . .');
-        //MAKE REQUEST
-        const res = await fetch('/api/stage-processing/verify-supplier', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        // GET & PROCESS RESPONSE FROM API
-        const data: ApiResponse = await res.json();
-  
-        if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', 'Payment details was successfully submited, awaiting payment status confirmation.');}
-        // if (data.responsex.status == 'SUCCESS') {
-        //   toast.success(data.responsex.message);
-        // }
-        if (data.responsex.status == 'ACTION_FAILED') {
-          toast.warning(data.responsex.message);
-        }
-        if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
-          toast.warning(data.responsex.message);
-        }
-      } catch (error: any) {
-          console.log(error.message);
-      } finally {
-        //setLoading(false);
-      }
-
-
   }
 
 
@@ -192,6 +140,72 @@ const ComponentsAccordionsBasic = () => {
     function setActionType(value:string) {
         alert(value);
     }
+
+
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+    
+        const formData = new FormData(event.currentTarget);
+        // const buttonClicked = formData.get('action');
+        // alert(buttonClicked);
+        // if (buttonClicked === 'approve') {
+        //   alert('APPROVED');
+        // } else if (buttonClicked === 'decline') {
+        //   alert('DECLINE');
+        // } else {
+        //   //setResult('Unknown action!');
+        // }
+    
+        // if (actionType === 'save') {
+        //   setMessage('Save button clicked! Performing save action...');
+        //   // Perform save logic here
+        // } else if (actionType === 'delete') {
+        //   setMessage('Delete button clicked! Performing delete action...');
+        //   // Perform delete logic here
+        // } else {
+        //   setMessage('Unknown action!');
+        // }
+    
+    
+    
+              //formData.append('message', message);
+              //formData.append('pidOrder', pidOrder);
+              formData.append('status', status);
+    
+          //MAKE REQUEST ATTEMPT
+          try {
+            toast.info('Processing . . .');
+            //MAKE REQUEST
+            const res = await fetch('/api/stage-processing/special-sourcing', {
+              method: 'POST',
+              body: formData,
+            });
+      
+            // GET & PROCESS RESPONSE FROM API
+            const data: ApiResponse = await res.json();
+      
+            if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', 'Payment details was successfully submited, awaiting payment status confirmation.');}
+            // if (data.responsex.status == 'SUCCESS') {
+            //   toast.success(data.responsex.message);
+            // }
+            if (data.responsex.status == 'ACTION_FAILED') {
+              toast.warning(data.responsex.message);
+            }
+            if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
+              toast.warning(data.responsex.message);
+            }
+          } catch (error: any) {
+              console.log(error.message);
+          } finally {
+            //setLoading(false);
+          }
+    
+    
+      }
+
+
+
 
    //LOADER & EMPTY RECORD PROCESSING 
    if (loading) {return <Loader />;} //show loader
@@ -222,7 +236,7 @@ const ComponentsAccordionsBasic = () => {
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.supplierName}</b> &nbsp; | ORDER ID: {datax.pidVerifySupplier}
+                                        <b className='text-xl'>#{index + 1} : {datax.productName}</b> &nbsp; | ORDER ID: {datax.pidSpecialSourcing} 
                                         
                                         <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
                                         <BookDown />
@@ -235,19 +249,17 @@ const ComponentsAccordionsBasic = () => {
                                         <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
                                             <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] text-white-dark dark:border-[#1b2e4b]">
                                                 {/* <TableProcurementProducts pidOrder={datax.pidOrder} orderName={datax.orderName} shippingAddress={datax.shippingAddress}  /> */}
-                                                Service ID: {datax.pidVerifySupplier}
+                                                Product ID: {datax.pidSpecialSourcing}
                                                 <hr />
-                                                Supplier Name: {datax.supplierName}
+                                                Product Name: {datax.productName}
                                                 <hr />
-                                                Supplier Phone: {datax.supplierPhone}
+                                                WhatsApp Number: {datax.whatsappNumber}
                                                 <hr />
-                                                Shipping Address: {datax.supplierAddress}
+                                                Quantity: {datax.productQualityRatings}
                                                 <hr />
-                                                Supplier Product: {datax.supplierProduct}
+                                                Unit Price: {datax.targetUnitPrice}
                                                 <hr />
-                                                Supplier Details: {datax.supplierDetails}
-                                                <hr />
-                                                Supplier Website: {datax.supplierWebsite}
+                                                Product Description: {datax.productName}
                                                 <hr />
                                             </div>
 
@@ -280,6 +292,7 @@ const ComponentsAccordionsBasic = () => {
                                                         onChange={(e) => setMessage(e.target.value)}
                                                     ></textarea>
                                                     </div><br />
+                                                    
 
                                                     {/* Action Buttons */}
                                                     <div className="p-7 flex flex-col md:flex-row items-center justify-between gap-4 mt-6">

@@ -1,46 +1,29 @@
 'use client';
 
-
 import React, { useEffect, useState } from 'react';
 import AnimateHeight from 'react-animate-height';
-import TableProcurementProducts from './TableProcurementProducts';
+import TableProcurementProducts from '../../../../../componentsx/dashboard/TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useParams, useSearchParams } from 'next/navigation';
-import { toast } from 'sonner';
-import { BookDown, Icon } from 'lucide-react';
+import Link from "next/link";
+import { toast } from "sonner";
+import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
+import { BookDown } from 'lucide-react';
 
 
-interface Product {
-    id: number;
-    pidProduct: string;
-    pidOrder: string;
-    pidUser: string;
-    productName: string;
-    productLink: string;
-    productCategory: string;
-    productPrice: string;
-    productWeight: string;
-    productQuantity: string;
-    productInfo: string;
-    productStatus: string;
-  }
-  
 
 interface Order {
     id: number;
-    pidPaySupplier: string;
+    pidVerifySupplier: string;
     pidUser: string;
     supplierName: string;
     supplierPhone: string;
-    supplierEmail: string;
-    aliPayAccountQRCodeImage: string;
-    weChatAccountQRCodeImage: string;
-    proformaInvoiceImage: string;
-    supplierBankAccountDetails: string;
-    amountToPayInYuan: string;
-    amountToPayInNaira: string;
-    serviceCharge: string;
+    supplierAddress: string;
+    supplierProduct: string;
+    supplierDetails: string;
+    supplierWebsite: string;
     status: string;
+    xStatus: string;
     createdAt: string;
   }
 
@@ -81,7 +64,6 @@ interface Order {
   }
 
 
-
 //USER DATA
 interface User {
     pidUser: string;
@@ -115,8 +97,6 @@ const ComponentsAccordionsBasic = () => {
     const status = useSearchParams().get('status') || 'none'; // Get the current 'status' value
     const [orderALL, setOrderALL] = useState<Order[]>([]);
     const [message, setMessage] = useState<String>('');
-    
-
 
 
     //GET RECORDS FROM DATABASE
@@ -124,7 +104,7 @@ const ComponentsAccordionsBasic = () => {
         try {
            // Pull Records from database
            //const res = await fetch(`/api/get-data/order-all?pidOrder=${pidOrder}&pidUser=${pidUser}`);
-           const res = await fetch(`/api/get-data/pay-supplier-many?status=${status}`);
+           const res = await fetch(`/api/get-data/verify-supplier-many?status=${status}`);
            const data = await res.json();
            setOrderALL(data);
         } catch (error) {
@@ -133,6 +113,70 @@ const ComponentsAccordionsBasic = () => {
         } finally {
            setLoading(false); // Set loading to false when done
         }
+  }
+
+
+
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    // const buttonClicked = formData.get('action');
+    // alert(buttonClicked);
+    // if (buttonClicked === 'approve') {
+    //   alert('APPROVED');
+    // } else if (buttonClicked === 'decline') {
+    //   alert('DECLINE');
+    // } else {
+    //   //setResult('Unknown action!');
+    // }
+
+    // if (actionType === 'save') {
+    //   setMessage('Save button clicked! Performing save action...');
+    //   // Perform save logic here
+    // } else if (actionType === 'delete') {
+    //   setMessage('Delete button clicked! Performing delete action...');
+    //   // Perform delete logic here
+    // } else {
+    //   setMessage('Unknown action!');
+    // }
+
+
+
+          //formData.append('message', message);
+          //formData.append('pidOrder', pidOrder);
+          formData.append('status', status);
+
+      //MAKE REQUEST ATTEMPT
+      try {
+        toast.info('Processing . . .');
+        //MAKE REQUEST
+        const res = await fetch('/api/stage-processing/verify-supplier', {
+          method: 'POST',
+          body: formData,
+        });
+  
+        // GET & PROCESS RESPONSE FROM API
+        const data: ApiResponse = await res.json();
+  
+        if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', 'Payment details was successfully submited, awaiting payment status confirmation.');}
+        // if (data.responsex.status == 'SUCCESS') {
+        //   toast.success(data.responsex.message);
+        // }
+        if (data.responsex.status == 'ACTION_FAILED') {
+          toast.warning(data.responsex.message);
+        }
+        if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
+          toast.warning(data.responsex.message);
+        }
+      } catch (error: any) {
+          console.log(error.message);
+      } finally {
+        //setLoading(false);
+      }
+
+
   }
 
 
@@ -148,76 +192,6 @@ const ComponentsAccordionsBasic = () => {
     function setActionType(value:string) {
         alert(value);
     }
-
-
-
-
-
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-    
-        const formData = new FormData(event.currentTarget);
-        // const buttonClicked = formData.get('action');
-        // alert(buttonClicked);
-        // if (buttonClicked === 'approve') {
-        //   alert('APPROVED');
-        // } else if (buttonClicked === 'decline') {
-        //   alert('DECLINE');
-        // } else {
-        //   //setResult('Unknown action!');
-        // }
-    
-        // if (actionType === 'save') {
-        //   setMessage('Save button clicked! Performing save action...');
-        //   // Perform save logic here
-        // } else if (actionType === 'delete') {
-        //   setMessage('Delete button clicked! Performing delete action...');
-        //   // Perform delete logic here
-        // } else {
-        //   setMessage('Unknown action!');
-        // }
-    
-    
-    
-              //formData.append('message', message);
-              //formData.append('pidOrder', pidOrder);
-              formData.append('status', status);
-    
-          //MAKE REQUEST ATTEMPT
-          try {
-            toast.info('Processing . . .');
-            //MAKE REQUEST
-            const res = await fetch('/api/stage-processing/pay-supplier', {
-              method: 'POST',
-              body: formData,
-            });
-      
-            // GET & PROCESS RESPONSE FROM API
-            const data: ApiResponse = await res.json();
-      
-            if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', 'Payment details was successfully submited, awaiting payment status confirmation.');}
-            // if (data.responsex.status == 'SUCCESS') {
-            //   toast.success(data.responsex.message);
-            // }
-            if (data.responsex.status == 'ACTION_FAILED') {
-              toast.warning(data.responsex.message);
-            }
-            if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
-              toast.warning(data.responsex.message);
-            }
-          } catch (error: any) {
-              console.log(error.message);
-          } finally {
-            //setLoading(false);
-          }
-    
-    
-      }
-
-
-
-
-
 
    //LOADER & EMPTY RECORD PROCESSING 
    if (loading) {return <Loader />;} //show loader
@@ -248,7 +222,7 @@ const ComponentsAccordionsBasic = () => {
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.supplierName}</b> &nbsp; | ORDER ID: {datax.pidPaySupplier}
+                                        <b className='text-xl'>#{index + 1} : {datax.supplierName}</b> &nbsp; | ORDER ID: {datax.pidVerifySupplier}
                                         
                                         <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
                                         <BookDown />
@@ -261,25 +235,21 @@ const ComponentsAccordionsBasic = () => {
                                         <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
                                             <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] text-white-dark dark:border-[#1b2e4b]">
                                                 {/* <TableProcurementProducts pidOrder={datax.pidOrder} orderName={datax.orderName} shippingAddress={datax.shippingAddress}  /> */}
-                                                Service ID: {datax.pidPaySupplier}
+                                                Service ID: {datax.pidVerifySupplier}
                                                 <hr />
                                                 Supplier Name: {datax.supplierName}
                                                 <hr />
-                                                Supplier Number: {datax.supplierPhone}
+                                                Supplier Phone: {datax.supplierPhone}
                                                 <hr />
-                                                Supplier Email: {datax.supplierEmail}
+                                                Shipping Address: {datax.supplierAddress}
                                                 <hr />
-                                                Supplier Bank Details: {datax.supplierBankAccountDetails}
+                                                Supplier Product: {datax.supplierProduct}
                                                 <hr />
-                                                Amount to pay in Yuan: {datax.amountToPayInYuan}
+                                                Supplier Details: {datax.supplierDetails}
                                                 <hr />
-                                                Amount to pay in Naira: {datax.amountToPayInNaira}
+                                                Supplier Website: {datax.supplierWebsite}
                                                 <hr />
                                             </div>
-
-
-
-
 
                                             <form onSubmit={handleSubmit}>
                                                     {/* Confirm Action */}
@@ -301,7 +271,7 @@ const ComponentsAccordionsBasic = () => {
 
 
                                                     {/* Message to Buyer */}
-                                                    <div className=' p-5'>
+                                                    <div className='p-5'>
                                                     <textarea
                                                         className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                                                         rows={3}
