@@ -1,4 +1,4 @@
-import { DashboardLayout } from "../../dashboard/components/dashboard-layout"
+import { DashboardLayout } from "../components/dashboard-layout"
 import ServiceChargeForm from "./components/ServiceChargeForm"
 import { PrismaClient } from '@prisma/client';
 

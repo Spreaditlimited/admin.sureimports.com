@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/_X/XAuthContext"
+import { useAuth } from "@/app/context/AuthContext"
 import Link from "next/link"
 
 export default function Register() {
