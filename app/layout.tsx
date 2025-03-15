@@ -38,15 +38,17 @@ export default function RootLayout({
           `,
           }}
         />
+
         <Suspense fallback={<div>Loading...</div>}>  
-        <AuthProvider>
-              <TokenValidator>
-                    <AlertProvider>
-                      {children}
-                    </AlertProvider>
-              </TokenValidator>                                             
-        </AuthProvider>
+            <AuthProvider>
+                  <TokenValidator>
+                        <AlertProvider>
+                          {children}
+                        </AlertProvider>
+                  </TokenValidator>                                             
+            </AuthProvider>
         </Suspense>
+
       </body>
     </html>
   )
