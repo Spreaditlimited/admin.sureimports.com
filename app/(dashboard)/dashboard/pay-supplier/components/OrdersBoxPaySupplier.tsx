@@ -7,7 +7,8 @@ import TableProcurementProducts from '../../../../../componentsx/dashboard/Table
 import Loader from '@/app/uix/Loader';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { BookDown, Icon } from 'lucide-react';
+import { BookDown, CornerRightDown, Icon } from 'lucide-react';
+import { getTimeDifference } from '@/lib/getTimeDifference';
 
 
 interface Product {
@@ -247,11 +248,14 @@ const ComponentsAccordionsBasic = () => {
                             <div className="mb-5">
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
+
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.supplierName}</b> &nbsp; | ORDER ID: {datax.pidPaySupplier}
+                                        <b className='text-xl'>#{index + 1} : {datax.supplierName}</b>&nbsp; | &nbsp; ORDER ID: {datax.pidOrder} &nbsp; | &nbsp; Updated: {getTimeDifference(datax.updatedAt)}&nbsp; | &nbsp; <small>Created: {getTimeDifference(datax.createdAt)}</small>
                                         
+                                        &nbsp; &nbsp;
+
                                         <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
-                                        <BookDown />
+                                         <CornerRightDown />
                                         </div>   
 
                                         <br /><hr />
@@ -259,21 +263,27 @@ const ComponentsAccordionsBasic = () => {
                                     </button>
                                     <div>
                                         <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
-                                            <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] text-white-dark dark:border-[#1b2e4b]">
+                                            <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[16px] text-white-dark dark:border-[#1b2e4b]">
                                                 {/* <TableProcurementProducts pidOrder={datax.pidOrder} orderName={datax.orderName} shippingAddress={datax.shippingAddress}  /> */}
-                                                Service ID: {datax.pidPaySupplier}
+                                                <b>Service ID:</b> {datax.pidPaySupplier}
                                                 <hr />
-                                                Supplier Name: {datax.supplierName}
+                                                <b>Supplier Name:</b> {datax.supplierName}
                                                 <hr />
-                                                Supplier Number: {datax.supplierPhone}
+                                                <b>Supplier Number:</b> {datax.supplierPhone}
                                                 <hr />
-                                                Supplier Email: {datax.supplierEmail}
+                                                <b>Supplier Email:</b> {datax.supplierEmail}
                                                 <hr />
-                                                Supplier Bank Details: {datax.supplierBankAccountDetails}
+                                                <b>Supplier Bank Details:</b> {datax.supplierBankAccountDetails}
                                                 <hr />
-                                                Amount to pay in Yuan: {datax.amountToPayInYuan}
+                                                <b>Amount to pay in Yuan:</b> ¥{((datax.amountToPayInYuan as number) / 1)
+                                                      .toFixed(2)
+                                                      .toString()
+                                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string}
                                                 <hr />
-                                                Amount to pay in Naira: {datax.amountToPayInNaira}
+                                                <b>Amount to pay in Naira:</b> ₦{((datax.amountToPayInNaira as number) / 1)
+                                                      .toFixed(2)
+                                                      .toString()
+                                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string}
                                                 <hr />
                                             </div>
 

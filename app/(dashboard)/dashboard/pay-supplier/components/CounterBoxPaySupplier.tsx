@@ -50,7 +50,7 @@ const handleClick = (status: string) => {
           <span>Saved Payment </span>&nbsp;&nbsp;
           <span className="bg-gray-100 text-black text-xs font-bold rounded-full px-2 py-0.5">{recordx?.savedOrder}</span>
         </button>
-        <button type="button" onClick={()=>handleClick('bank-pending')} className="whitespace-nowrap btn btn-dark my-4 bg-indigo-700 text-white px-3 py-1 text-sm rounded-full hover:bg-indigo-800 flex items-center justify-between min-w-[120px]">
+        <button type="button" onClick={()=>handleClick('pending-payment')} className="whitespace-nowrap btn btn-dark my-4 bg-indigo-700 text-white px-3 py-1 text-sm rounded-full hover:bg-indigo-800 flex items-center justify-between min-w-[120px]">
           <span>Bank Pending </span>&nbsp;&nbsp;
           <span className="bg-gray-100 text-black text-xs font-bold rounded-full px-2 py-0.5">{recordx?.paymentPendingOrder}</span>
         </button>
