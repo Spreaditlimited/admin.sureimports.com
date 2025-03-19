@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       data: {
               pidMessage: pidMessage,
               pidOrder: pidOrder,
-              pidFrom: 'admin@sureimports.com',
+              pidFrom: 'hello@sureimports.com',
               pidTo: user?.userEmail,
               fullName: user?.userFirstname,
               messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
@@ -185,7 +185,7 @@ export async function POST(request: Request) {
     data: {
       pidMessage: pidMessage,
       pidOrder: pidOrder,
-      pidFrom: 'admin@sureimports.com',
+      pidFrom: 'hello@sureimports.com',
       pidTo: user?.userEmail,
       fullName: user?.userFirstname,
       messageTitle: 'Admin Message: '+newStatus.toUpperCase(),

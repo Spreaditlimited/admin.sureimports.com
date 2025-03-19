@@ -115,7 +115,10 @@ const ComponentsAccordionsBasic = () => {
     // VARIABLES 
     const status = useSearchParams().get('status') || 'none'; // Get the current 'status' value
     const [orderALL, setOrderALL] = useState<Order[]>([]);
-    const [message, setMessage] = useState<String>('');
+    const [message, setMessage] = useState<any>('');
+    const [actionType, setActionType] = useState<string>('');
+    const [pidUser, setPidUser] = useState<any>('');
+    const [pidOrder, setPidOrder] = useState<any>('');
     
 
 
@@ -146,43 +149,28 @@ const ComponentsAccordionsBasic = () => {
     },[status]); // Empty dependency array to run only once on mount
 
 
-    function setActionType(value:string) {
-        alert(value);
-    }
+    // function setActionType(value:string) {
+    //     alert(value);
+    // }
 
 
 
 
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-    
-        const formData = new FormData(event.currentTarget);
-        // const buttonClicked = formData.get('action');
-        // alert(buttonClicked);
-        // if (buttonClicked === 'approve') {
-        //   alert('APPROVED');
-        // } else if (buttonClicked === 'decline') {
-        //   alert('DECLINE');
-        // } else {
-        //   //setResult('Unknown action!');
-        // }
-    
-        // if (actionType === 'save') {
-        //   setMessage('Save button clicked! Performing save action...');
-        //   // Perform save logic here
-        // } else if (actionType === 'delete') {
-        //   setMessage('Delete button clicked! Performing delete action...');
-        //   // Perform delete logic here
-        // } else {
-        //   setMessage('Unknown action!');
-        // }
-    
-    
-    
-              //formData.append('message', message);
-              //formData.append('pidOrder', pidOrder);
-              formData.append('status', status);
+      event.preventDefault();
+
+      let pidMessage = 'MSG' + new Date().getTime().toString();
+      let currentStatus = status;
+
+      const formData = new FormData(event.currentTarget);
+      formData.append('pidOrder', pidOrder);
+      formData.append('pidUser', pidUser);
+      formData.append('currentStatus', currentStatus);
+      formData.append('newStatus', actionType);
+      formData.append('message', message);
+      formData.append('pidMessage', pidMessage);
+      formData.append('status', status);
     
           //MAKE REQUEST ATTEMPT
           try {
@@ -194,18 +182,19 @@ const ComponentsAccordionsBasic = () => {
             });
       
             // GET & PROCESS RESPONSE FROM API
-            const data: ApiResponse = await res.json();
+            const data:any = await res.json();
       
-            if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', 'Payment details was successfully submited, awaiting payment status confirmation.');}
+            if (data.statusx == 'SUCCESS'){navigateWithAlert('/pay-supplier?status=paid-supplier', 'success', 'Payment details was successfully confirmed and order moved for processing.');}
             // if (data.responsex.status == 'SUCCESS') {
             //   toast.success(data.responsex.message);
             // }
-            if (data.responsex.status == 'ACTION_FAILED') {
-              toast.warning(data.responsex.message);
+            if (data.statusx  == 'ACTION_FAILED') {
+              toast.warning(data.message);
             }
-            if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
-              toast.warning(data.responsex.message);
+            if (data.statusx  == 'SUCCESS_MESSAGE') {
+              toast.success(data.message);
             }
+            if (data.statusx  == 'CANCELLED'){navigateWithAlert('/pay-supplier?status=request-cancelled', 'success', 'Pay Supplier Order has been successfully cancelled.');}
           } catch (error: any) {
               console.log(error.message);
           } finally {
@@ -292,6 +281,12 @@ const ComponentsAccordionsBasic = () => {
 
 
                                             <form onSubmit={handleSubmit}>
+
+
+                                                  <input type='hidden' id='pidUser' name='pidUser' onChange={(e) => setPidUser(e.target.value)} value={datax.pidUser} />
+                                                  <input type='hidden' id='pidOrder' name='pidOrder' onChange={(e) => setPidOrder(e.target.value)} value={datax.pidUser} />
+
+
                                                     {/* Confirm Action */}
                                                     <div className="space-y-4 p-5">
                                                     <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
@@ -312,31 +307,67 @@ const ComponentsAccordionsBasic = () => {
 
                                                     {/* Message to Buyer */}
                                                     <div className=' p-5'>
-                                                    <textarea
-                                                        className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                                                        rows={3}
-                                                        placeholder="Send Message to Buyer"
-                                                        //value={message}
-                                                        onChange={(e) => setMessage(e.target.value)}
-                                                    ></textarea>
+                                                        <textarea
+                                                            className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                            rows={3}
+                                                            placeholder="Send Message to Buyer"
+                                                            //value={message}
+                                                            onChange={(e) => setMessage(e.target.value)}
+                                                        ></textarea>
                                                     </div><br />
 
-                                                    {/* Action Buttons */}
-                                                    <div className="p-7 flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-                                                        <div className="w-full md:w-1/2">
-                                                            <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                                                            DECLINE (Place On-Hold)
-                                                            </button>
-                                                            <small>Decline Order if there are issues</small>
-                                                        </div>
-                                                        
-                                                        <div className="w-full md:w-1/2">
-                                                            <button type="submit" name="action" value="approve" onClick={() => setActionType('approve')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                                                            APPROVE
-                                                            </button>
-                                                            <small>Approve this Order for further processing</small>
-                                                        </div>
-                                                    </div>
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ SAVED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'saved') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-3 p-5"> 
+            
+            <div className="w-full md:w-1/1">
+                <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  Send Message
+                </button>
+                <small>Send message to Customer</small>
+            </div>
+
+        </div>
+        </>
+   )}
+
+
+
+
+
+
+
+
+{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ PENDING PAYMENT - PAID SUPPLIER ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
+{(status == 'pending-payment') && (
+          <>
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-3 p-5">
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="request-cancelled" onClick={() => setActionType('request-cancelled')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
+                  CANCEL (Cancel this request)
+                </button>
+                <small>Decline Order if there are issues</small>
+            </div>
+            
+            <div className="w-full md:w-1/2">
+                <button type="submit" name="action" value="paid-supplier" onClick={() => setActionType('paid-supplier')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                  APPROVE (Move to Paid Supplier)
+                </button>
+                <small>Approve this Order for further processing</small>
+            </div>
+        </div>
+        </>
+   )}
+
+
+
+
 
                                                     </form>
 

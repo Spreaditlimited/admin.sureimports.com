@@ -24,7 +24,7 @@ interface StatCardProps {
     return (
       <>
 
-<div className="">
+            <div className="">
                 <div className="p-3">
                     <CounterBoxPaySupplier />
                 </div>

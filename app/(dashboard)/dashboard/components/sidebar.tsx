@@ -72,7 +72,7 @@ const features: MenuItem[] = [
   {
     title: "Pay Supplier",
     icon: HandCoins,
-    path: "/dashboard/pay-supplier",
+    path: "/dashboard/pay-supplier?status=saved",
   },
   {
     title: "Shipping Only",

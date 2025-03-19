@@ -150,7 +150,9 @@ const ComponentsAccordionsBasic = () => {
                             <div key={index + 1} className="mb-5">
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
+                                    
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
+                                        
                                         <b className='text-xl'>#{index + 1} : {datax.orderName}</b>&nbsp; | &nbsp; ORDER ID: {datax.pidOrder} &nbsp; | &nbsp; Updated: {getTimeDifference(datax.updatedAt)}&nbsp; | &nbsp; <small>Created: {getTimeDifference(datax.createdAt)}</small>
                                         
                                         &nbsp; &nbsp;
@@ -163,12 +165,12 @@ const ComponentsAccordionsBasic = () => {
                                                                                                                     
                                     </button>
 
-
                                     <div>
                                         <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
   
                                             <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] text-white-dark dark:border-[#1b2e4b]">
 
+                                                
                                                 {/****************************** SHIPPING DETAILS *****************************/}
                                                 <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
                                                     <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
