@@ -91,11 +91,11 @@ const Page = () => {
     const [productSpecification, setProductSpecification] = useState('');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                toast.info('Adding product to store . . .');
+                
                 e.preventDefault();
                 setIsLoading(true);
                 if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
-
+                toast.info('Adding product to store . . .');
                 //collecting form data
                 const formData = new FormData();
                 formData.append('file', file);
