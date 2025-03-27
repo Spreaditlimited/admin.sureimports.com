@@ -155,8 +155,8 @@ const Page = () => {
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Name *</label>
           <input
-            name='accountName'
-            onChange={(e) => setAccountName(e.target.value)}
+            name='productName'
+            onChange={(e) => setProductName(e.target.value)}
             type="text"
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -171,6 +171,11 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Category</label>
           <select
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            id='productCategory' 
+            name='productCategory'
+            value={productCategory} 
+            onChange={(e:any) => setProductCategory(e.target.value)}
+            required
           >
             <option value="">Select a Cateogry</option>
             <option value="laptop">Laptop</option>
@@ -180,9 +185,14 @@ const Page = () => {
           </select>
           </div>
           <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Brand Category</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Brand</label>
           <select
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            id='brand' 
+            name='brand'
+            value={brand} 
+            onChange={(e:any) => setBrand(e.target.value)}
+            required
           >
             <option value="">Select Product Brand</option>
             <option value="hp">HP</option>
@@ -198,35 +208,45 @@ const Page = () => {
 
         {/* Textarea */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description</label>
           <textarea
+            id="productDescription"  
+            name='productDescription' 
+            placeholder="Provide product description here"
+            onChange={(e) => setProductDescription(e.target.value)}
             rows={4}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="Enter your message..."
-          ></textarea>
-        </div>
-
-
-        {/* Textarea */}
-        div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
-          <textarea
-            rows={4}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="Enter your message..."
           ></textarea>
         </div>
 
 
         {/* Textarea */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Features</label>
           <textarea
+            id="productFeatures"  
+            name='productFeatures' 
+            placeholder="Provide product features here"
+            onChange={(e) => setProductFeatures(e.target.value)}
             rows={4}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="Enter your message..."
           ></textarea>
         </div>
+
+
+        {/* Textarea */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Specification</label>
+          <textarea
+            id="productSpecification"  
+            name='productSpecification' 
+            placeholder="Provide product specification here"
+            onChange={(e) => setProductSpecification(e.target.value)}
+            rows={4}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          ></textarea>
+        </div>
+
 
         {/* File Upload */}
         <div className="mb-6">
@@ -250,15 +270,13 @@ const Page = () => {
         </div>
 
 
-
-
         {/* Submit Button */}
         <div className="flex justify-end">
           <button
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
           >
-            <Save /> &nbsp; Create Admin
+            <Save /> &nbsp; Add Product
           </button>
         </div>
 
