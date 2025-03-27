@@ -34,13 +34,11 @@ export async function POST(request: Request) {
 
   //CHECK IF FILE IS UPLOADED
   if (!file) {
-    const responsex = {
-      message:
-        'No Image file has been selected',
-      status: 'NO_IMAGE_SELECTED',
-    };
+
     return NextResponse.json(
-      { responsex, successx: true, userx: null },
+      {       message:
+        'No Image file has been selected',
+        statusx: 'NO_IMAGE_SELECTED', },
       { status: 401 },
     );
   }
@@ -60,13 +58,10 @@ export async function POST(request: Request) {
   const fileOK = fileFilter(fileExt, allowedExt);
 
   if(fileOK){}else{
-        const responsex = {
-          message:
-            'Please select only valid images '+fileExt+' is not allowed',
-          status: 'INVALID_IMAGE_UPLOAD',
-        };
         return NextResponse.json(
-          { responsex, successx: true, userx: null },
+          {           message:
+            'Please select only valid images '+fileExt+' is not allowed',
+          statusx: 'INVALID_IMAGE_UPLOAD', },
           { status: 401 },
         );
   }
@@ -123,25 +118,19 @@ export async function POST(request: Request) {
                         await upload.done();
 
                         //RETURN SUCCESS ON FILE UPLOAD
-                        const responsex = {
-                          message:
-                            'Product was successfuly added',
-                          status: 'SUCCESS',
-                        };
                         return NextResponse.json(
-                          { responsex, successx: true, userx: null },
+                          {   message:
+                            'Product was successfuly added',
+                          status: 'SUCCESS', },
                           { status: 200 },
                         );
 
                 } catch (error) {
                         //CATCH ANY ERRORS ON FAILED UPLOAD
-                        const responsex = {
-                          message:
-                            'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error,
-                          status: 'IMAGE_UPLOAD_FAILED',
-                        };
                         return NextResponse.json(
-                          { responsex, successx: true, userx: null },
+                          {                           message:
+                            'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error,
+                          status: 'IMAGE_UPLOAD_FAILED', },
                           { status: 401 },
                         );
                 }
@@ -149,13 +138,10 @@ export async function POST(request: Request) {
 
           }else{
                 //GET RESPONSE MESSAGE FOR THE FORM FEEDBACK
-                const responsex = {
-                  message:
-                    'Failed saving record! Please contact the admin.',
-                  status: 'ACTION_FAILED',
-                };
                 return NextResponse.json(
-                  { responsex, successx: true, userx: null },
+                  {                   message:
+                    'Failed saving record! Please contact the admin.',
+                  status: 'ACTION_FAILED', },
                   { status: 401 },
                 );
           }

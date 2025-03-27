@@ -126,10 +126,10 @@ const Page = () => {
                     const data: any = await res.json();
                     //if (data.status == 'SUCCESS'){toast.success(data.responsex.message);}
                     if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', 'Admin User was successfully created!');}
-                    if (data.status == 'NO_IMAGE_SELECTED'){toast.warning(data.responsex.message);}
-                    if (data.status == 'INVALID_IMAGE_UPLOAD'){toast.warning(data.responsex.message);}
-                    if (data.status == 'IMAGE_UPLOAD_FAILED'){toast.warning(data.responsex.message);}
-                    if (data.status == 'ACTION_FAILED'){toast.error(data.responsex.message);}
+                    if (data.statusx == 'NO_IMAGE_SELECTED'){toast.warning(data.message);}
+                    if (data.statusx == 'INVALID_IMAGE_UPLOAD'){toast.warning(data.message);}
+                    if (data.statusx == 'IMAGE_UPLOAD_FAILED'){toast.warning(data.message);}
+                    if (data.statusx == 'ACTION_FAILED'){toast.error(data.message);}
 
             } catch (error: any) {
                 toast.error(error.message);
