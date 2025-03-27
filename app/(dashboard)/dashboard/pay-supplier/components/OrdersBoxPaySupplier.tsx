@@ -158,23 +158,23 @@ const ComponentsAccordionsBasic = () => {
 
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+          event.preventDefault();
 
-      let pidMessage = 'MSG' + new Date().getTime().toString();
-      let currentStatus = status;
+          let pidMessage = 'MSG' + new Date().getTime().toString();
+          let currentStatus = status;
 
-      const formData = new FormData(event.currentTarget);
-      formData.append('pidOrder', pidOrder);
-      formData.append('pidUser', pidUser);
-      formData.append('currentStatus', currentStatus);
-      formData.append('newStatus', actionType);
-      formData.append('message', message);
-      formData.append('pidMessage', pidMessage);
-      formData.append('status', status);
+          const formData = new FormData(event.currentTarget);
+          formData.append('pidOrder', pidOrder);
+          formData.append('pidUser', pidUser);
+          formData.append('currentStatus', currentStatus);
+          formData.append('newStatus', actionType);
+          formData.append('message', message);
+          formData.append('pidMessage', pidMessage);
+          formData.append('status', status);
     
           //MAKE REQUEST ATTEMPT
           try {
-            toast.info('Processing . . .');
+            toast.info('Processing . . .'+pidOrder+pidUser);
             //MAKE REQUEST
             const res = await fetch('/api/stage-processing/pay-supplier', {
               method: 'POST',
@@ -283,24 +283,25 @@ const ComponentsAccordionsBasic = () => {
                                             <form onSubmit={handleSubmit}>
 
 
-                                                  <input type='hidden' id='pidUser' name='pidUser' onChange={(e) => setPidUser(e.target.value)} value={datax.pidUser} />
-                                                  <input type='hidden' id='pidOrder' name='pidOrder' onChange={(e) => setPidOrder(e.target.value)} value={datax.pidUser} />
+                                                  <input type='hidden' id='pidUser' name='pidUser' onChange={(e) => setPidUser(e.target.value)} defaultValue={datax.pidUser} />
+                                                  <input type='hidden' id='pidOrder' name='pidOrder' onChange={(e) => setPidOrder(e.target.value)} defaultValue={datax.pidUser} />
 
 
                                                     {/* Confirm Action */}
                                                     <div className="space-y-4 p-5">
-                                                    <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
-                                                    <div className="flex items-center space-x-2">
-                                                        <input
-                                                        type="checkbox"
-                                                        id="confirm"
-                                                        className="rounded border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-                                                        required
-                                                        />
-                                                        <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300">
-                                                        Check this box to confirm your action
-                                                        </label>
-                                                    </div>
+                                                        <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
+                                                        <div className="flex items-center space-x-2">
+                                                            <input
+                                                            key={index + 999999}
+                                                            type="checkbox"
+                                                            id={"confirm"+index}
+                                                            className="rounded border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
+                                                            required
+                                                            />
+                                                            <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300">
+                                                            Check this box to confirm your action
+                                                            </label>
+                                                        </div>
                                                     </div>
 
 

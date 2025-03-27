@@ -25,7 +25,7 @@ export default async function AuthLayout({
   }
 
   return <><AuthProvider>{children}</AuthProvider></>
-}
+
 
 
 
