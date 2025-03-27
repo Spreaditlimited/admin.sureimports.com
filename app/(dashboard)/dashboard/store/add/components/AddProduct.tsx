@@ -80,6 +80,7 @@ const Page = () => {
     //const [pidUser, setPidUser] = useState(user?.pidUser as string);
     const [file, setFile] = useState<File | null>(null)
     //const [isLoading, setIsLoading] = useState(false);
+    const [pidProduct, setPidProduct] = useState(productID);
     const [productName, setProductName] = useState(productID);
     const [productCategory, setProductCategory] = useState('');
     const [productBrand, setProductBrand] = useState('');
@@ -89,10 +90,8 @@ const Page = () => {
     const [productFeatures, setProductFeatures] = useState('');
     const [productSpecification, setProductSpecification] = useState('');
 
-    const [authorizationLevel, setAuthorizationLevel] = useState('');
-
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                toast.info('Adding Admin User . . .');
+                toast.info('Adding product to store . . .');
                 e.preventDefault();
                 setIsLoading(true);
                 if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
@@ -100,7 +99,7 @@ const Page = () => {
                 //collecting form data
                 const formData = new FormData();
                 formData.append('file', file);
-                //formData.append('pidUser', pidUser);
+                formData.append('pidProduct', pidProduct);
                 formData.append('productName', productName);
                 formData.append('productCategory', productCategory);
                 formData.append('productBrand', productBrand);
@@ -125,10 +124,12 @@ const Page = () => {
 
                     //PROCESS POST RESPONSE
                     const data: any = await res.json();
-                    //if (data.responsex.status == 'SUCCESS'){toast.success(data.responsex.message);}
-                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', 'Admin User was successfully created!');}
-                    if (data.statusx == 'USER_EXISTS'){toast.error(data.message);}
-                    if (data.statusx == 'FAILED'){toast.error(data.responsex.message);}
+                    //if (data.status == 'SUCCESS'){toast.success(data.responsex.message);}
+                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', 'Admin User was successfully created!');}
+                    if (data.status == 'NO_IMAGE_SELECTED'){toast.warning(data.responsex.message);}
+                    if (data.status == 'INVALID_IMAGE_UPLOAD'){toast.warning(data.responsex.message);}
+                    if (data.status == 'IMAGE_UPLOAD_FAILED'){toast.warning(data.responsex.message);}
+                    if (data.status == 'ACTION_FAILED'){toast.error(data.responsex.message);}
 
             } catch (error: any) {
                 toast.error(error.message);

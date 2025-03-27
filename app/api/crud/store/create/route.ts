@@ -16,103 +16,148 @@ const prisma = new PrismaClient();
 export async function POST(request: Request) {
 
         const formData = await request.formData();
+        const productImage = formData.get('file') as File;
+        const pidProduct = formData.get('pidProduct') as string;
         const productName = formData.get('productName') as string;
         const productCategory = formData.get('productCategory') as string;
         const productBrand = formData.get('productBrand') as string;
         const productPrice = formData.get('productPrice') as string;
         const productMOQ = formData.get('productMOQ') as string;
         const productDescription = formData.get('productDescription') as string;
-        const productFeatures = formData.get('productFeatures') as string;
+        const productFeature = formData.get('productFeatures') as string;
         const productSpecification = formData.get('productSpecification') as any;
 
-console.log(formData)
+        console.log(formData)
 
   //GET FILE FROM FROM
-  //const file = formData.get('file') as File;
+  const file = formData.get('file') as File;
 
   //CHECK IF FILE IS UPLOADED
-  // if (!file) {
-  //   const responsex = {
-  //     message:
-  //       'No Image file has been selected',
-  //     status: 'NO_IMAGE_SELECTED',
-  //   };
-  //   return NextResponse.json(
-  //     { responsex, successx: true, userx: null },
-  //     { status: 401 },
-  //   );
-  // }
-
+  if (!file) {
+    const responsex = {
+      message:
+        'No Image file has been selected',
+      status: 'NO_IMAGE_SELECTED',
+    };
+    return NextResponse.json(
+      { responsex, successx: true, userx: null },
+      { status: 401 },
+    );
+  }
+  
   //const productCode:string = randomGenerator(20);
+  const productCode:string = pidProduct;
 
   //SET FILE NAME & GET FILE PARAMS
-  // const originalFileName = file.name;
-  // const fileType = file.type;
-  // const fileExt = getFileExt(originalFileName);
-  // const fileSize = file.size;
-  // const newFileName = "IMG"+productCode;
+  const originalFileName = file.name;
+  const fileType = file.type;
+  const fileExt = getFileExt(originalFileName);
+  const fileSize = file.size;
+  const newFileName = "IMG"+productCode;
 
   //CHECK FILE VALIDITY
-  // const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG'];//enter only permitted extensions
-  // const fileOK = fileFilter(fileExt, allowedExt);
+  const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG'];//enter only permitted extensions
+  const fileOK = fileFilter(fileExt, allowedExt);
 
-  // if(fileOK){}else{
-  //       const responsex = {
-  //         message:
-  //           'Please select only valid images '+fileExt+' is not allowed',
-  //         status: 'INVALID_IMAGE_UPLOAD',
-  //       };
-  //       return NextResponse.json(
-  //         { responsex, successx: true, userx: null },
-  //         { status: 401 },
-  //       );
-  // }
+  if(fileOK){}else{
+        const responsex = {
+          message:
+            'Please select only valid images '+fileExt+' is not allowed',
+          status: 'INVALID_IMAGE_UPLOAD',
+        };
+        return NextResponse.json(
+          { responsex, successx: true, userx: null },
+          { status: 401 },
+        );
+  }
 
 
   //GENERATE PRODUCT ID AND SLUG STRING
-  //const pidProduct = "PRD"+productCode;
-  //const categorySlug = generateSlug(categoryName);
+  const productSlug = generateSlug(productName);
 
-
-const existingUser = await prisma.admin.findUnique({ where: { userEmail:email } })
-if (existingUser) {
-            return NextResponse.json(
-              { statusx:'USER_EXISTS', message: 'Admin User already exists!'},
-              { status: 401 },
-            );
-}
-
-
-const hashedPassword = await bcrypt.hash(password, 10)
 
   //UPLOAD PRODUCT DETAILS
-  const admin = await prisma.admin.create({
+  const product = await prisma.store.create({
     data: { 
-            pidUser: pidAdminUser, 
-            userFirstname: firstName, 
-            userLastname: lastName, 
-            userEmail: email, 
-            userPhone: parseInt(phone), 
-            userPassword: hashedPassword, 
-            userStatus: authorizationLevel, 
-            userExt1: accountName,
+            pidProduct: pidProduct, 
+            productName: productName, 
+            productSlug: productSlug, 
+            productCategory: productCategory,
+            productBrand: productBrand,
+            productPrice: parseFloat(productPrice),
+            productMOQ: parseFloat(productMOQ),
+            productDescription: productDescription,
+            productFeature: productFeature,
+            productSpecification: productSpecification,
+            productVisibility: true,
+            productImage: newFileName,
+            productImageType: fileType,
+            productImageExt: fileExt,
             createdAt: new Date(),
          }
   })
 
 
       //CHECK IF PRODUCT DETAILS HAVE BEEN SUCCESSFULY UPLOADED THEN UPLOAD IMAGE
-      if(admin && admin.id)
+      if(product && product.id)
           {
-              return NextResponse.json(
-              { statusx:'SUCCESS', message: 'Admin User was successfuly created.'},
-              { status: 200 },
-            );
+
+
+                ///////////// IMAGE UPLOAD TO R2 STARTS /////////////
+                try {
+                        //GET FILE PAYLOAD
+                        const buffer = await file.arrayBuffer();
+
+                        //FILE UPLOAD DETAILS
+                        const upload = new Upload({
+                                client: getR2Client(),
+                                params: {
+                                          Bucket: process.env.R2_BUCKET_NAME,
+                                          Key: newFileName,
+                                          Body: Buffer.from(buffer),
+                                          ContentType: fileType,
+                                        },
+                                });
+
+                        //UPLOAD FILE
+                        await upload.done();
+
+                        //RETURN SUCCESS ON FILE UPLOAD
+                        const responsex = {
+                          message:
+                            'Product was successfuly added',
+                          status: 'SUCCESS',
+                        };
+                        return NextResponse.json(
+                          { responsex, successx: true, userx: null },
+                          { status: 200 },
+                        );
+
+                } catch (error) {
+                        //CATCH ANY ERRORS ON FAILED UPLOAD
+                        const responsex = {
+                          message:
+                            'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error,
+                          status: 'IMAGE_UPLOAD_FAILED',
+                        };
+                        return NextResponse.json(
+                          { responsex, successx: true, userx: null },
+                          { status: 401 },
+                        );
+                }
+              ///////////// IMAGE UPLOAD TO R2 STOPS /////////////
+
           }else{
-            return NextResponse.json(
-              { statusx:'FAILED', message: 'Admin User Creation Failed!'},
-              { status: 401 },
-            );
+                //GET RESPONSE MESSAGE FOR THE FORM FEEDBACK
+                const responsex = {
+                  message:
+                    'Failed saving record! Please contact the admin.',
+                  status: 'ACTION_FAILED',
+                };
+                return NextResponse.json(
+                  { responsex, successx: true, userx: null },
+                  { status: 401 },
+                );
           }
  
 

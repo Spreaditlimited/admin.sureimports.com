@@ -158,6 +158,32 @@ model products {
 
 
 
+model store {
+  id         Int       @id @default(autoincrement())
+  pidProduct String    @unique()
+  productName    String?
+  productSlug    String?
+  productCategory    String?
+  productBrand    String?
+  productPrice    Float?
+  productMOQ    Float?
+  productDescription    String?
+  productFeature    String?
+  productSpecification    String?
+  productVisibility    Boolean?
+  productStatus    String?
+  productImage    String?
+  productImageType  String?
+  productImageExt  String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+}
+
+
+
 model orders {
   id                 Int       @id @default(autoincrement())
   pidOrder String    @unique()
