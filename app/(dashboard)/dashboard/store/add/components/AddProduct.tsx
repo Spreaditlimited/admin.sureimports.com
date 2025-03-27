@@ -76,50 +76,52 @@ const Page = () => {
 
 
     //SET FORM DATA
-    let AdminUserID = 'ADM' + new Date().getTime().toString();
+    let productID = 'STORE' + new Date().getTime().toString();
     //const [pidUser, setPidUser] = useState(user?.pidUser as string);
-    const [pidAdminUser, setAdminUser] = useState(AdminUserID);
-    const [accountName, setAccountName] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [password, setPassword] = useState('');
+    const [file, setFile] = useState<File | null>(null)
+    //const [isLoading, setIsLoading] = useState(false);
+    const [productName, setProductName] = useState(productID);
+    const [productCategory, setProductCategory] = useState('');
+    const [productBrand, setProductBrand] = useState('');
+    const [productPrice, setProductPrice] = useState('');
+    const [productMOQ, setProductMOQ] = useState('');
+    const [productDescription, setProductDescription] = useState('');
+    const [productFeatures, setProductFeatures] = useState('');
+    const [productSpecification, setProductSpecification] = useState('');
+
     const [authorizationLevel, setAuthorizationLevel] = useState('');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 toast.info('Adding Admin User . . .');
                 e.preventDefault();
                 setIsLoading(true);
-
-                //if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
+                if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
 
                 //collecting form data
                 const formData = new FormData();
-                //formData.append('file', file);
+                formData.append('file', file);
                 //formData.append('pidUser', pidUser);
-                formData.append('pidAdminUser', pidAdminUser);
-                formData.append('accountName', accountName);
-                formData.append('firstName', firstName);
-                formData.append('lastName', lastName);
-                formData.append('email', email);
-                formData.append('phone', phone);
-                formData.append('password', password);
-                formData.append('authorizationLevel', authorizationLevel);
+                formData.append('productName', productName);
+                formData.append('productCategory', productCategory);
+                formData.append('productBrand', productBrand);
+                formData.append('productPrice', productPrice);
+                formData.append('productMOQ', productMOQ);
+                formData.append('productDescription', productDescription);
+                formData.append('productFeatures', productFeatures);
+                formData.append('productSpecification', productSpecification);
 
                 //formData.append('categoryImage', categoryImage);
 
                 //MAKE REQUEST ATTEMPT
                 try {
                     //MAKE REQUEST
-                            const res = await fetch('/api/crud/admin/create', {
+                            const res = await fetch('/api/crud/store/create', {
                             method: 'POST',
                             //headers: { 'Content-Type': 'application/json' },
                             //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             //headers: { 'Content-Type': 'multipart/form-data' },
                             body: formData,
                     });
-
 
                     //PROCESS POST RESPONSE
                     const data: any = await res.json();
@@ -168,7 +170,7 @@ const Page = () => {
         {/* Double Column */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Category</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Category *</label>
           <select
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             id='productCategory' 
@@ -185,13 +187,13 @@ const Page = () => {
           </select>
           </div>
           <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Brand</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Brand *</label>
           <select
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            id='brand' 
-            name='brand'
-            value={brand} 
-            onChange={(e:any) => setBrand(e.target.value)}
+            id='productBrand' 
+            name='productBrand'
+            value={productBrand} 
+            onChange={(e:any) => setProductBrand(e.target.value)}
             required
           >
             <option value="">Select Product Brand</option>
@@ -206,15 +208,51 @@ const Page = () => {
         </div>
 
 
+
+
+        {/* Double Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Price *</label>
+          <input
+            id="productPrice" 
+            name='productPrice' 
+            type="number" 
+            placeholder="0.00" 
+            onChange={(e) => setProductPrice(e.target.value)}
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">MOQ *</label>
+          <input
+            id="productMOQ" 
+            name='productMOQ' 
+            type="number" 
+            placeholder="1" 
+            value={1}
+            onChange={(e) => setProductMOQ(e.target.value)}
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+        </div>
+
+
+
+
         {/* Textarea */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description *</label>
           <textarea
             id="productDescription"  
             name='productDescription' 
             placeholder="Provide product description here"
             onChange={(e) => setProductDescription(e.target.value)}
             rows={4}
+            required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           ></textarea>
         </div>
@@ -252,10 +290,14 @@ const Page = () => {
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Resume</label>
           <input
+            id='file'
+            name='file'
             type="file"
             className="mt-1 block w-full text-sm text-gray-900 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-gray-700 dark:file:text-gray-300"
           />
         </div>
+
+        
 
         {/* Toggle Switch */}
         <div className="mb-6">
