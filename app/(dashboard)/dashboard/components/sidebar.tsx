@@ -27,6 +27,7 @@ import {
   Ship,
   MonitorSmartphone,
   ChartCandlestick,
+  Store,
 } from "lucide-react"
 import type React from "react"
 
@@ -84,6 +85,7 @@ const features: MenuItem[] = [
     icon: UserCheck,
     path: "/dashboard/verify-supplier?status=pending-payment",
   },
+  
   // {
   //   title: "Dashboard",
   //   icon: LayoutDashboard,
@@ -122,6 +124,19 @@ const features: MenuItem[] = [
   // { title: "Subscribers", icon: Users, path: "/subscribers" },
   // { title: "Messages", icon: MessageSquare, path: "/messages" },
   // { title: "Payments", icon: CreditCard, path: "/payments" },
+]
+
+const store: MenuItem[] = 
+  {
+    title: "Store Mgt.",
+    icon: Store,
+    path: "/store",
+    submenu: [
+      { title: "View Products", path: "/dashboard/store/view" },
+      { title: "Add Products", path: "/dashboard/store/add" },
+      // { title: "Roles", path: "/admin/roles" },
+    ],
+  },
 ]
 
 const systemSettings: MenuItem[] = [
@@ -339,6 +354,22 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             </h2>
             <div className="space-y-1">
               {features.map((item) => (
+                <MenuItem key={item.path} item={item} />
+              ))}
+            </div>
+          </div>
+
+
+          <div>
+            <h2
+              className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
+                isCollapsed ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              STORE
+            </h2>
+            <div className="space-y-1">
+              {store.map((item) => (
                 <MenuItem key={item.path} item={item} />
               ))}
             </div>
