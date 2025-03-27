@@ -126,7 +126,7 @@ const features: MenuItem[] = [
   // { title: "Payments", icon: CreditCard, path: "/payments" },
 ]
 
-const store: MenuItem[] = 
+const store: MenuItem[] = [
   {
     title: "Store Mgt.",
     icon: Store,

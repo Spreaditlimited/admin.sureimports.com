@@ -162,88 +162,94 @@ const Page = () => {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
-
+        
 
 
         {/* Double Column */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
-          <input
-            name='firstName'
-            onChange={(e) => setFirstName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name *</label>
-          <input
-            name='lastName'
-            onChange={(e) => setLastName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-        </div>
-
-
-         {/* Double Column */}
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
-          <input
-            name='email'
-            onChange={(e) => setEmail(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number *</label>
-          <input
-            name='phone'
-            onChange={(e) => setPhone(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-        </div>
-
-
-
-        {/* Single Column */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Admin Password *</label>
-          <input
-            name='password'
-            onChange={(e) => setPassword(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-        </div>
-
-
-
-        {/* Dropdown (Select) */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Authorization Level *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Category</label>
           <select
-            name='authorizationLevel'
-            onChange={(e) => setAuthorizationLevel(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value=""> - Level - </option>
-            <option value="L1">Super Admin L1</option>
-            <option value="L2">Regular Admin L2 </option>
-            <option value="L3">Regular Admin L3 </option>
+            <option value="">Select a Cateogry</option>
+            <option value="laptop">Laptop</option>
+            <option value="laptop">Desktop</option>
+            <option value="phone">Phones</option>
+            <option value="other">Others</option>
           </select>
+          </div>
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Brand Category</label>
+          <select
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="">Select Product Brand</option>
+            <option value="hp">HP</option>
+            <option value="dell">DELL</option>
+            <option value="acer">ACER</option>
+            <option value="lenovo">LENOVO</option>
+            <option value="apple">APPLE</option>
+            <option value="phone">GOOGLE</option>
+          </select>
+          </div>
         </div>
+
+
+        {/* Textarea */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+          <textarea
+            rows={4}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Enter your message..."
+          ></textarea>
+        </div>
+
+
+        {/* Textarea */}
+        div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+          <textarea
+            rows={4}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Enter your message..."
+          ></textarea>
+        </div>
+
+
+        {/* Textarea */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
+          <textarea
+            rows={4}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Enter your message..."
+          ></textarea>
+        </div>
+
+        {/* File Upload */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Resume</label>
+          <input
+            type="file"
+            className="mt-1 block w-full text-sm text-gray-900 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-gray-700 dark:file:text-gray-300"
+          />
+        </div>
+
+        {/* Toggle Switch */}
+        <div className="mb-6">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+            />
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+            <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">Turn <b>ON / OFF</b> Product Visibility</span>
+          </label>
+        </div>
+
+
 
 
         {/* Submit Button */}
