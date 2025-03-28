@@ -80,8 +80,10 @@ export default function ProductsTable() {
             const data:any = await response.json();
 
             if(data.statusx == 'SUCCESS'){
-              if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', data.message);}
+              if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', data.message);}
               //toast.success(data.message);
+              window.location.href = '/dashboard/store/view';
+
               }
 
             if(data.statusx == 'FAILED'){
