@@ -16,21 +16,21 @@ const prisma = new PrismaClient();
 //export async function POST(request: Request) {
   export async function GET(request: NextRequest) {
 
-const pidUser = request.nextUrl.searchParams.get('pidUser') as any;
+const pidProduct = request.nextUrl.searchParams.get('pidProduct') as any;
 
         try {
-            await prisma.admin.delete({
-              where: { pidUser: pidUser },
+            await prisma.store.delete({
+              where: { pidProduct: pidProduct },
         });
 
       return NextResponse.json(
-      { statusx: 'SUCCESS', message: 'Admin User was successfully deleted!' },
+      { statusx: 'SUCCESS', message: 'Product was successfully deleted!' },
       { status: 200 },
     );
 
     } catch (error) {
       return NextResponse.json(
-        { statusx: 'FAILED', message: 'Failed to delete admin user' },
+        { statusx: 'FAILED', message: 'Failed to delete product, please contact super admin' },
         { status: 401 },
       );
     }finally {

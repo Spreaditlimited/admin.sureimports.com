@@ -17,12 +17,13 @@ import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 interface ProductsProps {
       id: number,
       pidProduct: string, 
-      productName: number, 
-      productBrand: true,
-      productCategory: true,
-      productVisibility: true,
-      productImage: true,
-      createdAt: true,
+      productName: string, 
+      productPrice: string, 
+      productBrand: string,
+      productCategory: string,
+      productVisibility: number,
+      productImage: string,
+      createdAt: string,
   }
 
 export default function ProductsTable() {
@@ -71,11 +72,11 @@ export default function ProductsTable() {
   const router = useRouter();
 
 
-  async function handleDelete(pidUser:any){
+  async function handleDelete(pidProduct:any){
       toast.info('Deleting Product...');
       try {
             //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
-            const response = await fetch(`/api/crud/store/delete?pidUser=${pidUser}`);
+            const response = await fetch(`/api/crud/store/delete?pidProduct=${pidProduct}`);
             const data:any = await response.json();
 
             if(data.statusx == 'SUCCESS'){
@@ -127,12 +128,13 @@ export default function ProductsTable() {
             <th scope="col" className="px-6 py-3">S/N</th>
             <th scope="col" className="px-6 py-3">Product Image</th>
             <th scope="col" className="px-6 py-3">Product Name</th>
+            <th scope="col" className="px-6 py-3">Price(₦)</th>
             <th scope="col" className="px-6 py-3">Brand / Category</th>
             <th scope="col" className="px-6 py-3">Visibility</th>
             <th scope="col" className="px-6 py-3">Action</th>
           </tr>
         </thead>
-        
+
         <tbody>
 
         {(products || []).length ? (
@@ -154,12 +156,34 @@ export default function ProductsTable() {
             </td> */}
 
             <td className="px-6 py-4">
-                {product.productImage}<br />
+                <div className="w-32 h-32 bg-gray-100 relative rounded-xl">
+                        <Image
+                            src={process.env.NEXT_PUBLIC_R2_PUBLIC_URL+'/'+`${product.productImage}` as string}
+                            alt="Product"
+                            width={100} // specify width
+                            height={100} // specify height
+                            className="absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl"
+                        />
+                </div>
             </td>
 
-            <td className="px-6 py-4">
-               {product.productName}<br />
+            <td className="px-6 py-4 text-base">
+               <b>{product.productName}</b><br />
                <small> ID: {product.pidProduct}</small><br />
+            </td>
+
+            <td className="px-6 py-4 text-base">
+               <b>
+                  ₦
+                  {
+                      (
+                        parseFloat(product.productPrice)
+                      )
+                      .toFixed(2)
+                      .toString()
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                  }
+                </b>
             </td>
 
             <td className="px-6 py-4">

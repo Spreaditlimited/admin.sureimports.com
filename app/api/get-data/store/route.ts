@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         id: true,
         pidProduct: true,
         productName: true, 
+        productPrice: true,
         productBrand: true,
         productCategory: true,
         productVisibility: true,
