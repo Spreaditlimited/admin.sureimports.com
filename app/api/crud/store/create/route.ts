@@ -36,11 +36,10 @@ export async function POST(request: Request) {
   if (!file) {
 
     return NextResponse.json(
-      {       message:
-        'No Image file has been selected',
-        statusx: 'NO_IMAGE_SELECTED', },
+      { statusx:'NO_IMAGE_SELECTED', message: 'No Image file has been selected'},
       { status: 401 },
     );
+
   }
   
   //const productCode:string = randomGenerator(20);
@@ -58,12 +57,11 @@ export async function POST(request: Request) {
   const fileOK = fileFilter(fileExt, allowedExt);
 
   if(fileOK){}else{
-        return NextResponse.json(
-          {           message:
-            'Please select only valid images '+fileExt+' is not allowed',
-          statusx: 'INVALID_IMAGE_UPLOAD', },
-          { status: 401 },
-        );
+    return NextResponse.json(
+      { statusx:'INVALID_IMAGE_UPLOAD', message: 'Please select only valid images '+fileExt+' is not allowed'},
+      { status: 401 },
+    );
+
   }
 
 
@@ -119,18 +117,15 @@ export async function POST(request: Request) {
 
                         //RETURN SUCCESS ON FILE UPLOAD
                         return NextResponse.json(
-                          {   message:
-                            'Product was successfuly added',
-                          status: 'SUCCESS', },
-                          { status: 200 },
+                          { statusx:'SUCCESS', message: 'Product was successfuly added'},
+                          { status: 401 },
                         );
+
 
                 } catch (error) {
                         //CATCH ANY ERRORS ON FAILED UPLOAD
                         return NextResponse.json(
-                          {                           message:
-                            'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error,
-                          status: 'IMAGE_UPLOAD_FAILED', },
+                          { statusx:'IMAGE_UPLOAD_FAILED', message: 'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error},
                           { status: 401 },
                         );
                 }
@@ -139,14 +134,12 @@ export async function POST(request: Request) {
           }else{
                 //GET RESPONSE MESSAGE FOR THE FORM FEEDBACK
                 return NextResponse.json(
-                  {                   message:
-                    'Failed saving record! Please contact the admin.',
-                  status: 'ACTION_FAILED', },
+                  { statusx:'ACTION_FAILED', message: 'Failed saving record! Please contact the admin.'},
                   { status: 401 },
                 );
           }
  
-          
+
 
   //END
 }
