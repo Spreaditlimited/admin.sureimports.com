@@ -72,7 +72,7 @@ export default function ProductsTable() {
   const router = useRouter();
 
 
-  async function handleDelete(pidProduct:any){
+  async function handleDelete(pidProduct:any){``
       toast.info('Deleting Product...');
       try {
             //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
@@ -83,9 +83,8 @@ export default function ProductsTable() {
               if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', data.message);}
               //toast.success(data.message);
               window.location.href = '/dashboard/store/view';
-
               }
-              
+
 
             if(data.statusx == 'FAILED'){                                           
               toast.error(data.message);
