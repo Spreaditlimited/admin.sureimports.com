@@ -206,10 +206,12 @@ export default function ProductsTable() {
           </tr>
                         ))
                       ) : (
-                        <tr className="flex border p-5 m-5 text-center justify-center">
-                          {/* <td className="border p-2 text-center" colSpan={3}> */}
-                            No categories found.
-                          {/* </td> */}
+                        <tr className="px-6 py-4">
+                            <div className="flex border p-5 m-5 text-center justify-center">
+                            {/* <td className="border p-2 text-center" colSpan={3}> */}
+                                No Products found
+                            {/* </td> */}
+                            </div>
                         </tr>
                       )}
         </tbody>
