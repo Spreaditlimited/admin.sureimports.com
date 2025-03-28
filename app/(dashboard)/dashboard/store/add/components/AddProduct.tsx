@@ -15,7 +15,7 @@ import ImageBox from '@/componentsx/ImageBox';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { Save } from 'lucide-react';
+import { PlusCircle, Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
 
@@ -301,7 +301,7 @@ const Page = () => {
         {/* IMAGE UPLOAD */}
         <div className="mb-6">
             <div>
-                <label htmlFor="url"><b>Upload Featured Image</b></label>
+                <label htmlFor="url"><b>Upload Product Image</b></label>
                 <div className="flex">
                         <ImageBox onImageChange={handleImageChange} />
                 </div>
@@ -309,8 +309,20 @@ const Page = () => {
         </div>
 
 
-        {/* Toggle Switch */}
         <div className="mb-6">
+        <label className="flex items-center">
+            <input
+              type="checkbox"
+              className="sr-onlyXYZ peer"
+            />
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+            <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">Turn <b>ON / OFF</b> Product Visibility</span>
+          </label>
+        </div>
+
+
+        {/* Toggle Switch */}
+        {/* <div className="mb-6">
           <label className="flex items-center">
             <input
               type="checkbox"
@@ -319,7 +331,7 @@ const Page = () => {
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
             <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">Turn <b>ON / OFF</b> Product Visibility</span>
           </label>
-        </div>
+        </div> */}
 
 
         {/* Submit Button */}
@@ -328,7 +340,7 @@ const Page = () => {
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
           >
-            <Save /> &nbsp; Add Product
+            <PlusCircle /> &nbsp; Add Product
           </button>
         </div>
 

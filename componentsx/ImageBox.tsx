@@ -59,7 +59,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange }) => {
       //   cursor: 'pointer',
       // }}
       className={`
-        flex flex-col items-center justify-center w-20 h-20 relative
+        flex flex-col items-center justify-center w-200 h-250 relative dark:bg-slate-600
         border-2 border-dashed rounded-md cursor-pointer bg-blue-50
         ${isDragOver ? "border-blue-500" : "border-gray-300"} 
         h-70 w-80
@@ -71,11 +71,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange }) => {
         onChange={handleImageChange}
         style={{ display: 'none' }}
       />
-      <PhotoIcon className="h-10 w-10 mr-2" />
+      <PhotoIcon className="h-10 w-10 mr-2 dark:text-gray-600" />
       {previewImage ? (
         <img src={previewImage} alt="Preview" style={{ maxWidth: '300px' }} className='absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl' />
       ) : (
-        <p className='p-10 m-10 '>Click or drag and drop an image to upload</p>
+        <p className='p-10 m-10 dark:text-gray-600'>Click or drag and drop an image to upload</p>
       )}
     </div>
   );
