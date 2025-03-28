@@ -85,8 +85,9 @@ export default function ProductsTable() {
               window.location.href = '/dashboard/store/view';
 
               }
+              
 
-            if(data.statusx == 'FAILED'){
+            if(data.statusx == 'FAILED'){                                           
               toast.error(data.message);
               }
 
