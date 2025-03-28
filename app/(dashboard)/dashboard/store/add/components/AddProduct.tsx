@@ -71,7 +71,7 @@ const Page = () => {
 
 
     const handleImageChange = (file: File) => {
-      //setFile(file);
+      setFile(file);
     };
 
 
@@ -288,7 +288,7 @@ const Page = () => {
 
 
         {/* File Upload */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Resume</label>
           <input
             id='file'
@@ -296,9 +296,18 @@ const Page = () => {
             type="file"
             className="mt-1 block w-full text-sm text-gray-900 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-gray-700 dark:file:text-gray-300"
           />
+        </div> */}
+
+        {/* IMAGE UPLOAD */}
+        <div className="mb-6">
+            <div>
+                <label htmlFor="url"><b>Upload Featured Image</b></label>
+                <div className="flex">
+                        <ImageBox onImageChange={handleImageChange} />
+                </div>
+            </div>
         </div>
 
-        
 
         {/* Toggle Switch */}
         <div className="mb-6">
