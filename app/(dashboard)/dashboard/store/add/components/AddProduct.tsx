@@ -232,8 +232,8 @@ const Page = () => {
             id="productMOQ" 
             name='productMOQ' 
             type="number" 
-            placeholder="1" 
-            value={1}
+            placeholder="Provide Minimum Order Quantity" 
+            defaultValue={1}
             onChange={(e) => setProductMOQ(e.target.value)}
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"

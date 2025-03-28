@@ -65,13 +65,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange }) => {
         h-70 w-80
       `}
     >
+      
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleImageChange}
         style={{ display: 'none' }}
       />
-      <PhotoIcon className="h-10 w-10 mr-2 dark:text-gray-600" />
+      <PhotoIcon className="h-20 w-10 mr-2 dark:text-gray-600" />
       {previewImage ? (
         <img src={previewImage} alt="Preview" style={{ maxWidth: '300px' }} className='absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl' />
       ) : (
