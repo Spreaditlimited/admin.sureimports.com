@@ -191,7 +191,7 @@ export default function ProductsTable() {
             </td>
 
             <td className="px-6 py-4">
-               {product.productVisibility}
+               {product.productVisibility && 'YES'}
             </td>
             
             <td className="px-6 py-4">
