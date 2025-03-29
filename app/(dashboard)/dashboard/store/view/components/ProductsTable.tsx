@@ -7,7 +7,7 @@ import { MdAddToPhotos } from 'react-icons/md';
 import { prisma } from '@/lib/prisma';
 import { toast } from 'sonner';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
-import { Delete, Edit, List, Trash, View } from 'lucide-react';
+import { Delete, Edit, List, PlusCircle, Trash, View } from 'lucide-react';
 
 // interface User {
 //   id: number;
@@ -104,11 +104,18 @@ export default function ProductsTable() {
     <>
     <div className="w-full overflow-x-auto shadow-md sm:rounded-lg">
 
-    {/* <div>
-        <button type="button" onClick={() => { router.push('/dashboard/admin/add');}} className="btn btn-primary w-full"><MdAddToPhotos /> &nbsp; Add New Admin</button>
-    </div> */}
+        {/* Submit Button */}
+        <div className="flex justify-end p-5">
+          <button
+            type="button"
+            onClick={()=>{router.push('/dashboard/store/add')}}
+            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
+          >
+            <PlusCircle /> &nbsp; Add Product
+          </button>
+        </div>
 
-    {/* <h1 className="text-base font-bold m-2 p-3">View Admin Users Records</h1> */}
+
       {/* Search Input */}
       {/* <input
         type="text"
@@ -146,17 +153,7 @@ export default function ProductsTable() {
             <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
             {index + 1}
             </td>
-            {/* <td className="px-6 py-4">
-                    <div className="w-20 h-20 bg-gray-100 relative">
-                        <Image
-                            src={process.env.NEXT_PUBLIC_R2_PUBLIC_URL+'/'+`${cat.categoryImage}` as string}
-                            alt="Category"
-                            width={100} // specify width
-                            height={100} // specify height
-                            className="absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl"
-                        />
-                    </div>
-            </td> */}
+
 
             <td className="px-6 py-4">
                 <div className="w-32 h-32 bg-gray-100 relative rounded-xl">
