@@ -15,9 +15,10 @@ import ImageBox from '@/componentsx/ImageBox';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { PlusCircle, Save } from 'lucide-react';
+import { ArrowBigLeft, PlusCircle, Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { db } from "@/lib/db"
+import { FaBackward } from 'react-icons/fa';
 
 export const metadata: Metadata = {
     title: 'Printin Admin Dashboard',
@@ -81,7 +82,7 @@ interface ProductFormProps {
     product: Product
   }
   
-  export const ProductDetailsDisplay: React.FC<ProductDetailsDisplayProps> = ({ product }) => {
+  export const ProductDetailsDisplay:  React.FC<ProductDetailsDisplayProps> = ({ product }) => {
 
     const {user} = useAuth();
     //initialize alert system
@@ -108,18 +109,44 @@ interface ProductFormProps {
     })
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/'); // Fallback to home if no history
+    }
+  };
 
 
     return (
         <>
-
-<div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
+        {/* Submit Button */}
+        <div className="flex justify-end p-5">
+          <button
+            type="button"
+            onClick={()=>{router.push('/dashboard/store/add')}}
+            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
+          >
+            <PlusCircle /> &nbsp; Add Product
+          </button>
+        </div>
+        
+    {/* Product Details */}
+    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Product Details</h2>
         <div className="flex space-x-2">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Edit</button>
-          <button className="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-            Back
+          <button 
+              type="button"
+              onClick={()=>{router.push('/dashboard/store/edit?id='+product.pidProduct)}}
+              className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
+              >
+              <PlusCircle /> &nbsp; Edit
+          </button>
+          <button 
+          onClick={handleBack}
+          className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ">
+           <ArrowBigLeft /> &nbsp; Back
           </button>
         </div>
       </div>
@@ -127,38 +154,72 @@ interface ProductFormProps {
       {/* Basic Info Section */}
       <div className="mb-8 border-b border-gray-200 dark:border-gray-700 pb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+
           <div className="md:col-span-2">
-            <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Product ID</h3>
-              <p className="text-base text-gray-900 dark:text-white">{product.pidProduct}</p>
-            </div>
-            <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Product Name</h3>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">{product.productName}</p>
-            </div>
-            <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Category</h3>
-              <p className="text-base text-gray-900 dark:text-white">{product.productCategory}</p>
-            </div>
+
+          <div className="w-96 h-96 bg-gray-100 relative rounded-xl">
+                  <Image
+                      src={process.env.NEXT_PUBLIC_R2_PUBLIC_URL+'/'+`${product.productImage}` as string}
+                      alt="Product"
+                      width={300} // specify width
+                      height={300} // specify height
+                      className="absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl"
+                  />
           </div>
-          <div>
+
+          <div className="mb-4 pt-7">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Product Name</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{product.productName}</p>
+              </div>
+
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Product ID</h3>
+                <p className="text-base text-gray-900 dark:text-white">{product.pidProduct}</p>
+              </div>
+
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Brand / Category</h3>
+                <p className="text-base text-gray-900 dark:text-white">{product.productBrand}, {product.productCategory}</p>
+              </div>
+          </div>
+
+
+          <div className="text-lg">
+            
             <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Price</h3>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">${product.productPrice.toFixed(2)}</p>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Price</h3>
+                <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    ₦
+                    {
+                        (
+                          parseFloat(product.productPrice)
+                        )
+                        .toFixed(2)
+                        .toString()
+                        .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                    }
+                </p>
             </div>
+
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Stock</h3>
               <p className="text-base text-gray-900 dark:text-white">{1} units</p>
             </div>
+
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(product.updatedAt)}</p>
             </div>
+
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(product.createdAt)}</p>
             </div>
+
           </div>
+
+
         </div>
       </div>
 
@@ -176,7 +237,7 @@ interface ProductFormProps {
         <ul className="list-disc pl-5 space-y-2">
 
             <li className="text-gray-700 dark:text-gray-300">
-              {product.productFeatures}
+              {product.productFeature}
             </li>
 
         </ul>
@@ -218,3 +279,4 @@ interface ProductFormProps {
     );
 };
 
+export default ProductDetailsDisplay;

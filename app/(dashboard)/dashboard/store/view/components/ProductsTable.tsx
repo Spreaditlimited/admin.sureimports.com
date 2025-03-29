@@ -104,7 +104,7 @@ export default function ProductsTable() {
     <>
     <div className="w-full overflow-x-auto shadow-md sm:rounded-lg">
 
-        {/* Submit Button */}
+        {/* Link Button */}
         <div className="flex justify-end p-5">
           <button
             type="button"
