@@ -85,7 +85,7 @@ export default function ProductsTable() {
               //toast.success(data.message);
               window.location.href = '/dashboard/store/view';
               }
-
+              
 
             if(data.statusx == 'FAILED'){                                           
               toast.error(data.message);
@@ -200,24 +200,23 @@ export default function ProductsTable() {
             <td className="flex vertical-align:middle px-6 py-4 whitespace-nowrap justify-center items-center gap-2">
               {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
               <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
-
-              <a href="/dashboard/store/details?id=2" className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><List /></a> &nbsp; | &nbsp;
+              <a href={'/dashboard/store/details?id='+product.pidProduct} className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><List /></a> &nbsp; | &nbsp;
               <a href="/dashboard/store/edit?id=2" className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Edit /></a> &nbsp; | &nbsp;
               <a href="#" onClick={() => handleDelete(product.pidProduct as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Trash /></a>
-
-              </td>
+            </td>
             
-          </tr>
-                        ))
-                      ) : (
-                        <tr className="px-6 py-4">
-                            <div className="flex border p-5 m-5 text-center justify-center">
-                            {/* <td className="border p-2 text-center" colSpan={3}> */}
-                                No Products found
-                            {/* </td> */}
-                            </div>
-                        </tr>
-                      )}
+            </tr>
+                ))
+                ) : (
+                <tr className="px-6 py-4">
+                    <div className="flex border p-5 m-5 text-center justify-center">
+                    {/* <td className="border p-2 text-center" colSpan={3}> */}
+                        No Products found
+                    {/* </td> */}
+                    </div>
+            </tr>
+
+            )}
         </tbody>
       </table>
       )}
