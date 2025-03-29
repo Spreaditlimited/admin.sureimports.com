@@ -120,21 +120,11 @@ interface ProductFormProps {
 
     return (
         <>
-        {/* Submit Button */}
-        <div className="flex justify-end p-5">
-          <button
-            type="button"
-            onClick={()=>{router.push('/dashboard/store/add')}}
-            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
-          >
-            <PlusCircle /> &nbsp; Add Product
-          </button>
-        </div>
         
     {/* Product Details */}
-    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
+    <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Product Details</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Product</h2>
         <div className="flex space-x-2">
           <button 
               type="button"
