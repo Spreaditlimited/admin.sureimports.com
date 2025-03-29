@@ -201,7 +201,7 @@ export default function ProductsTable() {
               {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
               <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
               <a href={'/dashboard/store/details?id='+product.pidProduct} className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><List /></a> &nbsp; | &nbsp;
-              <a href="/dashboard/store/edit?id=2" className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Edit /></a> &nbsp; | &nbsp;
+              <a href={'/dashboard/store/edit?id='+product.pidProduct} className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Edit /></a> &nbsp; | &nbsp;
               <a href="#" onClick={() => handleDelete(product.pidProduct as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Trash /></a>
             </td>
             
