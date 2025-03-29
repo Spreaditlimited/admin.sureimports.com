@@ -5,7 +5,7 @@ import { Metadata } from 'next';
 import React from 'react';
 import { useState } from 'react';
 import { MdAddShoppingCart, MdAddToPhotos, MdBook } from 'react-icons/md';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 //import toast from 'react-hot-toast';
 import { useAlert } from '@/app/context/AlertContext';
@@ -68,12 +68,8 @@ const Page = () => {
     //const [value, setValue] = useState('<h3>Product Description Title</h3><br /><p> Product description goes here...</p>');
     //const [file, setFile] = useState<File | null>(null)
     const [isLoading, setIsLoading] = useState(false);
-
-
-    const handleImageChange = (file: File) => {
-      setFile(file);
-    };
-
+    const status = useSearchParams().get('status') || 'none'; // Get the current 'status' value
+    const [orderALL, setOrderALL] = useState<Product[]>([]);
 
     //SET FORM DATA
     let productID = 'STORE' + new Date().getTime().toString();
