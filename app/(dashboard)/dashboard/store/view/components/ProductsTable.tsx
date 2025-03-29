@@ -197,7 +197,7 @@ export default function ProductsTable() {
                {product.productVisibility && 'YES'}
             </td>
             
-            <td className="px-6 py-4">
+            <td className="flex vertical-align:middle px-6 py-4 whitespace-nowrap justify-center items-center gap-2">
               {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
               <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
 

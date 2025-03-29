@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         createdAt: true,
       },
       orderBy: [
-        { id: 'asc' },
+        { id: 'desc' },
         //{ createdAt: 'asc' },
       ],
     });
