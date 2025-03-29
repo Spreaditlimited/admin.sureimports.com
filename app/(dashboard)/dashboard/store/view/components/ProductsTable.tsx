@@ -7,7 +7,7 @@ import { MdAddToPhotos } from 'react-icons/md';
 import { prisma } from '@/lib/prisma';
 import { toast } from 'sonner';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
-import { Delete, Edit, View } from 'lucide-react';
+import { Delete, Edit, List, Trash, View } from 'lucide-react';
 
 // interface User {
 //   id: number;
@@ -201,9 +201,9 @@ export default function ProductsTable() {
               {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
               <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
 
-              <a href="/dashboard/store/details?id=2" className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><View /></a> &nbsp; | &nbsp;
+              <a href="/dashboard/store/details?id=2" className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><List /></a> &nbsp; | &nbsp;
               <a href="/dashboard/store/edit?id=2" className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Edit /></a> &nbsp; | &nbsp;
-              <a href="#" onClick={() => handleDelete(product.pidProduct as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Delete /></a>
+              <a href="#" onClick={() => handleDelete(product.pidProduct as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline"><Trash /></a>
 
               </td>
             
