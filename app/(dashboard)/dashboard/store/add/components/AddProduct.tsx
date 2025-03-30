@@ -125,7 +125,7 @@ const Page = () => {
                     //PROCESS POST RESPONSE
                     const data: any = await res.json();
                     //if (data.status == 'SUCCESS'){toast.success(data.responsex.message);}
-                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', 'Admin User was successfully created!');}
+                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', 'Product was successfully created!');}
                     if (data.statusx == 'NO_IMAGE_SELECTED'){toast.warning(data.message);}
                     if (data.statusx == 'INVALID_IMAGE_UPLOAD'){toast.warning(data.message);}
                     if (data.statusx == 'IMAGE_UPLOAD_FAILED'){toast.warning(data.message);}

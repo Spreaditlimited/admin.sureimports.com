@@ -32,32 +32,6 @@ interface User {
     name: string;
   }
   
-//API RESPONSE
-interface ApiResponse {
-    responsex: any;
-    successx: boolean;
-    userx: User;
-  }
-
-interface ProductFormProps {
-    product?: {
-      id: number
-      pidProduct: string
-      pidCategory: string
-      productName: string
-      productDescription: number
-      productCategory: string
-      productPrice: number
-      productPriceInfo: string
-      productGeneralInfo: string
-      productMOQ: number
-      productVAT: number
-      productAdditionalPrice: number
-      productAdditionalDescription: string
-    }
-  }
-
-
 
   type Product = {
     pidProduct: string

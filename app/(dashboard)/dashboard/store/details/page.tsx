@@ -3,6 +3,8 @@ import { DashboardLayout } from "../../../dashboard/components/dashboard-layout"
 import ProductDetails from "./components/ProductDetails"
 import { db } from "@/lib/db"
 
+
+
 export default async function ProductDetailsPage({
   searchParams,
 }: {

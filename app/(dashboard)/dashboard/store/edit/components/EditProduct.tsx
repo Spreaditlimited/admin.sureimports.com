@@ -20,7 +20,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 
 export const metadata: Metadata = {
-    title: 'Printin Admin Dashboard',
+    title: 'Admin Dashboard',
     description: 'Printin'
 };
 
@@ -31,34 +31,32 @@ interface User {
     name: string;
   }
   
-//API RESPONSE
-interface ApiResponse {
-    responsex: any;
-    successx: boolean;
-    userx: User;
+
+  type Product = {
+    pidProduct: string
+    productName: string
+    productPrice: string
+    productSlug: string
+    productCategory: string
+    productBrand: string
+    productMOQ: string
+    productDescription: string
+    productFeature: string
+    productSpecification: string
+    productVisibility: string
+    productImage: string
+    productImageType: string
+    productImageExt: string
+    createdAt: Date
+    updatedAt: Date
   }
-
-interface ProductFormProps {
-    product?: {
-      id: number
-      pidProduct: string
-      pidCategory: string
-      productName: string
-      productDescription: number
-      productCategory: string
-      productPrice: number
-      productPriceInfo: string
-      productGeneralInfo: string
-      productMOQ: number
-      productVAT: number
-      productAdditionalPrice: number
-      productAdditionalDescription: string
-    }
+  
+  interface EditProductProps {
+    product: Product
   }
+  
+  export const EditProductPage:  React.FC<EditProductProps> = ({ product }) => {
 
-
-
-const Page = () => {
     const {user} = useAuth();
     //initialize alert system
     const navigateWithAlert = useNavigationWithAlert();
@@ -76,19 +74,19 @@ const Page = () => {
 
 
     //SET FORM DATA
-    let productID = 'STORE' + new Date().getTime().toString();
+    //let productID = 'STORE' + new Date().getTime().toString();
     //const [pidUser, setPidUser] = useState(user?.pidUser as string);
     const [file, setFile] = useState<File | null>(null)
     //const [isLoading, setIsLoading] = useState(false);
-    const [pidProduct, setPidProduct] = useState(productID);
-    const [productName, setProductName] = useState(productID);
-    const [productCategory, setProductCategory] = useState('');
-    const [productBrand, setProductBrand] = useState('');
-    const [productPrice, setProductPrice] = useState('');
-    const [productMOQ, setProductMOQ] = useState('');
-    const [productDescription, setProductDescription] = useState('');
-    const [productFeatures, setProductFeatures] = useState('');
-    const [productSpecification, setProductSpecification] = useState('');
+    const [pidProduct, setPidProduct] = useState(product.pidProduct);
+    const [productName, setProductName] = useState(product.productName);
+    const [productCategory, setProductCategory] = useState(product.productCategory);
+    const [productBrand, setProductBrand] = useState(product.productBrand);
+    const [productPrice, setProductPrice] = useState(product.productPrice);
+    const [productMOQ, setProductMOQ] = useState(product.productMOQ);
+    const [productDescription, setProductDescription] = useState(product.productDescription);
+    const [productFeatures, setProductFeatures] = useState(product.productFeature);
+    const [productSpecification, setProductSpecification] = useState(product.productSpecification);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 
@@ -114,7 +112,7 @@ const Page = () => {
                 //MAKE REQUEST ATTEMPT
                 try {
                     //MAKE REQUEST
-                            const res = await fetch('/api/crud/store/create', {
+                            const res = await fetch('/api/crud/store/update', {
                             method: 'POST',
                             //headers: { 'Content-Type': 'application/json' },
                             //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -125,7 +123,7 @@ const Page = () => {
                     //PROCESS POST RESPONSE
                     const data: any = await res.json();
                     //if (data.status == 'SUCCESS'){toast.success(data.responsex.message);}
-                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', 'Admin User was successfully created!');}
+                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', 'Product was successfully updated');}
                     if (data.statusx == 'NO_IMAGE_SELECTED'){toast.warning(data.message);}
                     if (data.statusx == 'INVALID_IMAGE_UPLOAD'){toast.warning(data.message);}
                     if (data.statusx == 'IMAGE_UPLOAD_FAILED'){toast.warning(data.message);}
@@ -159,6 +157,7 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Name *</label>
           <input
             name='productName'
+            defaultValue={productName}
             onChange={(e) => setProductName(e.target.value)}
             type="text"
             required
@@ -176,7 +175,7 @@ const Page = () => {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             id='productCategory' 
             name='productCategory'
-            value={productCategory} 
+            defaultValue={productCategory} 
             onChange={(e:any) => setProductCategory(e.target.value)}
             required
           >
@@ -193,7 +192,7 @@ const Page = () => {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             id='productBrand' 
             name='productBrand'
-            value={productBrand} 
+            defaultValue={productBrand} 
             onChange={(e:any) => setProductBrand(e.target.value)}
             required
           >
@@ -218,6 +217,7 @@ const Page = () => {
           <input
             id="productPrice" 
             name='productPrice' 
+            defaultValue={product.productPrice}
             type="number" 
             placeholder="0.00" 
             onChange={(e) => setProductPrice(e.target.value)}
@@ -231,9 +231,9 @@ const Page = () => {
           <input
             id="productMOQ" 
             name='productMOQ' 
+            defaultValue={product.productMOQ}
             type="number" 
             placeholder="Provide Minimum Order Quantity" 
-            defaultValue={1}
             onChange={(e) => setProductMOQ(e.target.value)}
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -250,6 +250,7 @@ const Page = () => {
           <textarea
             id="productDescription"  
             name='productDescription' 
+            defaultValue={product.productDescription}
             placeholder="Provide product description here"
             onChange={(e) => setProductDescription(e.target.value)}
             rows={4}
@@ -265,6 +266,7 @@ const Page = () => {
           <textarea
             id="productFeatures"  
             name='productFeatures' 
+            defaultValue={product.productFeature}
             placeholder="Provide product features here"
             onChange={(e) => setProductFeatures(e.target.value)}
             rows={4}
@@ -282,6 +284,7 @@ const Page = () => {
           <textarea
             id="productSpecification"  
             name='productSpecification' 
+            defaultValue={product.productSpecification}
             placeholder="Provide product specification here"
             onChange={(e) => setProductSpecification(e.target.value)}
             rows={4}
@@ -343,7 +346,7 @@ const Page = () => {
             type="submit"
             className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
           >
-            <PlusCircle /> &nbsp; Add Product
+            <PlusCircle /> &nbsp; Update Product
           </button>
         </div>
 
@@ -356,4 +359,4 @@ const Page = () => {
     );
 };
 
-export default Page;
+export default EditProductPage;

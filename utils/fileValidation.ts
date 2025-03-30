@@ -18,6 +18,7 @@ export default function validFile(fileExt: any): any {
     return { success: true, message: 'Valid File Type' };
   } else {
     return { success: false, message: 'Invalid File Type' };
-    console.log('GREAT!!!');
+    console.log('JESUS IS GREAT!!!');
+    console.log('JESUS IS KING!!!');
   }
 }
