@@ -87,7 +87,7 @@ interface User {
     const [productDescription, setProductDescription] = useState(product.productDescription);
     const [productFeatures, setProductFeatures] = useState(product.productFeature);
     const [productSpecification, setProductSpecification] = useState(product.productSpecification);
-alert(productMOQ);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 
                 e.preventDefault();

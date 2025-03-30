@@ -18,10 +18,17 @@ import axios from 'axios';
 import { PlusCircle, Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
+//import TiptapEditor from '@/components/TiptapEditor';
+// import CKEditorWrapper from '@/components/CKEditorWrapper';
+// import Editor from '@monaco-editor/react';
+
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import TiptapEditor from "@/components/tiptap-editor"
 
 export const metadata: Metadata = {
-    title: 'Printin Admin Dashboard',
-    description: 'Printin'
+    title: 'Admin Dashboard',
+    description: 'Admin'
 };
 
 //USER DATA
@@ -62,6 +69,10 @@ const Page = () => {
     const {user} = useAuth();
     //initialize alert system
     const navigateWithAlert = useNavigationWithAlert();
+
+    //Tiptap Editor
+    const [content, setContent] = useState('<p>Start writing your post here...</p>');
+    //const [content, setContent] = useState<string>('');
 
     //SET VARIABLES DATA
     const router = useRouter();
@@ -247,6 +258,7 @@ const Page = () => {
         {/* Textarea */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description *</label>
+          <TiptapEditor initialContent="" onChange={setContent} />
           <textarea
             id="productDescription"  
             name='productDescription' 
@@ -262,6 +274,7 @@ const Page = () => {
         {/* Textarea */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Features</label>
+          {/* <TiptapEditor content={content} onChange={setContent} /> */}
           <textarea
             id="productFeatures"  
             name='productFeatures' 
