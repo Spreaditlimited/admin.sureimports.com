@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { PlusCircle, Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import ImageBox2 from '@/componentsx/ImageBox2';
 
 
 export const metadata: Metadata = {
@@ -87,12 +88,14 @@ interface User {
     const [productDescription, setProductDescription] = useState(product.productDescription);
     const [productFeatures, setProductFeatures] = useState(product.productFeature);
     const [productSpecification, setProductSpecification] = useState(product.productSpecification);
+    const [imagex, setImagex] = useState(product.productImage);
+
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 
                 e.preventDefault();
                 setIsLoading(true);
-                if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
+                if (file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
                 toast.info('Adding product to store . . .');
                 //collecting form data
                 const formData = new FormData();
@@ -309,7 +312,8 @@ interface User {
             <div>
                 <label htmlFor="url"><b>Upload Product Image</b></label>
                 <div className="flex">
-                        <ImageBox onImageChange={handleImageChange} />
+                        {/* <ImageBox onImageChange={handleImageChange} /> */}
+                          <ImageBox2 onImageChange={handleImageChange} imagex={imagex} />
                 </div>
             </div>
         </div>

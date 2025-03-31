@@ -15,10 +15,10 @@ const Page = async () => {
 
     const countries = await CountryDataFetcher()
     return (
-        <DashboardLayout>
+        <>
         <h1 className="text-2xl font-bold mb-6">Shipping Plan</h1>
         {/* <AdminForm /> */}
-    </DashboardLayout>
+    </>
     );
 };
 

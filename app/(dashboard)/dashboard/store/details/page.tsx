@@ -31,10 +31,10 @@ export default async function ProductDetailsPage({
   }
   
   return (
-      <DashboardLayout>
+      <>
           <h1 className="text-2xl font-bold mb-6">Products Details </h1>
           <ProductDetails product={product as any} />
-      </DashboardLayout>
+      </>
   )
 }
 

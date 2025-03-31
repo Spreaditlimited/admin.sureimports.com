@@ -3,10 +3,10 @@ import { BuyPhonesLaptopsContent } from "./components/PageContent"
 
 export default function DashboardPage() {
   return (
-      <DashboardLayout>
+      <>
           <h1 className="text-2xl font-bold mb-6">Phones & Laptops</h1>
           <BuyPhonesLaptopsContent />
-      </DashboardLayout>
+      </>
   )
 }
 

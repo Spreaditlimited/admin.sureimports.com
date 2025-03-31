@@ -19,10 +19,10 @@ export default async function DashboardPage() {
 console.log(JSON.stringify(rates));
 
   return (
-      <DashboardLayout>
+      <>
           <h1 className="text-2xl font-bold mb-6">Exchange Rates Update</h1>
           <ExchangeRatesForm rates={rates} />
-      </DashboardLayout>
+      </>
   )
 }
 

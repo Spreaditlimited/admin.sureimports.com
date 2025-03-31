@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { MdAddShoppingCart, MdAddToPhotos, MdBook } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-//import toast from 'react-hot-toast';
 import { useAlert } from '@/app/context/AlertContext';
 import Image from 'next/image';
 import ImageUploadBox from '@/componentsx/ImageUploadBox';
@@ -17,23 +16,10 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { PlusCircle, Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-//import TiptapEditor from "@/components/tiptap-editor"
-//import TiptapEditor from "@/components/TiptapEditor";
-
-//import TiptapEditor from '@/components/TiptapEditor';
-// import CKEditorWrapper from '@/components/CKEditorWrapper';
-// import Editor from '@monaco-editor/react';
-
-//import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-//import TiptapEditor from "@/components/editor-form"
-// import dynamic from 'next/dynamic';
-// import { EditorState } from 'draft-js';
-// import QuillEditor from '@/components/QuillEditor';
-// import { Jodit } from 'jodit';
-// import JoditReact from 'jodit-react';
-// import EditorForm from "@/components/editor-form"
 import RichTextEditor from '@/components/RichTextEditor';
+import ImageBox2 from '@/componentsx/ImageBox2';
+
+
 
 export const metadata: Metadata = {
     title: 'Admin Dashboard',
@@ -279,6 +265,7 @@ const Page = () => {
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description *</label>
 
+
           <RichTextEditor 
             apiKey={apiKey}
             initialValue="<p>Start editing here...</p>" 
@@ -346,7 +333,8 @@ const Page = () => {
             <div>
                 <label htmlFor="url"><b>Upload Product Image</b></label>
                 <div className="flex">
-                        <ImageBox onImageChange={handleImageChange} />
+                        {/* <ImageBox onImageChange={handleImageChange} /> */}
+                        <ImageBox2 onImageChange={handleImageChange} imagex={''} />
                 </div>
             </div>
         </div>
