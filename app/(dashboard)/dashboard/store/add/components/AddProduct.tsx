@@ -27,12 +27,12 @@ import TiptapEditor from "@/components/tiptap-editor"
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 //import TiptapEditor from "@/components/editor-form"
-import dynamic from 'next/dynamic';
-import { EditorState } from 'draft-js';
-import QuillEditor from '@/components/QuillEditor';
-import { Jodit } from 'jodit';
-import JoditReact from 'jodit-react';
-import EditorForm from "@/components/editor-form"
+// import dynamic from 'next/dynamic';
+// import { EditorState } from 'draft-js';
+// import QuillEditor from '@/components/QuillEditor';
+// import { Jodit } from 'jodit';
+// import JoditReact from 'jodit-react';
+// import EditorForm from "@/components/editor-form"
 import RichTextEditor from '@/components/RichTextEditor';
 
 export const metadata: Metadata = {
@@ -78,12 +78,6 @@ const Page = () => {
     const {user} = useAuth();
     //initialize alert system
     const navigateWithAlert = useNavigationWithAlert();
-
-    //Tiptap Editor
-    //const [content, setContent] = useState('<p>Start writing your post here...</p>');
-    //const [content, setContent] = useState<string>('');
-    const editor = useRef<Jodit>(null);
-    //const [content, setContent] = useState(defaultValue);
 
     //SET VARIABLES DATA
     const router = useRouter();
