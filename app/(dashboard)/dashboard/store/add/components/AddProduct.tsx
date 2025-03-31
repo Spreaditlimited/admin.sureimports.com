@@ -2,7 +2,7 @@
 
 import Products from '@/componentsx/dashboard/Products';
 import { Metadata } from 'next';
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useState } from 'react';
 import { MdAddShoppingCart, MdAddToPhotos, MdBook } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { PlusCircle, Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import TiptapEditor from "@/components/tiptap-editor"
+//import TiptapEditor from "@/components/TiptapEditor";
 
 //import TiptapEditor from '@/components/TiptapEditor';
 // import CKEditorWrapper from '@/components/CKEditorWrapper';
@@ -24,7 +26,14 @@ import { useAuth } from '@/lib/AuthContext';
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import TiptapEditor from "@/components/tiptap-editor"
+//import TiptapEditor from "@/components/editor-form"
+import dynamic from 'next/dynamic';
+import { EditorState } from 'draft-js';
+import QuillEditor from '@/components/QuillEditor';
+import { Jodit } from 'jodit';
+import JoditReact from 'jodit-react';
+import EditorForm from "@/components/editor-form"
+import RichTextEditor from '@/components/RichTextEditor';
 
 export const metadata: Metadata = {
     title: 'Admin Dashboard',
@@ -65,14 +74,16 @@ interface ProductFormProps {
 
 
 
-const Page = () => {
+const Page = ({defaultValue = ''}) => {
     const {user} = useAuth();
     //initialize alert system
     const navigateWithAlert = useNavigationWithAlert();
 
     //Tiptap Editor
-    const [content, setContent] = useState('<p>Start writing your post here...</p>');
+    //const [content, setContent] = useState('<p>Start writing your post here...</p>');
     //const [content, setContent] = useState<string>('');
+    const editor = useRef<Jodit>(null);
+    const [content, setContent] = useState(defaultValue);
 
     //SET VARIABLES DATA
     const router = useRouter();
@@ -100,6 +111,37 @@ const Page = () => {
     const [productDescription, setProductDescription] = useState('');
     const [productFeatures, setProductFeatures] = useState('');
     const [productSpecification, setProductSpecification] = useState('');
+
+
+    const config = useMemo(() => ({
+      readonly: false,
+      placeholder: 'Start typing...',
+      height: 500,
+      toolbarAdaptive: false,
+      toolbarSticky: true,
+      buttons: [
+        'bold', 'italic', 'underline', 'strikethrough', '|',
+        'ul', 'ol', '|',
+        'font', 'fontsize', 'brush', 'paragraph', '|',
+        'align', '|',
+        'undo', 'redo', '|',
+        'hr', 'table', 'link', '|',
+        'fullsize', 'preview', 'print'
+      ]
+    }), []);
+
+    
+    //const [content, setContent] = useState('');
+    const apiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'moywdpb8ambo3p01qo59oz27mjwfpcukr7myzoopyicobb6i';
+  
+    const handleEditorChange = (newContent: string) => {
+      setContent(newContent);
+    };
+  
+    const handleSave = () => {
+      console.log('Content to save:', content);
+      // Add your save logic here
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 
@@ -258,8 +300,14 @@ const Page = () => {
         {/* Textarea */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description *</label>
-          <TiptapEditor initialContent="" onChange={setContent} />
-          <textarea
+
+          <RichTextEditor 
+            apiKey={apiKey}
+            initialValue="<p>Start editing here...</p>" 
+            onChange={handleEditorChange} 
+          />
+
+          {/* <textarea
             id="productDescription"  
             name='productDescription' 
             placeholder="Provide product description here"
@@ -267,7 +315,7 @@ const Page = () => {
             rows={4}
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          ></textarea>
+          ></textarea> */}
         </div>
 
 

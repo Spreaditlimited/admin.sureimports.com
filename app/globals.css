@@ -133,6 +133,49 @@
 
 
 
+/* TinyMCE Dark Mode Overrides */
+.tox-tinymce-aux {
+  z-index: 9999 !important;
+}
+
+.tox:not(.tox-tinymce-inline) .tox-editor-header {
+  background-color: var(--background);
+  border-bottom: 1px solid var(--border);
+}
+
+.dark .tox .tox-menubar,
+.dark .tox .tox-toolbar,
+.dark .tox .tox-toolbar__overflow,
+.dark .tox .tox-toolbar__primary {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.dark .tox .tox-tbtn {
+  color: #95a4b3 !important;
+}
+
+.dark .tox .tox-tbtn:hover {
+  background: #334155 !important;
+}
+
+.dark .tox .tox-tbtn--enabled {
+  background: #475569 !important;
+}
+
+.dark .tox .tox-statusbar {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+.dark .tox .tox-statusbar__path-item,
+.dark .tox .tox-statusbar__wordcount {
+  color: #94a3b8 !important;
+}
+
+
+
 
   /* END */
 }
