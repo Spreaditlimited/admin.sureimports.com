@@ -92,14 +92,14 @@ interface User {
 
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                
+                alert(file);
                 e.preventDefault();
                 setIsLoading(true);
-                if (file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
+                //if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
                 toast.info('Adding product to store . . .');
                 //collecting form data
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', file as File);
                 formData.append('pidProduct', pidProduct);
                 formData.append('productName', productName);
                 formData.append('productCategory', productCategory);
