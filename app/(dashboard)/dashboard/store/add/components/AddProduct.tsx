@@ -17,14 +17,14 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { PlusCircle, Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import TiptapEditor from "@/components/tiptap-editor"
+//import TiptapEditor from "@/components/tiptap-editor"
 //import TiptapEditor from "@/components/TiptapEditor";
 
 //import TiptapEditor from '@/components/TiptapEditor';
 // import CKEditorWrapper from '@/components/CKEditorWrapper';
 // import Editor from '@monaco-editor/react';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+//import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 //import TiptapEditor from "@/components/editor-form"
 // import dynamic from 'next/dynamic';
