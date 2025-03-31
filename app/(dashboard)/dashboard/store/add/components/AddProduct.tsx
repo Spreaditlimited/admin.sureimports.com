@@ -74,7 +74,7 @@ interface ProductFormProps {
 
 
 
-const Page = ({defaultValue = ''}) => {
+const Page = () => {
     const {user} = useAuth();
     //initialize alert system
     const navigateWithAlert = useNavigationWithAlert();
@@ -83,7 +83,7 @@ const Page = ({defaultValue = ''}) => {
     //const [content, setContent] = useState('<p>Start writing your post here...</p>');
     //const [content, setContent] = useState<string>('');
     const editor = useRef<Jodit>(null);
-    const [content, setContent] = useState(defaultValue);
+    //const [content, setContent] = useState(defaultValue);
 
     //SET VARIABLES DATA
     const router = useRouter();
@@ -112,34 +112,18 @@ const Page = ({defaultValue = ''}) => {
     const [productFeatures, setProductFeatures] = useState('');
     const [productSpecification, setProductSpecification] = useState('');
 
-
-    const config = useMemo(() => ({
-      readonly: false,
-      placeholder: 'Start typing...',
-      height: 500,
-      toolbarAdaptive: false,
-      toolbarSticky: true,
-      buttons: [
-        'bold', 'italic', 'underline', 'strikethrough', '|',
-        'ul', 'ol', '|',
-        'font', 'fontsize', 'brush', 'paragraph', '|',
-        'align', '|',
-        'undo', 'redo', '|',
-        'hr', 'table', 'link', '|',
-        'fullsize', 'preview', 'print'
-      ]
-    }), []);
-
     
+    //TINY MCE EDITOR
     //const [content, setContent] = useState('');
     const apiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'moywdpb8ambo3p01qo59oz27mjwfpcukr7myzoopyicobb6i';
   
     const handleEditorChange = (newContent: string) => {
-      setContent(newContent);
+      //setContent(newContent);
+      setProductDescription(newContent);
     };
   
     const handleSave = () => {
-      console.log('Content to save:', content);
+      //console.log('Content to save:', content);
       // Add your save logic here
     };
 
@@ -305,6 +289,7 @@ const Page = ({defaultValue = ''}) => {
             apiKey={apiKey}
             initialValue="<p>Start editing here...</p>" 
             onChange={handleEditorChange} 
+            //onChange={handleEditorChange} 
           />
 
           {/* <textarea
