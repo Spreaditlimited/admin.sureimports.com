@@ -92,7 +92,7 @@ interface User {
 
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                alert(file);
+                //alert(file);
                 e.preventDefault();
                 setIsLoading(true);
                 //if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}

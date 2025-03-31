@@ -266,14 +266,14 @@ const Page = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description *</label>
 
 
-          <RichTextEditor 
+          {/* <RichTextEditor 
             apiKey={apiKey}
             initialValue="<p>Start editing here...</p>" 
             onChange={handleEditorChange} 
             //onChange={handleEditorChange} 
-          />
+          /> */}
 
-          {/* <textarea
+          <textarea
             id="productDescription"  
             name='productDescription' 
             placeholder="Provide product description here"
@@ -281,7 +281,7 @@ const Page = () => {
             rows={4}
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          ></textarea> */}
+          ></textarea>
         </div>
 
 
