@@ -3,23 +3,17 @@ import { PrismaClient } from '@prisma/client';
 import { random } from 'lodash';
 import { getR2Client } from '@/app/utils/r2Client';
 import { Upload } from '@aws-sdk/lib-storage';
-import getFileExt from '@/app/utils/fileExt'
-import fileFilter from '@/app/utils/fileFilter'
-import randomGenerator from "@/lib/helpers/randomGenerator";
+import getFileExt from '@/app/utils/fileExt';
+import fileFilter from '@/utils/fileFilter';
+import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextResponse } from 'next/server';
-import { generateSlug } from '@/app/utils/slugGenerator'
-import bcrypt from "bcryptjs"
+import { generateSlug } from '@/utils/slugGenerator';
+//import r2ImageUpload from '@/lib/helpers/r2ImageUpload';
 
 const prisma = new PrismaClient();
 
 
 export async function POST(request: Request) {
-
-                          //RETURN SUCCESS ON FILE UPLOAD
-                          return NextResponse.json(
-                            { statusx:'SUCCESS', message: 'Product was successfuly updated'},
-                            { status: 200 },
-                          );
 
         const formData = await request.formData();
         const productImage = formData.get('file') as File;
@@ -35,6 +29,14 @@ export async function POST(request: Request) {
 
         console.log(formData)
 
+  //CHECK IF PRODUCTS EXISTS
+  const product = await prisma.store.findUnique({
+    where: {
+        pidProduct: pidProduct,
+    },
+  });
+
+
   //GET FILE FROM FROM
   const file = formData.get('file') as File;
 
@@ -47,104 +49,163 @@ export async function POST(request: Request) {
     );
 
   }
-  
-  //const productCode:string = randomGenerator(20);
-  const productCode:string = pidProduct;
 
-  //SET FILE NAME & GET FILE PARAMS
-  const originalFileName = file.name;
-  const fileType = file.type;
-  const fileExt = getFileExt(originalFileName);
-  const fileSize = file.size;
-  const newFileName = "IMG"+productCode;
+          const productCode:string = pidProduct;
+        
+          //SET FILE NAME & GET FILE PARAMS
+          const originalFileName = file.name;
+          const fileType = file.type;
+          const fileExt = getFileExt(originalFileName);
+          const fileSize = file.size;
+          const newFileName = "IMG"+productCode;
+        
+          //CHECK FILE VALIDITY
+          const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG'];//enter only permitted extensions
+          const fileOK = fileFilter(fileExt, allowedExt);
+        
+          if(fileOK){}else{
+            return NextResponse.json(
+              { statusx:'INVALID_IMAGE_UPLOAD', message: 'Please select only valid images '+fileExt+' is not allowed'},
+              { status: 401 },
+            );
+        
+          }
 
-  //CHECK FILE VALIDITY
-  const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG'];//enter only permitted extensions
-  const fileOK = fileFilter(fileExt, allowedExt);
+        
+          //GENERATE PRODUCT ID AND SLUG STRING
+          const productSlug = generateSlug(productName);
 
-  if(fileOK){}else{
-    return NextResponse.json(
-      { statusx:'INVALID_IMAGE_UPLOAD', message: 'Please select only valid images '+fileExt+' is not allowed'},
-      { status: 401 },
-    );
 
+  //UPDATE PROFILE RECORDS
+  const updatex = await prisma.store.update({
+    where: { pidProduct: pidProduct,} ,
+    data: {
+        pidProduct: pidProduct, 
+        productName: productName, 
+        productSlug: productSlug, 
+        productCategory: productCategory,
+        productBrand: productBrand,
+        productPrice: parseFloat(productPrice),
+        productMOQ: parseFloat(productMOQ),
+        productDescription: productDescription,
+        productFeature: productFeature,
+        productSpecification: productSpecification,
+        productVisibility: true,
+        productImage: newFileName,
+        productImageType: fileType,
+        productImageExt: fileExt,
+        //userImage: newFileName,
+        updatedAt: new Date(),
+    },
+  });
+
+  let imageStatus = 'YES';
+
+  //CHECK IF IMAGE IS SELECTED OR IF IMAGE EXISTS IN DB
+  if (!file || !(file instanceof File)) {
+    if (product?.productImage == null) {
+      const responsex = {
+        message: 'Please select an image file',
+        status: 'NO_IMAGE_SELECTED',
+      };
+      return NextResponse.json(
+        { responsex, successx: true, userx: null },
+        { status: 401 },
+      );
+    } else {
+      imageStatus = 'NO';
+    }
   }
 
+  if (imageStatus == 'NO') {
+    //RETURN SUCCESS CONTENT UPLOAD
+    const responsex = {
+      message: 'Product was successfuly updated',
+      status: 'SUCCESS',
+    };
+    return NextResponse.json(
+      { responsex, successx: true, userx: null },
+      { status: 401 },
+    );
+  } else {
+    //FILE DETAILS (NAME, SIZE, TYPE)
+    let originalFileName = file.name;
+    let fileSize = file.size;
+    let fileType = file.type;
+    let productCode: string = randomGenerator(20);
+    let fileExt = getFileExt(originalFileName);
+    let newFileName = 'IMG' + productCode;
 
-  //GENERATE PRODUCT ID AND SLUG STRING
-  const productSlug = generateSlug(productName);
+    //CHECK FILE VALIDITY
+    const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG']; //enter only permitted extensions
+    const fileOK = fileFilter(fileExt, allowedExt);
 
+    if (fileOK) {
+    } else {
+      const responsex = {
+        message:
+          'Please select only valid images, ' + fileExt + ' is not allowed',
+        status: 'INVALID_IMAGE_UPLOAD',
+      };
+      return NextResponse.json(
+        { responsex, successx: true, userx: null },
+        { status: 401 },
+      );
+    }
 
-  //UPLOAD PRODUCT DETAILS
-  const product = await prisma.store.create({
-    data: { 
-            pidProduct: pidProduct, 
-            productName: productName, 
-            productSlug: productSlug, 
-            productCategory: productCategory,
-            productBrand: productBrand,
-            productPrice: parseFloat(productPrice),
-            productMOQ: parseFloat(productMOQ),
-            productDescription: productDescription,
-            productFeature: productFeature,
-            productSpecification: productSpecification,
-            productVisibility: true,
-            productImage: newFileName,
-            productImageType: fileType,
-            productImageExt: fileExt,
-            createdAt: new Date(),
-         }
-  })
+    //update image file in database
+    const updatex = await prisma.store.update({
+      where: { pidProduct: pidProduct, },
+      data: {
+        productImage: newFileName,
+        updatedAt: new Date(),
+      },
+    });
 
+    ///////////// IMAGE UPLOAD TO R2 STARTS /////////////
+    try {
+      //GET FILE PAYLOAD
+      const buffer = await file.arrayBuffer();
 
-      //CHECK IF PRODUCT DETAILS HAVE BEEN SUCCESSFULY UPLOADED THEN UPLOAD IMAGE
-      if(product && product.id)
-          {
+      //FILE UPLOAD DETAILS
+      const upload = new Upload({
+        client: getR2Client(),
+        params: {
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: newFileName,
+          Body: Buffer.from(buffer),
+          ContentType: fileType,
+        },
+      });
 
+      //UPLOAD FILE
+      await upload.done();
 
-                ///////////// IMAGE UPLOAD TO R2 STARTS /////////////
-                try {
-                        //GET FILE PAYLOAD
-                        const buffer = await file.arrayBuffer();
+      //RETURN SUCCESS ON FILE UPLOAD
+      const responsex = {
+        message: 'product was successfuly updated',
+        status: 'SUCCESS',
+      };
+      return NextResponse.json(
+        { responsex, successx: true, userx: null },
+        { status: 401 },
+      );
+    } catch (error) {
+      //CATCH ANY ERRORS ON FAILED UPLOAD
+      const responsex = {
+        message:
+          'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::' +
+          error,
+        status: 'IMAGE_UPLOAD_FAILED',
+      };
+      return NextResponse.json(
+        { responsex, successx: true, userx: null },
+        { status: 401 },
+      );
+    }
+    ///////////// IMAGE UPLOAD TO R2 STOPS /////////////
+  }
 
-                        //FILE UPLOAD DETAILS
-                        const upload = new Upload({
-                                client: getR2Client(),
-                                params: {
-                                          Bucket: process.env.R2_BUCKET_NAME,
-                                          Key: newFileName,
-                                          Body: Buffer.from(buffer),
-                                          ContentType: fileType,
-                                        },
-                                });
-
-                        //UPLOAD FILE
-                        await upload.done();
-
-                        //RETURN SUCCESS ON FILE UPLOAD
-                        return NextResponse.json(
-                          { statusx:'SUCCESS', message: 'Product was successfuly added'},
-                          { status: 200 },
-                        );
-
-
-                } catch (error) {
-                        //CATCH ANY ERRORS ON FAILED UPLOAD
-                        return NextResponse.json(
-                          { statusx:'IMAGE_UPLOAD_FAILED', message: 'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error},
-                          { status: 401 },
-                        );
-                }
-              ///////////// IMAGE UPLOAD TO R2 STOPS /////////////
-
-          }else{
-                //GET RESPONSE MESSAGE FOR THE FORM FEEDBACK
-                return NextResponse.json(
-                  { statusx:'ACTION_FAILED', message: 'Failed saving record! Please contact the admin.'},
-                  { status: 401 },
-                );
-          }
- 
 
 
   //END
