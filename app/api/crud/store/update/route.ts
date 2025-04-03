@@ -60,7 +60,7 @@ export async function POST(request: Request) {
           const newFileName = "IMG"+productCode;
         
           //CHECK FILE VALIDITY
-          const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG'];//enter only permitted extensions
+          const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG', 'webp', 'WEBP', 'svg', 'SVG'];//enter only permitted extensions
           const fileOK = fileFilter(fileExt, allowedExt);
         
           if(fileOK){}else{
