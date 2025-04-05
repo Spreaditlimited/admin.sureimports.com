@@ -40,36 +40,8 @@ export async function POST(request: Request) {
   //GET FILE FROM FROM
   const file = formData.get('file') as File;
 
-  //CHECK IF FILE IS UPLOADED
-  if (!file) {
-
-    return NextResponse.json(
-      { statusx:'NO_IMAGE_SELECTED', message: 'No Image file has been selected'},
-      { status: 401 },
-    );
-
-  }
 
           const productCode:string = pidProduct;
-        
-          //SET FILE NAME & GET FILE PARAMS
-          const originalFileName = file.name;
-          const fileType = file.type;
-          const fileExt = getFileExt(originalFileName);
-          const fileSize = file.size;
-          const newFileName = "IMG"+productCode;
-        
-          //CHECK FILE VALIDITY
-          const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG', 'webp', 'WEBP', 'svg', 'SVG'];//enter only permitted extensions
-          const fileOK = fileFilter(fileExt, allowedExt);
-        
-          if(fileOK){}else{
-            return NextResponse.json(
-              { statusx:'INVALID_IMAGE_UPLOAD', message: 'Please select only valid images '+fileExt+' is not allowed'},
-              { status: 401 },
-            );
-        
-          }
 
         
           //GENERATE PRODUCT ID AND SLUG STRING
@@ -91,9 +63,9 @@ export async function POST(request: Request) {
         productFeature: productFeature,
         productSpecification: productSpecification,
         productVisibility: true,
-        productImage: newFileName,
-        productImageType: fileType,
-        productImageExt: fileExt,
+        //productImage: newFileName,
+        // productImageType: fileType,
+        // productImageExt: fileExt,
         //userImage: newFileName,
         updatedAt: new Date(),
     },
@@ -104,14 +76,10 @@ export async function POST(request: Request) {
   //CHECK IF IMAGE IS SELECTED OR IF IMAGE EXISTS IN DB
   if (!file || !(file instanceof File)) {
     if (product?.productImage == null) {
-      const responsex = {
-        message: 'Please select an image file',
-        status: 'NO_IMAGE_SELECTED',
-      };
-      return NextResponse.json(
-        { responsex, successx: true, userx: null },
-        { status: 401 },
-      );
+          return NextResponse.json(
+            { statusx:'NO_IMAGE_SELECTED', message: 'No Image file has been selected'},
+            { status: 401 },
+          );
     } else {
       imageStatus = 'NO';
     }
@@ -119,39 +87,30 @@ export async function POST(request: Request) {
 
   if (imageStatus == 'NO') {
     //RETURN SUCCESS CONTENT UPLOAD
-    const responsex = {
-      message: 'Product was successfuly updated',
-      status: 'SUCCESS',
-    };
     return NextResponse.json(
-      { responsex, successx: true, userx: null },
-      { status: 401 },
+      { statusx:'SUCCESS', message: 'Product was successfuly updated'},
+      { status: 200 },
     );
   } else {
-    //FILE DETAILS (NAME, SIZE, TYPE)
-    let originalFileName = file.name;
-    let fileSize = file.size;
-    let fileType = file.type;
-    let productCode: string = randomGenerator(20);
-    let fileExt = getFileExt(originalFileName);
-    let newFileName = 'IMG' + productCode;
+      //FILE DETAILS (NAME, SIZE, TYPE)
+      let originalFileName = file.name;
+      let fileSize = file.size;
+      let fileType = file.type;
+      let productCode: string = randomGenerator(20);
+      let fileExt = getFileExt(originalFileName);
+      let newFileName = 'IMG' + productCode;
 
-    //CHECK FILE VALIDITY
-    const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG']; //enter only permitted extensions
-    const fileOK = fileFilter(fileExt, allowedExt);
+      //CHECK FILE VALIDITY
+      const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG', 'webp', 'WEBP', 'svg', 'SVG']; //enter only permitted extensions
+      const fileOK = fileFilter(fileExt, allowedExt);
 
-    if (fileOK) {
-    } else {
-      const responsex = {
-        message:
-          'Please select only valid images, ' + fileExt + ' is not allowed',
-        status: 'INVALID_IMAGE_UPLOAD',
-      };
-      return NextResponse.json(
-        { responsex, successx: true, userx: null },
-        { status: 401 },
-      );
-    }
+      if (fileOK) {
+      } else {
+            return NextResponse.json(
+              { statusx:'INVALID_IMAGE_UPLOAD', message: 'Please select only valid images, ' + fileExt + ' is not allowed'},
+              { status: 401 },
+            );
+      }
 
     //update image file in database
     const updatex = await prisma.store.update({
@@ -182,26 +141,17 @@ export async function POST(request: Request) {
       await upload.done();
 
       //RETURN SUCCESS ON FILE UPLOAD
-      const responsex = {
-        message: 'product was successfuly updated',
-        status: 'SUCCESS',
-      };
       return NextResponse.json(
-        { responsex, successx: true, userx: null },
-        { status: 401 },
+        { statusx:'SUCCESS', message: 'Product was successfuly updated'},
+        { status: 200 },
       );
     } catch (error) {
       //CATCH ANY ERRORS ON FAILED UPLOAD
-      const responsex = {
-        message:
-          'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::' +
-          error,
-        status: 'IMAGE_UPLOAD_FAILED',
-      };
-      return NextResponse.json(
-        { responsex, successx: true, userx: null },
-        { status: 401 },
-      );
+          return NextResponse.json(
+            { statusx:'IMAGE_UPLOAD_FAILED', message: 'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::' +
+              error,},
+            { status: 401 },
+          );
     }
     ///////////// IMAGE UPLOAD TO R2 STOPS /////////////
   }
