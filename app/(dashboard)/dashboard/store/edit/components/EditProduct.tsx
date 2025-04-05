@@ -202,9 +202,11 @@ interface User {
             <option value="">Select Product Brand</option>
             <option value="hp">HP</option>
             <option value="dell">DELL</option>
+            <option value="asus">ASUS</option>
             <option value="acer">ACER</option>
             <option value="lenovo">LENOVO</option>
             <option value="apple">APPLE</option>
+            <option value="samsung">SAMSUNG</option>
             <option value="phone">GOOGLE</option>
           </select>
           </div>
