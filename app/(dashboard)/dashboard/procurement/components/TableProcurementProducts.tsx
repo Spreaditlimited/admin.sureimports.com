@@ -722,7 +722,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                   {' '}
                   $
                   {
-                    (grandTotalCost as number)
+                    ((grandTotalCost as number)/1)
                       .toFixed(2)
                       .toString()
                       .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
@@ -1025,18 +1025,18 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                   <>
                     &nbsp;{' | '}&nbsp;
                     <span className="">
-                    ₦
-                  {
-                      (
-                        (costDifference) *
-                        exNairaToDollar
-                      )
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }
-              &nbsp; Naira
-            </span>
+                            ₦
+                            {
+                                (
+                                  ((costDifference) *
+                                  exNairaToDollar)/1
+                                )
+                                .toFixed(2)
+                                .toString()
+                                .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                            }
+                            &nbsp; Naira
+                    </span>
                   </>
                 )}
           </div>
