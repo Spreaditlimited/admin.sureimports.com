@@ -83,7 +83,7 @@ export default function ProductsTable() {
 
 
   async function handleViewDetials(pidUser:any){
-      toast.info('Opening customer details...');
+      toast.info('Opening customer details...');return;
       try {
             //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
             const response = await fetch(`/api/crud/admin/delete?pidUser=${pidUser}`);
