@@ -867,3 +867,37 @@ enum PayStatus {
   COMPLETED
   CANCELLED
 }
+
+model buy_products {
+  id         Int       @id @default(autoincrement())
+  pidProduct String    @unique()
+  pidCategory    String
+  pidUser    String?
+  productName    String?      
+  productPrice    Float?                                     
+  productInfo    String?
+  productStatus    String?
+  pidAdmin    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  buy_category       buy_category  @relation(fields: [pidCategory], references: [pidCategory], onDelete: Cascade)
+}
+
+
+model buy_category {
+  id         Int       @id @default(autoincrement())
+  pidCategory String    @unique()
+  pidUser    String?
+  categoryName    String?                                    
+  categoryInfo    String?
+  categoryStatus    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  buy_products           buy_products[]
+}

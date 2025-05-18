@@ -16,9 +16,9 @@ type TableData = {
 
 export default async function DashboardPage() {
 
-  // const prisma = new PrismaClient();
-  // const users:any = await prisma.buy_category.findMany();
-  // await prisma.$disconnect();
+  const prisma = new PrismaClient();
+  const users:any = await prisma.buy_category.findMany();
+  await prisma.$disconnect();
 
   // return {
   //   props: {
@@ -36,7 +36,7 @@ export default async function DashboardPage() {
   return (
       <DashboardLayout>
           <h1 className="text-2xl font-bold mb-6">View Devices</h1>
-          {/* <TableLayout initialData={users}  /> */}
+          <TableLayout initialData={users}  />
       </DashboardLayout>
   )
 }
