@@ -4,11 +4,15 @@ import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
+
+
 interface User {
   pidUser: string
   userEmail: string
   userFirstname?: string
 }
+
+
 
 interface AuthContextType {
   user: User | null
@@ -18,12 +22,16 @@ interface AuthContextType {
   checkAuth: () => Promise<boolean>
 }
 
+
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
+
+  //Function to check authentication status
   const checkAuth = async () => {
     try {
       const res = await fetch("/api/auth/me", {
@@ -50,10 +58,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+
+
+  //Check authentication status on initial load
   useEffect(() => {
     checkAuth()
   }, []) //This was the line that needed to be updated to include the dependency
 
+
+
+  //Login function
   const login = async (userEmail: string, userPassword: string) => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -69,12 +83,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+
+
+  //Logout function
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" })
     setUser(null)
     router.push("/auth/login")
   }
 
+
+
+  //Register function
   const register = async (userEmail: string, userPassword: string, userFirstname?: string) => {
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -93,6 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={{ user, login, logout, register, checkAuth }}>{children}</AuthContext.Provider>
 }
 
+
+
+//Custom hook to use the Auth context
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {

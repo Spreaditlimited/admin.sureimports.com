@@ -14,67 +14,76 @@ import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 //   email: string;
 // }
 
-interface AdminProps {
-      id: number;
-      pidUser: string; 
-      userFirstname: number; 
-      userLastname: string;
-      userEmail: string; 
-      userPhone: string; 
-      userStatus: string; 
-      userExt1: string;
-      createdAt: string;
-  }
+// interface AdminProps {
+//       id: number;
+//       pidUser: string; 
+//       userFirstname: number; 
+//       userLastname: string;
+//       userEmail: string; 
+//       userPhone: string; 
+//       userStatus: string; 
+//       userExt1: string;
+//       createdAt: string;
+//   }
 
 export default function ProductsTable() {
   
       const navigateWithAlert = useNavigationWithAlert();
-      
-      const [adminUsers, setAdminUsers] = useState<AdminProps[]>([]);
+      const [statusz, setStatus2] = useState<any>('ok');
+      //const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
+      //const [customerAccounts, setCustomerAccounts] = useState<any | null>(null);
+      const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
       const [search, setSearch] = useState<string>('');
-      const [loading, setLoading] = useState<boolean>(false);
+      const [loading, setLoading] = useState<boolean>(true);
       const [error, setError] = useState<string | null>(null);
       const [page, setPage] = useState<number>(1);
-      const [totalPages, setTotalPages] = useState<number>(1);
+      const [totalAmount, setTotalAmount] = useState<number>(0);
 
-  const getCategories = async (search: string, page: number) => {
-            setLoading(true);
-            setError(null);
+      const [customer, setCustomer] = useState<any | null>(null);
+      const [transactions, setTransaction] = useState<any | null>(null);
+    
+      const [statusx, setStatus] = useState<string | null>(null);
+      const [message, setMessage] = useState<string | null>(null);
 
-            try {
-                //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
-                const response = await fetch(`/api/get-data/admin`);
-                const responseData:any = await response.json();
-                setAdminUsers(responseData);
-                setTotalPages(responseData.totalPages);
-            } catch (error) {
-                setError('Failed to fetch users');
-            } finally {
-                setLoading(false);
-            }
-        };
+
 
   useEffect(() => {
-    getCategories(search, page);
-  }, [search, page]);
+    const fetchCustomer = async () => {
+      try {
+        const response = await fetch(`/api/paystack/dedicated-accounts?status=ok`);
+
+        // if (!response.ok) {
+        //   throw new Error('Failed to fetch customer data');
+        // }
+
+        const data:any = await response.json();
+
+        //alert(data.statusx+' '+data.message);
+        setStatus(data.statusx);
+        setMessage(data.message);
+        setCustomerAccounts(data.accountDetails.data);
+        setTransaction(data.transactionDetails);
+        setTotalAmount(data.totalAmount);
+      } catch (statusx) {
+        //setError(error instanceof Error ? error.message : 'Unknown error');
+        //setStatus(statusx as string);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomer();
+  }, [statusz]);
 
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
-    setPage(1); // Reset to first page on new search
-  };
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0 && newPage <= totalPages) {
-      setPage(newPage);
-    }
-  };
+
 
   const router = useRouter();
 
 
-  async function handleDelete(pidUser:any){
-      toast.info('Deleting User...');
+  async function handleViewDetials(pidUser:any){
+      toast.info('Opening customer details...');
       try {
             //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
             const response = await fetch(`/api/crud/admin/delete?pidUser=${pidUser}`);
@@ -97,9 +106,13 @@ export default function ProductsTable() {
       }
   }
 
+
+
+
   return (
 
     <>
+
     <div className="w-full overflow-x-auto shadow-md sm:rounded-lg">
 
     {/* <div>
@@ -118,7 +131,7 @@ export default function ProductsTable() {
 
       {/* Table */}
       {loading ? (
-        <p>Loading...</p>
+        <div className='flex justify-center m-10 text-gray-600'> L o a d i n g . . . </div>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : (
@@ -126,15 +139,16 @@ export default function ProductsTable() {
         <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
           <tr>
             <th scope="col" className="px-6 py-3">S/N</th>
-            <th scope="col" className="px-6 py-3">Full Name/ ID</th>
-            <th scope="col" className="px-6 py-3">Level/Email/Phone</th>
+            <th scope="col" className="px-6 py-3">ID / Full Name </th>
+            <th scope="col" className="px-6 py-3">Email / Phone</th>
+            <th scope="col" className="px-6 py-3">Account Details</th>
             <th scope="col" className="px-6 py-3">Action</th>
           </tr>
         </thead>
         <tbody>
 
-        {(adminUsers || []).length ? (
-              adminUsers.map((user:AdminProps, index:number) => (
+        {Array.isArray(customerAccounts) && customerAccounts.length > 0 ? (
+              customerAccounts.map((user:any, index:number) => (
           <tr key={index + 1} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
             <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
             {index + 1}
@@ -150,34 +164,40 @@ export default function ProductsTable() {
                         />
                     </div>
             </td> */}
+            
             <td className="px-6 py-4">
-                Account: {user.userExt1}<br />
-                Admin User: {user.userFirstname} &nbsp; {user.userLastname}<br />
-               <small> ID: {user.pidUser}</small><br />
+                <small> ID: <b>{user.customer.id}</b></small><br />
+                Name: <b>{user.customer.first_name}</b> &nbsp; <b>{user.customer.last_name}</b><br />
+
             </td>
+
             <td className="px-6 py-4">
-                Access Level: {user.userStatus} <br />
-                Email: {user.userEmail} <br />
-                Phone: {user.userPhone} <br />
-               Account Created: {user.createdAt} <br />
+                Email: <b>{user.customer.email}</b><br />
+                Phone: <b>{user.customer.phone}</b><br />
+            </td>
+
+            <td className="px-6 py-4">
+                Bank: <b>{user.bank.name}</b><br />
+                Account Name: <b>{user.account_name}</b><br />
+                Account Number: <b>{user.account_number}</b><br />
             </td>
             
             <td className="px-6 py-4">
-              {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
-              <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
-              { user.userStatus != 'superadmin' &&
-              <a href="#" onClick={() => handleDelete(user.pidUser as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Delete</a>
-              }
-              </td>
+                {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
+                <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
+                { user.userStatus != 'superadmin' &&
+                <a href="#" onClick={() => handleViewDetials(user.customer.email as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View Details</a>
+                }
+            </td>
             
           </tr>
                         ))
                       ) : (
-                        <tr className="flex border p-5 m-5 text-center justify-center">
+                        <div className="flex border p-5 text-center justify-center m-10 colSpan=">
                           {/* <td className="border p-2 text-center" colSpan={3}> */}
                             No categories found.
                           {/* </td> */}
-                        </tr>
+                        </div>
                       )}
         </tbody>
       </table>
@@ -186,31 +206,6 @@ export default function ProductsTable() {
     
 
 
-    <div className="max-w-4xlx mx-autox w-full p-4">
-
-      {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={() => handlePageChange(page - 1)}
-          disabled={page === 1}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md disabled:bg-gray-300 dark:text-white-700 dark:bg-gray-700"
-        >
-          Previous
-        </button>
-
-        <p>
-          Page {page} of {totalPages}
-        </p>
-
-        <button
-          onClick={() => handlePageChange(page + 1)}
-          disabled={page === totalPages}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md disabled:bg-gray-300 dark:text-white-700 dark:bg-gray-700"
-        >
-          Next
-        </button>
-      </div>
-    </div>
     </>
   );
 }

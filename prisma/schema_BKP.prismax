@@ -130,9 +130,6 @@ model users {
     createdAt            DateTime?  @default(now())
     updatedAt            DateTime?
     orders               orders[]
-    wallets   Wallet[]
-    accounts  Account[]
-    paysmallsmall  paysmallsmall[]
 }
 
 
@@ -162,49 +159,27 @@ model products {
 
 
 model store {
-  id                  Int       @id @default(autoincrement())
-  pidProduct          String    @unique()
-  productName         String?
-  productSlug         String?
-  productCategory     String?
-  productBrand        String?
-  productPrice        Float?
-  productMOQ          Float?
-  productDescription  String?
-  productFeature      String?
-  productSpecification String?
-  productVisibility   Boolean?
-  productStatus       String?
-  productImage        String?
-  productImageType    String?
-  productImageExt     String?
-  ext1                String?
-  ext2                String?
-  xStatus             String?
-  createdAt           DateTime? @default(now())
-  updatedAt           DateTime?
-  small       paysmallsmall[] // Add this relation
-}
-
-
-
-model paysmallsmall {
-  id                Int       @id @default(autoincrement())
-  pidPaySmallSmall  String    @unique()
-  pidUser           String   
-  pidProduct        String?  
-  productName       String?   
-  productDescription String? 
-  amount            Float
-  quantity          Int
-  status            PayStatus
-  ext1              String?
-  ext2              String?
-  statusx           String?
-  createdAt         DateTime? @default(now())
-  updatedAt         DateTime? @default(now())
-  store             store?    @relation(fields: [pidProduct], references: [pidProduct]) // Add this relation
-  users             users?    @relation(fields: [pidUser], references: [pidUser]) // Add this relation
+  id         Int       @id @default(autoincrement())
+  pidProduct String    @unique()
+  productName    String?
+  productSlug    String?
+  productCategory    String?
+  productBrand    String?
+  productPrice    Float?
+  productMOQ    Float?
+  productDescription    String?
+  productFeature    String?
+  productSpecification    String?
+  productVisibility    Boolean?
+  productStatus    String?
+  productImage    String?
+  productImageType  String?
+  productImageExt  String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
 }
 
 
@@ -778,92 +753,36 @@ model shippingplan {
 }
 
 
-
-model Wallet {
-  id          String        @id @default(cuid())
-  name        String
-  type        WalletType
-  currency    String        @default("NGN")
-  balance     Float         @default(0)
-  pidUser     String        @unique()
-  user        users         @relation(fields: [pidUser], references: [pidUser], onDelete: Cascade)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  transactions Transaction[]
-
-  @@index([pidUser])
+model buy_products {
+  id         Int       @id @default(autoincrement())
+  pidProduct String    @unique()
+  pidCategory    String
+  pidUser    String?
+  productName    String?      
+  productPrice    Float?                                     
+  productInfo    String?
+  productStatus    String?
+  pidAdmin    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  buy_category       buy_category  @relation(fields: [pidCategory], references: [pidCategory], onDelete: Cascade)
 }
 
 
-model Transaction {
-  id          String          @id @default(cuid())
-  amount      Float
-  description String
-  date        DateTime        @default(now())
-  type        TransactionType
-  walletId    String
-  wallet      Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  categoryId  String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-
-  @@index([walletId])
-}
-
-enum WalletType {
-  MAIN
-  SAVINGS
-  CREDIT
-  INVESTMENT
-}
-
-enum TransactionType {
-  CREDIT
-  DEBIT
-  TRANSFER
-}
-
-
-
-model Account {
-  id            String        @id @default(cuid())
-  name          String
-  pidAccount    String        @unique()
-  accountName   String
-  accountNumber String
-  bankName      String
-  first_name    String
-  email         String
-  customer_code String
-  phone         String
-  type          AccountType
-  balance       Decimal?       @default(0)
-  currency      String?        @default("NGN")
-  color         String?       // For UI customization
-  icon          String?       // Icon identifier
-  isDefault     Boolean?       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  userId        String
-  user          users         @relation(fields: [userId], references: [pidUser], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-enum AccountType {
-  CASH
-  BANK
-  CREDIT_CARD
-  INVESTMENT
-  SAVINGS
-  OTHER
-}
-
-
-
-enum PayStatus {
-  SAVED
-  STARTED
-  COMPLETED
-  CANCELLED
+model buy_category {
+  id         Int       @id @default(autoincrement())
+  pidCategory String    @unique()
+  pidUser    String?
+  categoryName    String?                                    
+  categoryInfo    String?
+  categoryStatus    String?
+  ext1            String?
+  ext2            String?
+  xStatus            String?
+  createdAt          DateTime?  @default(now())
+  updatedAt          DateTime?
+  buy_products           buy_products[]
 }

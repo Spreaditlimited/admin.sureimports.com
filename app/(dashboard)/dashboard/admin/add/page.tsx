@@ -4,10 +4,12 @@ import AdminForm from "./components/AdminForm"
 
 export default function DashboardPage() {
   return (
-      <DashboardLayout>
+      <>
+      {/* <DashboardLayout> */}
           <h1 className="text-2xl font-bold mb-6">Create Admin User</h1>
           <AdminForm />
-      </DashboardLayout>
+      {/* </DashboardLayout> */}
+      </>
   )
 }
 

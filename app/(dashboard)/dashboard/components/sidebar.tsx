@@ -28,6 +28,7 @@ import {
   MonitorSmartphone,
   ChartCandlestick,
   Store,
+  Wallet,
 } from "lucide-react"
 import type React from "react"
 
@@ -85,6 +86,11 @@ const features: MenuItem[] = [
     icon: UserCheck,
     path: "/dashboard/verify-supplier?status=pending-payment",
   },
+  {
+    title: "Pay Small Small",
+    icon: HandCoins,
+    path: "/dashboard/pay-small-small?status=SAVED",
+  },
   
   // {
   //   title: "Dashboard",
@@ -134,6 +140,20 @@ const store: MenuItem[] = [
     submenu: [
       { title: "View Products", path: "/dashboard/store/view" },
       { title: "Add Products", path: "/dashboard/store/add" },
+      // { title: "Roles", path: "/admin/roles" },
+    ],
+  },
+]
+
+
+const customerAccounts: MenuItem[] = [
+  {
+    title: "Customer Accounts",
+    icon: Wallet,
+    path: "/customer-accounts",
+    submenu: [
+      { title: "Customers", path: "/dashboard/customer-accounts/customers" },
+      { title: "Transactions", path: "/dashboard/customer-accounts/transactions" },
       // { title: "Roles", path: "/admin/roles" },
     ],
   },
@@ -354,6 +374,22 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             </h2>
             <div className="space-y-1">
               {features.map((item) => (
+                <MenuItem key={item.path} item={item} />
+              ))}
+            </div>
+          </div>
+
+
+          <div>
+            <h2
+              className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
+                isCollapsed ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              CUSTOMER ACCOUNTS
+            </h2>
+            <div className="space-y-1">
+              {customerAccounts.map((item) => (
                 <MenuItem key={item.path} item={item} />
               ))}
             </div>

@@ -118,7 +118,7 @@ export async function POST(request: Request) {
                         //RETURN SUCCESS ON FILE UPLOAD
                         return NextResponse.json(
                           { statusx:'SUCCESS', message: 'Product was successfuly added'},
-                          { status: 401 },
+                          { status: 200 },
                         );
 
 
