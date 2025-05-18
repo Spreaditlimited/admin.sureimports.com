@@ -114,7 +114,7 @@ export default function ProductsTable() {
     <>
 
     <div className="w-full overflow-x-auto shadow-md sm:rounded-lg">
-
+ <h1 className="text-base font-bold m-2">{customerAccounts.length} Customer's Accounts</h1>
     {/* <div>
         <button type="button" onClick={() => { router.push('/dashboard/admin/add');}} className="btn btn-primary w-full"><MdAddToPhotos /> &nbsp; Add New Admin</button>
     </div> */}
