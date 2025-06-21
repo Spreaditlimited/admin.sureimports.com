@@ -34,15 +34,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   //Function to check authentication status
   const checkAuth = async () => {
     try {
-      const res = await fetch("/api/auth/me", {
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      })
+          const res = await fetch("/api/auth/me", {
+            headers: {
+              "Cache-Control": "no-cache",
+            },
+          })
+
       if (!res.ok) {
         setUser(null)
         return false
       }
+
       const data = await res.json()
       if (data.user) {
         setUser(data.user)
@@ -64,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     checkAuth()
   }, []) //This was the line that needed to be updated to include the dependency
-
+  
 
 
   //Login function

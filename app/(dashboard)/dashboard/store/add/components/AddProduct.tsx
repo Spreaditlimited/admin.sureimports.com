@@ -201,6 +201,7 @@ const Page = () => {
             <option value="laptop">Laptop</option>
             <option value="desktop">Desktop</option>
             <option value="phone">Phone</option>
+            <option value="tablet">Tablet</option>
             <option value="other">Others</option>
           </select>
           </div>
@@ -222,7 +223,8 @@ const Page = () => {
             <option value="lenovo">LENOVO</option>
             <option value="apple">APPLE</option>
             <option value="samsung">SAMSUNG</option>
-            <option value="phone">GOOGLE</option>
+            <option value="google">GOOGLE</option>
+            <option value="microsoft">MICROSOFT</option>
           </select>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { useEffect } from "react"
 import type React from "react"
 
 // Define protected routes
-const protectedRoutes = ["/dashboard", "/profile", "/settings"]
+const protectedRoutes = ["/dashboard", "/profile", "/settings", "/orders"]
 
 export function TokenValidator({ children }: { children: React.ReactNode }) {
   const { checkAuth } = useAuth()
