@@ -189,10 +189,10 @@ const ComponentsAccordionsBasic = () => {
                                                       <p className="md:w-64">Gender : {datax.user.gender ?? 'NA'}</p>
                                                     </div>
                                                     <div className="flex max-md:justify-between md:gap-20">
-                                                      <p className="md:w-64">Phone : {datax.user.userPhone ?? 'NA'}</p>
+                                                      <p className="md:w-64">Phone : {datax.user.userPhone ?? ''} &nbsp; {datax.user.phone ?? 'NA'}</p>
                                                     </div>
                                                     <div className="flex max-md:justify-between md:gap-20">
-                                                      <p className="md:w-64">Country : {datax.user.userCountry ?? 'NA'}</p>
+                                                      <p className="md:w-64">Country : {datax.user.userCountry ?? ''} &nbsp; {datax.user.country ?? 'NA'}</p>
                                                     </div>
                                                     <div className="flex max-md:justify-between md:gap-20">
                                                       <p className="md:w-64">Address : {datax.user.address ?? 'NA'}</p>
