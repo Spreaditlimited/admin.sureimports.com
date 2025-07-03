@@ -549,6 +549,22 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Shipping Details
           </div><hr />
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Shipping Plan:</p>{' '}
+            <p>
+              {shippingPlanName || 'Not Specified'}
+            </p>
+          </div>
+
+          
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Shipping Rate:</p>{' '}
+            <p>
+              { '$'+shippingPlanRate+'/Kg' || 'Not Specified'}
+            </p>
+          </div>
+
           <div className="flex max-md:justify-between md:gap-20">
             <p className="md:w-64">Estimated Total Weight of Order:</p>{' '}
             <p>

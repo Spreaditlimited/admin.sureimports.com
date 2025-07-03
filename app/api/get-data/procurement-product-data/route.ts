@@ -74,6 +74,18 @@ export async function GET(request: NextRequest) {
       },
     });
 
+
+    //SHIPPING RATE
+    const shippingPlanNamex: any = await prisma.shippingplan.findUnique({
+      where: {
+        //countryId: orderRecord?.destinationCountry,
+        pidShippingPlan: orderRecord?.shippingPlan,
+      } as any,
+      select: {
+        shippingPlanRate: true,
+      },
+    });
+
     //EXCHANGE RATE
     const exRate = await prisma.exchange_rate.findUnique({
       where: { id: 1 as number },
@@ -138,7 +150,7 @@ export async function GET(request: NextRequest) {
     
 
     //Shipping Plan Name
-    let shippingPlanName = orderRecord?.shippingPlan; //value in USD
+    let shippingPlanName = shippingPlanNamex; //value in USD
 
     //Shipping rate per KG
     let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
