@@ -184,9 +184,12 @@ interface User {
           >
             <option value="">Select a Cateogry</option>
             <option value="laptop">Laptop</option>
-            <option value="laptop">Desktop</option>
+            <option value="desktop">Desktop</option>
             <option value="phone">Phones</option>
-            <option value="other">Others</option>
+            <option value="watch">Watch</option>
+            <option value="tablet">Tablet</option>
+            <option value="accessories">Accessories</option>
+            {/* <option value="other">Others</option> */}
           </select>
           </div>
           <div>
@@ -207,7 +210,11 @@ interface User {
             <option value="lenovo">LENOVO</option>
             <option value="apple">APPLE</option>
             <option value="samsung">SAMSUNG</option>
-            <option value="phone">GOOGLE</option>
+            <option value="google">GOOGLE</option>
+            <option value="microsoft">MICROSOFT</option>
+            <option value="faya">FAYA</option>
+            <option value="kainene">Kainene</option>
+            <option value="skmei">Skmei</option>
           </select>
           </div>
         </div>

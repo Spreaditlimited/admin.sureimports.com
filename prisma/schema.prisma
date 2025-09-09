@@ -831,6 +831,32 @@ model store_sales {
   updatedAt DateTime  @updatedAt
 }
 
+
+model store_sales_faya {
+  id  String  @id @default(cuid())
+  pidStore  String  @unique
+  pidProduct  String
+  pidUser  String
+  product_name  String
+  unit_price  String
+  total_price  String
+  quantity  String
+
+  activeTab  String?
+  purchaseType  String? // 'single' or 'bulk'
+  fullName  String?
+  phone  String?
+  address  String?
+  deliveryOption  String?
+  deliveryLocation  String?
+
+  status  String
+  ext1  String?
+  ext2  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 enum WalletType {
   MAIN
   SAVINGS
