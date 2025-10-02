@@ -16,6 +16,23 @@ datasource db {
 }
 
 
+model sub {
+  id            Int       @id @default(autoincrement())
+  pidBlog       String    @unique(map: "Blog_pidBlog_key")
+  blogTitle     String    @db.VarChar(255)
+  blogContent   String?
+  blogSlug      String?
+  blogPublished Boolean   @default(false)
+  blogImage     String?
+  blogBy        String?
+  blogExt1      String? 
+  blogExt2      String?
+  xStaus        String?
+  createdAt     DateTime?  @default(now())
+  updatedAt     DateTime?
+}
+
+
 
 model blog {
   id            Int       @id @default(autoincrement())
@@ -132,7 +149,6 @@ model users {
     orders               orders[]
     wallets   Wallet[]
     accounts  Account[]
-    paysmallsmall  paysmallsmall[]
 }
 
 
@@ -178,12 +194,16 @@ model store {
   productImage        String?
   productImageType    String?
   productImageExt     String?
+  condition           Condition?
+  warrantyPeriod      WarrantyPeriod?
+  affiliatePayout     Float?
+  superAffiliatePayout     Float?
   ext1                String?
   ext2                String?
   xStatus             String?
   createdAt           DateTime? @default(now())
   updatedAt           DateTime?
-  small       paysmallsmall[] // Add this relation
+  paysmallsmall       paysmallsmall[] // Add this relation
 }
 
 
@@ -204,7 +224,6 @@ model paysmallsmall {
   createdAt         DateTime? @default(now())
   updatedAt         DateTime? @default(now())
   store             store?    @relation(fields: [pidProduct], references: [pidProduct]) // Add this relation
-  users             users?    @relation(fields: [pidUser], references: [pidUser]) // Add this relation
 }
 
 
@@ -288,10 +307,37 @@ model payments {
 
 
 
+model debits {
+  id                   Int       @id @default(autoincrement())
+  pidDebit             String    @unique()
+  pidUser              String
+  email                String
+  payerName            String
+  txID                 String
+  txRef                String
+  paymentStatus        String?
+  paymentType          String?
+  currency             String?
+  amount               Float
+  serviceID            String?
+  serviceName          String?
+  serviceDescription   String?
+  status1              String?
+  status2              String?
+  debitExt1            String?
+  debitExt2            String?
+  xStatus              String?
+  createdAt            DateTime?  @default(now())
+  updatedAt            DateTime?
+}
+
+
+
 model subscriptions {
   id                 Int       @id @default(autoincrement())
   pidSubscription    String    @unique()
   subEmail           String?
+  subService         String?
   subStatus          String?
   subExt1            String?
   subExt2            String?
@@ -815,6 +861,7 @@ model Transaction {
 }
 
 
+
 model store_sales {
   id  String  @id @default(cuid())
   pidStore  String  @unique
@@ -833,29 +880,53 @@ model store_sales {
 
 
 model store_sales_faya {
-  id  String  @id @default(cuid())
-  pidStore  String  @unique
-  pidProduct  String
-  pidUser  String
-  product_name  String
-  unit_price  String
-  total_price  String
-  quantity  String
-
-  activeTab  String?
-  purchaseType  String? // 'single' or 'bulk'
-  fullName  String?
-  phone  String?
-  address  String?
-  deliveryOption  String?
-  deliveryLocation  String?
-
-  status  String
-  ext1  String?
-  ext2  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id               Int       @id @default(autoincrement())
+  pidStore         String    @unique
+  pidProduct       String
+  pidUser          String
+  product_name     String    @default("Unknown Product")
+  unit_price       String
+  total_price      String
+  quantity         String    @default("1")
+  activeTab        String    @default("activeTab")
+  purchaseType     String    @default("purchaseType")
+  fullName         String    @default("Unknown User")
+  phone            String    @default("Unknown Phone")
+  address          String    @default("Unknown Address")
+  deliveryOption   String    @default("Standard Delivery")
+  deliveryLocation String    @default("Default Location")
+  status           String    @default("PENDING")
+  ext1             String    @default("")
+  ext2             String    @default("")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
+
+// model store_sales_faya {
+//   id  String  @id @default(cuid())
+//   pidStore  String  @unique
+//   pidProduct  String
+//   pidUser  String
+//   product_name  String
+//   unit_price  String
+//   total_price  String
+//   quantity  String
+
+//   activeTab  String?
+//   purchaseType  String? // 'single' or 'bulk'
+//   fullName  String?
+//   phone  String?
+//   address  String?
+//   deliveryOption  String?
+//   deliveryLocation  String?
+
+//   status  String
+//   ext1  String?
+//   ext2  String?
+//   createdAt DateTime  @default(now())
+//   updatedAt DateTime  @updatedAt
+// }
+
 
 enum WalletType {
   MAIN
@@ -897,6 +968,7 @@ model Account {
   @@index([userId])
 }
 
+
 enum AccountType {
   CASH
   BANK
@@ -907,7 +979,6 @@ enum AccountType {
 }
 
 
-
 enum PayStatus {
   SAVED
   STARTED
@@ -915,36 +986,19 @@ enum PayStatus {
   CANCELLED
 }
 
-model buy_products {
-  id         Int       @id @default(autoincrement())
-  pidProduct String    @unique()
-  pidCategory    String
-  pidUser    String?
-  productName    String?      
-  productPrice    Float?                                     
-  productInfo    String?
-  productStatus    String?
-  pidAdmin    String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  buy_category       buy_category  @relation(fields: [pidCategory], references: [pidCategory], onDelete: Cascade)
+
+enum Condition {
+  BRAND_NEW
+  PRE_OWNED
+  REFURBISHED
+  OPEN_BOX
 }
 
 
-model buy_category {
-  id         Int       @id @default(autoincrement())
-  pidCategory String    @unique()
-  pidUser    String?
-  categoryName    String?                                    
-  categoryInfo    String?
-  categoryStatus    String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  buy_products           buy_products[]
+enum WarrantyPeriod {
+  MONTHS3
+  MONTHS6
+  MONTHS12
+  MONTHS24
+  MONTHS36
 }

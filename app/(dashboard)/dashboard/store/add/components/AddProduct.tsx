@@ -88,6 +88,13 @@ const Page = () => {
     const [productBrand, setProductBrand] = useState('');
     const [productPrice, setProductPrice] = useState('');
     const [productMOQ, setProductMOQ] = useState('');
+
+    const [affiliatePayout, setAffiliatePayout] = useState('');
+    const [superAffiliatePayout, setSuperAffiliatePayout] = useState('');
+
+    const [productCondition, setProductCondition] = useState('');
+    const [warrantyPeriod, setWarrantyPeriod] = useState('');
+    
     const [productDescription, setProductDescription] = useState('');
     const [productFeatures, setProductFeatures] = useState('');
     const [productSpecification, setProductSpecification] = useState('');
@@ -122,6 +129,13 @@ const Page = () => {
                 formData.append('productBrand', productBrand);
                 formData.append('productPrice', productPrice);
                 formData.append('productMOQ', productMOQ);
+
+                formData.append('affiliatePayout', affiliatePayout);
+                formData.append('superAffiliatePayout', superAffiliatePayout);
+
+                formData.append('productCondition', productCondition);
+                formData.append('warrantyPeriod', warrantyPeriod);
+
                 formData.append('productDescription', productDescription);
                 formData.append('productFeatures', productFeatures);
                 formData.append('productSpecification', productSpecification);
@@ -265,6 +279,78 @@ const Page = () => {
           />
           </div>
         </div>
+
+
+
+        {/* Double Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Affiliate Payout *</label>
+          <input
+            id="affiliatePayout" 
+            name='affiliatePayout' 
+            type="number" 
+            placeholder="0.00" 
+            onChange={(e) => setAffiliatePayout(e.target.value)}
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Super Affiliate Payout *</label>
+          <input
+            id="setAffiliatePayout" 
+            name='setAffiliatePayout' 
+            type="number" 
+            placeholder="0.00" 
+            onChange={(e) => setSuperAffiliatePayout(e.target.value)}
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+        </div>
+
+
+        {/* Double Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Condition *</label>
+          <select
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            id='productCondition' 
+            name='productCondition'
+            value={productCategory} 
+            onChange={(e:any) => setProductCondition(e.target.value)}
+            required
+          >
+            <option value="">Select a Condition</option>
+            <option value="BRAND_NEW">Brand New</option>
+            <option value="PRE_OWNED">Pre-Owned</option>
+            <option value="REFURBISHED">Refurbished</option>
+            <option value="OPEN_BOX">Open Box</option>
+          </select>
+          </div>
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Warranty Period *</label>
+          <select
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            id='productBrand' 
+            name='productBrand'
+            value={productBrand} 
+            onChange={(e:any) => setWarrantyPeriod(e.target.value)}
+            required
+          >
+            <option value="">Select Warranty</option>
+            <option value="MONTHS3">3 Months</option>
+            <option value="MONTHS6">6 Months</option>
+            <option value="MONTHS12">12 Months</option>
+            <option value="MONTHS24">24 Months</option>
+            <option value="MONTHS36">36 Months</option>
+          </select>
+          </div>
+        </div>
+
 
 
 
