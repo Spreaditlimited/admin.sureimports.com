@@ -19,8 +19,6 @@ import { useAuth } from '@/lib/AuthContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import ImageBox2 from '@/componentsx/ImageBox2';
 
-
-
 export const metadata: Metadata = {
     title: 'Admin Dashboard',
     description: 'Admin'
@@ -58,8 +56,6 @@ interface ProductFormProps {
     }
   }
 
-
-
 const Page = () => {
     const {user} = useAuth();
     //initialize alert system
@@ -67,50 +63,37 @@ const Page = () => {
 
     //SET VARIABLES DATA
     const router = useRouter();
-    //const [value, setValue] = useState('<h3>Product Description Title</h3><br /><p> Product description goes here...</p>');
-    //const [file, setFile] = useState<File | null>(null)
     const [isLoading, setIsLoading] = useState(false);
-
 
     const handleImageChange = (file: File) => {
       setFile(file);
     };
 
-
     //SET FORM DATA
     let productID = 'STORE' + new Date().getTime().toString();
-    //const [pidUser, setPidUser] = useState(user?.pidUser as string);
     const [file, setFile] = useState<File | null>(null)
-    //const [isLoading, setIsLoading] = useState(false);
     const [pidProduct, setPidProduct] = useState(productID);
     const [productName, setProductName] = useState(productID);
     const [productCategory, setProductCategory] = useState('');
     const [productBrand, setProductBrand] = useState('');
     const [productPrice, setProductPrice] = useState('');
     const [productMOQ, setProductMOQ] = useState('');
-
     const [affiliatePayout, setAffiliatePayout] = useState('');
     const [superAffiliatePayout, setSuperAffiliatePayout] = useState('');
-
     const [productCondition, setProductCondition] = useState('');
     const [warrantyPeriod, setWarrantyPeriod] = useState('');
-    
     const [productDescription, setProductDescription] = useState('');
     const [productFeatures, setProductFeatures] = useState('');
     const [productSpecification, setProductSpecification] = useState('');
+    const [isProductVisible, setIsProductVisible] = useState(true);
 
-    
-    //TINY MCE EDITOR
-    //const [content, setContent] = useState('');
     const apiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || 'moywdpb8ambo3p01qo59oz27mjwfpcukr7myzoopyicobb6i';
   
     const handleEditorChange = (newContent: string) => {
-      //setContent(newContent);
       setProductDescription(newContent);
     };
   
     const handleSave = () => {
-      //console.log('Content to save:', content);
       // Add your save logic here
     };
 
@@ -140,22 +123,15 @@ const Page = () => {
                 formData.append('productFeatures', productFeatures);
                 formData.append('productSpecification', productSpecification);
 
-                //formData.append('categoryImage', categoryImage);
+                formData.append('isProductVisible', isProductVisible.toString());
 
-                //MAKE REQUEST ATTEMPT
                 try {
-                    //MAKE REQUEST
-                            const res = await fetch('/api/crud/store/create', {
+                    const res = await fetch('/api/crud/store/create', {
                             method: 'POST',
-                            //headers: { 'Content-Type': 'application/json' },
-                            //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            //headers: { 'Content-Type': 'multipart/form-data' },
                             body: formData,
                     });
 
-                    //PROCESS POST RESPONSE
                     const data: any = await res.json();
-                    //if (data.status == 'SUCCESS'){toast.success(data.responsex.message);}
                     if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/store/view', 'success', 'Product was successfully created!');}
                     if (data.statusx == 'NO_IMAGE_SELECTED'){toast.warning(data.message);}
                     if (data.statusx == 'INVALID_IMAGE_UPLOAD'){toast.warning(data.message);}
@@ -164,17 +140,10 @@ const Page = () => {
 
             } catch (error: any) {
                 toast.error(error.message);
-                //navigateWithAlert('/dashboard', 'success', 'Action was successfully!')
             } finally {
                 setIsLoading(false);
             }
     }
-//END FORM...
-
-
-
-
-
 
     return (
         <>
@@ -184,8 +153,6 @@ const Page = () => {
       <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
         <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Product Form</h2>
 
-
-        {/* Single Column */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Name *</label>
           <input
@@ -197,9 +164,6 @@ const Page = () => {
           />
         </div>
         
-
-
-        {/* Double Column */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Category *</label>
@@ -247,10 +211,6 @@ const Page = () => {
           </div>
         </div>
 
-
-
-
-        {/* Double Column */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Price *</label>
@@ -272,7 +232,6 @@ const Page = () => {
             name='productMOQ' 
             type="number" 
             placeholder="Provide Minimum Order Quantity" 
-            //defaultValue={1}
             onChange={(e) => setProductMOQ(e.target.value)}
             required
             className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -280,9 +239,6 @@ const Page = () => {
           </div>
         </div>
 
-
-
-        {/* Double Column */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Affiliate Payout *</label>
@@ -311,8 +267,6 @@ const Page = () => {
           </div>
         </div>
 
-
-        {/* Double Column */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Condition *</label>
@@ -351,22 +305,8 @@ const Page = () => {
           </div>
         </div>
 
-
-
-
-
-        {/* Textarea */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Description *</label>
-
-
-          {/* <RichTextEditor 
-            apiKey={apiKey}
-            initialValue="<p>Start editing here...</p>" 
-            onChange={handleEditorChange} 
-            //onChange={handleEditorChange} 
-          /> */}
-
           <textarea
             id="productDescription"  
             name='productDescription' 
@@ -378,11 +318,8 @@ const Page = () => {
           ></textarea>
         </div>
 
-
-        {/* Textarea */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Features</label>
-          {/* <TiptapEditor content={content} onChange={setContent} /> */}
           <textarea
             id="productFeatures"  
             name='productFeatures' 
@@ -393,11 +330,6 @@ const Page = () => {
           ></textarea>
         </div>
 
-
-
-
-
-        {/* Textarea */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Pay Small Small</label>
           <textarea
@@ -410,65 +342,37 @@ const Page = () => {
           ></textarea>
         </div>
 
-
-        {/* File Upload */}
-        {/* <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Resume</label>
-          <input
-            id='file'
-            name='file'
-            type="file"
-            className="mt-1 block w-full text-sm text-gray-900 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-gray-700 dark:file:text-gray-300"
-          />
-        </div> */}
-
-        {/* IMAGE UPLOAD */}
         <div className="mb-6">
             <div>
                 <label htmlFor="url"><b>Upload Product Image</b></label>
                 <div className="flex">
-                        {/* <ImageBox onImageChange={handleImageChange} /> */}
                         <ImageBox2 onImageChange={handleImageChange} imagex={''} />
                 </div>
             </div>
         </div>
-
 
         <div className="mb-6">
         <label className="flex items-center">
             <input
               type="checkbox"
               className="sr-onlyXYZ peer"
+              checked={isProductVisible}
+              onChange={(e) => setIsProductVisible(e.target.checked)}
             />
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
             <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">Turn <b>ON / OFF</b> Product Visibility</span>
           </label>
         </div>
 
-
-        {/* Toggle Switch */}
-        {/* <div className="mb-6">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-            />
-            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
-            <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">Turn <b>ON / OFF</b> Product Visibility</span>
-          </label>
-        </div> */}
-
-
-        {/* Submit Button */}
         <div className="flex justify-end">
           <button
             type="submit"
-            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
+            disabled={isLoading}
+            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <PlusCircle /> &nbsp; Add Product
+            <PlusCircle /> &nbsp; {isLoading ? 'Adding Product...' : 'Add Product'}
           </button>
         </div>
-
 
       </div>
     </div>

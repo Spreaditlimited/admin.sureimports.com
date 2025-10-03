@@ -32,6 +32,8 @@ export async function POST(request: Request) {
         const productCondition = formData.get('productCondition') as any;
         const warrantyPeriod = formData.get('warrantyPeriod') as any;
 
+        const productVisibility = formData.get('productVisibility') as any;
+
 
         console.log(formData)
 
@@ -88,7 +90,7 @@ export async function POST(request: Request) {
             productDescription: productDescription,
             productFeature: productFeature,
             productSpecification: productSpecification,
-            productVisibility: true,
+            productVisibility: productVisibility,
             productImage: newFileName,
             productImageType: fileType,
             productImageExt: fileExt,
