@@ -27,6 +27,12 @@ export async function POST(request: Request) {
         const productFeature = formData.get('productFeatures') as string;
         const productSpecification = formData.get('productSpecification') as any;
 
+        const affiliatePayout = formData.get('affiliatePayout') as any;
+        const superAffiliatePayout = formData.get('superAffiliatePayout') as any;
+        const productCondition = formData.get('productCondition') as any;
+        const warrantyPeriod = formData.get('warrantyPeriod') as any;
+
+
         console.log(formData)
 
   //GET FILE FROM FROM
@@ -86,6 +92,12 @@ export async function POST(request: Request) {
             productImage: newFileName,
             productImageType: fileType,
             productImageExt: fileExt,
+
+            affiliatePayout: affiliatePayout,
+            superAffiliatePayout: superAffiliatePayout,
+            productCondition: productCondition,
+            warrantyPeriod: warrantyPeriod,
+
             createdAt: new Date(),
          }
   })
