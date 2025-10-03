@@ -17,7 +17,7 @@ type TableData = {
 export default async function DashboardPage() {
 
   const prisma = new PrismaClient();
-  const users:any = await prisma.users.findMany();
+  const users:any = await prisma.buy_category.findMany();
   await prisma.$disconnect();
 
   // return {
