@@ -274,11 +274,21 @@ model payments {
   serviceID            String?
   serviceName          String?
   serviceDescription   String?
+
+  affiliate_payout_amount             String?
+  affiliate_payout_percentage           String?
+  superAffiliate_payout_amount        String?
+  superAffiliate_payout_percentage   String?
+
   bankName             String?
   bankNumber           String?
   depositorName        String?
   affiliatePayStatus   String?
   affiliateRefId       String?
+
+  superAffiliatePayStatus   String?
+  superAffiliateRefId       String?
+
   txDateProcesser      String?
   txDateServer         String?
   status1              String?
