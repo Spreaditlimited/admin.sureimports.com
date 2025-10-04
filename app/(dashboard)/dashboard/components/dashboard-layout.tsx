@@ -4,6 +4,8 @@ import { useState, useEffect, type ReactNode, Suspense } from "react"
 import { Sidebar } from "./sidebar"
 import { Search, Sun, Moon, ChevronDown } from "lucide-react"
 import Loading from "@/components/layouts/loading"
+import { AuthProvider } from "@/app/context/AuthContext"
+import { TokenValidator } from "@/lib/TokenValidator"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -76,7 +78,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto bg-background p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-background p-6">
+          <AuthProvider>
+          <TokenValidator>
+              {children}
+          </TokenValidator>
+          </AuthProvider>
+        </main>
       </div>
       
 
