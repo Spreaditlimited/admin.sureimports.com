@@ -27,6 +27,13 @@ export async function POST(request: Request) {
         const productFeature = formData.get('productFeatures') as string;
         const productSpecification = formData.get('productSpecification') as any;
 
+        const affiliatePayout = formData.get('affiliatePayout') as any;
+        const superAffiliatePayout = formData.get('superAffiliatePayout') as any;
+        const productCondition = formData.get('productCondition') as any;
+        const warrantyPeriod = formData.get('warrantyPeriod') as any;
+
+        const isProductVisible = formData.get('isProductVisible') as any;
+
         console.log(formData)
 
   //CHECK IF PRODUCTS EXISTS
@@ -62,11 +69,13 @@ export async function POST(request: Request) {
         productDescription: productDescription,
         productFeature: productFeature,
         productSpecification: productSpecification,
-        productVisibility: true,
-        //productImage: newFileName,
-        // productImageType: fileType,
-        // productImageExt: fileExt,
-        //userImage: newFileName,
+        productVisibility: isProductVisible === 'true' ? true : false,
+
+        affiliatePayout: parseFloat(affiliatePayout),
+        superAffiliatePayout: parseFloat(superAffiliatePayout),
+        productCondition: productCondition,
+        warrantyPeriod: warrantyPeriod,
+
         updatedAt: new Date(),
     },
   });

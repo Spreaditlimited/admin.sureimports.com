@@ -41,6 +41,10 @@ interface User {
     productCategory: string
     productBrand: string
     productMOQ: string
+    affiliatePayout: string
+    superAffiliatePayout: string
+    productCondition: string
+    warrantyPeriod: string
     productDescription: string
     productFeature: string
     productSpecification: string
@@ -85,12 +89,18 @@ interface User {
     const [productBrand, setProductBrand] = useState(product.productBrand);
     const [productPrice, setProductPrice] = useState(product.productPrice);
     const [productMOQ, setProductMOQ] = useState(product.productMOQ);
+    const [affiliatePayout, setAffiliatePayout] = useState(product.affiliatePayout);
+    const [superAffiliatePayout, setSuperAffiliatePayout] = useState(product.superAffiliatePayout);
+    const [productCondition, setProductCondition] = useState(product.productCondition);
+    const [warrantyPeriod, setWarrantyPeriod] = useState(product.warrantyPeriod);
     const [productDescription, setProductDescription] = useState(product.productDescription);
     const [productFeatures, setProductFeatures] = useState(product.productFeature);
     const [productSpecification, setProductSpecification] = useState(product.productSpecification);
     const [imagex, setImagex] = useState(product.productImage);
+    const [isProductVisible, setIsProductVisible] = useState(product.productVisibility);
 
 
+    //FORM SUBMISSION
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 //alert(file);
                 e.preventDefault();
@@ -109,6 +119,14 @@ interface User {
                 formData.append('productDescription', productDescription);
                 formData.append('productFeatures', productFeatures);
                 formData.append('productSpecification', productSpecification);
+
+                formData.append('affiliatePayout', affiliatePayout);
+                formData.append('superAffiliatePayout', superAffiliatePayout);
+
+                formData.append('productCondition', productCondition);
+                formData.append('warrantyPeriod', warrantyPeriod);
+
+                formData.append('isProductVisible', isProductVisible.toString());
 
                 //formData.append('categoryImage', categoryImage);
 
@@ -254,6 +272,76 @@ interface User {
         </div>
 
 
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300"> Affiliate Payout *</label>
+          <input
+            id="affiliatePayout" 
+            name='affiliatePayout' 
+            defaultValue={product.affiliatePayout}
+            type="number" 
+            placeholder="0.00" 
+            onChange={(e) => setAffiliatePayout(e.target.value)}
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Super Affiliate Payout *</label>
+          <input
+            id="setAffiliatePayout" 
+            name='setAffiliatePayout' 
+            defaultValue={product.superAffiliatePayout}
+            type="number" 
+            placeholder="0.00" 
+            onChange={(e) => setSuperAffiliatePayout(e.target.value)}
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Product Condition *</label>
+          <select
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            id='productCondition' 
+            name='productCondition'
+            value={productCondition} 
+            onChange={(e:any) => setProductCondition(e.target.value)}
+            required
+          >
+            <option value="">Select a Condition</option>
+            <option value="BRAND_NEW">Brand New</option>
+            <option value="PRE_OWNED">Pre-Owned</option>
+            <option value="REFURBISHED">Refurbished</option>
+            <option value="OPEN_BOX">Open Box</option>
+          </select>
+          </div>
+          <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Warranty Period *</label>
+          <select
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            id='warrantyPeriod' 
+            name='warrantyPeriod'
+            value={warrantyPeriod} 
+            onChange={(e:any) => setWarrantyPeriod(e.target.value)}
+            required
+          >
+            <option value="">Select Warranty</option>
+            <option value="MONTHS3">3 Months</option>
+            <option value="MONTHS6">6 Months</option>
+            <option value="MONTHS12">12 Months</option>
+            <option value="MONTHS24">24 Months</option>
+            <option value="MONTHS36">36 Months</option>
+          </select>
+          </div>
+        </div>
+
+
 
 
         {/* Textarea */}
@@ -333,6 +421,11 @@ interface User {
             <input
               type="checkbox"
               className="sr-onlyXYZ peer"
+              name='isProductVisible'
+              id='isProductVisible'
+              value={isProductVisible ? 'true' : 'false'}
+              checked={isProductVisible as any}
+              onChange={(e) => setIsProductVisible(e.target.checked as any)}
             />
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
             <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">Turn <b>ON / OFF</b> Product Visibility</span>

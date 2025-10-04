@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         const productCondition = formData.get('productCondition') as any;
         const warrantyPeriod = formData.get('warrantyPeriod') as any;
 
-        const productVisibility = formData.get('productVisibility') as any;
+        const isProductVisible = formData.get('isProductVisible') as any;
 
 
         console.log(formData)
@@ -90,13 +90,13 @@ export async function POST(request: Request) {
             productDescription: productDescription,
             productFeature: productFeature,
             productSpecification: productSpecification,
-            productVisibility: productVisibility,
+            productVisibility: isProductVisible === 'true' ? true : false,
             productImage: newFileName,
             productImageType: fileType,
             productImageExt: fileExt,
 
-            affiliatePayout: affiliatePayout,
-            superAffiliatePayout: superAffiliatePayout,
+            affiliatePayout: parseFloat(affiliatePayout),
+            superAffiliatePayout: parseFloat(superAffiliatePayout),
             productCondition: productCondition,
             warrantyPeriod: warrantyPeriod,
 
