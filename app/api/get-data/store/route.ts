@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
       where.productCategory = category;
     }
 
-    // Brand filter - contains match
+    // Brand filter - case-insensitive exact match for dropdown
     if (brand) {
-      where.productBrand = { contains: brand };
+      where.productBrand = brand;
     }
 
     // Visibility filter - convert string to boolean

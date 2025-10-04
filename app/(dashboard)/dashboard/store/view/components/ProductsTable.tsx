@@ -66,17 +66,23 @@ export default function ProductsTable() {
       if (priceMin) params.append('priceMin', priceMin);
       if (priceMax) params.append('priceMax', priceMax);
 
+      console.log('Fetching with params:', params.toString()); // Debug log
+
       const response = await fetch(`/api/get-data/store?${params.toString()}`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      
       const data = await response.json();
 
-      setProducts(data.data || data || []);
+      console.log('API Response:', data); // Debug log
+
+      if (!response.ok || data.statusx === 'ERROR') {
+        throw new Error(data.message || 'Failed to fetch products');
+      }
+
+      setProducts(data.data || []);
       setTotalPages(data.totalPages || 1);
-      setTotalCount(data.totalCount || (data.data ? data.data.length : data.length));
-    } catch (err) {
-      setError('Failed to fetch products. Please try again.');
-      console.error(err);
+      setTotalCount(data.totalCount || 0);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch products. Please try again.');
+      console.error('Fetch error:', err);
       setProducts([]);
       setTotalPages(1);
       setTotalCount(0);
@@ -225,13 +231,25 @@ export default function ProductsTable() {
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Brand
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={brand}
                     onChange={(e) => handleFilterChange(setBrand, e.target.value)}
-                    placeholder="Enter brand name"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  />
+                  >
+                    <option value="">All Brands</option>
+                    <option value="hp">HP</option>
+                    <option value="dell">DELL</option>
+                    <option value="asus">ASUS</option>
+                    <option value="acer">ACER</option>
+                    <option value="lenovo">LENOVO</option>
+                    <option value="apple">APPLE</option>
+                    <option value="samsung">SAMSUNG</option>
+                    <option value="google">GOOGLE</option>
+                    <option value="microsoft">MICROSOFT</option>
+                    <option value="faya">FAYA</option>
+                    <option value="kainene">Kainene</option>
+                    <option value="skmei">Skmei</option>
+                  </select>
                 </div>
 
                 <div>
