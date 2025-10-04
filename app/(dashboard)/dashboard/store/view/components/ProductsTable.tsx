@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
-import { Edit, List, PlusCircle, Trash, Filter, Search, X } from 'lucide-react';
+import { Edit, List, PlusCircle, Trash, Filter, Search, X, Eye, EyeOff } from 'lucide-react';
 
 interface ProductsProps {
   id: number;
@@ -66,12 +66,12 @@ export default function ProductsTable() {
       if (priceMin) params.append('priceMin', priceMin);
       if (priceMax) params.append('priceMax', priceMax);
 
-      console.log('Fetching with params:', params.toString()); // Debug log
+      console.log('Fetching with params:', params.toString());
 
       const response = await fetch(`/api/get-data/store?${params.toString()}`);
       const data = await response.json();
 
-      console.log('API Response:', data); // Debug log
+      console.log('API Response:', data);
 
       if (!response.ok || data.statusx === 'ERROR') {
         throw new Error(data.message || 'Failed to fetch products');
@@ -117,6 +117,43 @@ export default function ProductsTable() {
   };
 
   const hasActiveFilters = search || category || brand || visibility || condition || warranty || priceMin || priceMax;
+
+  const handleToggleVisibility = async (pidProduct: string, currentVisibility: boolean) => {
+    const newVisibility = !currentVisibility;
+    const action = newVisibility ? 'visible' : 'hidden';
+    
+    toast.info(`Setting product as ${action}...`);
+    try {
+      const response = await fetch('/api/crud/store/toggle-visibility', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pidProduct,
+          productVisibility: newVisibility,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.statusx === 'SUCCESS') {
+        toast.success(`Product is now ${action}`);
+        // Update local state immediately for better UX
+        setProducts(prev => 
+          prev.map(p => 
+            p.pidProduct === pidProduct 
+              ? { ...p, productVisibility: newVisibility }
+              : p
+          )
+        );
+      } else {
+        toast.error(data.message || 'Failed to update visibility');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred while updating visibility.');
+    }
+  };
 
   const handleDelete = async (pidProduct: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -418,15 +455,25 @@ export default function ProductsTable() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                        <button
+                          onClick={() => handleToggleVisibility(product.pidProduct, product.productVisibility)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                             product.productVisibility
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800'
+                              : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800'
                           }`}
+                          title={product.productVisibility ? 'Click to hide' : 'Click to show'}
                         >
-                          {product.productVisibility ? '● Visible' : '○ Hidden'}
-                        </span>
+                          {product.productVisibility ? (
+                            <>
+                              <Eye size={14} /> Visible
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff size={14} /> Hidden
+                            </>
+                          )}
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-3">
