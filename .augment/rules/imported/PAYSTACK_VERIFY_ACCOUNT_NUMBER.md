@@ -1,0 +1,69 @@
+---
+type: "always_apply"
+---
+
+# Verify Account Number
+In a nutshell
+The account validation APIs allow merchants to confirm the authenticity of a customer’s account number before sending money to the customer.
+
+## Introduction
+Before sending money to a customer, you need to ensure the customer’s account details are correct. This is to ensure you aren’t sending money to the wrong person. In order to achieve this, we provide the following APIs:
+
+Name	Availability	Description
+Resolve Account Number	Nigeria, Ghana	Used for the confirmation of personal bank accounts
+Account Validation	South Africa	Used for the validation of personal and business bank accounts
+Account number verification allows you to:
+
+# Confirm a customer’s bank details before creating a transfer recipient
+Automate your KYC process
+Resolve Account Number
+Gentle reminder
+This feature is available to business in Nigeria and Ghana.
+
+The Resolve Account NumberAPI takes the customer’s account number and bank code and returns the account details of the customer. To resolve an account number, make a GET request to the /bank/resolve endpoint:
+
+
+## SOURCE CODE REQUEST
+`code`
+```javascript
+const https = require('https')
+
+const options = {
+  hostname: 'api.paystack.co',
+  port: 443,
+  path: '/bank/resolve?account_number=0001234567&bank_code=058',
+  method: 'GET',
+  headers: {
+    Authorization: 'Bearer SECRET_KEY'
+  }
+}
+
+https.request(options, res => {
+  let data = ''
+
+  res.on('data', (chunk) => {
+    data += chunk
+  });
+
+  res.on('end', () => {
+    console.log(JSON.parse(data))
+  })
+}).on('error', error => {
+  console.error(error)
+})
+```
+
+## SOURCE CODE RESPONSE
+`code`
+```json
+{
+  "status": true,
+  "message": "Account number resolved",
+  "data": {
+    "account_number": "0001234567",
+    "account_name": "Doe Jane Loren",
+    "bank_id": 9
+  }
+}
+```
+

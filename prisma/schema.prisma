@@ -112,6 +112,8 @@ model users {
     bank_name            String?
     bank_account_number  String?
     bank_account_name    String?
+    bank_code            String?
+    bank_transfer_code   String?
     ref_id               String?
     userPhone            String?
     userCid              String?
@@ -134,6 +136,23 @@ model users {
     accounts  Account[]
     paysmallsmall  paysmallsmall[]
 }
+
+
+
+model payoutrequest {
+    id         Int       @id @default(autoincrement())
+    pidPayout  String    @unique()
+    pidUser    String?
+    amount     Float?
+    recipient    String?
+    reference    String?
+    reason    String?
+    status    String?
+    xStatus   String?
+    createdAt            DateTime?  @default(now())
+    updatedAt            DateTime?
+}
+
 
 
 
@@ -265,6 +284,7 @@ model payments {
   pidPayment           String    @unique()
   pidUser              String
   payerName            String
+  payerEmail           String
   txID                 String
   txRef                String
   paymentStatus        String?
@@ -283,6 +303,7 @@ model payments {
   bankName             String?
   bankNumber           String?
   depositorName        String?
+
   affiliatePayStatus   String?
   affiliateRefId       String?
 

@@ -159,6 +159,21 @@ const customerAccounts: MenuItem[] = [
   },
 ]
 
+
+const customerPayouts: MenuItem[] = [
+  {
+    title: "Payout Requests",
+    icon: Wallet,
+    path: "/payout-requests",
+    submenu: [
+      { title: "Payout Requests", path: "/dashboard/payout-requests/requests" },
+      { title: "Payout History", path: "/dashboard/payout-requests/transactions" },
+      // { title: "Roles", path: "/admin/roles" },
+    ],
+  },
+]
+
+
 const systemSettings: MenuItem[] = [
   {
     title: "Admin Mgt.",
@@ -393,6 +408,13 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 <MenuItem key={item.path} item={item} />
               ))}
             </div>
+
+            <div className="space-y-1">
+              {customerPayouts.map((item) => (
+                <MenuItem key={item.path} item={item} />
+              ))}
+            </div>
+
           </div>
 
 
