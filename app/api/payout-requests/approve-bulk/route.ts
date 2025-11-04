@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import randomGenerator from '@/lib/helpers/randomGenerator';
 
 interface TransferItem {
   amount: number;
   recipient: string;
   reference: string;
   reason: string;
+}
+
+interface UserDetails {
+  pidUser: string;
+  userEmail: string;
+  userFirstname: string | null;
+  userLastname: string | null;
 }
 
 interface PaystackTransferResponse {
@@ -26,6 +34,129 @@ interface TransferResult {
   success: boolean;
   message: string;
   transfer_code?: string;
+}
+
+/**
+ * Generate a unique debit ID
+ */
+function generateDebitId(): string {
+  return `DEB_${Date.now()}_${randomGenerator(8)}`;
+}
+
+/**
+ * Fetch user details for debit record creation
+ */
+async function fetchUserDetails(pidUser: string): Promise<UserDetails | null> {
+  try {
+    const user = await prisma.users.findUnique({
+      where: { pidUser },
+      select: {
+        pidUser: true,
+        userEmail: true,
+        userFirstname: true,
+        userLastname: true,
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      pidUser: user.pidUser,
+      userEmail: user.userEmail,
+      userFirstname: user.userFirstname,
+      userLastname: user.userLastname,
+    };
+  } catch (error) {
+    console.error(`Error fetching user details for ${pidUser}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Create a debit record for a successful payout
+ */
+async function createDebitRecord(
+  payout: any,
+  transferCode: string,
+  userDetails: UserDetails
+): Promise<boolean> {
+  try {
+    const pidDebit = generateDebitId();
+    const payerName = `${userDetails.userFirstname || ''} ${userDetails.userLastname || ''}`.trim() || 'Unknown';
+
+    await prisma.debits.create({
+      data: {
+        pidDebit,
+        pidUser: userDetails.pidUser,
+        email: userDetails.userEmail,
+        payerName,
+        txID: transferCode,
+        txRef: payout.reference || payout.pidPayout,
+        paymentStatus: 'DEBITED',
+        paymentType: 'BANK_PAYOUT',
+        currency: 'NGN',
+        amount: payout.amount || 0,
+        serviceID: payout.pidPayout,
+        serviceName: 'Bank Payout',
+        serviceDescription: payout.reason || 'Wallet withdrawal to bank account',
+        status1: 'SUCCESS',
+        status2: null,
+        debitExt1: payout.recipient, // Store recipient code
+        debitExt2: null,
+        xStatus: 'success',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+    console.log(`✅ Debit record created: ${pidDebit} for payout ${payout.pidPayout}`);
+    return true;
+  } catch (error: any) {
+    console.error(`❌ Failed to create debit record for payout ${payout.pidPayout}:`, error);
+
+    // If duplicate pidDebit, retry once with new ID
+    if (error.code === 'P2002' && error.meta?.target?.includes('pidDebit')) {
+      try {
+        const newPidDebit = generateDebitId();
+        const payerName = `${userDetails.userFirstname || ''} ${userDetails.userLastname || ''}`.trim() || 'Unknown';
+
+        await prisma.debits.create({
+          data: {
+            pidDebit: newPidDebit,
+            pidUser: userDetails.pidUser,
+            email: userDetails.userEmail,
+            payerName,
+            txID: transferCode,
+            txRef: payout.reference || payout.pidPayout,
+            paymentStatus: 'DEBITED',
+            paymentType: 'BANK_PAYOUT',
+            currency: 'NGN',
+            amount: payout.amount || 0,
+            serviceID: payout.pidPayout,
+            serviceName: 'Bank Payout',
+            serviceDescription: payout.reason || 'Wallet withdrawal to bank account',
+            status1: 'SUCCESS',
+            status2: null,
+            debitExt1: payout.recipient,
+            debitExt2: null,
+            xStatus: 'success',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+
+        console.log(`✅ Debit record created (retry): ${newPidDebit} for payout ${payout.pidPayout}`);
+        return true;
+      } catch (retryError) {
+        console.error(`❌ Retry failed for debit record creation:`, retryError);
+        return false;
+      }
+    }
+
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -157,9 +288,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process results and update database
+    // Process results and update database with debit records
     const results: TransferResult[] = [];
-    const updatePromises: Promise<any>[] = [];
 
     for (const transfer of paystackData.data) {
       // Find the corresponding payout request
@@ -178,42 +308,138 @@ export async function POST(request: NextRequest) {
 
       const isSuccess = transfer.status === 'success' || transfer.status === 'pending';
 
-      results.push({
-        pidPayout: payout.pidPayout,
-        success: isSuccess,
-        message: isSuccess ? 'Transfer initiated successfully' : `Transfer failed: ${transfer.status}`,
-        transfer_code: transfer.transfer_code,
-      });
-
-      // Update database record
+      // Process successful transfers with debit record creation
       if (isSuccess) {
-        updatePromises.push(
-          prisma.payoutrequest.update({
-            where: { pidPayout: payout.pidPayout },
-            data: {
-              status: 'Paid',
-              xStatus: transfer.status,
-              reference: transfer.transfer_code,
-              updatedAt: new Date(),
-            },
-          })
-        );
+        try {
+          // Validate that pidUser exists
+          if (!payout.pidUser) {
+            console.error(`❌ Payout ${payout.pidPayout} has no pidUser - cannot create debit record`);
+            results.push({
+              pidPayout: payout.pidPayout,
+              success: false,
+              message: 'Payout has no associated user - debit record creation failed',
+              transfer_code: transfer.transfer_code,
+            });
+            continue;
+          }
+
+          // Fetch user details
+          const userDetails = await fetchUserDetails(payout.pidUser);
+
+          if (!userDetails) {
+            console.error(`❌ User not found for pidUser: ${payout.pidUser}`);
+            results.push({
+              pidPayout: payout.pidPayout,
+              success: false,
+              message: 'User not found - cannot create debit record',
+              transfer_code: transfer.transfer_code,
+            });
+            continue;
+          }
+
+          // Use Prisma transaction to ensure atomicity
+          await prisma.$transaction(async (tx) => {
+            // Create debit record first
+            const pidDebit = generateDebitId();
+            const payerName = `${userDetails.userFirstname || ''} ${userDetails.userLastname || ''}`.trim() || 'Unknown';
+
+            await tx.debits.create({
+              data: {
+                pidDebit,
+                pidUser: userDetails.pidUser,
+                email: userDetails.userEmail,
+                payerName,
+                txID: transfer.transfer_code,
+                txRef: payout.reference || payout.pidPayout,
+                paymentStatus: 'DEBITED',
+                paymentType: 'BANK_PAYOUT',
+                currency: 'NGN',
+                amount: payout.amount || 0,
+                serviceID: payout.pidPayout,
+                serviceName: 'Bank Payout',
+                serviceDescription: payout.reason || 'Wallet withdrawal to bank account',
+                status1: 'SUCCESS',
+                status2: null,
+                debitExt1: payout.recipient, // Store recipient code
+                debitExt2: transfer.transfer_code, // Store transfer code
+                xStatus: transfer.status,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            });
+
+            console.log(`✅ Debit record created: ${pidDebit} for payout ${payout.pidPayout}`);
+
+            // Then update payout request status
+            await tx.payoutrequest.update({
+              where: { pidPayout: payout.pidPayout },
+              data: {
+                status: 'Paid',
+                xStatus: transfer.status,
+                reference: transfer.transfer_code,
+                updatedAt: new Date(),
+              },
+            });
+
+            console.log(`✅ Payout ${payout.pidPayout} marked as Paid`);
+          });
+
+          // Transaction successful
+          results.push({
+            pidPayout: payout.pidPayout,
+            success: true,
+            message: 'Transfer initiated successfully and debit record created',
+            transfer_code: transfer.transfer_code,
+          });
+
+          console.log(`✅ Successfully processed payout ${payout.pidPayout} with debit record`);
+
+        } catch (error: any) {
+          console.error(`❌ Error processing payout ${payout.pidPayout}:`, error);
+
+          // If transaction fails, mark as failed
+          results.push({
+            pidPayout: payout.pidPayout,
+            success: false,
+            message: `Database update failed: ${error.message}`,
+            transfer_code: transfer.transfer_code,
+          });
+
+          // Log the failure for audit
+          console.error(`❌ CRITICAL: Paystack transfer succeeded but database update failed for ${payout.pidPayout}`);
+          console.error(`Transfer Code: ${transfer.transfer_code}, Amount: ${payout.amount}`);
+        }
       } else {
-        updatePromises.push(
-          prisma.payoutrequest.update({
+        // Handle failed transfers
+        try {
+          await prisma.payoutrequest.update({
             where: { pidPayout: payout.pidPayout },
             data: {
               status: 'Failed',
               xStatus: transfer.status,
               updatedAt: new Date(),
             },
-          })
-        );
+          });
+
+          results.push({
+            pidPayout: payout.pidPayout,
+            success: false,
+            message: `Transfer failed: ${transfer.status}`,
+            transfer_code: transfer.transfer_code,
+          });
+
+          console.log(`⚠️ Payout ${payout.pidPayout} marked as Failed`);
+        } catch (error: any) {
+          console.error(`❌ Error updating failed payout ${payout.pidPayout}:`, error);
+          results.push({
+            pidPayout: payout.pidPayout,
+            success: false,
+            message: `Transfer and database update failed: ${error.message}`,
+            transfer_code: transfer.transfer_code,
+          });
+        }
       }
     }
-
-    // Execute all database updates
-    await Promise.all(updatePromises);
 
     // Log successful completion
     const successCount = results.filter((r) => r.success).length;

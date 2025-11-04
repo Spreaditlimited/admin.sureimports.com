@@ -45,7 +45,7 @@
 
 9. **Review Results**
    - After processing, you'll see results for each transfer:
-     - ✅ Success: Transfer completed
+     - ✅ Success: Transfer completed and debit record created
      - ❌ Failed: Transfer failed (with reason)
    - A summary toast notification will appear
    - The table will automatically refresh
@@ -53,6 +53,7 @@
 10. **Close Modal**
     - Click "Close" to return to the payout requests table
     - Successfully processed payouts will now show status "Paid"
+    - **Important**: Each successful payout has a corresponding debit record in the system for financial tracking
 
 ## Understanding the Interface
 
@@ -302,7 +303,7 @@ A: The transfers will still process on the server, but you won't see the results
 A: Yes, the interface is responsive and works on mobile devices.
 
 **Q: How do I know if a transfer was successful?**
-A: Check the results modal, the table status, and your Paystack dashboard.
+A: Check the results modal, the table status, and your Paystack dashboard. Additionally, a debit record will be created in the system for every successful transfer.
 
 **Q: What if a customer's bank account is invalid?**
 A: The transfer will fail. Contact the customer to verify their bank details and create a new payout request.
@@ -318,6 +319,15 @@ A: There's no hard limit, but consider your available balance and processing tim
 
 **Q: How do I add funds to Paystack balance?**
 A: Log in to Paystack Dashboard → Balances → Add Funds
+
+**Q: What are debit records and why are they important?**
+A: Debit records are financial audit trail entries created for every successful payout. They track wallet debits, ensure accurate balance management, and provide complete transaction history. Every successful payout MUST have a corresponding debit record for financial integrity.
+
+**Q: What happens if a debit record fails to create?**
+A: If debit record creation fails, the entire transaction is rolled back. The payout will remain in "Pending" status even if the Paystack transfer succeeded. This ensures financial integrity. Contact your system administrator immediately if this occurs.
+
+**Q: Can I view debit records?**
+A: Yes, debit records are stored in the `debits` table in the database. Your system administrator can provide access to view these records for reconciliation and audit purposes.
 
 ## Appendix: Status Workflow
 
