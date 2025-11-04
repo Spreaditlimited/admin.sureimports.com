@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Eye, Search, X, Filter } from 'lucide-react';
+import { Eye, Search, X, Filter, CheckCircle } from 'lucide-react';
 import Modal from '@/app/uix/ModalLarge';
+import ApprovalModal from './ApprovalModal';
 
 interface PayoutRequest {
   id: number;
@@ -54,6 +55,11 @@ export default function PayoutRequestsTable() {
   const [selectedPayout, setSelectedPayout] = useState<PayoutRequest | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
+
+  // Selection state for bulk approval
+  const [selectedPayouts, setSelectedPayouts] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
 
   // Fetch payout requests
   const fetchPayoutRequests = useCallback(async () => {
@@ -157,6 +163,66 @@ export default function PayoutRequestsTable() {
     setPage(1);
   };
 
+  // Handle checkbox selection
+  const handleSelectPayout = (pidPayout: string, isChecked: boolean) => {
+    const newSelected = new Set(selectedPayouts);
+    if (isChecked) {
+      newSelected.add(pidPayout);
+    } else {
+      newSelected.delete(pidPayout);
+    }
+    setSelectedPayouts(newSelected);
+    setSelectAll(false);
+  };
+
+  // Handle select all
+  const handleSelectAll = (isChecked: boolean) => {
+    if (isChecked) {
+      const pendingPayouts = payoutRequests
+        .filter((p) => p.status?.toLowerCase() === 'pending')
+        .map((p) => p.pidPayout);
+      setSelectedPayouts(new Set(pendingPayouts));
+      setSelectAll(true);
+    } else {
+      setSelectedPayouts(new Set());
+      setSelectAll(false);
+    }
+  };
+
+  // Calculate selected total amount
+  const selectedTotalAmount = payoutRequests
+    .filter((p) => selectedPayouts.has(p.pidPayout))
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  // Get pending payouts count
+  const pendingPayoutsCount = payoutRequests.filter(
+    (p) => p.status?.toLowerCase() === 'pending'
+  ).length;
+
+  // Clear selections when data changes
+  useEffect(() => {
+    setSelectedPayouts(new Set());
+    setSelectAll(false);
+  }, [status, search]);
+
+  // Handle opening approval modal
+  const handleOpenApprovalModal = () => {
+    setIsApprovalModalOpen(true);
+  };
+
+  // Handle approval success
+  const handleApprovalSuccess = () => {
+    setSelectedPayouts(new Set());
+    setSelectAll(false);
+    setIsApprovalModalOpen(false);
+    fetchPayoutRequests();
+  };
+
+  // Get selected payout objects
+  const selectedPayoutObjects = payoutRequests.filter((p) =>
+    selectedPayouts.has(p.pidPayout)
+  );
+
   // Format currency
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return 'N/A';
@@ -197,25 +263,49 @@ export default function PayoutRequestsTable() {
       {/* Total Amount Summary */}
       {!loading && !error && (
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 p-6 rounded-lg shadow-lg">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="flex-1">
               <p className="text-blue-100 text-sm font-medium mb-1">
                 Total Payout Amount {status && `(${status})`}
               </p>
               <p className="text-white text-3xl font-bold">
                 {formatCurrency(totalAmount)}
               </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 text-blue-100">
-              <div className="text-center sm:text-right">
-                <p className="text-xs font-medium mb-1">Total Requests</p>
-                <p className="text-xl font-semibold text-white">{totalCount}</p>
-              </div>
-              {status && (
-                <div className="text-center sm:text-right">
-                  <p className="text-xs font-medium mb-1">Status</p>
-                  <p className="text-xl font-semibold text-white">{status}</p>
+              {selectedPayouts.size > 0 && (
+                <div className="mt-3 pt-3 border-t border-blue-500">
+                  <p className="text-blue-100 text-sm font-medium mb-1">
+                    Selected for Approval
+                  </p>
+                  <p className="text-white text-2xl font-bold">
+                    {formatCurrency(selectedTotalAmount)}
+                  </p>
+                  <p className="text-blue-200 text-xs mt-1">
+                    {selectedPayouts.size} of {totalCount} requests selected
+                  </p>
                 </div>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
+              <div className="flex flex-col sm:flex-row gap-4 text-blue-100">
+                <div className="text-center sm:text-right">
+                  <p className="text-xs font-medium mb-1">Total Requests</p>
+                  <p className="text-xl font-semibold text-white">{totalCount}</p>
+                </div>
+                {status && (
+                  <div className="text-center sm:text-right">
+                    <p className="text-xs font-medium mb-1">Status</p>
+                    <p className="text-xl font-semibold text-white">{status}</p>
+                  </div>
+                )}
+              </div>
+              {selectedPayouts.size > 0 && (
+                <button
+                  onClick={handleOpenApprovalModal}
+                  className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg transition-colors whitespace-nowrap"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Approve Payment ({selectedPayouts.size})
+                </button>
               )}
             </div>
           </div>
@@ -309,6 +399,16 @@ export default function PayoutRequestsTable() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
+                    <th className="px-6 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectAll}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        disabled={pendingPayoutsCount === 0}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Select all pending payouts"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       S/N
                     </th>
@@ -340,14 +440,30 @@ export default function PayoutRequestsTable() {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {payoutRequests.length > 0 ? (
-                    payoutRequests.map((payout, index) => (
-                      <tr
-                        key={payout.pidPayout}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {(page - 1) * itemsPerPage + index + 1}
-                        </td>
+                    payoutRequests.map((payout, index) => {
+                      const isPending = payout.status?.toLowerCase() === 'pending';
+                      const isSelected = selectedPayouts.has(payout.pidPayout);
+
+                      return (
+                        <tr
+                          key={payout.pidPayout}
+                          className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                            isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                          }`}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => handleSelectPayout(payout.pidPayout, e.target.checked)}
+                              disabled={!isPending}
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                              title={isPending ? 'Select for approval' : 'Only pending payouts can be selected'}
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {(page - 1) * itemsPerPage + index + 1}
+                          </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                           {payout.pidPayout}
                         </td>
@@ -386,11 +502,12 @@ export default function PayoutRequestsTable() {
                           </button>
                         </td>
                       </tr>
-                    ))
+                      );
+                    })
                   ) : (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={10}
                         className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
                         No payout requests found
@@ -599,6 +716,14 @@ export default function PayoutRequestsTable() {
           </div>
         )}
       </Modal>
+
+      {/* Approval Modal */}
+      <ApprovalModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => setIsApprovalModalOpen(false)}
+        selectedPayouts={selectedPayoutObjects}
+        onSuccess={handleApprovalSuccess}
+      />
     </div>
   );
 }

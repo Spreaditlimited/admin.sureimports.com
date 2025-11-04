@@ -1,6 +1,8 @@
 # Initiate Bulk Transfer
 Batch multiple transfers in a single request.
 
+Paystack Transfer API Link: https://paystack.com/docs/api/transfer
+
 You need to disable the Transfers OTP requirement to use this endpoint.
 
 Headers
