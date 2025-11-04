@@ -11,6 +11,10 @@ const transporter = nodemailer.createTransport({
     user: SMTP_EMAIL,
     pass: SMTP_PASSWORD,
   },
+  tls: {
+    // Accept self-signed certificates
+    rejectUnauthorized: false,
+  },
 });
 
 // const transporter = nodemailer.createTransport({

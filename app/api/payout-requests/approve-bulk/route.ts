@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import randomGenerator from '@/lib/helpers/randomGenerator';
+import sendPayoutEmail from '@/lib/email/sendPayoutEmail';
 
 interface TransferItem {
   amount: number;
@@ -34,6 +35,22 @@ interface TransferResult {
   success: boolean;
   message: string;
   transfer_code?: string;
+}
+
+/**
+ * Calculate service charge (2% capped at ₦2,000)
+ */
+function calculateServiceCharge(amount: number): number {
+  const twoPercent = amount * 0.02;
+  return Math.min(twoPercent, 2000); // Cap at ₦2,000
+}
+
+/**
+ * Calculate net transfer amount after service charge
+ */
+function calculateNetTransferAmount(amount: number): number {
+  const serviceCharge = calculateServiceCharge(amount);
+  return amount - serviceCharge;
 }
 
 /**
@@ -245,16 +262,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare transfers for Paystack
-    const transfers: TransferItem[] = payoutRequests.map((payout) => ({
-      amount: Math.round((payout.amount || 0) * 100), // Convert to kobo
-      recipient: payout.recipient!,
-      reference: payout.reference || payout.pidPayout,
-      reason: payout.reason || 'Payout transfer',
-    }));
+    // Prepare transfers for Paystack with 2% service charge deduction
+    const transfers: TransferItem[] = payoutRequests.map((payout) => {
+      const originalAmount = payout.amount || 0;
+      const serviceCharge = calculateServiceCharge(originalAmount);
+      const netTransferAmount = originalAmount - serviceCharge;
 
-    // Log the bulk transfer attempt
+      return {
+        amount: Math.round(netTransferAmount * 100), // Convert net amount to kobo (after 2% deduction)
+        recipient: payout.recipient!,
+        reference: payout.reference || payout.pidPayout,
+        reason: payout.reason || 'Payout transfer',
+      };
+    });
+
+    // Log the bulk transfer attempt with service charge details
     console.log(`Initiating bulk transfer for ${transfers.length} payouts at ${new Date().toISOString()}`);
+    payoutRequests.forEach((payout) => {
+      const originalAmount = payout.amount || 0;
+      const serviceCharge = calculateServiceCharge(originalAmount);
+      const netAmount = originalAmount - serviceCharge;
+      console.log(`Payout ${payout.pidPayout}: Original ₦${originalAmount.toLocaleString()}, Service Charge ₦${serviceCharge.toLocaleString()}, Net Transfer ₦${netAmount.toLocaleString()}`);
+    });
     console.log('Transfer details:', JSON.stringify(transfers, null, 2));
 
     // Call Paystack Bulk Transfer API
@@ -337,11 +366,18 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
+          // Calculate service charge for this payout
+          const originalAmount = payout.amount || 0;
+          const serviceCharge = calculateServiceCharge(originalAmount);
+          const netTransferAmount = originalAmount - serviceCharge;
+
+          // Prepare user name for debit record and email
+          const payerName = `${userDetails.userFirstname || ''} ${userDetails.userLastname || ''}`.trim() || 'Unknown';
+
           // Use Prisma transaction to ensure atomicity
           await prisma.$transaction(async (tx) => {
-            // Create debit record first
+            // Create debit record first (with FULL original amount)
             const pidDebit = generateDebitId();
-            const payerName = `${userDetails.userFirstname || ''} ${userDetails.userLastname || ''}`.trim() || 'Unknown';
 
             await tx.debits.create({
               data: {
@@ -354,13 +390,13 @@ export async function POST(request: NextRequest) {
                 paymentStatus: 'DEBITED',
                 paymentType: 'BANK_PAYOUT',
                 currency: 'NGN',
-                amount: payout.amount || 0,
+                amount: originalAmount, // FULL amount debited from wallet (100%)
                 serviceID: payout.pidPayout,
                 serviceName: 'Bank Payout',
                 serviceDescription: payout.reason || 'Wallet withdrawal to bank account',
                 status1: 'SUCCESS',
-                status2: null,
-                debitExt1: payout.recipient, // Store recipient code
+                status2: `Service Charge: ₦${serviceCharge.toLocaleString()}`, // Track service charge
+                debitExt1: `SC:${serviceCharge}|NET:${netTransferAmount}`, // Service charge and net amount
                 debitExt2: transfer.transfer_code, // Store transfer code
                 xStatus: transfer.status,
                 createdAt: new Date(),
@@ -368,7 +404,7 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            console.log(`✅ Debit record created: ${pidDebit} for payout ${payout.pidPayout}`);
+            console.log(`✅ Debit record created: ${pidDebit} for payout ${payout.pidPayout} (Full amount: ₦${originalAmount.toLocaleString()}, Service charge: ₦${serviceCharge.toLocaleString()})`);
 
             // Then update payout request status
             await tx.payoutrequest.update({
@@ -381,18 +417,52 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            console.log(`✅ Payout ${payout.pidPayout} marked as Paid`);
+            console.log(`✅ Payout ${payout.pidPayout} marked as Paid (Net transfer: ₦${netTransferAmount.toLocaleString()})`);
           });
 
           // Transaction successful
           results.push({
             pidPayout: payout.pidPayout,
             success: true,
-            message: 'Transfer initiated successfully and debit record created',
+            message: `Transfer successful (₦${netTransferAmount.toLocaleString()} sent, ₦${serviceCharge.toLocaleString()} service charge)`,
             transfer_code: transfer.transfer_code,
           });
 
           console.log(`✅ Successfully processed payout ${payout.pidPayout} with debit record`);
+
+          // Send email notification to user (non-blocking)
+          // Email failure should NOT affect the payout status
+          try {
+            const transactionDate = new Date().toLocaleString('en-NG', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            });
+
+            const emailSent = await sendPayoutEmail({
+              userEmail: userDetails.userEmail,
+              userName: payerName,
+              originalAmount,
+              serviceCharge,
+              netAmount: netTransferAmount,
+              recipientCode: payout.recipient || 'N/A',
+              transferCode: transfer.transfer_code,
+              transactionDate,
+            });
+
+            if (emailSent) {
+              console.log(`📧 Email notification sent to ${userDetails.userEmail} for payout ${payout.pidPayout}`);
+            } else {
+              console.warn(`⚠️ Email notification failed for payout ${payout.pidPayout}, but payout was successful`);
+            }
+          } catch (emailError: any) {
+            // Log email error but don't fail the payout
+            console.error(`❌ Email sending error for payout ${payout.pidPayout}:`, emailError.message);
+            console.error(`⚠️ Payout ${payout.pidPayout} was successful, but email notification failed`);
+          }
 
         } catch (error: any) {
           console.error(`❌ Error processing payout ${payout.pidPayout}:`, error);

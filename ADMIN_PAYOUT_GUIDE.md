@@ -29,9 +29,15 @@
 
 6. **Review Approval Details**
    - **Available Balance**: Shows your current Paystack balance
-   - **Total to Transfer**: Shows the sum of selected payouts
+   - **Original Amount**: Total amount requested by users
+   - **Service Charge (2%)**: Total fees to be deducted (capped at ₦2,000 per transaction)
+   - **Net Transfer Amount**: Actual amount that will be sent to banks
    - **Balance Check**: Green checkmark if sufficient, red X if insufficient
-   - **Selected Payouts List**: Review all payouts to be processed
+   - **Selected Payouts List**: Review all payouts with breakdown:
+     - Original amount column
+     - Service charge column (shown in orange)
+     - Net transfer amount column
+   - **Service Charge Notice**: Orange notice explaining the 2% fee structure
 
 7. **Enter Admin Passcode**
    - Enter your secure admin passcode
@@ -45,15 +51,46 @@
 
 9. **Review Results**
    - After processing, you'll see results for each transfer:
-     - ✅ Success: Transfer completed and debit record created
+     - ✅ Success: Transfer completed, debit record created, and email sent to user
      - ❌ Failed: Transfer failed (with reason)
    - A summary toast notification will appear
+   - Users will receive email notifications for successful transfers
    - The table will automatically refresh
 
 10. **Close Modal**
     - Click "Close" to return to the payout requests table
     - Successfully processed payouts will now show status "Paid"
     - **Important**: Each successful payout has a corresponding debit record in the system for financial tracking
+
+## Service Charge Information
+
+### 2% Service Charge
+
+**All payout transfers are subject to a 2% service charge, capped at ₦2,000 per transaction.**
+
+**How it works:**
+- Users request a payout amount (e.g., ₦10,000)
+- System calculates 2% service charge (e.g., ₦200)
+- Net amount is transferred to user's bank (e.g., ₦9,800)
+- Full original amount is debited from user's wallet (e.g., ₦10,000)
+
+**Examples:**
+
+| Original Amount | Service Charge (2%) | Net Transfer | Wallet Debit |
+|----------------|---------------------|--------------|--------------|
+| ₦10,000 | ₦200 | ₦9,800 | ₦10,000 |
+| ₦50,000 | ₦1,000 | ₦49,000 | ₦50,000 |
+| ₦100,000 | ₦2,000 (at cap) | ₦98,000 | ₦100,000 |
+| ₦200,000 | ₦2,000 (capped) | ₦198,000 | ₦200,000 |
+
+**Important Notes:**
+- ✅ Service charge is **capped at ₦2,000** regardless of payout size
+- ✅ Users receive the **net amount** in their bank account
+- ✅ Full **original amount** is debited from their wallet
+- ✅ Service charge is tracked in debit records for audit purposes
+- ✅ Paystack balance is checked against the **net transfer amount**
+
+---
 
 ## Understanding the Interface
 
@@ -328,6 +365,52 @@ A: If debit record creation fails, the entire transaction is rolled back. The pa
 
 **Q: Can I view debit records?**
 A: Yes, debit records are stored in the `debits` table in the database. Your system administrator can provide access to view these records for reconciliation and audit purposes.
+
+**Q: Why is there a 2% service charge?**
+A: The 2% service charge covers transaction processing costs, including Paystack fees, system maintenance, and operational expenses. The charge is capped at ₦2,000 to ensure fairness for large transactions.
+
+**Q: How is the service charge calculated?**
+A: Service charge = minimum of (2% of original amount, ₦2,000). For example:
+- ₦10,000 payout → ₦200 service charge (2%)
+- ₦200,000 payout → ₦2,000 service charge (capped, not ₦4,000)
+
+**Q: Do users see the service charge before requesting a payout?**
+A: Users should be informed about the service charge policy. The admin sees the exact breakdown in the approval modal before processing the transfer.
+
+**Q: Where does the service charge go?**
+A: The service charge is the difference between the amount debited from the user's wallet and the amount transferred to their bank. It's tracked in the debit record for audit purposes.
+
+**Q: Can I waive the service charge for specific payouts?**
+A: No, the service charge is automatically applied to all payouts. If you need to waive fees, contact your system administrator to modify the system configuration.
+
+**Q: How do I verify the service charge was applied correctly?**
+A: Check the debit record in the database. The `amount` field shows the full wallet debit, and `debitExt1` contains the service charge details (e.g., "SC:200|NET:9800").
+
+**Q: Do users receive email notifications when payouts are processed?**
+A: Yes! Users automatically receive a professional email notification after their payout is successfully processed. The email includes the transaction summary, service charge breakdown, and transaction reference.
+
+**Q: What happens if the email notification fails to send?**
+A: Email failures do NOT affect the payout status. The payout will still be marked as "Paid" and the funds will be transferred. Email errors are logged for admin review, and you can manually notify the user if needed.
+
+**Q: What information is included in the email notification?**
+A: The email includes:
+- User's name
+- Original payout amount
+- Service charge (2%)
+- Net amount transferred to bank
+- Bank account (recipient code)
+- Transaction reference (Paystack transfer code)
+- Transaction date and time
+- Status: "Completed"
+- Processing time notice (24 hours)
+- Service charge disclaimer
+- Support contact information
+
+**Q: Can I customize the email template?**
+A: Yes, the email template is located at `lib/email/temp/payoutMailTemplate.ts`. You can modify the HTML, styling, and content as needed. Make sure to test thoroughly after making changes.
+
+**Q: How do I check if emails are being sent successfully?**
+A: Check the server console logs. Successful emails show: "📧 Email notification sent to user@email.com (Transfer: TRF_xxxxx)". Failed emails show: "❌ Email sending error for payout PAY_xxxxx: [error message]".
 
 ## Appendix: Status Workflow
 

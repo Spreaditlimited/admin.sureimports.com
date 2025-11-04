@@ -48,7 +48,18 @@ export default function ApprovalModal({
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState<TransferResult[] | null>(null);
 
+  // Calculate service charge (2% capped at ₦2,000)
+  const calculateServiceCharge = (amount: number): number => {
+    const twoPercent = amount * 0.02;
+    return Math.min(twoPercent, 2000); // Cap at ₦2,000
+  };
+
   const totalAmount = selectedPayouts.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalServiceCharge = selectedPayouts.reduce((sum, p) => {
+    const amount = p.amount || 0;
+    return sum + calculateServiceCharge(amount);
+  }, 0);
+  const totalNetTransfer = totalAmount - totalServiceCharge;
 
   // Check balance when modal opens
   useEffect(() => {
@@ -89,8 +100,9 @@ export default function ApprovalModal({
       return;
     }
 
-    if (!balance || balance.available < totalAmount) {
-      toast.error('Insufficient balance');
+    // Check balance against net transfer amount (what will actually be sent)
+    if (!balance || balance.available < totalNetTransfer) {
+      toast.error('Insufficient balance for net transfer amount');
       return;
     }
 
@@ -207,11 +219,17 @@ export default function ApprovalModal({
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(balance.available)}
                   </p>
-                  <div className="mt-2 text-sm">
+                  <div className="mt-2 text-sm space-y-1">
                     <p className="text-gray-600 dark:text-gray-400">
-                      Total to transfer: <span className="font-semibold">{formatCurrency(totalAmount)}</span>
+                      Original amount: <span className="font-semibold">{formatCurrency(totalAmount)}</span>
                     </p>
-                    {balance.available >= totalAmount ? (
+                    <p className="text-orange-600 dark:text-orange-400">
+                      Service charge (2%): <span className="font-semibold">-{formatCurrency(totalServiceCharge)}</span>
+                    </p>
+                    <p className="text-gray-900 dark:text-white text-base font-bold border-t border-gray-300 dark:border-gray-600 pt-1">
+                      Net transfer amount: <span>{formatCurrency(totalNetTransfer)}</span>
+                    </p>
+                    {balance.available >= totalNetTransfer ? (
                       <p className="text-green-600 dark:text-green-400 flex items-center gap-1 mt-1">
                         <CheckCircle className="w-4 h-4" />
                         Sufficient balance available
@@ -219,7 +237,7 @@ export default function ApprovalModal({
                     ) : (
                       <p className="text-red-600 dark:text-red-400 flex items-center gap-1 mt-1">
                         <XCircle className="w-4 h-4" />
-                        Insufficient balance (Short by {formatCurrency(totalAmount - balance.available)})
+                        Insufficient balance (Short by {formatCurrency(totalNetTransfer - balance.available)})
                       </p>
                     )}
                   </div>
@@ -246,24 +264,42 @@ export default function ApprovalModal({
                       Recipient
                     </th>
                     <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Amount
+                      Original
+                    </th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Service Charge
+                    </th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Net Transfer
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {selectedPayouts.map((payout) => (
-                    <tr key={payout.pidPayout}>
-                      <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
-                        {payout.pidPayout}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
-                        {payout.recipient || 'N/A'}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right font-semibold text-gray-900 dark:text-white">
-                        {formatCurrency(payout.amount || 0)}
-                      </td>
-                    </tr>
-                  ))}
+                  {selectedPayouts.map((payout) => {
+                    const originalAmount = payout.amount || 0;
+                    const serviceCharge = calculateServiceCharge(originalAmount);
+                    const netAmount = originalAmount - serviceCharge;
+
+                    return (
+                      <tr key={payout.pidPayout}>
+                        <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
+                          {payout.pidPayout}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
+                          {payout.recipient || 'N/A'}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right text-gray-900 dark:text-white">
+                          {formatCurrency(originalAmount)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right text-orange-600 dark:text-orange-400">
+                          -{formatCurrency(serviceCharge)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right font-semibold text-gray-900 dark:text-white">
+                          {formatCurrency(netAmount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 <tfoot className="bg-gray-50 dark:bg-gray-700">
                   <tr>
@@ -272,6 +308,12 @@ export default function ApprovalModal({
                     </td>
                     <td className="px-4 py-2 text-sm text-right font-bold text-gray-900 dark:text-white">
                       {formatCurrency(totalAmount)}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-right font-bold text-orange-600 dark:text-orange-400">
+                      -{formatCurrency(totalServiceCharge)}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-right font-bold text-gray-900 dark:text-white">
+                      {formatCurrency(totalNetTransfer)}
                     </td>
                   </tr>
                 </tfoot>
@@ -327,6 +369,25 @@ export default function ApprovalModal({
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Service Charge Notice */}
+        {!results && (
+          <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                  Service Charge Applied
+                </h4>
+                <p className="text-sm text-orange-800 dark:text-orange-300">
+                  A 2% service charge (capped at ₦2,000 per transaction) will be deducted from each payout.
+                  Users will receive the net transfer amount in their bank accounts, while the full original
+                  amount will be debited from their wallets.
+                </p>
+              </div>
             </div>
           </div>
         )}
