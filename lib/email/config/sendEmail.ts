@@ -3,6 +3,8 @@ import transporter from '@/lib/email/config/nodemailerConfig';
 
 const { SMTP_EMAIL } = process.env;
 
+
+
 const sendEmail = async (to: string, subject: string, html: string) => {
   try {
     console.log('📧 SMTP Configuration:', {

@@ -21,6 +21,7 @@ export const payoutMailTemplate = ({
     return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  
   return `
 <!DOCTYPE html>
 <html lang="en">
