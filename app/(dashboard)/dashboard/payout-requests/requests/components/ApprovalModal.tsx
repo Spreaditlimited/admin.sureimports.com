@@ -48,10 +48,10 @@ export default function ApprovalModal({
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState<TransferResult[] | null>(null);
 
-  // Calculate service charge (2% capped at ₦2,000)
+  // Calculate service charge (2% capped at ₦2,500)
   const calculateServiceCharge = (amount: number): number => {
     const twoPercent = amount * 0.02;
-    return Math.min(twoPercent, 2000); // Cap at ₦2,000
+    return Math.min(twoPercent, 2500); // Cap at ₦2,500
   };
 
   const totalAmount = selectedPayouts.reduce((sum, p) => sum + (p.amount || 0), 0);

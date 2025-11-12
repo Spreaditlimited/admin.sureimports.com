@@ -38,11 +38,11 @@ interface TransferResult {
 }
 
 /**
- * Calculate service charge (2% capped at ₦2,000)
+ * Calculate service charge (2% capped at ₦2,500)
  */
 function calculateServiceCharge(amount: number): number {
   const twoPercent = amount * 0.02;
-  return Math.min(twoPercent, 2000); // Cap at ₦2,000
+  return Math.min(twoPercent, 2500); // Cap at ₦2,500
 }
 
 /**

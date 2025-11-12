@@ -170,7 +170,7 @@ export const payoutMailTemplate = ({
             <td style="padding: 10px 30px 20px 30px;">
               <div style="background-color: #f3f4f6; padding: 15px; border-radius: 4px;">
                 <p style="margin: 0; color: #4b5563; font-size: 12px; line-height: 1.5;">
-                  <strong>About Service Charge:</strong> A 2% service charge (capped at ₦2,000 per transaction) 
+                  <strong>About Service Charge:</strong> A 2% service charge (capped at ₦2,500 per transaction) 
                   is applied to all payout transfers to cover transaction processing costs. The full original amount 
                   has been debited from your wallet, and the net amount (after service charge) has been transferred 
                   to your bank account.
@@ -191,7 +191,7 @@ export const payoutMailTemplate = ({
           <!-- Footer -->
           <tr>
             <td align="center" style="padding: 20px 30px; border-top: 1px solid #e5e7eb;">
-              <img src="${process.env.ROOT_URL}/assets/images/logo.png" height="35" alt="SureImports Logo" style="margin-bottom: 10px;" />
+              <img src="https://sureimports.com/images/logo.png" height="35" alt="SureImports Logo" style="margin-bottom: 10px;" />
               <p style="margin: 10px 0; color: #666666; font-size: 14px; font-style: italic;">
                 Start your importation with peace of mind
               </p>
