@@ -470,7 +470,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-        {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
+        {/****************************** TOTAL ESTIMATED SHIPPING COST (SAVED STAGE) *****************************/}
+        {(status == 'saved') && (
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Estimated Shipping Cost of Order
@@ -539,9 +540,81 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                 )}
           </div>
         </div>
+        )}
 
 
 
+        {/****************************** TOTAL ESTIMATED SHIPPING COST (OTHER STAGES) *****************************/}
+        {(status !== 'saved') && (
+        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
+          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
+            Estimated Shipping Cost of Order
+          </div><hr />
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">Domestic Shipping Cost within China:</p>
+            <p>
+            $
+              {
+                ((domesticShippingCost as number) / 1)
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              &nbsp; USD
+            </p>
+          </div>
+
+          <div className="flex max-md:justify-between md:gap-20">
+            <p className="md:w-64">International Shipping Cost:</p>
+            <p>
+            $
+              {
+                ((estimatedTotalShippingCost - domesticShippingCost as number) / 1)
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              &nbsp; USD
+            </p>
+          </div>
+
+          <div className="flex max-md:justify-between md:gap-3">
+            <p className="md:w-64"><b>Total Cost:</b></p>
+            <span className="font-semibold">
+              $<b>
+              {
+                ((estimatedTotalShippingCost as number) / 1)
+                  .toFixed(2)
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+              }
+              </b>
+              &nbsp; USD
+            </span>
+
+                {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
+                {destinationCountry == 'Nigeria' && (
+                  <>
+                    &nbsp;{' | '}&nbsp;
+                    <span className="">
+                    ₦
+                  {
+                      (
+                        ((estimatedTotalShippingCost as number) / 1) *
+                        exNairaToDollar
+                      )
+                      .toFixed(2)
+                      .toString()
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
+                  }
+              &nbsp; Naira
+            </span>
+                  </>
+                )}
+          </div>
+        </div>
+        )}
 
 
         {/****************************** SHIPPING DETAILS *****************************/}
@@ -983,7 +1056,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               $
               <b>
                 {
-                  ((actualTotalShippingCost - estimatedTotalShippingCost as number)/1)
+                  ((costDifference as number)/1)
                     .toFixed(2)
                     .toString()
                     .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
