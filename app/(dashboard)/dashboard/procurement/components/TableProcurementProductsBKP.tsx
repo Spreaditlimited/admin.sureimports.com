@@ -983,7 +983,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               $
               <b>
                 {
-                  ((actualTotalShippingCost - estimatedTotalShippingCost as number)/1)
+                  ((costDifference as number)/1)
                     .toFixed(2)
                     .toString()
                     .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
