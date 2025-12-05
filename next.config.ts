@@ -8,15 +8,16 @@ const nextConfig = {
   //   ignoreBuildErrors: true,
   // },
     reactStrictMode: true,
-    swcMinify: true,
+    // swcMinify is removed in Next.js 15 (SWC is now the default minifier)
     eslint: {
         ignoreDuringBuilds: true,
     },
-    experimental: {
-        serverActions: true,
-      },
+    // Server Actions are stable in Next.js 15, no experimental flag needed
+    // experimental: {
+    //     serverActions: true,
+    // },
 
-      
+
       images: {
         //domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com'],
         remotePatterns: [
