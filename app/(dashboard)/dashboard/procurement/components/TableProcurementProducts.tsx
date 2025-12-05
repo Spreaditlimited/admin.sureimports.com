@@ -1056,7 +1056,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               $
               <b>
                 {
-                  ((costDifference as number)/1)
+                  ((actualTotalShippingCost - estimatedTotalShippingCost  as number)/1)
                     .toFixed(2)
                     .toString()
                     .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
@@ -1076,7 +1076,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               $
               <b>
                 {
-                  ((costDifference as number)/1)
+                  ((actualTotalShippingCost - estimatedTotalShippingCost as number)/1)
                     .toFixed(2)
                     .toString()
                     .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
@@ -1109,6 +1109,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
+
                 {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
                 {destinationCountry == 'Nigeria' && (
                   <>
@@ -1117,7 +1118,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                             ₦
                             {
                                 (
-                                  ((costDifference) *
+                                  ((actualTotalShippingCost - estimatedTotalShippingCost) *
                                   exNairaToDollar)/1
                                 )
                                 .toFixed(2)
