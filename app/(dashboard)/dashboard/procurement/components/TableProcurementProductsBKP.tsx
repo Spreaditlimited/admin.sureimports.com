@@ -473,7 +473,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Estimated Shipping Cost of Order
+            Estimated Shipping Cost of Order X
           </div><hr />
 
           <div className="flex max-md:justify-between md:gap-20">

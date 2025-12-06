@@ -470,8 +470,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-        {/****************************** TOTAL ESTIMATED SHIPPING COST (SAVED STAGE) *****************************/}
-        {(status == 'saved') && (
+        {/****************************** TOTAL ESTIMATED SHIPPING COST (SAVED STAGE & ON-HOLD STAGE) *****************************/}
+        {['saved', 'on-hold'].includes(status) && (
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Estimated Shipping Cost of Order
@@ -545,7 +545,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
         {/****************************** TOTAL ESTIMATED SHIPPING COST (OTHER STAGES) *****************************/}
-        {(status !== 'saved') && (
+        {!['saved', 'on-hold'].includes(status) && (
         <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
             Estimated Shipping Cost of Order
@@ -1049,7 +1049,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           <div className="flex max-md:justify-between md:gap-3">
 
 
-            { costDifference > 0 && (
+            { (actualTotalShippingCost - estimatedTotalShippingCost) > 0 && (
               <>
             <p className="md:w-64"><b>Amount to Pay:</b></p>
             <span className="font-semibold">
@@ -1069,7 +1069,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-            { costDifference < 0 && (
+            { (actualTotalShippingCost - estimatedTotalShippingCost) < 0 && (
             <>
             <p className="md:w-64"><b>Shipping Refund Balance:</b></p>
             <span className="font-semibold">
@@ -1089,7 +1089,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
 
 
-        { costDifference == 0 && (
+        { (actualTotalShippingCost - estimatedTotalShippingCost) == 0 && (
             <>
             <p className="md:w-64"><b>No Payment is Required </b></p>
             {/* <span className="font-semibold">

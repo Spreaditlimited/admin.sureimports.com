@@ -62,8 +62,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
+  
 
-    //SHIPPING RATE
+    //SHIPPING RATE DYNAMIC
     const shippingRate: any = await prisma.shippingplan.findUnique({
       where: {
         //countryId: orderRecord?.destinationCountry,
@@ -201,6 +202,11 @@ export async function GET(request: NextRequest) {
     let actualInternationalShippingCost = parseFloat(actualWeight as any ?? 0) * parseFloat(shippingPlanRate as any ?? 0);
     let actualTotalShippingCost = actualDomesticShippingCost + actualInternationalShippingCost;
     let costDifference = actualTotalShippingCost - estimatedTotalShippingCost;
+
+    console.log('costDifference', costDifference);
+    console.log('actualTotalShippingCost', actualTotalShippingCost);
+    console.log('actualInternationalShippingCost', actualInternationalShippingCost);
+    console.log('estimatedTotalShippingCost', estimatedTotalShippingCost);
 
 console.log('JESUS CHRIST IS GREAT!!!');
 
