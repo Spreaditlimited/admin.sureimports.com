@@ -894,7 +894,7 @@ model store_sales {
 
 
 model store_sales_faya {
-  id  String  @id @default(cuid())
+  id  Int  @id @default(autoincrement())
   pidStore  String  @unique
   pidProduct  String
   pidUser  String

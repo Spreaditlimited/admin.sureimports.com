@@ -140,7 +140,7 @@ const store: MenuItem[] = [
     submenu: [
       { title: "View Products", path: "/dashboard/store/view" },
       { title: "Add Products", path: "/dashboard/store/add" },
-      // { title: "Roles", path: "/admin/roles" },
+      { title: "Store Orders", path: "/dashboard/store-sales" },
     ],
   },
 ]
