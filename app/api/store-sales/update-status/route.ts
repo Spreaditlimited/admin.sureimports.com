@@ -127,8 +127,15 @@ export async function POST(request: NextRequest) {
 
     // Fetch user details for email notification
     // For faya store, strip "faya_" prefix from pidUser before lookup
-    let userDetails = null;
+    let userDetails: {
+      pidUser: string;
+      userFirstname: string | null;
+      userLastname: string | null;
+      userEmail: string;
+      userPhone: string | null;
+    } | null = null;
     let userEmail: string | null = null;
+    let mainStoreShippingAddress: string | null = null; // Store shipping address for main store
 
     if (firstItem.pidUser) {
       if (store === 'faya') {
@@ -158,7 +165,7 @@ export async function POST(request: NextRequest) {
         // Main store: pidUser is the actual user ID - lookup in users table (includes shipping addresses)
         console.log(`🔍 Main store email lookup using pidUser: "${firstItem.pidUser}"`);
 
-        userDetails = await prisma.users.findUnique({
+        const mainStoreUserDetails = await prisma.users.findUnique({
           where: { pidUser: firstItem.pidUser },
           select: {
             pidUser: true,
@@ -171,13 +178,23 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        if (userDetails) {
-          console.log(`✅ Main store user found: ${userDetails.userEmail} (${userDetails.userFirstname} ${userDetails.userLastname})`);
+        if (mainStoreUserDetails) {
+          console.log(`✅ Main store user found: ${mainStoreUserDetails.userEmail} (${mainStoreUserDetails.userFirstname} ${mainStoreUserDetails.userLastname})`);
+          // Extract shipping address with priority: userShippingAddress2 > userShippingAddress
+          mainStoreShippingAddress = mainStoreUserDetails.userShippingAddress2?.trim() || mainStoreUserDetails.userShippingAddress?.trim() || null;
+          // Assign common fields to userDetails for name usage
+          userDetails = {
+            pidUser: mainStoreUserDetails.pidUser,
+            userFirstname: mainStoreUserDetails.userFirstname,
+            userLastname: mainStoreUserDetails.userLastname,
+            userEmail: mainStoreUserDetails.userEmail,
+            userPhone: mainStoreUserDetails.userPhone,
+          };
         } else {
           console.warn(`⚠️ Main store user not found for pidUser: "${firstItem.pidUser}"`);
         }
 
-        userEmail = userDetails?.userEmail || null;
+        userEmail = mainStoreUserDetails?.userEmail || null;
       }
     }
 
@@ -200,13 +217,10 @@ export async function POST(request: NextRequest) {
           ? (firstItem.fullName || `${userDetails?.userFirstname || ''} ${userDetails?.userLastname || ''}`.trim() || 'Valued Customer')
           : (`${userDetails?.userFirstname || ''} ${userDetails?.userLastname || ''}`.trim() || 'Valued Customer');
 
-        // Shipping address: Faya uses order.address, Main uses userShippingAddress2 (priority) or userShippingAddress
-        let shippingAddress = 'N/A';
-        if (store === 'faya') {
-          shippingAddress = firstItem.address || 'N/A';
-        } else if (userDetails) {
-          shippingAddress = userDetails.userShippingAddress2?.trim() || userDetails.userShippingAddress?.trim() || 'N/A';
-        }
+        // Shipping address: Faya uses order.address, Main uses pre-computed mainStoreShippingAddress
+        const shippingAddress = store === 'faya'
+          ? (firstItem.address || 'N/A')
+          : (mainStoreShippingAddress || 'N/A');
         const deliveryOption = store === 'faya' ? (firstItem.deliveryOption || 'Standard Delivery') : 'Standard Delivery';
 
         const emailSent = await sendStoreSalesEmail({
