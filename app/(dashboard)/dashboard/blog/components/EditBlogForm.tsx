@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
-  PlusCircle,
   Save,
   Eye,
   EyeOff,
@@ -15,6 +14,9 @@ import {
   Settings,
   ChevronDown,
   ChevronUp,
+  ArrowLeft,
+  Trash2,
+  ExternalLink,
 } from 'lucide-react';
 import ImageBox from '@/componentsx/ImageBox';
 import dynamic from 'next/dynamic';
@@ -29,34 +31,85 @@ const BlogEditor = dynamic(() => import('@/components/blog-editor/BlogEditor'), 
   ),
 });
 
-interface User {
-  pidUser: string;
-  email: string;
-  name: string;
+interface Blog {
+  id: number;
+  pidBlog: string;
+  blogTitle: string;
+  blogContent: string | null;
+  blogSlug: string | null;
+  blogPublished: boolean;
+  blogImage: string | null;
+  blogBy: string | null;
+  blogExt1: string | null;
+  blogExt2: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 interface ApiResponse {
   responsex: any;
   successx: boolean;
-  userx: User;
   data?: any;
 }
 
-const CreateBlogForm = () => {
+const EditBlogForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pidBlog = searchParams.get('pidBlog');
+
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingBlog, setLoadingBlog] = useState(true);
+  const [existingImage, setExistingImage] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [blogData, setBlogData] = useState<Blog | null>(null);
 
-  const blogID = 'BLOG' + new Date().getTime().toString();
-  const [pidBlog] = useState(blogID);
   const [blogTitle, setBlogTitle] = useState('');
   const [blogContent, setBlogContent] = useState('');
   const [blogBy, setBlogBy] = useState('Admin');
   const [blogPublished, setBlogPublished] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
+  const [blogSlug, setBlogSlug] = useState('');
+
+  useEffect(() => {
+    if (pidBlog) {
+      fetchBlog();
+    } else {
+      toast.error('Blog ID is missing');
+      router.push('/dashboard/blog/view');
+    }
+  }, [pidBlog]);
+
+  const fetchBlog = async () => {
+    try {
+      const res = await fetch(`/api/crud/blog/fetch-single?pidBlog=${pidBlog}`);
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        const blog: Blog = data.data;
+        setBlogData(blog);
+        setBlogTitle(blog.blogTitle);
+        setBlogContent(blog.blogContent || '');
+        setBlogBy(blog.blogBy || 'Admin');
+        setBlogPublished(blog.blogPublished);
+        setVideoUrl(blog.blogExt1 || '');
+        setMetaDescription(blog.blogExt2 || '');
+        setExistingImage(blog.blogImage || '');
+        setBlogSlug(blog.blogSlug || '');
+      } else {
+        toast.error('Blog not found');
+        router.push('/dashboard/blog/view');
+      }
+    } catch (error) {
+      console.error('Error fetching blog:', error);
+      toast.error('Failed to load blog');
+    } finally {
+      setLoadingBlog(false);
+    }
+  };
 
   const handleImageChange = (file: File) => {
     setFile(file);
@@ -84,7 +137,7 @@ const CreateBlogForm = () => {
 
     const formData = new FormData();
     if (file) formData.append('file', file);
-    formData.append('pidBlog', pidBlog);
+    formData.append('pidBlog', pidBlog!);
     formData.append('blogTitle', blogTitle.trim());
     formData.append('blogContent', blogContent);
     formData.append('blogBy', blogBy.trim() || 'Admin');
@@ -93,8 +146,8 @@ const CreateBlogForm = () => {
     formData.append('blogExt2', metaDescription.trim());
 
     try {
-      const res = await fetch('/api/crud/blog/create', {
-        method: 'POST',
+      const res = await fetch('/api/crud/blog/update', {
+        method: 'PUT',
         body: formData,
       });
 
@@ -103,16 +156,8 @@ const CreateBlogForm = () => {
       if (data.responsex.status === 'SUCCESS') {
         toast.success(data.responsex.message);
         router.push('/dashboard/blog/view');
-      } else if (data.responsex.status === 'NO_IMAGE_SELECTED') {
-        toast.warning(data.responsex.message);
-      } else if (data.responsex.status === 'INVALID_IMAGE_UPLOAD') {
-        toast.warning(data.responsex.message);
-      } else if (data.responsex.status === 'IMAGE_UPLOAD_FAILED') {
-        toast.warning(data.responsex.message);
-      } else if (data.responsex.status === 'ACTION_FAILED') {
-        toast.error(data.responsex.message);
       } else {
-        toast.error('An error occurred');
+        toast.error(data.responsex.message);
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -121,34 +166,85 @@ const CreateBlogForm = () => {
     }
   };
 
-  const handleSaveDraft = async () => {
-    setBlogPublished(false);
+  const handleDelete = async () => {
+    try {
+      const res = await fetch(`/api/crud/blog/delete?pidBlog=${pidBlog}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (data.responsex.status === 'SUCCESS') {
+        toast.success('Blog deleted successfully');
+        router.push('/dashboard/blog/view');
+      } else {
+        toast.error(data.responsex.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const getImageUrl = (imageName: string | null) => {
+    if (!imageName) return '/assets/images/default-blog.jpg';
+    return `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${imageName}`;
+  };
+
+  const handleSave = async () => {
     const form = document.getElementById('blog-form') as HTMLFormElement;
     if (form) {
       form.requestSubmit();
     }
   };
 
-  const handlePublish = async () => {
-    setBlogPublished(true);
-    const form = document.getElementById('blog-form') as HTMLFormElement;
-    if (form) {
-      setTimeout(() => form.requestSubmit(), 100);
-    }
-  };
+  if (loadingBlog) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading blog...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/blog/view')}
+            className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to all posts
+          </button>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <FileText className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
-            Create New Blog Post
+            Edit Blog Post
           </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Write and publish your content with our rich text editor
-          </p>
+          {blogData?.createdAt && (
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Created: {new Date(blogData.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+              {blogData.updatedAt && blogData.updatedAt !== blogData.createdAt && (
+                <span className="ml-2">
+                  | Last updated: {new Date(blogData.updatedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </span>
+              )}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -159,6 +255,17 @@ const CreateBlogForm = () => {
             {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             {showPreview ? 'Hide Preview' : 'Preview'}
           </button>
+          {blogSlug && (
+            <a
+              href={`/blog/${blogSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View Live
+            </a>
+          )}
         </div>
       </div>
 
@@ -180,9 +287,9 @@ const CreateBlogForm = () => {
                 placeholder="Enter an engaging title for your blog post..."
                 className="w-full px-4 py-3 text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
               />
-              {blogTitle && (
+              {blogSlug && (
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  URL slug: <span className="font-mono">/blog/{blogTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}</span>
+                  Current URL: <span className="font-mono">/blog/{blogSlug}</span>
                 </p>
               )}
             </div>
@@ -282,21 +389,12 @@ const CreateBlogForm = () => {
               <div className="space-y-3">
                 <button
                   type="button"
-                  onClick={handlePublish}
+                  onClick={handleSave}
                   disabled={isLoading}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <PlusCircle className="w-5 h-5" />
-                  {isLoading ? 'Publishing...' : 'Publish Now'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveDraft}
-                  disabled={isLoading}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors disabled:opacity-50"
-                >
                   <Save className="w-5 h-5" />
-                  Save as Draft
+                  {isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
@@ -307,9 +405,24 @@ const CreateBlogForm = () => {
                 <ImageIcon className="w-5 h-5" />
                 Featured Image
               </h3>
+
+              {/* Current Image Preview */}
+              {existingImage && !file && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Current image:</p>
+                  <img
+                    src={getImageUrl(existingImage)}
+                    alt="Current blog image"
+                    className="w-full h-40 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                </div>
+              )}
+
               <ImageBox onImageChange={handleImageChange} />
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Recommended size: 1200x630 pixels for optimal social sharing
+                {file
+                  ? 'New image selected - will replace current image on save'
+                  : 'Upload a new image to replace the current one'}
               </p>
             </div>
 
@@ -372,6 +485,45 @@ const CreateBlogForm = () => {
                 </div>
               )}
             </div>
+
+            {/* Danger Zone */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-red-200 dark:border-red-900/50 p-6">
+              <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">
+                Danger Zone
+              </h3>
+              {!showDeleteConfirm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-medium rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete This Post
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    Are you sure? This action cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                    >
+                      Yes, Delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </form>
@@ -379,4 +531,4 @@ const CreateBlogForm = () => {
   );
 };
 
-export default CreateBlogForm;
+export default EditBlogForm;

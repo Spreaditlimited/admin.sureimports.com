@@ -215,6 +215,15 @@ const systemSettings: MenuItem[] = [
       // { title: "Roles", path: "/admin/roles" },
     ],
   },
+  {
+    title: "Blog Management",
+    icon: FileText,
+    path: "/blog",
+    submenu: [
+      { title: "View All Posts", path: "/dashboard/blog/view" },
+      { title: "Create New Post", path: "/dashboard/blog/create" },
+    ],
+  },
   // { title: "Blog", icon: FileText, path: "/blog" },
   // {
   //   title: "Settings & Config.",
