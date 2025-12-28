@@ -7,7 +7,8 @@
       "Bash(npm install:*)",
       "Bash(npx prisma db push)",
       "Bash(npx prisma db push:*)",
-      "Bash(npx prisma generate)"
+      "Bash(npx prisma generate)",
+      "Bash(cat:*)"
     ]
   }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Youtube } from 'lucide-react';
 
 interface YouTubeDialogProps {
@@ -17,6 +18,12 @@ export const YouTubeDialog = ({
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [videoId, setVideoId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -60,6 +67,7 @@ export const YouTubeDialog = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!url.trim()) {
       setError('URL is required');
@@ -83,15 +91,21 @@ export const YouTubeDialog = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const dialogContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (e.target === e.currentTarget) onClose();
+      }}
       onKeyDown={handleKeyDown}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <div
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
@@ -189,6 +203,8 @@ export const YouTubeDialog = ({
       </div>
     </div>
   );
+
+  return createPortal(dialogContent, document.body);
 };
 
 export default YouTubeDialog;

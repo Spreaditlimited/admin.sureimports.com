@@ -18,19 +18,38 @@ datasource db {
 
 
 model blog {
-  id            Int       @id @default(autoincrement())
-  pidBlog       String    @unique(map: "Blog_pidBlog_key")
-  blogTitle     String    @db.VarChar(255)
-  blogContent   String?   @db.LongText
-  blogSlug      String?   @db.VarChar(500)
-  blogPublished Boolean   @default(false)
-  blogImage     String?   @db.VarChar(255)
-  blogBy        String?   @db.VarChar(100)
-  blogExt1      String?   @db.Text
-  blogExt2      String?   @db.Text
-  xStaus        String?   @db.VarChar(50)
-  createdAt     DateTime?  @default(now())
+  id            Int            @id @default(autoincrement())
+  pidBlog       String         @unique(map: "Blog_pidBlog_key")
+  blogTitle     String         @db.VarChar(255)
+  blogContent   String?        @db.LongText
+  blogSlug      String?        @db.VarChar(500)
+  blogPublished Boolean        @default(false)
+  blogImage     String?        @db.VarChar(255)
+  blogBy        String?        @db.VarChar(100)
+  blogExt1      String?        @db.Text
+  blogExt2      String?        @db.Text
+  categoryId    String?
+  xStaus        String?        @db.VarChar(50)
+  createdAt     DateTime?      @default(now())
   updatedAt     DateTime?
+  category      blog_category? @relation(fields: [categoryId], references: [pidCategory])
+
+  @@index([categoryId])
+}
+
+model blog_category {
+  id               Int       @id @default(autoincrement())
+  pidCategory      String    @unique()
+  categoryName     String    @db.VarChar(100)
+  categorySlug     String?   @db.VarChar(100)
+  categoryDescription String? @db.Text
+  categoryColor    String?   @db.VarChar(20)
+  categoryIcon     String?   @db.VarChar(50)
+  categoryOrder    Int?      @default(0)
+  status           String?   @db.VarChar(20) @default("active")
+  createdAt        DateTime? @default(now())
+  updatedAt        DateTime?
+  blogs            blog[]
 }
 
 

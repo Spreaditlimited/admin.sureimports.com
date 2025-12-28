@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -17,6 +17,15 @@ import {
   ArrowLeft,
   Trash2,
   ExternalLink,
+  Search,
+  Globe,
+  Tag,
+  Link2,
+  Share2,
+  CheckCircle2,
+  AlertCircle,
+  Info,
+  FolderOpen,
 } from 'lucide-react';
 import ImageBox from '@/componentsx/ImageBox';
 import dynamic from 'next/dynamic';
@@ -42,8 +51,17 @@ interface Blog {
   blogBy: string | null;
   blogExt1: string | null;
   blogExt2: string | null;
+  categoryId: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+}
+
+interface BlogCategory {
+  pidCategory: string;
+  categoryName: string;
+  categorySlug: string | null;
+  categoryColor: string | null;
+  status: string | null;
 }
 
 interface ApiResponse {
@@ -51,6 +69,34 @@ interface ApiResponse {
   successx: boolean;
   data?: any;
 }
+
+interface SeoData {
+  metaTitle: string;
+  metaDescription: string;
+  focusKeyword: string;
+  keywords: string[];
+  canonicalUrl: string;
+  ogTitle: string;
+  ogDescription: string;
+  twitterTitle: string;
+  twitterDescription: string;
+  noIndex: boolean;
+  noFollow: boolean;
+}
+
+const defaultSeoData: SeoData = {
+  metaTitle: '',
+  metaDescription: '',
+  focusKeyword: '',
+  keywords: [],
+  canonicalUrl: '',
+  ogTitle: '',
+  ogDescription: '',
+  twitterTitle: '',
+  twitterDescription: '',
+  noIndex: false,
+  noFollow: false,
+};
 
 const EditBlogForm = () => {
   const router = useRouter();
@@ -64,6 +110,8 @@ const EditBlogForm = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSeoSection, setShowSeoSection] = useState(true);
+  const [seoTab, setSeoTab] = useState<'general' | 'social' | 'advanced'>('general');
   const [blogData, setBlogData] = useState<Blog | null>(null);
 
   const [blogTitle, setBlogTitle] = useState('');
@@ -71,8 +119,34 @@ const EditBlogForm = () => {
   const [blogBy, setBlogBy] = useState('Admin');
   const [blogPublished, setBlogPublished] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
-  const [metaDescription, setMetaDescription] = useState('');
   const [blogSlug, setBlogSlug] = useState('');
+
+  // Category state
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // SEO State
+  const [seoData, setSeoData] = useState<SeoData>(defaultSeoData);
+  const [keywordInput, setKeywordInput] = useState('');
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/crud/blog-category/fetch');
+        const data = await res.json();
+        if (data.successx && data.data) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (pidBlog) {
@@ -96,9 +170,27 @@ const EditBlogForm = () => {
         setBlogBy(blog.blogBy || 'Admin');
         setBlogPublished(blog.blogPublished);
         setVideoUrl(blog.blogExt1 || '');
-        setMetaDescription(blog.blogExt2 || '');
         setExistingImage(blog.blogImage || '');
         setBlogSlug(blog.blogSlug || '');
+        setSelectedCategory(blog.categoryId || '');
+
+        // Parse SEO data from blogExt2
+        if (blog.blogExt2) {
+          try {
+            const parsedSeo = JSON.parse(blog.blogExt2);
+            setSeoData({
+              ...defaultSeoData,
+              ...parsedSeo,
+              keywords: Array.isArray(parsedSeo.keywords) ? parsedSeo.keywords : [],
+            });
+          } catch {
+            // If parsing fails, it might be old format (plain text meta description)
+            setSeoData({
+              ...defaultSeoData,
+              metaDescription: blog.blogExt2,
+            });
+          }
+        }
       } else {
         toast.error('Blog not found');
         router.push('/dashboard/blog/view');
@@ -119,6 +211,122 @@ const EditBlogForm = () => {
     setBlogContent(content);
   }, []);
 
+  // SEO Helper Functions
+  const updateSeoField = (field: keyof SeoData, value: string | boolean | string[]) => {
+    setSeoData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const addKeyword = () => {
+    const keyword = keywordInput.trim().toLowerCase();
+    if (keyword && !seoData.keywords.includes(keyword) && seoData.keywords.length < 10) {
+      updateSeoField('keywords', [...seoData.keywords, keyword]);
+      setKeywordInput('');
+    }
+  };
+
+  const removeKeyword = (keyword: string) => {
+    updateSeoField('keywords', seoData.keywords.filter((k) => k !== keyword));
+  };
+
+  const handleKeywordKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addKeyword();
+    }
+  };
+
+  // SEO Score Calculation
+  const seoScore = useMemo(() => {
+    let score = 0;
+    const checks: { passed: boolean; message: string; importance: 'high' | 'medium' | 'low' }[] = [];
+
+    // Meta Title checks
+    const metaTitle = seoData.metaTitle || blogTitle;
+    if (metaTitle.length > 0) {
+      score += 10;
+      checks.push({ passed: true, message: 'Meta title is set', importance: 'high' });
+    } else {
+      checks.push({ passed: false, message: 'Add a meta title', importance: 'high' });
+    }
+    if (metaTitle.length >= 30 && metaTitle.length <= 60) {
+      score += 10;
+      checks.push({ passed: true, message: 'Meta title length is optimal (30-60 chars)', importance: 'medium' });
+    } else if (metaTitle.length > 0) {
+      checks.push({ passed: false, message: `Meta title should be 30-60 chars (currently ${metaTitle.length})`, importance: 'medium' });
+    }
+
+    // Meta Description checks
+    const metaDesc = seoData.metaDescription;
+    if (metaDesc.length > 0) {
+      score += 15;
+      checks.push({ passed: true, message: 'Meta description is set', importance: 'high' });
+    } else {
+      checks.push({ passed: false, message: 'Add a meta description', importance: 'high' });
+    }
+    if (metaDesc.length >= 120 && metaDesc.length <= 160) {
+      score += 10;
+      checks.push({ passed: true, message: 'Meta description length is optimal (120-160 chars)', importance: 'medium' });
+    } else if (metaDesc.length > 0) {
+      checks.push({ passed: false, message: `Meta description should be 120-160 chars (currently ${metaDesc.length})`, importance: 'medium' });
+    }
+
+    // Focus Keyword checks
+    if (seoData.focusKeyword.length > 0) {
+      score += 15;
+      checks.push({ passed: true, message: 'Focus keyword is set', importance: 'high' });
+
+      // Check if focus keyword is in title
+      if (metaTitle.toLowerCase().includes(seoData.focusKeyword.toLowerCase())) {
+        score += 10;
+        checks.push({ passed: true, message: 'Focus keyword appears in title', importance: 'medium' });
+      } else {
+        checks.push({ passed: false, message: 'Add focus keyword to title', importance: 'medium' });
+      }
+
+      // Check if focus keyword is in meta description
+      if (metaDesc.toLowerCase().includes(seoData.focusKeyword.toLowerCase())) {
+        score += 10;
+        checks.push({ passed: true, message: 'Focus keyword appears in meta description', importance: 'medium' });
+      } else {
+        checks.push({ passed: false, message: 'Add focus keyword to meta description', importance: 'medium' });
+      }
+    } else {
+      checks.push({ passed: false, message: 'Set a focus keyword', importance: 'high' });
+    }
+
+    // Additional keywords
+    if (seoData.keywords.length >= 3) {
+      score += 10;
+      checks.push({ passed: true, message: 'At least 3 keywords added', importance: 'low' });
+    } else {
+      checks.push({ passed: false, message: 'Add at least 3 keywords', importance: 'low' });
+    }
+
+    // Content length check
+    const contentText = blogContent.replace(/<[^>]*>/g, '');
+    const wordCount = contentText.split(/\s+/).filter(Boolean).length;
+    if (wordCount >= 300) {
+      score += 10;
+      checks.push({ passed: true, message: `Content has ${wordCount} words (good length)`, importance: 'medium' });
+    } else {
+      checks.push({ passed: false, message: `Content has ${wordCount} words (aim for 300+)`, importance: 'medium' });
+    }
+
+    return { score: Math.min(score, 100), checks };
+  }, [seoData, blogTitle, blogContent]);
+
+  const getSeoScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-500';
+    if (score >= 50) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
+  const getSeoScoreBg = (score: number) => {
+    if (score >= 80) return 'bg-green-500';
+    if (score >= 50) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -135,6 +343,14 @@ const EditBlogForm = () => {
       return;
     }
 
+    // Prepare SEO data as JSON
+    const seoJsonData = JSON.stringify({
+      ...seoData,
+      metaTitle: seoData.metaTitle || blogTitle.trim(),
+      ogTitle: seoData.ogTitle || blogTitle.trim(),
+      twitterTitle: seoData.twitterTitle || blogTitle.trim(),
+    });
+
     const formData = new FormData();
     if (file) formData.append('file', file);
     formData.append('pidBlog', pidBlog!);
@@ -143,7 +359,8 @@ const EditBlogForm = () => {
     formData.append('blogBy', blogBy.trim() || 'Admin');
     formData.append('blogPublished', blogPublished.toString());
     formData.append('blogExt1', videoUrl.trim());
-    formData.append('blogExt2', metaDescription.trim());
+    formData.append('blogExt2', seoJsonData);
+    if (selectedCategory) formData.append('categoryId', selectedCategory);
 
     try {
       const res = await fetch('/api/crud/blog/update', {
@@ -385,6 +602,52 @@ const EditBlogForm = () => {
                 />
               </div>
 
+              {/* Category */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <FolderOpen className="w-4 h-4 inline mr-1" />
+                  Category
+                </label>
+                {loadingCategories ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 animate-pulse">
+                    Loading categories...
+                  </div>
+                ) : (
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category.pidCategory} value={category.pidCategory}>
+                        {category.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {selectedCategory && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: categories.find(c => c.pidCategory === selectedCategory)?.categoryColor || '#6366f1',
+                        color: 'white',
+                      }}
+                    >
+                      {categories.find(c => c.pidCategory === selectedCategory)?.categoryName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCategory('')}
+                      className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Action Buttons */}
               <div className="space-y-3">
                 <button
@@ -464,24 +727,6 @@ const EditBlogForm = () => {
                       Featured video for this post
                     </p>
                   </div>
-
-                  {/* Meta Description */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Meta Description (SEO)
-                    </label>
-                    <textarea
-                      value={metaDescription}
-                      onChange={(e) => setMetaDescription(e.target.value)}
-                      placeholder="Brief description for search engines..."
-                      rows={3}
-                      maxLength={160}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {metaDescription.length}/160 characters
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
@@ -520,6 +765,492 @@ const EditBlogForm = () => {
                     >
                       Cancel
                     </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* SEO Section - Full Width Below */}
+          <div className="lg:col-span-3">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              {/* SEO Header with Score */}
+              <button
+                type="button"
+                onClick={() => setShowSeoSection(!showSeoSection)}
+                className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Search className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                    SEO Settings
+                  </span>
+                  {/* SEO Score Badge */}
+                  <div className="flex items-center gap-2">
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${getSeoScoreColor(seoScore.score)} bg-opacity-10 ${seoScore.score >= 80 ? 'bg-green-100 dark:bg-green-900/30' : seoScore.score >= 50 ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                      Score: {seoScore.score}/100
+                    </div>
+                  </div>
+                </div>
+                {showSeoSection ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+
+              {showSeoSection && (
+                <div className="border-t border-gray-200 dark:border-gray-700">
+                  {/* SEO Tabs */}
+                  <div className="flex border-b border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      onClick={() => setSeoTab('general')}
+                      className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                        seoTab === 'general'
+                          ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Search className="w-4 h-4 inline mr-2" />
+                      General SEO
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSeoTab('social')}
+                      className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                        seoTab === 'social'
+                          ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Share2 className="w-4 h-4 inline mr-2" />
+                      Social Media
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSeoTab('advanced')}
+                      className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                        seoTab === 'advanced'
+                          ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Settings className="w-4 h-4 inline mr-2" />
+                      Advanced
+                    </button>
+                  </div>
+
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Main SEO Fields */}
+                      <div className="lg:col-span-2 space-y-6">
+                        {/* General SEO Tab */}
+                        {seoTab === 'general' && (
+                          <>
+                            {/* Focus Keyword */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <Tag className="w-4 h-4 inline mr-1" />
+                                Focus Keyword
+                              </label>
+                              <input
+                                type="text"
+                                value={seoData.focusKeyword}
+                                onChange={(e) => updateSeoField('focusKeyword', e.target.value)}
+                                placeholder="Enter your main target keyword"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                              />
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                The primary keyword you want this page to rank for
+                              </p>
+                            </div>
+
+                            {/* Meta Title */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <Globe className="w-4 h-4 inline mr-1" />
+                                SEO Title
+                              </label>
+                              <input
+                                type="text"
+                                value={seoData.metaTitle}
+                                onChange={(e) => updateSeoField('metaTitle', e.target.value)}
+                                placeholder={blogTitle || 'Enter SEO title (defaults to blog title)'}
+                                maxLength={60}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                              />
+                              <div className="flex justify-between mt-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Appears in search results and browser tabs
+                                </p>
+                                <span className={`text-xs ${(seoData.metaTitle || blogTitle).length > 60 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                                  {(seoData.metaTitle || blogTitle).length}/60
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Meta Description */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Meta Description
+                              </label>
+                              <textarea
+                                value={seoData.metaDescription}
+                                onChange={(e) => updateSeoField('metaDescription', e.target.value)}
+                                placeholder="Write a compelling description for search engines..."
+                                rows={3}
+                                maxLength={160}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                              />
+                              <div className="flex justify-between mt-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Appears below the title in search results
+                                </p>
+                                <span className={`text-xs ${seoData.metaDescription.length > 160 ? 'text-red-500' : seoData.metaDescription.length >= 120 ? 'text-green-500' : 'text-gray-500 dark:text-gray-400'}`}>
+                                  {seoData.metaDescription.length}/160
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Keywords */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <Tag className="w-4 h-4 inline mr-1" />
+                                Keywords
+                              </label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={keywordInput}
+                                  onChange={(e) => setKeywordInput(e.target.value)}
+                                  onKeyDown={handleKeywordKeyDown}
+                                  placeholder="Type keyword and press Enter"
+                                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={addKeyword}
+                                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                                >
+                                  Add
+                                </button>
+                              </div>
+                              {seoData.keywords.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                  {seoData.keywords.map((keyword) => (
+                                    <span
+                                      key={keyword}
+                                      className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm"
+                                    >
+                                      {keyword}
+                                      <button
+                                        type="button"
+                                        onClick={() => removeKeyword(keyword)}
+                                        className="hover:text-indigo-900 dark:hover:text-indigo-100"
+                                      >
+                                        &times;
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                {seoData.keywords.length}/10 keywords added
+                              </p>
+                            </div>
+
+                            {/* Google Preview */}
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Google Search Preview
+                              </h4>
+                              <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <div className="text-blue-600 dark:text-blue-400 text-lg hover:underline cursor-pointer truncate">
+                                  {seoData.metaTitle || blogTitle || 'Your page title'}
+                                </div>
+                                <div className="text-green-700 dark:text-green-500 text-sm mt-1 truncate">
+                                  https://sureimports.com/blog/{blogSlug || 'your-post-slug'}
+                                </div>
+                                <div className="text-gray-600 dark:text-gray-400 text-sm mt-1 line-clamp-2">
+                                  {seoData.metaDescription || 'Add a meta description to see how it will appear in search results...'}
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* Social Media Tab */}
+                        {seoTab === 'social' && (
+                          <>
+                            {/* Open Graph Settings */}
+                            <div className="space-y-4">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                <Globe className="w-4 h-4" />
+                                Open Graph (Facebook, LinkedIn)
+                              </h4>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  OG Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={seoData.ogTitle}
+                                  onChange={(e) => updateSeoField('ogTitle', e.target.value)}
+                                  placeholder={blogTitle || 'Title for social sharing'}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  OG Description
+                                </label>
+                                <textarea
+                                  value={seoData.ogDescription}
+                                  onChange={(e) => updateSeoField('ogDescription', e.target.value)}
+                                  placeholder={seoData.metaDescription || 'Description for social sharing'}
+                                  rows={2}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Twitter Card Settings */}
+                            <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                <Share2 className="w-4 h-4" />
+                                Twitter Card
+                              </h4>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Twitter Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={seoData.twitterTitle}
+                                  onChange={(e) => updateSeoField('twitterTitle', e.target.value)}
+                                  placeholder={blogTitle || 'Title for Twitter'}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Twitter Description
+                                </label>
+                                <textarea
+                                  value={seoData.twitterDescription}
+                                  onChange={(e) => updateSeoField('twitterDescription', e.target.value)}
+                                  placeholder={seoData.metaDescription || 'Description for Twitter'}
+                                  rows={2}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Social Preview */}
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Social Share Preview
+                              </h4>
+                              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div className="h-32 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                                  <ImageIcon className="w-12 h-12 text-gray-400" />
+                                </div>
+                                <div className="p-3">
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+                                    sureimports.com
+                                  </div>
+                                  <div className="font-semibold text-gray-900 dark:text-white mt-1 line-clamp-1">
+                                    {seoData.ogTitle || seoData.metaTitle || blogTitle || 'Your post title'}
+                                  </div>
+                                  <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                    {seoData.ogDescription || seoData.metaDescription || 'Your post description...'}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* Advanced Tab */}
+                        {seoTab === 'advanced' && (
+                          <>
+                            {/* Canonical URL */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <Link2 className="w-4 h-4 inline mr-1" />
+                                Canonical URL
+                              </label>
+                              <input
+                                type="url"
+                                value={seoData.canonicalUrl}
+                                onChange={(e) => updateSeoField('canonicalUrl', e.target.value)}
+                                placeholder={`https://sureimports.com/blog/${blogSlug || 'your-post'}`}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                              />
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Use this to specify the preferred URL if content exists at multiple URLs
+                              </p>
+                            </div>
+
+                            {/* Robot Meta Tags */}
+                            <div className="space-y-4 pt-4">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Search Engine Directives
+                              </h4>
+
+                              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                <div>
+                                  <div className="font-medium text-gray-900 dark:text-white">
+                                    No Index
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    Prevent search engines from indexing this page
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => updateSeoField('noIndex', !seoData.noIndex)}
+                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                    seoData.noIndex ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                      seoData.noIndex ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                  />
+                                </button>
+                              </div>
+
+                              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                <div>
+                                  <div className="font-medium text-gray-900 dark:text-white">
+                                    No Follow
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    Prevent search engines from following links on this page
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => updateSeoField('noFollow', !seoData.noFollow)}
+                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                    seoData.noFollow ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                      seoData.noFollow ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                  />
+                                </button>
+                              </div>
+
+                              {(seoData.noIndex || seoData.noFollow) && (
+                                <div className="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                  <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                                  <div className="text-sm text-yellow-700 dark:text-yellow-300">
+                                    <strong>Warning:</strong> This page will {seoData.noIndex ? 'not be indexed' : ''}{seoData.noIndex && seoData.noFollow ? ' and ' : ''}{seoData.noFollow ? 'links will not be followed' : ''} by search engines.
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* SEO Score Sidebar */}
+                      <div className="space-y-4">
+                        {/* Score Circle */}
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
+                          <div className="relative inline-flex items-center justify-center">
+                            <svg className="w-24 h-24 transform -rotate-90">
+                              <circle
+                                cx="48"
+                                cy="48"
+                                r="40"
+                                stroke="currentColor"
+                                strokeWidth="8"
+                                fill="none"
+                                className="text-gray-200 dark:text-gray-700"
+                              />
+                              <circle
+                                cx="48"
+                                cy="48"
+                                r="40"
+                                stroke="currentColor"
+                                strokeWidth="8"
+                                fill="none"
+                                strokeDasharray={251.2}
+                                strokeDashoffset={251.2 - (251.2 * seoScore.score) / 100}
+                                className={getSeoScoreBg(seoScore.score)}
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <span className={`absolute text-2xl font-bold ${getSeoScoreColor(seoScore.score)}`}>
+                              {seoScore.score}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            SEO Score
+                          </p>
+                        </div>
+
+                        {/* SEO Checklist */}
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                            SEO Checklist
+                          </h4>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {seoScore.checks.map((check, index) => (
+                              <div
+                                key={index}
+                                className={`flex items-start gap-2 text-sm ${
+                                  check.passed
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : check.importance === 'high'
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : check.importance === 'medium'
+                                    ? 'text-yellow-600 dark:text-yellow-400'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}
+                              >
+                                {check.passed ? (
+                                  <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                ) : (
+                                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                )}
+                                <span>{check.message}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* SEO Tips */}
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                          <div className="flex items-start gap-2">
+                            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                SEO Tip
+                              </h4>
+                              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                {seoScore.score < 50
+                                  ? 'Start by adding a focus keyword and meta description to improve your SEO score.'
+                                  : seoScore.score < 80
+                                  ? 'Good progress! Make sure your focus keyword appears in both the title and description.'
+                                  : 'Excellent SEO setup! Your post is well-optimized for search engines.'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

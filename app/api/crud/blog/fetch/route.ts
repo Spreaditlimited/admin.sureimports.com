@@ -15,7 +15,8 @@ export async function GET(request: Request) {
 
     // Build where clause
     const where: any = {};
-    
+    const categoryId = searchParams.get('categoryId') || '';
+
     if (search) {
       where.OR = [
         { blogTitle: { contains: search } },
@@ -23,9 +24,13 @@ export async function GET(request: Request) {
         { blogBy: { contains: search } },
       ];
     }
-    
+
     if (status) {
       where.blogPublished = status === 'published';
+    }
+
+    if (categoryId) {
+      where.categoryId = categoryId;
     }
 
     // Fetch blogs with pagination
@@ -35,6 +40,16 @@ export async function GET(request: Request) {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: {
+          category: {
+            select: {
+              pidCategory: true,
+              categoryName: true,
+              categorySlug: true,
+              categoryColor: true,
+            },
+          },
+        },
       }),
       prisma.blog.count({ where }),
     ]);

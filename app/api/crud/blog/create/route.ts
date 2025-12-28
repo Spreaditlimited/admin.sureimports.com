@@ -19,7 +19,8 @@ export async function POST(request: Request) {
     const blogBy = formData.get('blogBy') as string || 'Admin';
     const blogPublished = formData.get('blogPublished') === 'true';
     const blogExt1 = formData.get('blogExt1') as string || ''; // Can be used for video URL
-    const blogExt2 = formData.get('blogExt2') as string || ''; // Can be used for additional metadata
+    const blogExt2 = formData.get('blogExt2') as string || ''; // Can be used for SEO data
+    const categoryId = formData.get('categoryId') as string || null;
     
     // Validate required fields
     if (!blogTitle || !blogContent) {
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
         blogBy,
         blogExt1,
         blogExt2,
+        categoryId: categoryId || null,
         xStaus: 'active',
         createdAt: new Date(),
         updatedAt: new Date(),

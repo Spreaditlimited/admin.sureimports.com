@@ -200,6 +200,7 @@ export const BlogEditor = ({
         className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-1 p-1"
       >
         <button
+          type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
             editor.isActive('bold') ? 'bg-gray-200 dark:bg-gray-600' : ''
@@ -212,6 +213,7 @@ export const BlogEditor = ({
           </svg>
         </button>
         <button
+          type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
             editor.isActive('italic') ? 'bg-gray-200 dark:bg-gray-600' : ''
@@ -223,6 +225,7 @@ export const BlogEditor = ({
           </svg>
         </button>
         <button
+          type="button"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
             editor.isActive('underline') ? 'bg-gray-200 dark:bg-gray-600' : ''
@@ -235,6 +238,7 @@ export const BlogEditor = ({
         </button>
         <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
         <button
+          type="button"
           onClick={() => setIsLinkDialogOpen(true)}
           className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
             editor.isActive('link') ? 'bg-gray-200 dark:bg-gray-600' : ''
@@ -246,6 +250,7 @@ export const BlogEditor = ({
           </svg>
         </button>
         <button
+          type="button"
           onClick={() => editor.chain().focus().toggleHighlight().run()}
           className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
             editor.isActive('highlight') ? 'bg-yellow-200 dark:bg-yellow-600' : ''
@@ -265,6 +270,7 @@ export const BlogEditor = ({
         className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-1 p-1"
       >
         <button
+          type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-bold"
           title="Heading 2"
@@ -272,6 +278,7 @@ export const BlogEditor = ({
           H2
         </button>
         <button
+          type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
           title="Bullet List"
@@ -281,6 +288,7 @@ export const BlogEditor = ({
           </svg>
         </button>
         <button
+          type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
           title="Quote"
@@ -290,6 +298,7 @@ export const BlogEditor = ({
           </svg>
         </button>
         <button
+          type="button"
           onClick={() => setIsImageDialogOpen(true)}
           className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
           title="Insert Image"
