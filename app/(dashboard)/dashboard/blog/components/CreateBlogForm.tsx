@@ -101,7 +101,7 @@ const CreateBlogForm = () => {
       try {
         const res = await fetch('/api/crud/blog-category/fetch');
         const data = await res.json();
-        if (data.successx && data.data) {
+        if (data.success && data.data) {
           setCategories(data.data);
         }
       } catch (error) {
