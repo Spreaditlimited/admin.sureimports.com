@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     const blogContent = formData.get('blogContent') as string;
     const blogBy = formData.get('blogBy') as string || 'Admin';
     const blogPublished = formData.get('blogPublished') === 'true';
+    const blogFeatured = formData.get('blogFeatured') === 'true';
     const blogExt1 = formData.get('blogExt1') as string || ''; // Can be used for video URL
     const blogExt2 = formData.get('blogExt2') as string || ''; // Can be used for SEO data
     const categoryId = formData.get('categoryId') as string || null;
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
         blogContent,
         blogSlug,
         blogPublished,
+        blogFeatured,
         blogImage: newFileName,
         blogBy,
         blogExt1,

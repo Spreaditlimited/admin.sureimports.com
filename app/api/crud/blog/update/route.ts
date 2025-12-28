@@ -19,6 +19,7 @@ export async function PUT(request: Request) {
     const blogContent = formData.get('blogContent') as string;
     const blogBy = formData.get('blogBy') as string || 'Admin';
     const blogPublished = formData.get('blogPublished') === 'true';
+    const blogFeatured = formData.get('blogFeatured') === 'true';
     const blogExt1 = formData.get('blogExt1') as string || '';
     const blogExt2 = formData.get('blogExt2') as string || '';
     const categoryId = formData.get('categoryId') as string || null;
@@ -110,6 +111,7 @@ export async function PUT(request: Request) {
         blogContent,
         blogSlug,
         blogPublished,
+        blogFeatured,
         blogImage: newFileName,
         blogBy,
         blogExt1,

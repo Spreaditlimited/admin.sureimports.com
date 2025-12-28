@@ -24,6 +24,7 @@ model blog {
   blogContent   String?        @db.LongText
   blogSlug      String?        @db.VarChar(500)
   blogPublished Boolean        @default(false)
+  blogFeatured  Boolean        @default(false)
   blogImage     String?        @db.VarChar(255)
   blogBy        String?        @db.VarChar(100)
   blogExt1      String?        @db.Text

@@ -26,6 +26,7 @@ import {
   AlertCircle,
   Info,
   FolderOpen,
+  Star,
 } from 'lucide-react';
 import ImageBox from '@/componentsx/ImageBox';
 import dynamic from 'next/dynamic';
@@ -47,6 +48,7 @@ interface Blog {
   blogContent: string | null;
   blogSlug: string | null;
   blogPublished: boolean;
+  blogFeatured: boolean;
   blogImage: string | null;
   blogBy: string | null;
   blogExt1: string | null;
@@ -118,6 +120,7 @@ const EditBlogForm = () => {
   const [blogContent, setBlogContent] = useState('');
   const [blogBy, setBlogBy] = useState('Admin');
   const [blogPublished, setBlogPublished] = useState(false);
+  const [blogFeatured, setBlogFeatured] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const [blogSlug, setBlogSlug] = useState('');
 
@@ -169,6 +172,7 @@ const EditBlogForm = () => {
         setBlogContent(blog.blogContent || '');
         setBlogBy(blog.blogBy || 'Admin');
         setBlogPublished(blog.blogPublished);
+        setBlogFeatured(blog.blogFeatured || false);
         setVideoUrl(blog.blogExt1 || '');
         setExistingImage(blog.blogImage || '');
         setBlogSlug(blog.blogSlug || '');
@@ -358,6 +362,7 @@ const EditBlogForm = () => {
     formData.append('blogContent', blogContent);
     formData.append('blogBy', blogBy.trim() || 'Admin');
     formData.append('blogPublished', blogPublished.toString());
+    formData.append('blogFeatured', blogFeatured.toString());
     formData.append('blogExt1', videoUrl.trim());
     formData.append('blogExt2', seoJsonData);
     if (selectedCategory) formData.append('categoryId', selectedCategory);
@@ -582,6 +587,34 @@ const EditBlogForm = () => {
                     }`}
                   >
                     Published
+                  </button>
+                </div>
+              </div>
+
+              {/* Featured Toggle */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${blogFeatured ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                      <Star className={`w-4 h-4 ${blogFeatured ? 'text-white fill-white' : 'text-gray-500 dark:text-gray-400'}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Featured Post</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Highlight this post on the blog</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBlogFeatured(!blogFeatured)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      blogFeatured ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        blogFeatured ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
                   </button>
                 </div>
               </div>

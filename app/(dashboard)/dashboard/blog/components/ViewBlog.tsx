@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   Clock,
   TrendingUp,
+  Star,
 } from 'lucide-react';
 
 interface Blog {
@@ -35,6 +36,7 @@ interface Blog {
   blogContent: string | null;
   blogSlug: string | null;
   blogPublished: boolean;
+  blogFeatured: boolean;
   blogImage: string | null;
   blogBy: string | null;
   blogExt1: string | null;
@@ -381,7 +383,7 @@ const ViewBlog = () => {
                     )}
 
                     {/* Status Badge */}
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute top-3 left-3 flex items-center gap-2">
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
                           blog.blogPublished
@@ -401,6 +403,12 @@ const ViewBlog = () => {
                           </>
                         )}
                       </span>
+                      {blog.blogFeatured && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/90 text-white backdrop-blur-sm">
+                          <Star className="w-3.5 h-3.5 fill-white" />
+                          Featured
+                        </span>
+                      )}
                     </div>
 
                     {/* Actions Dropdown */}
@@ -532,15 +540,23 @@ const ViewBlog = () => {
                         {stripHtml(blog.blogContent)}
                       </p>
                     </div>
-                    <span
-                      className={`flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                        blog.blogPublished
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                      }`}
-                    >
-                      {blog.blogPublished ? 'Published' : 'Draft'}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {blog.blogFeatured && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                          <Star className="w-3 h-3 fill-current" />
+                          Featured
+                        </span>
+                      )}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                          blog.blogPublished
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                        }`}
+                      >
+                        {blog.blogPublished ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Meta */}
