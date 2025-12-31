@@ -27,6 +27,7 @@ model blog {
   blogFeatured  Boolean        @default(false)
   blogImage     String?        @db.VarChar(255)
   blogBy        String?        @db.VarChar(100)
+  publisherId   String?
   blogExt1      String?        @db.Text
   blogExt2      String?        @db.Text
   categoryId    String?
@@ -34,8 +35,30 @@ model blog {
   createdAt     DateTime?      @default(now())
   updatedAt     DateTime?
   category      blog_category? @relation(fields: [categoryId], references: [pidCategory])
+  publisher     blog_publisher? @relation(fields: [publisherId], references: [pidPublisher])
 
   @@index([categoryId])
+  @@index([publisherId])
+}
+
+model blog_publisher {
+  id                  Int       @id @default(autoincrement())
+  pidPublisher        String    @unique()
+  publisherName       String    @db.VarChar(100)
+  publisherSlug       String?   @db.VarChar(100)
+  publisherEmail      String?   @db.VarChar(255)
+  publisherBio        String?   @db.Text
+  publisherRole       String?   @db.VarChar(100)
+  publisherImage      String?   @db.VarChar(255)
+  publisherSocialX    String?   @db.VarChar(255)
+  publisherSocialLinkedin String? @db.VarChar(255)
+  publisherSocialFacebook String? @db.VarChar(255)
+  publisherSocialInstagram String? @db.VarChar(255)
+  publisherWebsite    String?   @db.VarChar(255)
+  status              String?   @db.VarChar(20) @default("active")
+  createdAt           DateTime? @default(now())
+  updatedAt           DateTime?
+  blogs               blog[]
 }
 
 model blog_category {

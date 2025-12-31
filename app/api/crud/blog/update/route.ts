@@ -23,6 +23,7 @@ export async function PUT(request: Request) {
     const blogExt1 = formData.get('blogExt1') as string || '';
     const blogExt2 = formData.get('blogExt2') as string || '';
     const categoryId = formData.get('categoryId') as string || null;
+    const publisherId = formData.get('publisherId') as string || null;
     
     if (!pidBlog) {
       return NextResponse.json(
@@ -117,6 +118,7 @@ export async function PUT(request: Request) {
         blogExt1,
         blogExt2,
         categoryId: categoryId || null,
+        publisherId: publisherId || null,
         updatedAt: new Date(),
       },
     });

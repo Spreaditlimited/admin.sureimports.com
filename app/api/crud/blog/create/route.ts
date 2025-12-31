@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     const blogExt1 = formData.get('blogExt1') as string || ''; // Can be used for video URL
     const blogExt2 = formData.get('blogExt2') as string || ''; // Can be used for SEO data
     const categoryId = formData.get('categoryId') as string || null;
+    const publisherId = formData.get('publisherId') as string || null;
     
     // Validate required fields
     if (!blogTitle || !blogContent) {
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
         blogExt1,
         blogExt2,
         categoryId: categoryId || null,
+        publisherId: publisherId || null,
         xStaus: 'active',
         createdAt: new Date(),
         updatedAt: new Date(),

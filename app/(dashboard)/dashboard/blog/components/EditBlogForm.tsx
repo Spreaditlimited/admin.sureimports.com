@@ -54,6 +54,7 @@ interface Blog {
   blogExt1: string | null;
   blogExt2: string | null;
   categoryId: string | null;
+  publisherId: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -63,6 +64,14 @@ interface BlogCategory {
   categoryName: string;
   categorySlug: string | null;
   categoryColor: string | null;
+  status: string | null;
+}
+
+interface BlogPublisher {
+  pidPublisher: string;
+  publisherName: string;
+  publisherRole: string | null;
+  publisherImage: string | null;
   status: string | null;
 }
 
@@ -129,11 +138,16 @@ const EditBlogForm = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [loadingCategories, setLoadingCategories] = useState(true);
 
+  // Publisher state
+  const [publishers, setPublishers] = useState<BlogPublisher[]>([]);
+  const [selectedPublisher, setSelectedPublisher] = useState<string>('');
+  const [loadingPublishers, setLoadingPublishers] = useState(true);
+
   // SEO State
   const [seoData, setSeoData] = useState<SeoData>(defaultSeoData);
   const [keywordInput, setKeywordInput] = useState('');
 
-  // Fetch categories on mount
+  // Fetch categories and publishers on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -148,7 +162,23 @@ const EditBlogForm = () => {
         setLoadingCategories(false);
       }
     };
+
+    const fetchPublishers = async () => {
+      try {
+        const res = await fetch('/api/crud/blog-publisher/fetch');
+        const data = await res.json();
+        if (data.successx && data.data) {
+          setPublishers(data.data.filter((p: BlogPublisher) => p.status === 'active'));
+        }
+      } catch (error) {
+        console.error('Error fetching publishers:', error);
+      } finally {
+        setLoadingPublishers(false);
+      }
+    };
+
     fetchCategories();
+    fetchPublishers();
   }, []);
 
   useEffect(() => {
@@ -177,6 +207,7 @@ const EditBlogForm = () => {
         setExistingImage(blog.blogImage || '');
         setBlogSlug(blog.blogSlug || '');
         setSelectedCategory(blog.categoryId || '');
+        setSelectedPublisher(blog.publisherId || '');
 
         // Parse SEO data from blogExt2
         if (blog.blogExt2) {
@@ -366,6 +397,7 @@ const EditBlogForm = () => {
     formData.append('blogExt1', videoUrl.trim());
     formData.append('blogExt2', seoJsonData);
     if (selectedCategory) formData.append('categoryId', selectedCategory);
+    if (selectedPublisher) formData.append('publisherId', selectedPublisher);
 
     try {
       const res = await fetch('/api/crud/blog/update', {
@@ -673,6 +705,53 @@ const EditBlogForm = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedCategory('')}
+                      className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Publisher */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <User className="w-4 h-4 inline mr-1" />
+                  Publisher
+                </label>
+                {loadingPublishers ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 animate-pulse">
+                    Loading publishers...
+                  </div>
+                ) : (
+                  <select
+                    value={selectedPublisher}
+                    onChange={(e) => setSelectedPublisher(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                    <option value="">Select a publisher</option>
+                    {publishers.map((publisher) => (
+                      <option key={publisher.pidPublisher} value={publisher.pidPublisher}>
+                        {publisher.publisherName} {publisher.publisherRole ? `(${publisher.publisherRole})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {selectedPublisher && (
+                  <div className="mt-2 flex items-center gap-2">
+                    {publishers.find(p => p.pidPublisher === selectedPublisher)?.publisherImage && (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${publishers.find(p => p.pidPublisher === selectedPublisher)?.publisherImage}`}
+                        alt=""
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    )}
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {publishers.find(p => p.pidPublisher === selectedPublisher)?.publisherName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPublisher('')}
                       className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                       Clear

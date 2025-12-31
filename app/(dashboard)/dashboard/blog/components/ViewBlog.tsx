@@ -201,6 +201,12 @@ const ViewBlog = () => {
               <span>Categories</span>
             </button>
           </Link>
+          <Link href="/dashboard/blog/publishers">
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all border border-gray-200 dark:border-gray-700">
+              <User className="w-4 h-4" />
+              <span>Publishers</span>
+            </button>
+          </Link>
           <Link href="/dashboard/blog/create">
             <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all">
               <Plus className="w-5 h-5" />
