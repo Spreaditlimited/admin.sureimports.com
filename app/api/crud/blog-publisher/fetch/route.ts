@@ -22,15 +22,22 @@ export async function GET(request: Request) {
       if (!publisher) {
         return NextResponse.json(
           {
-            success: false,
-            message: 'Publisher not found',
+            responsex: {
+              message: 'Publisher not found',
+              status: 'NOT_FOUND',
+            },
+            successx: false,
           },
           { status: 404 }
         );
       }
 
       return NextResponse.json({
-        success: true,
+        responsex: {
+          message: 'Publisher fetched successfully',
+          status: 'SUCCESS',
+        },
+        successx: true,
         data: publisher,
       });
     }
@@ -46,15 +53,22 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({
-      success: true,
+      responsex: {
+        message: 'Publishers fetched successfully',
+        status: 'SUCCESS',
+      },
+      successx: true,
       data: publishers,
     });
   } catch (error: any) {
     console.error('Error fetching publishers:', error);
     return NextResponse.json(
       {
-        success: false,
-        message: 'Failed to fetch publishers',
+        responsex: {
+          message: 'Failed to fetch publishers',
+          status: 'ACTION_FAILED',
+        },
+        successx: false,
         error: error.message,
       },
       { status: 500 }

@@ -88,7 +88,7 @@ export async function PUT(request: Request) {
     }
 
     // Handle image upload
-    const file = formData.get('file') as File | null;
+    const file = formData.get('image') as File | null;
     let newFileName = existingPublisher.publisherImage || '';
     let fileType = '';
 

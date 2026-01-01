@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -25,32 +23,32 @@ export async function GET() {
     ] = await Promise.all([
       // Total customers
       prisma.users.count(),
-      
-      // Active customers (with login status)
+
+      // Active customers (userCid = 'VERIFIED')
       prisma.users.count({
-        where: { cidStatus: "1" }
+        where: { userCid: 'VERIFIED' }
       }),
-      
+
       // Total orders
       prisma.orders.count(),
-      
+
       // Active orders (pending/processing)
       prisma.orders.count({
         where: {
           orderStatus: {
-            in: ['pending', 'processing', 'shipped']
+            in: ['pending', 'processing', 'shipped', 'Pending', 'Processing', 'Shipped']
           }
         }
       }),
-      
+
       // Total products in orders
       prisma.products.count(),
-      
+
       // Store products
       prisma.store.count({
         where: { productVisibility: true }
       }),
-      
+
       // Total services (special sourcing + shipping only + verify supplier)
       Promise.all([
         prisma.special_sourcing.count(),
@@ -58,45 +56,51 @@ export async function GET() {
         prisma.verify_supplier.count(),
         prisma.pay_supplier.count(),
       ]).then(counts => counts.reduce((a, b) => a + b, 0)),
-      
+
       // Total payments
       prisma.payments.count(),
-      
+
       // Pending pay supplier requests
       prisma.pay_supplier.count({
         where: { status: 'pending' }
       }),
-      
+
       // Total affiliates
       prisma.affiliates.count(),
-      
+
       // Total messages
       prisma.messages.count(),
-      
+
       // Unread messages (for admin)
       prisma.messages.count({
         where: { messageStatus: 'unread' }
       }),
-      
+
       // Total store products (all)
       prisma.store.count(),
-      
+
       // Total PaySmallSmall entries
       prisma.paysmallsmall.count(),
-      
+
       // Completed PaySmallSmall
       prisma.paysmallsmall.count({
         where: { status: 'COMPLETED' }
       }),
     ])
 
-    // Calculate total revenue
+    // Calculate total revenue - check for multiple possible success statuses
     const totalRevenue = await prisma.payments.aggregate({
       _sum: {
         amount: true,
       },
       where: {
-        paymentStatus: 'PAID',
+        OR: [
+          { paymentStatus: 'PAID' },
+          { paymentStatus: 'paid' },
+          { paymentStatus: 'success' },
+          { paymentStatus: 'successful' },
+          { paymentStatus: 'SUCCESS' },
+        ]
       },
     })
 
@@ -139,7 +143,5 @@ export async function GET() {
       { error: 'Failed to fetch dashboard statistics' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
