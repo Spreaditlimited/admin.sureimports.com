@@ -66,11 +66,11 @@ const features: MenuItem[] = [
   //     { title: "View Categories", path: "/dashboard/buy-phones-laptops/view-category" },
   //   ],
   // },
-  {
-    title: "Special Sourcing",
-    icon: ShoppingBag,
-    path: "/dashboard/special-sourcing?status=pending",
-  },
+  // {
+  //   title: "Special Sourcing",
+  //   icon: ShoppingBag,
+  //   path: "/dashboard/special-sourcing?status=pending",
+  // },
   {
     title: "Pay Supplier",
     icon: HandCoins,

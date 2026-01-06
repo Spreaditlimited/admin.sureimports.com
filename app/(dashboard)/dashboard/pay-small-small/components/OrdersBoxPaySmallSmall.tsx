@@ -222,7 +222,7 @@ const ComponentsAccordionsBasic = () => {
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.store.productName}</b> &nbsp; | ORDER ID: {datax.pidPaySmallSmall} &nbsp;
+                                        <b className='text-xl'>#{index + 1} : {datax.store?.productName || datax.productName || 'N/A'}</b> &nbsp; | ORDER ID: {datax.pidPaySmallSmall} &nbsp;
                                         
                                         <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
                                         <BookDown />
@@ -244,7 +244,7 @@ const ComponentsAccordionsBasic = () => {
                                                         src={
                                                             (process.env.NEXT_PUBLIC_R2_PUBLIC_URL +
                                                             '/' +
-                                                            `${datax.store.productImage}`) as string
+                                                            `${datax.store?.productImage || ''}`) as string
                                                         }
                                                         alt="Product Image"
                                                         className="h-full w-full object-cover"
@@ -256,7 +256,7 @@ const ComponentsAccordionsBasic = () => {
                                                 {/* Product Details */}
                                                 <div className="w-full md:px-0">
                                                     <h3 className="text-xl font-bold text-gray-800 dark:text-gray-400">
-                                                    {datax.store.productName} | ₦
+                                                    {datax.store?.productName || datax.productName || 'N/A'} | ₦
                                                     {
                                                         parseFloat(datax.amount as any)
                                                         .toFixed(2)
@@ -267,7 +267,7 @@ const ComponentsAccordionsBasic = () => {
                                                     <small> {datax.updatedAt.toString()} </small>
 
                                                     <p className="mt-2 text-gray-700 dark:text-gray-400">
-                                                    {datax.store.productDescription}
+                                                    {datax.store?.productDescription || datax.productDescription || 'No description available'}
                                                     </p>
                                                 </div>
 

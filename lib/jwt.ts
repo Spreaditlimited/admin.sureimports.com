@@ -1,6 +1,10 @@
 import jwt from "jsonwebtoken"
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error("Missing JWT_SECRET environment variable")
+}
 
 export function generateToken(payload: object): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "1d" })
@@ -13,4 +17,3 @@ export function verifyToken(token: string): object | null {
     return null
   }
 }
-
