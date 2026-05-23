@@ -55,6 +55,11 @@ const features: MenuItem[] = [
     icon: ShoppingCart,
     path: "/dashboard/procurement?status=pending",
   },
+  {
+    title: "Corporate Gifts",
+    icon: Package,
+    path: "/dashboard/corporate-gifts",
+  },
   // {
   //   title: "Buy Phones & Laptops",
   //   icon: MonitorSmartphone ,
