@@ -12,6 +12,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import DbFingerprintPanel from './components/DbFingerprintPanel';
 
 export default async function CorporateGiftsAdminPage() {
   const sourceSiteUrl =
@@ -39,6 +40,8 @@ export default async function CorporateGiftsAdminPage() {
           </span>
         </div>
       </div>
+
+      <DbFingerprintPanel />
 
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed bg-slate-50 p-20 text-center dark:border-slate-700 dark:bg-slate-900/40">
