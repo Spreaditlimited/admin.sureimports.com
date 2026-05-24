@@ -7,11 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "backfill:media:dry": "DRY_RUN=true node backfill-r2-to-cloudinary.js",
+    "backfill:media": "DRY_RUN=false node backfill-r2-to-cloudinary.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.744.0",
-    "@aws-sdk/lib-storage": "^3.744.0",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.3.1",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -46,6 +46,7 @@
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "cookie": "^1.0.2",
     "cookies": "^0.9.1",

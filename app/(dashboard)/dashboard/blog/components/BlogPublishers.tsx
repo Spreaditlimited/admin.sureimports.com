@@ -111,7 +111,10 @@ const BlogPublishers = () => {
 
   const getImageUrl = (imageName: string | null) => {
     if (!imageName) return null;
-    return `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${imageName}`;
+    if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
+      return imageName;
+    }
+    return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
   };
 
   const openCreateModal = () => {

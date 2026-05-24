@@ -1,8 +1,6 @@
 // app/api/upload/route.ts
 import { PrismaClient } from '@prisma/client';
 import { random } from 'lodash';
-import { getR2Client } from '@/app/utils/r2Client';
-import { Upload } from '@aws-sdk/lib-storage';
 import getFileExt from '@/app/utils/fileExt';
 import fileFilter from '@/utils/fileFilter';
 import randomGenerator from '@/lib/helpers/randomGenerator';

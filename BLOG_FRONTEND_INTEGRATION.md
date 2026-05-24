@@ -202,19 +202,19 @@ All blog images are stored in Cloudflare R2 object storage. To display images on
 
 ```javascript
 // Image filename is stored in blogImage field
-const imageUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${blog.blogImage}`;
+const imageUrl = `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${blog.blogImage}`;
 ```
 
 **Environment Variable Required:**
 ```env
-NEXT_PUBLIC_R2_PUBLIC_URL=https://your-r2-public-url.com
+NEXT_PUBLIC_CLOUDINARY_BASE_URL=https://your-r2-public-url.com
 ```
 
 ### Example Image Display:
 
 ```jsx
 <img 
-  src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${blog.blogImage}`}
+  src={`${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${blog.blogImage}`}
   alt={blog.blogTitle}
   className="w-full h-auto"
 />
@@ -225,7 +225,7 @@ NEXT_PUBLIC_R2_PUBLIC_URL=https://your-r2-public-url.com
 ```javascript
 const getImageUrl = (imageName) => {
   if (!imageName) return '/assets/images/default-blog.jpg';
-  return `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${imageName}`;
+  return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
 };
 ```
 
@@ -277,7 +277,7 @@ export default function BlogListPage() {
 
   const getImageUrl = (imageName: string) => {
     if (!imageName) return '/assets/images/default-blog.jpg';
-    return `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${imageName}`;
+    return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
   };
 
   const truncateText = (text: string, maxLength: number = 150) => {
@@ -381,7 +381,7 @@ export default function BlogPostPage() {
 
   const getImageUrl = (imageName: string) => {
     if (!imageName) return '/assets/images/default-blog.jpg';
-    return `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${imageName}`;
+    return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
   };
 
   const getVideoEmbedUrl = (url: string) => {
@@ -483,7 +483,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   
   const blog = data.data;
   const imageUrl = blog.blogImage 
-    ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${blog.blogImage}`
+    ? `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${blog.blogImage}`
     : '/assets/images/default-blog.jpg';
   
   return {
@@ -515,15 +515,15 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 ### Backend (.env)
 ```env
 DATABASE_URL="mysql://user:password@host:port/database"
-R2_ACCOUNT_ID="your-cloudflare-account-id"
-R2_ACCESS_KEY_ID="your-r2-access-key"
-R2_SECRET_ACCESS_KEY="your-r2-secret-key"
-R2_BUCKET_NAME="your-bucket-name"
+CLOUDINARY_CLOUD_NAME="your-cloudflare-account-id"
+CLOUDINARY_API_KEY="your-r2-access-key"
+CLOUDINARY_API_SECRET="your-r2-secret-key"
+CLOUDINARY_UPLOAD_PRESET="your-bucket-name"
 ```
 
 ### Frontend (.env.local)
 ```env
-NEXT_PUBLIC_R2_PUBLIC_URL="https://your-r2-public-url.com"
+NEXT_PUBLIC_CLOUDINARY_BASE_URL="https://your-r2-public-url.com"
 NEXT_PUBLIC_API_URL="http://localhost:3000" # or your production URL
 ```
 
@@ -621,7 +621,7 @@ NEXT_PUBLIC_API_URL="http://localhost:3000" # or your production URL
 ### Common Issues
 
 **Issue:** Images not displaying
-- **Solution:** Check `NEXT_PUBLIC_R2_PUBLIC_URL` environment variable
+- **Solution:** Check `NEXT_PUBLIC_CLOUDINARY_BASE_URL` environment variable
 - **Solution:** Verify R2 bucket permissions are set to public
 
 **Issue:** Blog content not rendering

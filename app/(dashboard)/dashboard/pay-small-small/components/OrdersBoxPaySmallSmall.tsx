@@ -242,7 +242,7 @@ const ComponentsAccordionsBasic = () => {
                                                     <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
                                                         <img
                                                         src={
-                                                            (process.env.NEXT_PUBLIC_R2_PUBLIC_URL +
+                                                            (process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL +
                                                             '/' +
                                                             `${datax.store?.productImage || ''}`) as string
                                                         }
@@ -369,4 +369,3 @@ export default ComponentsAccordionsBasic;
 function navigateWithAlert(arg0: string, arg1: string, arg2: string) {
   throw new Error('Function not implemented.');
 }
-

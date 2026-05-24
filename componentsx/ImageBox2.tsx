@@ -15,7 +15,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange, imagex }) => {
     imagex = 'default2.png';
   } //set default image value
 
-  const url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL + '/' + imagex;
+  const url =
+    process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL +
+    '/' +
+    imagex;
   const [previewImage, setPreviewImage] = useState<string | null>(url);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);

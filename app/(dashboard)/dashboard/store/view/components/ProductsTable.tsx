@@ -426,7 +426,7 @@ export default function ProductsTable() {
                       <td className="px-6 py-4">
                         <div className="w-20 h-20 relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                           <Image
-                            src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${product.productImage}`}
+                            src={`${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${product.productImage}`}
                             alt={product.productName}
                             fill
                             className="object-contain p-1"
@@ -588,5 +588,3 @@ export default function ProductsTable() {
     </>
   );
 }
-
-

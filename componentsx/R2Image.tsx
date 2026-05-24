@@ -8,7 +8,8 @@ interface R2ImageProps {
 }
 
 const R2Image: React.FC<R2ImageProps> = ({ fileName, alt, width, height }) => {
-  const baseUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
+  const baseUrl =
+    process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL;
   const imageUrl = `${baseUrl}/${fileName}`;
 
   return (

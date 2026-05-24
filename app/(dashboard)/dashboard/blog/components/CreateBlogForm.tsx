@@ -609,7 +609,21 @@ const CreateBlogForm = () => {
                   <div className="mt-2 flex items-center gap-2">
                     {publishers.find(p => p.pidPublisher === selectedPublisher)?.publisherImage && (
                       <img
-                        src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${publishers.find(p => p.pidPublisher === selectedPublisher)?.publisherImage}`}
+                        src={
+                          (() => {
+                            const publisherImage = publishers.find(
+                              (p) => p.pidPublisher === selectedPublisher
+                            )?.publisherImage;
+                            if (!publisherImage) return '/assets/images/default-blog.jpg';
+                            if (
+                              publisherImage.startsWith('http://') ||
+                              publisherImage.startsWith('https://')
+                            ) {
+                              return publisherImage;
+                            }
+                            return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${publisherImage}`;
+                          })()
+                        }
                         alt=""
                         className="w-6 h-6 rounded-full object-cover"
                       />

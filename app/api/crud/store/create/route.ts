@@ -1,14 +1,13 @@
 // app/api/upload/route.ts
 import { PrismaClient } from '@prisma/client';
 import { random } from 'lodash';
-import { getR2Client } from '@/app/utils/r2Client';
-import { Upload } from '@aws-sdk/lib-storage';
 import getFileExt from '@/app/utils/fileExt'
 import fileFilter from '@/app/utils/fileFilter'
 import randomGenerator from "@/lib/helpers/randomGenerator";
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/app/utils/slugGenerator'
 import bcrypt from "bcryptjs"
+import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
 
 const prisma = new PrismaClient();
 
@@ -115,19 +114,13 @@ export async function POST(request: Request) {
                         //GET FILE PAYLOAD
                         const buffer = await file.arrayBuffer();
 
-                        //FILE UPLOAD DETAILS
-                        const upload = new Upload({
-                                client: getR2Client(),
-                                params: {
-                                          Bucket: process.env.R2_BUCKET_NAME,
-                                          Key: newFileName,
-                                          Body: Buffer.from(buffer),
-                                          ContentType: fileType,
-                                        },
-                                });
-
-                        //UPLOAD FILE
-                        await upload.done();
+                        await uploadBufferToCloudinary(Buffer.from(buffer), {
+                          folder: 'admin-sureimports/store',
+                          publicId: newFileName,
+                          useFilename: false,
+                          uniqueFilename: false,
+                          overwrite: true,
+                        });
 
                         //RETURN SUCCESS ON FILE UPLOAD
                         return NextResponse.json(

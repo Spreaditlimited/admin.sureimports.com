@@ -1,11 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { getR2Client } from '@/app/utils/r2Client';
-import { Upload } from '@aws-sdk/lib-storage';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import getFileExt from '@/app/utils/fileExt';
 import fileFilter from '@/app/utils/fileFilter';
 import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextResponse } from 'next/server';
+import { destroyCloudinaryAsset } from '@/lib/cloudinary/destroy';
+import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
 
 const prisma = new PrismaClient();
 
@@ -116,14 +115,10 @@ export async function PUT(request: Request) {
 
       newFileName = `PUBLISHER_${imageCode}`;
 
-      // Delete old image from R2 if exists
+      // Delete old image from Cloudinary if exists
       if (existingPublisher.publisherImage) {
         try {
-          const deleteCommand = new DeleteObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME,
-            Key: existingPublisher.publisherImage,
-          });
-          await getR2Client().send(deleteCommand);
+          await destroyCloudinaryAsset(existingPublisher.publisherImage);
         } catch (error) {
           console.error('Error deleting old image:', error);
         }
@@ -154,22 +149,17 @@ export async function PUT(request: Request) {
       },
     });
 
-    // Upload new image to R2 if file exists
+    // Upload new image to Cloudinary if file exists
     if (file) {
       try {
-        const buffer = await file.arrayBuffer();
-
-        const upload = new Upload({
-          client: getR2Client(),
-          params: {
-            Bucket: process.env.R2_BUCKET_NAME,
-            Key: newFileName,
-            Body: Buffer.from(buffer),
-            ContentType: fileType,
-          },
+        const buffer = Buffer.from(await file.arrayBuffer());
+        await uploadBufferToCloudinary(buffer, {
+          folder: 'admin-sureimports/blog-publisher',
+          publicId: newFileName,
+          useFilename: false,
+          uniqueFilename: false,
+          overwrite: true,
         });
-
-        await upload.done();
       } catch (error) {
         console.error('Error uploading image:', error);
       }

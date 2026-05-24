@@ -319,7 +319,7 @@ export default function CustomersTable() {
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
                           {customer.userImage ? (
                             <img
-                              src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${customer.userImage}`}
+                              src={`${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${customer.userImage}`}
                               alt=""
                               className="w-full h-full rounded-full object-cover"
                             />

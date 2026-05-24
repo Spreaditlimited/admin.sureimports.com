@@ -132,7 +132,7 @@ model blog {
 
 1. **Setup Environment Variables:**
    ```env
-   NEXT_PUBLIC_R2_PUBLIC_URL=https://your-r2-url.com
+   NEXT_PUBLIC_CLOUDINARY_BASE_URL=https://your-r2-url.com
    ```
 
 2. **Fetch Blogs:**
@@ -143,7 +143,7 @@ model blog {
 
 3. **Display Blog:**
    ```jsx
-   <img src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${blog.blogImage}`} />
+   <img src={`${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${blog.blogImage}`} />
    <h1>{blog.blogTitle}</h1>
    <div dangerouslySetInnerHTML={{ __html: blog.blogContent }} />
    ```

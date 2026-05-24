@@ -256,7 +256,7 @@ function CustomerDetailsContent() {
             <div className="w-24 h-24 rounded-full border-4 border-white dark:border-gray-800 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
               {customer.userImage ? (
                 <img
-                  src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${customer.userImage}`}
+                  src={`${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${customer.userImage}`}
                   alt=""
                   className="w-full h-full rounded-full object-cover"
                 />

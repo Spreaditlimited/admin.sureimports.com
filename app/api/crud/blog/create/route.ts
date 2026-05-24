@@ -1,11 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { getR2Client } from '@/app/utils/r2Client';
-import { Upload } from '@aws-sdk/lib-storage';
 import getFileExt from '@/app/utils/fileExt';
 import fileFilter from '@/app/utils/fileFilter';
 import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/app/utils/slugGenerator';
+import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
 
 const prisma = new PrismaClient();
 
@@ -94,22 +93,17 @@ export async function POST(request: Request) {
       },
     });
 
-    // Upload image to R2 if file exists
+    // Upload image to Cloudinary if file exists
     if (file && blog && blog.id) {
       try {
-        const buffer = await file.arrayBuffer();
-
-        const upload = new Upload({
-          client: getR2Client(),
-          params: {
-            Bucket: process.env.R2_BUCKET_NAME,
-            Key: newFileName,
-            Body: Buffer.from(buffer),
-            ContentType: fileType,
-          },
+        const buffer = Buffer.from(await file.arrayBuffer());
+        await uploadBufferToCloudinary(buffer, {
+          folder: 'admin-sureimports/blog',
+          publicId: newFileName,
+          useFilename: false,
+          uniqueFilename: false,
+          overwrite: true,
         });
-
-        await upload.done();
 
         return NextResponse.json(
           {

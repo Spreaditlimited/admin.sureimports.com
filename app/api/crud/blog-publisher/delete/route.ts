@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { getR2Client } from '@/app/utils/r2Client';
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { NextResponse } from 'next/server';
+import { destroyCloudinaryAsset } from '@/lib/cloudinary/destroy';
 
 const prisma = new PrismaClient();
 
@@ -60,14 +59,10 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Delete image from R2 if exists
+    // Delete image from Cloudinary if exists
     if (publisher.publisherImage) {
       try {
-        const deleteCommand = new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME,
-          Key: publisher.publisherImage,
-        });
-        await getR2Client().send(deleteCommand);
+        await destroyCloudinaryAsset(publisher.publisherImage);
       } catch (error) {
         console.error('Error deleting image:', error);
       }

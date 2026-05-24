@@ -64,7 +64,7 @@ const { data, pagination } = await response.json();
 
 ```jsx
 <img 
-  src={`${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${blog.blogImage}`}
+  src={`${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${blog.blogImage}`}
   alt={blog.blogTitle}
 />
 ```
@@ -89,13 +89,13 @@ const { data, pagination } = await response.json();
 
 ```env
 # Backend
-R2_ACCOUNT_ID=your-account-id
-R2_ACCESS_KEY_ID=your-access-key
-R2_SECRET_ACCESS_KEY=your-secret-key
-R2_BUCKET_NAME=your-bucket-name
+CLOUDINARY_CLOUD_NAME=your-account-id
+CLOUDINARY_API_KEY=your-access-key
+CLOUDINARY_API_SECRET=your-secret-key
+CLOUDINARY_UPLOAD_PRESET=your-bucket-name
 
 # Frontend
-NEXT_PUBLIC_R2_PUBLIC_URL=https://your-r2-url.com
+NEXT_PUBLIC_CLOUDINARY_BASE_URL=https://your-r2-url.com
 ```
 
 ---

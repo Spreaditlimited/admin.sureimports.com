@@ -4,11 +4,11 @@
 
 ### Environment Variables
 - [ ] `DATABASE_URL` is properly configured in `.env`
-- [ ] `R2_ACCOUNT_ID` is set in `.env`
-- [ ] `R2_ACCESS_KEY_ID` is set in `.env`
-- [ ] `R2_SECRET_ACCESS_KEY` is set in `.env`
-- [ ] `R2_BUCKET_NAME` is set in `.env`
-- [ ] `NEXT_PUBLIC_R2_PUBLIC_URL` is set for frontend
+- [ ] `CLOUDINARY_CLOUD_NAME` is set in `.env`
+- [ ] `CLOUDINARY_API_KEY` is set in `.env`
+- [ ] `CLOUDINARY_API_SECRET` is set in `.env`
+- [ ] `CLOUDINARY_UPLOAD_PRESET` is set in `.env`
+- [ ] `NEXT_PUBLIC_CLOUDINARY_BASE_URL` is set for frontend
 
 ### Database
 - [ ] Prisma schema is up to date

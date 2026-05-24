@@ -124,7 +124,7 @@ interface User {
 
           <div className="w-96 h-96 bg-gray-100 relative rounded-xl">
                   <Image
-                      src={process.env.NEXT_PUBLIC_R2_PUBLIC_URL+'/'+`${product.productImage}` as string}
+                      src={process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL+'/'+`${product.productImage}` as string}
                       alt="Product"
                       width={300} // specify width
                       height={300} // specify height

@@ -116,7 +116,7 @@ export default function ProductsTable() {
             <td className="px-6 py-4">
                     <div className="w-20 h-20 bg-gray-100 relative">
                         <Image
-                            src={process.env.NEXT_PUBLIC_R2_PUBLIC_URL+'/'+`${product.productImage}` as string}
+                            src={process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL+'/'+`${product.productImage}` as string}
                             alt="Product"
                             width={100} // specify width
                             height={100} // specify height

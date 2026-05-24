@@ -126,7 +126,7 @@
 │  User → Blog Page → GET /fetch-single → DB Query → Format → Display    │
 │                                                                         │
 │  DISPLAY IMAGE:                                                         │
-│  Frontend → ${R2_URL}/${blog.blogImage} → CDN → User's Browser         │
+│  Frontend → ${CLOUDINARY_BASE_URL}/${blog.blogImage} → CDN → User's Browser         │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 
