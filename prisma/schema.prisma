@@ -1092,6 +1092,10 @@ model corporate_gift_request {
   referenceFileName             String?
   logoFileUrl                   String?
   logoFileName                  String?
+  status                        String    @default("Pending")
+  handledByPidUser              String?
+  handledByEmail                String?
+  handledByName                 String?
   pageUrl                       String?
   utmSource                     String?
   utmMedium                     String?
