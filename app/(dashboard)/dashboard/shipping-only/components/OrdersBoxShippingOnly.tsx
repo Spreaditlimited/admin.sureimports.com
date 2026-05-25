@@ -130,7 +130,7 @@ const ComponentsAccordionsBasic = () => {
 
 
     function setActionType(value:string) {
-        alert(value);
+        toast.info(value);
     }
 
 
@@ -336,4 +336,3 @@ export default ComponentsAccordionsBasic;
 function navigateWithAlert(arg0: string, arg1: string, arg2: string) {
   throw new Error('Function not implemented.');
 }
-

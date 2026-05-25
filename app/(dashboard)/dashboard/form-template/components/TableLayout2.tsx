@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 // Define the type for table data
 type TableData = {
@@ -104,7 +105,7 @@ export default function AdvancedTable() {
 
   // Handle action button clicks
   const handleAction = (action: string, item: TableData) => {
-    alert(`${action} clicked for ${item.name}`);
+    toast.info(`${action} clicked for ${item.name}`);
     setOpenDropdownId(null); // Close dropdown after action
   };
 

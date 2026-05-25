@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { unparse } from 'papaparse';
+import { toast } from 'sonner';
 
 // Define the type for table data
 type TableData = {
@@ -121,7 +122,7 @@ export default function AdvancedTable({ initialData }: { initialData: TableData[
 
   // Handle action button clicks
   const handleAction = (action: string, item: TableData) => {
-    alert(`${action} clicked for ${item.categoryName}`);
+    toast.info(`${action} clicked for ${item.categoryName}`);
     setOpenDropdownId(null); // Close dropdown after action
   };
 

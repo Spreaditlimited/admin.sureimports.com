@@ -178,6 +178,22 @@ const customerPayouts: MenuItem[] = [
   },
 ]
 
+const invoicing: MenuItem[] = [
+  {
+    title: "Invoicing",
+    icon: CreditCard,
+    path: "/dashboard/invoicing",
+    submenu: [
+      { title: "All Invoices", path: "/dashboard/invoicing" },
+      { title: "Create Invoice", path: "/dashboard/invoicing/create" },
+      { title: "Receipts", path: "/dashboard/invoicing/receipts" },
+      { title: "Payment Claims", path: "/dashboard/invoicing/payment-claims" },
+      { title: "Bank Accounts", path: "/dashboard/invoicing/bank-accounts" },
+      { title: "Settings", path: "/dashboard/invoicing/settings" },
+    ],
+  },
+]
+
 
 const systemSettings: MenuItem[] = [
   {
@@ -429,6 +445,12 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               ))}
             </div>
 
+            <div className="space-y-1">
+              {invoicing.map((item) => (
+                <MenuItem key={item.path} item={item} />
+              ))}
+            </div>
+
           </div>
 
 
@@ -492,4 +514,3 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     </>
   )
 }
-

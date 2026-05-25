@@ -15,26 +15,24 @@ datasource db {
   //url      = "mysql://root:@localhost:3306/u324293482_printin"
 }
 
-
-
 model blog {
-  id            Int            @id @default(autoincrement())
-  pidBlog       String         @unique(map: "Blog_pidBlog_key")
-  blogTitle     String         @db.VarChar(255)
-  blogContent   String?        @db.LongText
-  blogSlug      String?        @db.VarChar(500)
-  blogPublished Boolean        @default(false)
-  blogFeatured  Boolean        @default(false)
-  blogImage     String?        @db.VarChar(255)
-  blogBy        String?        @db.VarChar(100)
+  id            Int             @id @default(autoincrement())
+  pidBlog       String          @unique(map: "Blog_pidBlog_key")
+  blogTitle     String          @db.VarChar(255)
+  blogContent   String?         @db.LongText
+  blogSlug      String?         @db.VarChar(500)
+  blogPublished Boolean         @default(false)
+  blogFeatured  Boolean         @default(false)
+  blogImage     String?         @db.VarChar(255)
+  blogBy        String?         @db.VarChar(100)
   publisherId   String?
-  blogExt1      String?        @db.Text
-  blogExt2      String?        @db.Text
+  blogExt1      String?         @db.Text
+  blogExt2      String?         @db.Text
   categoryId    String?
-  xStaus        String?        @db.VarChar(50)
-  createdAt     DateTime?      @default(now())
+  xStaus        String?         @db.VarChar(50)
+  createdAt     DateTime?       @default(now())
   updatedAt     DateTime?
-  category      blog_category? @relation(fields: [categoryId], references: [pidCategory])
+  category      blog_category?  @relation(fields: [categoryId], references: [pidCategory])
   publisher     blog_publisher? @relation(fields: [publisherId], references: [pidPublisher])
 
   @@index([categoryId])
@@ -42,57 +40,55 @@ model blog {
 }
 
 model blog_publisher {
+  id                       Int       @id @default(autoincrement())
+  pidPublisher             String    @unique()
+  publisherName            String    @db.VarChar(100)
+  publisherSlug            String?   @db.VarChar(100)
+  publisherEmail           String?   @db.VarChar(255)
+  publisherBio             String?   @db.Text
+  publisherRole            String?   @db.VarChar(100)
+  publisherImage           String?   @db.VarChar(255)
+  publisherSocialX         String?   @db.VarChar(255)
+  publisherSocialLinkedin  String?   @db.VarChar(255)
+  publisherSocialFacebook  String?   @db.VarChar(255)
+  publisherSocialInstagram String?   @db.VarChar(255)
+  publisherWebsite         String?   @db.VarChar(255)
+  status                   String?   @default("active") @db.VarChar(20)
+  createdAt                DateTime? @default(now())
+  updatedAt                DateTime?
+  blogs                    blog[]
+}
+
+model blog_category {
   id                  Int       @id @default(autoincrement())
-  pidPublisher        String    @unique()
-  publisherName       String    @db.VarChar(100)
-  publisherSlug       String?   @db.VarChar(100)
-  publisherEmail      String?   @db.VarChar(255)
-  publisherBio        String?   @db.Text
-  publisherRole       String?   @db.VarChar(100)
-  publisherImage      String?   @db.VarChar(255)
-  publisherSocialX    String?   @db.VarChar(255)
-  publisherSocialLinkedin String? @db.VarChar(255)
-  publisherSocialFacebook String? @db.VarChar(255)
-  publisherSocialInstagram String? @db.VarChar(255)
-  publisherWebsite    String?   @db.VarChar(255)
-  status              String?   @db.VarChar(20) @default("active")
+  pidCategory         String    @unique()
+  categoryName        String    @db.VarChar(100)
+  categorySlug        String?   @db.VarChar(100)
+  categoryDescription String?   @db.Text
+  categoryColor       String?   @db.VarChar(20)
+  categoryIcon        String?   @db.VarChar(50)
+  categoryOrder       Int?      @default(0)
+  status              String?   @default("active") @db.VarChar(20)
   createdAt           DateTime? @default(now())
   updatedAt           DateTime?
   blogs               blog[]
 }
 
-model blog_category {
-  id               Int       @id @default(autoincrement())
-  pidCategory      String    @unique()
-  categoryName     String    @db.VarChar(100)
-  categorySlug     String?   @db.VarChar(100)
-  categoryDescription String? @db.Text
-  categoryColor    String?   @db.VarChar(20)
-  categoryIcon     String?   @db.VarChar(50)
-  categoryOrder    Int?      @default(0)
-  status           String?   @db.VarChar(20) @default("active")
-  createdAt        DateTime? @default(now())
-  updatedAt        DateTime?
-  blogs            blog[]
-}
-
-
 model contact {
-  id               Int       @id @default(autoincrement())
-  pidContact       String    @unique(map: "Contact_pidContact_key")
-  contactSubject   String?
-  contactName      String?
-  contactEmail     String?
-  contactPhone     String?
-  contactMessage   String?
-  contactStatus    String?
-  contactExt1      String?
-  contactExt2      String?
-  xStaus           String?
-  createdAt        DateTime?  @default(now())
-  updatedAt        DateTime?
+  id             Int       @id @default(autoincrement())
+  pidContact     String    @unique(map: "Contact_pidContact_key")
+  contactSubject String?
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  contactMessage String?
+  contactStatus  String?
+  contactExt1    String?
+  contactExt2    String?
+  xStaus         String?
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime?
 }
-
 
 model faqs {
   id          Int       @id @default(autoincrement())
@@ -103,308 +99,289 @@ model faqs {
   faqExt1     String?
   faqExt2     String?
   xStatus     String?
-  createdAt   DateTime?  @default(now())
+  createdAt   DateTime? @default(now())
   updatedAt   DateTime?
 }
 
-
-
 model admin {
-  id                   Int       @id @default(autoincrement())
-  pidUser              String    @unique()
+  id                Int       @id @default(autoincrement())
+  pidUser           String    @unique()
+  userFirstname     String?
+  userLastname      String?
+  userEmail         String    @unique()
+  userPassword      String?
+  userSession       String?
+  userPhone         Int?
+  userCid           String?
+  userStatus        String?
+  userAffiliateCode String?
+  userAffiliateRef  String?
+  userImage         String?
+  userFile          String?
+  userExt1          String?
+  userExt2          String?
+  xStaus            String?
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime?
+  //posts     Post[]
+}
+
+model users {
+  id                   Int                  @id @default(autoincrement())
+  pidUser              String               @unique()
   userFirstname        String?
   userLastname         String?
-  userEmail            String    @unique()
+  userEmail            String               @unique()
   userPassword         String?
   userSession          String?
-  userPhone            Int?
+  cidStatus            String?
+  loginStatus          String?
+  loginKey             String?
+  loginStamp           String?
+  gender               String?
+  dob                  String?
+  email                String?
+  phone                String?
+  address              String?
+  country              String?
+  bank_name            String?
+  bank_account_number  String?
+  bank_account_name    String?
+  bank_code            String?
+  bank_transfer_code   String?
+  ref_id               String?
+  userPhone            String?
   userCid              String?
-  userStatus           String?
+  userShippingAddress  String?
+  userShippingAddress2 String?
+  userCountry          String?
+  userState            String?
   userAffiliateCode    String?
   userAffiliateRef     String?
+  userStatus           String?
   userImage            String?
   userFile             String?
   userExt1             String?
   userExt2             String?
-  xStaus               String?
-  createdAt            DateTime?  @default(now())
+  xStatus              String?
+  createdAt            DateTime?            @default(now())
   updatedAt            DateTime?
-  //posts     Post[]
+  orders               orders[]
+  wallets              Wallet[]
+  accounts             Account[]
+  paysmallsmall        paysmallsmall[]
+  invoices             invoices[]
+  invoicePayments      invoice_payments[]
+  invoiceAuditLogs     invoice_audit_logs[]
+  invoicePaymentClaims invoice_payment_claims[]
 }
-
-
-
-model users {
-    id                   Int       @id @default(autoincrement())
-    pidUser              String    @unique()
-    userFirstname        String?
-    userLastname         String?
-    userEmail            String    @unique()
-    userPassword         String?
-    userSession          String?
-    cidStatus            String?
-    loginStatus          String?
-    loginKey             String?
-    loginStamp           String?
-    gender               String?
-    dob                  String?
-    email                String?
-    phone                String?
-    address              String?
-    country              String?
-    bank_name            String?
-    bank_account_number  String?
-    bank_account_name    String?
-    bank_code            String?
-    bank_transfer_code   String?
-    ref_id               String?
-    userPhone            String?
-    userCid              String?
-    userShippingAddress  String?
-    userShippingAddress2 String?
-    userCountry          String?
-    userState            String?
-    userAffiliateCode    String?
-    userAffiliateRef     String?
-    userStatus           String?
-    userImage            String?
-    userFile             String?
-    userExt1             String?
-    userExt2             String?
-    xStatus              String?
-    createdAt            DateTime?  @default(now())
-    updatedAt            DateTime?
-    orders               orders[]
-    wallets   Wallet[]
-    accounts  Account[]
-    paysmallsmall  paysmallsmall[]
-}
-
-
 
 model payoutrequest {
-    id         Int       @id @default(autoincrement())
-    pidPayout  String    @unique()
-    pidUser    String?
-    amount     Float?
-    recipient    String?
-    reference    String?
-    reason    String?
-    status    String?
-    xStatus   String?
-    createdAt            DateTime?  @default(now())
-    updatedAt            DateTime?
+  id        Int       @id @default(autoincrement())
+  pidPayout String    @unique()
+  pidUser   String?
+  amount    Float?
+  recipient String?
+  reference String?
+  reason    String?
+  status    String?
+  xStatus   String?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime?
 }
-
-
-
 
 model products {
-  id         Int       @id @default(autoincrement())
-  pidProduct String    @unique()
-  pidOrder    String
-  pidUser    String?
-  productName    String?
-  productLink    String?
-  productCategory    String?
+  id              Int       @id @default(autoincrement())
+  pidProduct      String    @unique()
+  pidOrder        String
+  pidUser         String?
+  productName     String?
+  productLink     String?
+  productCategory String?
   productPrice    Float?
-  productWeight    Float?
-  productQuantity    Float?
-  productInfo    String?
-  productStatus    String?
-  pidAdmin    String?
+  productWeight   Float?
+  productQuantity Float?
+  productInfo     String?
+  productStatus   String?
+  pidAdmin        String?
   ext1            String?
   ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  orders             orders  @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
+  xStatus         String?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime?
+  orders          orders    @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
 }
-
-
 
 model store {
-  id                  Int       @id @default(autoincrement())
-  pidProduct          String    @unique()
-  productName         String?
-  productSlug         String?
-  productCategory     String?
-  productBrand        String?
-  productPrice        Float?
-  productMOQ          Float?
-  productDescription  String?
-  productFeature      String?
+  id                   Int               @id @default(autoincrement())
+  pidProduct           String            @unique()
+  productName          String?
+  productSlug          String?
+  productCategory      String?
+  productBrand         String?
+  productPrice         Float?
+  productMOQ           Float?
+  productDescription   String?
+  productFeature       String?
   productSpecification String?
-  productVisibility   Boolean?
-  productStatus       String?
-  productImage        String?
-  productImageType    String?
-  productImageExt     String?
-  productCondition    ProductCondition?
-  warrantyPeriod      WarrantyPeriod?
-  affiliatePayout     Float?
-  superAffiliatePayout     Float?
-  ext1                String?
-  ext2                String?
-  xStatus             String?
-  createdAt           DateTime? @default(now())
-  updatedAt           DateTime?
-  paysmallsmall       paysmallsmall[] // Add this relation
+  productVisibility    Boolean?
+  productStatus        String?
+  productImage         String?
+  productImageType     String?
+  productImageExt      String?
+  productCondition     ProductCondition?
+  warrantyPeriod       WarrantyPeriod?
+  affiliatePayout      Float?
+  superAffiliatePayout Float?
+  ext1                 String?
+  ext2                 String?
+  xStatus              String?
+  createdAt            DateTime?         @default(now())
+  updatedAt            DateTime?
+  paysmallsmall        paysmallsmall[] // Add this relation
 }
-
-
 
 model paysmallsmall {
-  id                Int       @id @default(autoincrement())
-  pidPaySmallSmall  String    @unique()
-  pidUser           String   
-  pidProduct        String?  
-  productName       String?   
-  productDescription String? 
-  amount            Float
-  quantity          Int
-  status            PayStatus
-  ext1              String?
-  ext2              String?
-  statusx           String?
-  createdAt         DateTime? @default(now())
-  updatedAt         DateTime? @default(now())
-  store             store?    @relation(fields: [pidProduct], references: [pidProduct]) // Add this relation
-  users             users?    @relation(fields: [pidUser], references: [pidUser]) // Add this relation
+  id                 Int       @id @default(autoincrement())
+  pidPaySmallSmall   String    @unique()
+  pidUser            String
+  pidProduct         String?
+  productName        String?
+  productDescription String?
+  amount             Float
+  quantity           Int
+  status             PayStatus
+  ext1               String?
+  ext2               String?
+  statusx            String?
+  createdAt          DateTime? @default(now())
+  updatedAt          DateTime? @default(now())
+  store              store?    @relation(fields: [pidProduct], references: [pidProduct]) // Add this relation
+  users              users?    @relation(fields: [pidUser], references: [pidUser]) // Add this relation
 }
-
-
 
 model orders {
-  id                 Int       @id @default(autoincrement())
-  pidOrder String    @unique()
-  pidUser    String 
-  orderName    String?
-  destinationCountry    String?
-  currencyType    String?
-  shippingPlan    String?
-  orderCategory    String?
-  shippingAddress    String?
-  orderShippingCost    String?
-  orderShippingCostOld   String?
-  orderTotalCost    String?
-  orderWeight    String?
-  orderTotalCostOld    String?
-  orderWeightOld    String?
-  orderStatus    String?
-  orderType    String?
-  orderPriority    String?
-  vat    String?
-  serviceCharge    String?
-  exchangeRate1    String?
-  exchangeRate2    String?
-  exchangeRate3    String?
-  shippingCost1    String?
-  shippingCost2    String?
-  shippingCost3    String?
-  orderNote    String?
-  trackingCompany String?
-  trackingNumber String?
-  trackingLink   String?
-  additionalCost String?
+  id                        Int        @id @default(autoincrement())
+  pidOrder                  String     @unique()
+  pidUser                   String
+  orderName                 String?
+  destinationCountry        String?
+  currencyType              String?
+  shippingPlan              String?
+  orderCategory             String?
+  shippingAddress           String?
+  orderShippingCost         String?
+  orderShippingCostOld      String?
+  orderTotalCost            String?
+  orderWeight               String?
+  orderTotalCostOld         String?
+  orderWeightOld            String?
+  orderStatus               String?
+  orderType                 String?
+  orderPriority             String?
+  vat                       String?
+  serviceCharge             String?
+  exchangeRate1             String?
+  exchangeRate2             String?
+  exchangeRate3             String?
+  shippingCost1             String?
+  shippingCost2             String?
+  shippingCost3             String?
+  orderNote                 String?
+  trackingCompany           String?
+  trackingNumber            String?
+  trackingLink              String?
+  additionalCost            String?
   additionalCostDescription String?
-  pidAdmin    String?
-  pidAdminLast    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  products           products[]
-  user               users     @relation(fields: [pidUser ], references: [pidUser ])
+  pidAdmin                  String?
+  pidAdminLast              String?
+  status                    String?
+  ext1                      String?
+  ext2                      String?
+  xStatus                   String?
+  createdAt                 DateTime?  @default(now())
+  updatedAt                 DateTime?
+  products                  products[]
+  user                      users      @relation(fields: [pidUser], references: [pidUser])
 }
-
-
 
 model payments {
-  id                   Int       @id @default(autoincrement())
-  pidPayment           String    @unique()
-  pidUser              String
-  payerName            String
-  payerEmail           String?
-  txID                 String
-  txRef                String
-  paymentStatus        String?
-  paymentType          String?
-  currency             String?
-  amount               Float
-  serviceID            String?
-  serviceName          String?
-  serviceDescription   String?
+  id                 Int     @id @default(autoincrement())
+  pidPayment         String  @unique()
+  pidUser            String
+  payerName          String
+  payerEmail         String?
+  txID               String
+  txRef              String
+  paymentStatus      String?
+  paymentType        String?
+  currency           String?
+  amount             Float
+  serviceID          String?
+  serviceName        String?
+  serviceDescription String?
 
-  affiliate_payout_amount             String?
-  affiliate_payout_percentage           String?
-  superAffiliate_payout_amount        String?
-  superAffiliate_payout_percentage   String?
+  affiliate_payout_amount          String?
+  affiliate_payout_percentage      String?
+  superAffiliate_payout_amount     String?
+  superAffiliate_payout_percentage String?
 
-  bankName             String?
-  bankNumber           String?
-  depositorName        String?
+  bankName      String?
+  bankNumber    String?
+  depositorName String?
 
-  affiliatePayStatus   String?
-  affiliateRefId       String?
+  affiliatePayStatus String?
+  affiliateRefId     String?
 
-  superAffiliatePayStatus   String?
-  superAffiliateRefId       String?
+  superAffiliatePayStatus String?
+  superAffiliateRefId     String?
 
-  txDateProcesser      String?
-  txDateServer         String?
-  status1              String?
-  status2              String?
-  paymentExt1          String?
-  paymentExt2          String?
-  xStatus               String?
-  createdAt            DateTime?  @default(now())
-  updatedAt            DateTime?
+  txDateProcesser String?
+  txDateServer    String?
+  status1         String?
+  status2         String?
+  paymentExt1     String?
+  paymentExt2     String?
+  xStatus         String?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime?
 }
-
-
 
 model debits {
-  id                   Int       @id @default(autoincrement())
-  pidDebit             String    @unique()
-  pidUser              String
-  email                String
-  payerName            String
-  txID                 String
-  txRef                String
-  paymentStatus        String?
-  paymentType          String?
-  currency             String?
-  amount               Float
-  serviceID            String?
-  serviceName          String?
-  serviceDescription   String?
-  status1              String?
-  status2              String?
-  debitExt1            String?
-  debitExt2            String?
-  xStatus              String?
-  createdAt            DateTime?  @default(now())
-  updatedAt            DateTime?
-}
-
-
-
-model subscriptions {
   id                 Int       @id @default(autoincrement())
-  pidSubscription    String    @unique()
-  subEmail           String?
-  subStatus          String?
-  subExt1            String?
-  subExt2            String?
+  pidDebit           String    @unique()
+  pidUser            String
+  email              String
+  payerName          String
+  txID               String
+  txRef              String
+  paymentStatus      String?
+  paymentType        String?
+  currency           String?
+  amount             Float
+  serviceID          String?
+  serviceName        String?
+  serviceDescription String?
+  status1            String?
+  status2            String?
+  debitExt1          String?
+  debitExt2          String?
   xStatus            String?
-  createdAt          DateTime?  @default(now())
+  createdAt          DateTime? @default(now())
   updatedAt          DateTime?
 }
 
-
+model subscriptions {
+  id              Int       @id @default(autoincrement())
+  pidSubscription String    @unique()
+  subEmail        String?
+  subStatus       String?
+  subExt1         String?
+  subExt2         String?
+  xStatus         String?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime?
+}
 
 model special_sourcing {
   id                    Int       @id @default(autoincrement())
@@ -420,459 +397,415 @@ model special_sourcing {
   xStatus               String?
   ext1                  String?
   ext2                  String?
-  createdAt             DateTime?  @default(now())
+  createdAt             DateTime? @default(now())
   updatedAt             DateTime?
 }
 
-
-
 model pay_supplier {
-  id                          Int       @id @default(autoincrement())
-  pidPaySupplier              String    @unique()
-  pidUser                     String?
-  supplierName                String?
-  supplierPhone               String?
-  supplierEmail                String?
-  aliPayAccountQRCodeImage    String?
-  weChatAccountQRCodeImage    String?
-  proformaInvoiceImage        String?
-  supplierBankAccountDetails  String?
-  amountToPayInYuan           String?
-  amountToPayInNaira          String?
-  serviceCharge               String?
-  account_details1                String?
-  account_details2                String?
-  bank_account_details                String?
-  amount_to_pay                String?
-  additional_info                String?
-  service_charge                String?
-  vat                String?
-  buy_rate                String?
-  sell_rate                String?
-  admin                String?
-  admin_last                String?
-  status                      String?
-  xStatus                     String?
-  ext1                        String?
-  ext2                        String?
-  createdAt                   DateTime?  @default(now())
-  updatedAt                   DateTime?
+  id                         Int       @id @default(autoincrement())
+  pidPaySupplier             String    @unique()
+  pidUser                    String?
+  supplierName               String?
+  supplierPhone              String?
+  supplierEmail              String?
+  aliPayAccountQRCodeImage   String?
+  weChatAccountQRCodeImage   String?
+  proformaInvoiceImage       String?
+  supplierBankAccountDetails String?
+  amountToPayInYuan          String?
+  amountToPayInNaira         String?
+  serviceCharge              String?
+  account_details1           String?
+  account_details2           String?
+  bank_account_details       String?
+  amount_to_pay              String?
+  additional_info            String?
+  service_charge             String?
+  vat                        String?
+  buy_rate                   String?
+  sell_rate                  String?
+  admin                      String?
+  admin_last                 String?
+  status                     String?
+  xStatus                    String?
+  ext1                       String?
+  ext2                       String?
+  createdAt                  DateTime? @default(now())
+  updatedAt                  DateTime?
 }
-
-
 
 model shipping_only {
-  id                              Int       @id @default(autoincrement())
-  pidShippingOnly                 String    @unique()
-  pidUser                         String?
-  whatsappNumber                  String?
-  shippingName                    String?
-  shippingTo                      String?
-  grossWeight                     String?
-  trackingNumber                  String?
-  shippingPlan                    String?
-  expectedShipments               String?
-  wantProductVerification         Boolean?
-  wantConsolidation               Boolean?
-  multipleSuppliers               Boolean?
-  description                     String?
-  status                          String?
-  xStatus                         String?
-  ext1                            String?
-  ext2                            String?
-  createdAt                       DateTime?  @default(now())
-  updatedAt                       DateTime?
-}
-
-
-
-model verify_supplier {
-  id                              Int       @id @default(autoincrement())
-  pidVerifySupplier               String    @unique()
-  pidUser                         String?
-  supplierName                    String?
-  supplierPhone                   String?
-  supplierAddress                 String?
-  supplierProduct                 String?
-  supplierDetails                 String?
-  supplierWebsite                 String?
-  status                          String?
-  xStatus                         String?
-  ext1                            String?
-  ext2                            String?
-  createdAt                       DateTime?  @default(now())
-  updatedAt                       DateTime?
-}
-
-
-
-model affiliates {
   id                      Int       @id @default(autoincrement())
-  pidUser                 String    @unique()
-  username                String?
-  password                String?
-  cid_status              String?
-  login_status            String?
-  login_key               String?
-  login_stamp             String?
-  first_name              String?
-  last_name               String?
-  gender                  String?
-  dob_day                 String?
-  dob_month               String?
-  dob_year                String?
-  email                   String?
-  phone                   String?
-  address                 String?
-  bank_name               String?
-  bank_account_number     String?
-  bank_account_name       String?
-  affiliate_id            String?
-  payout_request          String?
+  pidShippingOnly         String    @unique()
+  pidUser                 String?
+  whatsappNumber          String?
+  shippingName            String?
+  shippingTo              String?
+  grossWeight             String?
+  trackingNumber          String?
+  shippingPlan            String?
+  expectedShipments       String?
+  wantProductVerification Boolean?
+  wantConsolidation       Boolean?
+  multipleSuppliers       Boolean?
+  description             String?
   status                  String?
   xStatus                 String?
   ext1                    String?
   ext2                    String?
-  createdAt               DateTime?  @default(now())
+  createdAt               DateTime? @default(now())
   updatedAt               DateTime?
 }
 
+model verify_supplier {
+  id                Int       @id @default(autoincrement())
+  pidVerifySupplier String    @unique()
+  pidUser           String?
+  supplierName      String?
+  supplierPhone     String?
+  supplierAddress   String?
+  supplierProduct   String?
+  supplierDetails   String?
+  supplierWebsite   String?
+  status            String?
+  xStatus           String?
+  ext1              String?
+  ext2              String?
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime?
+}
 
+model affiliates {
+  id                  Int       @id @default(autoincrement())
+  pidUser             String    @unique()
+  username            String?
+  password            String?
+  cid_status          String?
+  login_status        String?
+  login_key           String?
+  login_stamp         String?
+  first_name          String?
+  last_name           String?
+  gender              String?
+  dob_day             String?
+  dob_month           String?
+  dob_year            String?
+  email               String?
+  phone               String?
+  address             String?
+  bank_name           String?
+  bank_account_number String?
+  bank_account_name   String?
+  affiliate_id        String?
+  payout_request      String?
+  status              String?
+  xStatus             String?
+  ext1                String?
+  ext2                String?
+  createdAt           DateTime? @default(now())
+  updatedAt           DateTime?
+}
 
 model payment_records {
-  id                 Int       @id @default(autoincrement())
-  pidPayment String    @unique()
-  pid_user    String?
-  pid_order    String?
-  tx_code    String?
-  payment_status    String?
-  payment_type    String?
-  currency_type    String?
-  amount    String?
-  affiliate_pay_status    String?
-  service_type    String?
-  ref_id    String?
+  id                   Int       @id @default(autoincrement())
+  pidPayment           String    @unique()
+  pid_user             String?
+  pid_order            String?
+  tx_code              String?
+  payment_status       String?
+  payment_type         String?
+  currency_type        String?
+  amount               String?
+  affiliate_pay_status String?
+  service_type         String?
+  ref_id               String?
   tx_date_processor    String?
-  tx_date_server    String?
-  ext1               String?
-  ext2               String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  tx_date_server       String?
+  ext1                 String?
+  ext2                 String?
+  xStatus              String?
+  createdAt            DateTime? @default(now())
+  updatedAt            DateTime?
 }
-
 
 model refund_records {
-  id  Int       @id @default(autoincrement())
-  pidRefund String    @unique()
-  pidUser    String?
-  pidOrder    String?
-  amount    String?
-  currency    String?
-  refundStatus    String?
-  serviceType    String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id           Int       @id @default(autoincrement())
+  pidRefund    String    @unique()
+  pidUser      String?
+  pidOrder     String?
+  amount       String?
+  currency     String?
+  refundStatus String?
+  serviceType  String?
+  ext1         String?
+  ext2         String?
+  xStatus      String?
+  createdAt    DateTime? @default(now())
+  updatedAt    DateTime?
 }
-
-
-
-
-
 
 model bank_payment {
-  id  Int   @id @default(autoincrement())
-  pidBankPayment String  @unique()
-  pidUser    String?
-  pidBank    String?
-  pidOrder    String?
-  amount    String?
-  currency  String?
-  depositorName    String?
-  trxNumber    String?
+  id             Int       @id @default(autoincrement())
+  pidBankPayment String    @unique()
+  pidUser        String?
+  pidBank        String?
+  pidOrder       String?
+  amount         String?
+  currency       String?
+  depositorName  String?
+  trxNumber      String?
   serviceType    String?
-  bankStatus    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  bankStatus     String?
+  status         String?
+  ext1           String?
+  ext2           String?
+  xStatus        String?
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime?
 }
-
-
 
 model chats {
-  id                 Int       @id @default(autoincrement())
-  pidChat String    @unique()
-  pidOrder    String?
-  pidFrom    String?
-  pidTo    String?
-  fullName    String?
-  messageTitle    String?
+  id                Int       @id @default(autoincrement())
+  pidChat           String    @unique()
+  pidOrder          String?
+  pidFrom           String?
+  pidTo             String?
+  fullName          String?
+  messageTitle      String?
   messageContent    String?
-  messageStatus    String?
-  messageStatusUser    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  messageStatus     String?
+  messageStatusUser String?
+  status            String?
+  ext1              String?
+  ext2              String?
+  xStatus           String?
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime?
 }
-
-
 
 model messages {
-  id                 Int       @id @default(autoincrement())
-  pidMessage String    @unique()
-  pidOrder    String?
-  pidFrom    String?
-  pidTo    String?
-  fullName    String?
-  messageTitle    String?
+  id                Int       @id @default(autoincrement())
+  pidMessage        String    @unique()
+  pidOrder          String?
+  pidFrom           String?
+  pidTo             String?
+  fullName          String?
+  messageTitle      String?
   messageContent    String?
-  messageStatus    String?
-  messageStatusUser    String?
-  delStatus    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  messageStatus     String?
+  messageStatusUser String?
+  delStatus         String?
+  status            String?
+  ext1              String?
+  ext2              String?
+  xStatus           String?
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime?
 }
 
-
 model exchange_rate {
-  id                 Int       @id @default(autoincrement())
-  settings_name     String?
-  currency_name1    String?
-  currency_sign1    String?
-  currency_name2    String?
-  currency_sign2    String?
-  currency_name3    String?
-  currency_sign3    String?
-  service_charge    String?
-  vat               String?
-  exNairaToDollar   String?
-  exYuanToDollar    String?
-  exNairaToYuan    String?
+  id              Int       @id @default(autoincrement())
+  settings_name   String?
+  currency_name1  String?
+  currency_sign1  String?
+  currency_name2  String?
+  currency_sign2  String?
+  currency_name3  String?
+  currency_sign3  String?
+  service_charge  String?
+  vat             String?
+  exNairaToDollar String?
+  exYuanToDollar  String?
+  exNairaToYuan   String?
   status          String
   ext1            String?
   ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  xStatus         String?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime?
 }
-
-
 
 model settings_financial {
-  id                 Int       @id @default(autoincrement())
-  settings_name     String?
-  currency_name1    String?
-  currency_sign1    String?
-  currency_name2    String?
-  currency_sign2    String?
-  currency_name3    String?
-  currency_sign3    String?
-  service_charge    String?
-  vat    String?
-  exchange_rate1    String?
-  exchange_rate2    String?
-  exchange_rate3    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id             Int       @id @default(autoincrement())
+  settings_name  String?
+  currency_name1 String?
+  currency_sign1 String?
+  currency_name2 String?
+  currency_sign2 String?
+  currency_name3 String?
+  currency_sign3 String?
+  service_charge String?
+  vat            String?
+  exchange_rate1 String?
+  exchange_rate2 String?
+  exchange_rate3 String?
+  status         String?
+  ext1           String?
+  ext2           String?
+  xStatus        String?
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime?
 }
-
-
 
 model settings_pay_supplier {
-  id                 Int       @id @default(autoincrement())
-  service_charge    String?
-  vat    String?
-  buy_rate    String?
-  sell_rate    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id             Int       @id @default(autoincrement())
+  service_charge String?
+  vat            String?
+  buy_rate       String?
+  sell_rate      String?
+  status         String?
+  ext1           String?
+  ext2           String?
+  xStatus        String?
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime?
 }
-
-
 
 model settings_shipping {
-  id                 Int       @id @default(autoincrement())
-  settings_name String
-  shipping_company_name    String?
-  shipping_company_pid    String?
-  shipping_company_info    String?
-  shipping_name1    String?
-  pid_shipping1    String?
-  shipping_cost1    String?
-  shipping_cost_suffix1    String?
-  shipping_info1    String?
-  shipping_name2    String?
-  pid_shipping2    String?
-  shipping_cost2    String?
-  shipping_cost_suffix2    String?
-  shipping_info2    String?
-  shipping_name3    String?
-  pid_shipping3    String?
-  shipping_cost3    String?
-  shipping_cost_suffix3    String?
-  shipping_info3    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id                    Int       @id @default(autoincrement())
+  settings_name         String
+  shipping_company_name String?
+  shipping_company_pid  String?
+  shipping_company_info String?
+  shipping_name1        String?
+  pid_shipping1         String?
+  shipping_cost1        String?
+  shipping_cost_suffix1 String?
+  shipping_info1        String?
+  shipping_name2        String?
+  pid_shipping2         String?
+  shipping_cost2        String?
+  shipping_cost_suffix2 String?
+  shipping_info2        String?
+  shipping_name3        String?
+  pid_shipping3         String?
+  shipping_cost3        String?
+  shipping_cost_suffix3 String?
+  shipping_info3        String?
+  status                String?
+  ext1                  String?
+  ext2                  String?
+  xStatus               String?
+  createdAt             DateTime? @default(now())
+  updatedAt             DateTime?
 }
-
-
 
 model settings_weight {
-  id                 Int       @id @default(autoincrement())
-  settings_name    String?
-  minimum_weight    String?
-  maximum_weight    String?
-  additional_cost    String?
+  id              Int       @id @default(autoincrement())
+  settings_name   String?
+  minimum_weight  String?
+  maximum_weight  String?
+  additional_cost String?
   status          String?
   ext1            String?
   ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  xStatus         String?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime?
 }
-
-
 
 model coupon {
-  id                 Int       @id @default(autoincrement())
-  pidCoupon String    @unique()
-  pid_user    String?
-  pid_order    String?
-  coupon_code    String?
-  coupon_value    String?
-  coupon_value_amount    String?
-  coupon_code_ref    String?
-  coupon_type    String?
-  coupon_status    String?
-  coupon_validity    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id                  Int       @id @default(autoincrement())
+  pidCoupon           String    @unique()
+  pid_user            String?
+  pid_order           String?
+  coupon_code         String?
+  coupon_value        String?
+  coupon_value_amount String?
+  coupon_code_ref     String?
+  coupon_type         String?
+  coupon_status       String?
+  coupon_validity     String?
+  status              String?
+  ext1                String?
+  ext2                String?
+  xStatus             String?
+  createdAt           DateTime? @default(now())
+  updatedAt           DateTime?
 }
-
-
 
 model country_shipping_rate {
-  id                 Int       @id @default(autoincrement())
-  country_slug    String?
-  country_name    String?
-  shipping_rate    String?
-  shipping_rate_cbm    String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id                Int       @id @default(autoincrement())
+  country_slug      String?
+  country_name      String?
+  shipping_rate     String?
+  shipping_rate_cbm String?
+  status            String?
+  ext1              String?
+  ext2              String?
+  xStatus           String?
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime?
 }
-
-
 
 model banks {
-  id                 Int       @id @default(autoincrement())
-  pidBank String    @unique()
-  bankName           String?
-  bankAccountName           String?
-  bankAccountNumber           String?
-  accountType           String?
-  generalInfo           String?
-  admin           String?
-  status          String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id                Int       @id @default(autoincrement())
+  pidBank           String    @unique()
+  bankName          String?
+  bankAccountName   String?
+  bankAccountNumber String?
+  accountType       String?
+  generalInfo       String?
+  admin             String?
+  status            String?
+  ext1              String?
+  ext2              String?
+  xStatus           String?
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime?
 }
-
-
-
 
 model faq {
-  id                 Int       @id @default(autoincrement())
-  pidFaq             String    @unique()
-  slug               String?
-  question           String?
-  content            String?
-  category           String?
-  video_id           String?
-  admin              String?
-  status             String?
-  ext1               String?
-  ext2               String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id        Int       @id @default(autoincrement())
+  pidFaq    String    @unique()
+  slug      String?
+  question  String?
+  content   String?
+  category  String?
+  video_id  String?
+  admin     String?
+  status    String?
+  ext1      String?
+  ext2      String?
+  xStatus   String?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime?
 }
-
-
-
-
 
 model posts {
-  id                 Int       @id @default(autoincrement())
-  pidPost            String    @unique()
-  slug               String
-  title              String?
-  content            String?
-  category           String?
-  tags               String?
-  image              String?
-  author             String?
-  status             String?
-  ext1               String?
-  ext2               String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
+  id        Int       @id @default(autoincrement())
+  pidPost   String    @unique()
+  slug      String
+  title     String?
+  content   String?
+  category  String?
+  tags      String?
+  image     String?
+  author    String?
+  status    String?
+  ext1      String?
+  ext2      String?
+  xStatus   String?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime?
 }
 
-
 model country {
-  id          Int       @id @default(autoincrement())
-  pidCountry  String         @unique()
-  countrySlug String?
-  countryName String?        @unique()
-  ext1        String?
-  ext2        String?
-  status      String?
-  createdAt   DateTime?      @default(now())
-  updatedAt   DateTime?      @default(now())
+  id            Int            @id @default(autoincrement())
+  pidCountry    String         @unique()
+  countrySlug   String?
+  countryName   String?        @unique()
+  ext1          String?
+  ext2          String?
+  status        String?
+  createdAt     DateTime?      @default(now())
+  updatedAt     DateTime?      @default(now())
   shippingPlans shippingplan[]
 }
 
-
 model shippingplan {
-  id               Int      @id @default(autoincrement())
-  pidShippingPlan  String   @unique()
+  id               Int       @id @default(autoincrement())
+  pidShippingPlan  String    @unique()
   countryId        String
   shippingPlanSlug String?
   shippingPlanName String?
@@ -880,28 +813,25 @@ model shippingplan {
   ext1             String?
   ext2             String?
   status           String?
-  createdAt        DateTime @default(now())
+  createdAt        DateTime  @default(now())
   updatedAt        DateTime?
-  country          country  @relation(fields: [countryId], references: [pidCountry])
+  country          country   @relation(fields: [countryId], references: [pidCountry])
 }
 
-
-
 model Wallet {
-  id          String        @id @default(cuid())
-  name        String
-  type        WalletType
-  currency    String        @default("NGN")
-  balance     Float         @default(0)
-  pidUser     String        @unique()
-  user        users         @relation(fields: [pidUser], references: [pidUser], onDelete: Cascade)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id           String        @id @default(cuid())
+  name         String
+  type         WalletType
+  currency     String        @default("NGN")
+  balance      Float         @default(0)
+  pidUser      String        @unique()
+  user         users         @relation(fields: [pidUser], references: [pidUser], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   transactions Transaction[]
 
   @@index([pidUser])
 }
-
 
 model Transaction {
   id          String          @id @default(cuid())
@@ -918,47 +848,45 @@ model Transaction {
   @@index([walletId])
 }
 
-
 model store_sales {
-  id  String  @id @default(cuid())
-  pidStore  String  @unique
-  pidProduct  String
-  pidUser  String
-  product_name  String
-  unit_price  String
+  id           String   @id @default(cuid())
+  pidStore     String   @unique
+  pidProduct   String
+  pidUser      String
+  product_name String
+  unit_price   String
   total_price  String
-  quantity  String
-  status  String
-  ext1  String?
-  ext2  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  quantity     String
+  status       String
+  ext1         String?
+  ext2         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
-
 model store_sales_faya {
-  id  Int  @id @default(autoincrement())
-  pidStore  String  @unique
-  pidProduct  String
-  pidUser  String
-  product_name  String
-  unit_price  String
+  id           Int    @id @default(autoincrement())
+  pidStore     String @unique
+  pidProduct   String
+  pidUser      String
+  product_name String
+  unit_price   String
   total_price  String
-  quantity  String
+  quantity     String
 
-  activeTab  String?
-  purchaseType  String? // 'single' or 'bulk'
-  fullName  String?
-  phone  String?
-  address  String?
-  deliveryOption  String?
-  deliveryLocation  String?
+  activeTab        String?
+  purchaseType     String? // 'single' or 'bulk'
+  fullName         String?
+  phone            String?
+  address          String?
+  deliveryOption   String?
+  deliveryLocation String?
 
-  status  String
-  ext1  String?
-  ext2  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  status    String
+  ext1      String?
+  ext2      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum WalletType {
@@ -974,12 +902,10 @@ enum TransactionType {
   TRANSFER
 }
 
-
-
 model Account {
-  id            String        @id @default(cuid())
+  id            String      @id @default(cuid())
   name          String
-  pidAccount    String        @unique()
+  pidAccount    String      @unique()
   accountName   String
   accountNumber String
   bankName      String
@@ -988,15 +914,15 @@ model Account {
   customer_code String
   phone         String
   type          AccountType
-  balance       Decimal?       @default(0)
-  currency      String?        @default("NGN")
-  color         String?       // For UI customization
-  icon          String?       // Icon identifier
-  isDefault     Boolean?       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  balance       Decimal?    @default(0)
+  currency      String?     @default("NGN")
+  color         String? // For UI customization
+  icon          String? // Icon identifier
+  isDefault     Boolean?    @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   userId        String
-  user          users         @relation(fields: [userId], references: [pidUser], onDelete: Cascade)
+  user          users       @relation(fields: [userId], references: [pidUser], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -1010,8 +936,6 @@ enum AccountType {
   OTHER
 }
 
-
-
 enum PayStatus {
   SAVED
   STARTED
@@ -1020,40 +944,37 @@ enum PayStatus {
 }
 
 model buy_products {
-  id         Int       @id @default(autoincrement())
-  pidProduct String    @unique()
-  pidCategory    String
-  pidUser    String?
-  productName    String?      
-  productPrice    Float?                                     
-  productInfo    String?
-  productStatus    String?
-  pidAdmin    String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  buy_category       buy_category  @relation(fields: [pidCategory], references: [pidCategory], onDelete: Cascade)
+  id            Int          @id @default(autoincrement())
+  pidProduct    String       @unique()
+  pidCategory   String
+  pidUser       String?
+  productName   String?
+  productPrice  Float?
+  productInfo   String?
+  productStatus String?
+  pidAdmin      String?
+  ext1          String?
+  ext2          String?
+  xStatus       String?
+  createdAt     DateTime?    @default(now())
+  updatedAt     DateTime?
+  buy_category  buy_category @relation(fields: [pidCategory], references: [pidCategory], onDelete: Cascade)
 }
-
 
 model buy_category {
-  id         Int       @id @default(autoincrement())
-  pidCategory String    @unique()
-  pidUser    String?
-  categoryName    String?                                    
-  categoryInfo    String?
-  categoryStatus    String?
-  ext1            String?
-  ext2            String?
-  xStatus            String?
-  createdAt          DateTime?  @default(now())
-  updatedAt          DateTime?
-  buy_products           buy_products[]
+  id             Int            @id @default(autoincrement())
+  pidCategory    String         @unique()
+  pidUser        String?
+  categoryName   String?
+  categoryInfo   String?
+  categoryStatus String?
+  ext1           String?
+  ext2           String?
+  xStatus        String?
+  createdAt      DateTime?      @default(now())
+  updatedAt      DateTime?
+  buy_products   buy_products[]
 }
-
-
 
 enum ProductCondition {
   BRAND_NEW
@@ -1062,7 +983,6 @@ enum ProductCondition {
   OPEN_BOX
 }
 
-
 enum WarrantyPeriod {
   MONTHS3
   MONTHS6
@@ -1070,13 +990,14 @@ enum WarrantyPeriod {
   MONTHS24
   MONTHS36
 }
+
 model corporate_gift_request {
-  id                            Int       @id @default(autoincrement())
-  pidRequest                    String    @unique()
+  id                            Int      @id @default(autoincrement())
+  pidRequest                    String   @unique()
   businessName                  String
   contactPersonFullName         String
   productOrItemNeeded           String
-  detailedSpecifications        String    @db.LongText
+  detailedSpecifications        String   @db.LongText
   quantityNeeded                Int
   preferredQualityLevel         String
   brandingCustomizationRequired String
@@ -1086,13 +1007,13 @@ model corporate_gift_request {
   whatsappNumber                String
   proceedTimeline               String?
   hearAboutSureImports          String?
-  additionalNotes               String?   @db.LongText
+  additionalNotes               String?  @db.LongText
   budgetRange                   String?
   referenceFileUrl              String?
   referenceFileName             String?
   logoFileUrl                   String?
   logoFileName                  String?
-  status                        String    @default("Pending")
+  status                        String   @default("Pending")
   handledByPidUser              String?
   handledByEmail                String?
   handledByName                 String?
@@ -1103,6 +1024,207 @@ model corporate_gift_request {
   utmContent                    String?
   utmTerm                       String?
   submittedAt                   String?
-  createdAt                     DateTime  @default(now())
-  updatedAt                     DateTime  @updatedAt
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+}
+
+model invoice_settings {
+  id                     Int      @id @default(autoincrement())
+  pidSetting             String   @unique()
+  businessName           String
+  businessContactDetails String   @db.LongText
+  footerNotes            String   @db.LongText
+  status                 String?  @default("ACTIVE")
+  createdByPidUser       String?
+  updatedByPidUser       String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model invoices {
+  id               Int                  @id @default(autoincrement())
+  pidInvoice       String               @unique()
+  invoiceNumber    String               @unique()
+  pidUser          String
+  customerName     String?
+  customerEmail    String?
+  customerPhone    String?
+  currency         String               @default("NGN")
+  subtotal         Decimal              @db.Decimal(18, 2)
+  discountTotal    Decimal              @default(0) @db.Decimal(18, 2)
+  taxTotal         Decimal              @default(0) @db.Decimal(18, 2)
+  grandTotal       Decimal              @db.Decimal(18, 2)
+  amountPaid       Decimal              @default(0) @db.Decimal(18, 2)
+  balanceDue       Decimal              @db.Decimal(18, 2)
+  status           String               @default("DRAFT")
+  issuedAt         DateTime?
+  dueAt            DateTime?
+  paidAt           DateTime?
+  headerSnapshot   String?              @db.LongText
+  footerSnapshot   String?              @db.LongText
+  notes            String?              @db.LongText
+  linkedRequestId  String?
+  createdByPidUser String?
+  updatedByPidUser String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  user             users                @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
+  items            invoice_items[]
+  payments         invoice_payments[]
+  receipts         receipts[]
+  auditLogs        invoice_audit_logs[]
+  accessTokens     invoice_access_tokens[]
+  paymentClaims    invoice_payment_claims[]
+
+  @@index([pidUser])
+  @@index([status])
+  @@index([createdAt])
+  @@index([dueAt])
+}
+
+model invoice_access_tokens {
+  id            Int      @id @default(autoincrement())
+  pidToken      String   @unique()
+  pidInvoice    String
+  accessToken   String   @unique()
+  expiresAt     DateTime
+  lastUsedAt    DateTime?
+  revokedAt     DateTime?
+  createdByPidUser String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  invoice       invoices @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+
+  @@index([pidInvoice])
+  @@index([accessToken])
+  @@index([expiresAt])
+}
+
+model invoice_bank_accounts {
+  id             Int      @id @default(autoincrement())
+  pidBankAccount String   @unique()
+  accountName    String
+  accountNumber  String
+  bankName       String
+  sortCode       String?
+  currency       String   @default("NGN")
+  country        String?
+  notes          String?  @db.LongText
+  displayOrder   Int      @default(0)
+  status         String   @default("ACTIVE")
+  createdByPidUser String?
+  updatedByPidUser String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([currency])
+  @@index([displayOrder])
+}
+
+model invoice_payment_claims {
+  id                Int      @id @default(autoincrement())
+  pidClaim          String   @unique()
+  pidInvoice        String
+  pidUser           String?
+  claimedAmount     Decimal  @db.Decimal(18, 2)
+  currency          String   @default("NGN")
+  selectedBankAccountId String?
+  selectedBankAccountJson String? @db.LongText
+  paymentReference  String?
+  note              String?  @db.LongText
+  claimedAt         DateTime @default(now())
+  status            String   @default("PENDING_CONFIRMATION")
+  reviewedByPidUser String?
+  reviewedAt        DateTime?
+  reviewNote        String?  @db.LongText
+  approvedInvoicePaymentPid String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  invoice           invoices @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+  user              users?   @relation(fields: [pidUser], references: [pidUser], onDelete: SetNull)
+
+  @@index([pidInvoice])
+  @@index([pidUser])
+  @@index([status])
+  @@index([claimedAt])
+}
+
+model invoice_items {
+  id             Int      @id @default(autoincrement())
+  pidInvoiceItem String   @unique()
+  pidInvoice     String
+  lineNo         Int
+  description    String   @db.LongText
+  quantity       Decimal  @db.Decimal(18, 2)
+  unitPrice      Decimal  @db.Decimal(18, 2)
+  lineTotal      Decimal  @db.Decimal(18, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  invoice        invoices @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+
+  @@index([pidInvoice])
+}
+
+model invoice_payments {
+  id                Int        @id @default(autoincrement())
+  pidInvoicePayment String     @unique()
+  pidInvoice        String
+  pidUser           String
+  amount            Decimal    @db.Decimal(18, 2)
+  currency          String     @default("NGN")
+  paymentMethod     String
+  reference         String?
+  note              String?    @db.LongText
+  paidAt            DateTime
+  recordedByPidUser String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  invoice           invoices   @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Restrict)
+  user              users      @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
+  receipts          receipts[]
+
+  @@index([pidInvoice])
+  @@index([pidUser])
+  @@index([paidAt])
+}
+
+model receipts {
+  id                Int              @id @default(autoincrement())
+  pidReceipt        String           @unique()
+  receiptNumber     String           @unique()
+  pidInvoice        String
+  pidInvoicePayment String
+  amount            Decimal          @db.Decimal(18, 2)
+  balanceAfter      Decimal          @db.Decimal(18, 2)
+  issuedAt          DateTime         @default(now())
+  deliveryStatus    String           @default("PENDING")
+  sentAt            DateTime?
+  createdByPidUser  String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  invoice           invoices         @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Restrict)
+  payment           invoice_payments @relation(fields: [pidInvoicePayment], references: [pidInvoicePayment], onDelete: Restrict)
+
+  @@index([pidInvoice])
+  @@index([pidInvoicePayment])
+  @@index([issuedAt])
+}
+
+model invoice_audit_logs {
+  id          Int      @id @default(autoincrement())
+  pidAuditLog String   @unique()
+  pidInvoice  String
+  pidUser     String?
+  action      String
+  oldStatus   String?
+  newStatus   String?
+  metadata    String?  @db.LongText
+  createdAt   DateTime @default(now())
+  invoice     invoices @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+  user        users?   @relation(fields: [pidUser], references: [pidUser], onDelete: SetNull)
+
+  @@index([pidInvoice])
+  @@index([pidUser])
+  @@index([createdAt])
 }

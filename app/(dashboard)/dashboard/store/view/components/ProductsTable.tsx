@@ -42,6 +42,8 @@ export default function ProductsTable() {
   const [priceMin, setPriceMin] = useState<string>('');
   const [priceMax, setPriceMax] = useState<string>('');
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDeletePid, setPendingDeletePid] = useState<string | null>(null);
 
   // State for pagination
   const [page, setPage] = useState<number>(1);
@@ -155,12 +157,17 @@ export default function ProductsTable() {
     }
   };
 
-  const handleDelete = async (pidProduct: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    
+  const requestDelete = (pidProduct: string) => {
+    setPendingDeletePid(pidProduct);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDelete = async () => {
+    if (!pendingDeletePid) return;
+
     toast.info('Deleting Product...');
     try {
-      const response = await fetch(`/api/crud/store/delete?pidProduct=${pidProduct}`);
+      const response = await fetch(`/api/crud/store/delete?pidProduct=${pendingDeletePid}`);
       const data = await response.json();
       
       if (data.statusx === 'SUCCESS') {
@@ -171,6 +178,9 @@ export default function ProductsTable() {
       }
     } catch (err: any) {
       toast.error(err.message || 'An error occurred during deletion.');
+    } finally {
+      setShowDeleteConfirm(false);
+      setPendingDeletePid(null);
     }
   };
 
@@ -492,7 +502,7 @@ export default function ProductsTable() {
                             <Edit size={18} />
                           </a>
                           <button
-                            onClick={() => handleDelete(product.pidProduct)}
+                            onClick={() => requestDelete(product.pidProduct)}
                             title="Delete Product"
                             className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                           >
@@ -582,6 +592,34 @@ export default function ProductsTable() {
             >
               Last
             </button>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Delete Product</h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              Are you sure you want to delete this product? This action cannot be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setPendingDeletePid(null);
+                }}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -190,7 +190,7 @@ const ComponentsAccordionsBasic = () => {
 
 
     function setActionType(value:string) {
-        alert(value);
+        toast.info(value);
     }
 
    //LOADER & EMPTY RECORD PROCESSING 

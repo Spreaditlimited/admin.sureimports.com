@@ -1,4 +1,4 @@
-import sendEmail from '@/lib/email/config/sendEmail';
+import xMail from '@/lib/email/xMail2';
 
 export const CORPORATE_GIFT_STATUSES = [
   'Pending',
@@ -71,27 +71,25 @@ async function sendWhatsAppTemplate(input: NotifyInput) {
 }
 
 export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {
-  const statusLine = `Current Status: ${input.status}`;
-  const ownerLine = input.handledByName
-    ? `Handled by: ${input.handledByName}`
-    : '';
-
-  const emailHtml = `
-    <p>Hello ${input.contactPersonFullName || 'Customer'},</p>
-    <p>We have an update on your corporate gift sourcing request.</p>
-    <p><strong>Request ID:</strong> ${input.requestId}<br/>
-    <strong>Business:</strong> ${input.businessName}<br/>
-    <strong>${statusLine}</strong></p>
-    ${ownerLine ? `<p>${ownerLine}</p>` : ''}
-    <p>Thank you for choosing Sure Imports.</p>
-  `;
+  const ownerLine = input.handledByName ? input.handledByName : 'Unassigned';
+  const bodyTable = `
+<table style="width:100%;border-collapse:collapse;margin-top:6px;border:1px solid #e5e7eb;">
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Request ID</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${input.requestId}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Business</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${input.businessName}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Current Status</b></td><td style="padding:8px;border:1px solid #e5e7eb;"><b>${input.status}</b></td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Handled By</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${ownerLine}</td></tr>
+</table>`;
 
   await Promise.allSettled([
-    sendEmail(
-      input.contactEmail,
-      `Corporate Gift Request Update - ${input.requestId} (${input.status})`,
-      emailHtml,
-    ),
+    xMail({
+      xEmail: input.contactEmail,
+      xTitle: `Corporate Gift Request Update - ${input.requestId} (${input.status})`,
+      xBodyTitle: 'Corporate Gift Status Update',
+      xBody1: `Hello ${input.contactPersonFullName || 'Customer'},<br />We have an update on your corporate gift sourcing request.`,
+      xBody2: `${bodyTable}<br />Thank you for choosing Sure Imports.`,
+      xButtonTitle: 'Contact Us',
+      xButtonLink: 'https://sureimports.com/contact',
+    }),
     sendWhatsAppTemplate(input),
   ]);
 }

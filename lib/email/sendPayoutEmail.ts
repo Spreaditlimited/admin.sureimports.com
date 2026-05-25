@@ -1,6 +1,5 @@
 'use server';
-import sendEmail from '@/lib/email/config/sendEmail';
-import payoutMailTemplate from '@/lib/email/temp/payoutMailTemplate';
+import xMail from '@/lib/email/xMail2';
 
 interface PayoutEmailData {
   userEmail: string;
@@ -53,19 +52,28 @@ export default async function sendPayoutEmail(data: PayoutEmailData): Promise<bo
     const subject = `Payout Transfer Successful - ₦${formattedNetAmount} Sent to Your Bank Account`;
     console.log('📝 Email subject:', subject);
 
-    console.log('🎨 Generating email template...');
-    const htmlContent = payoutMailTemplate({
-      userName,
-      originalAmount,
-      serviceCharge,
-      netAmount,
-      recipientCode,
-      transferCode,
-      transactionDate,
-    });
+    const fmt = (value: number) =>
+      `₦${value.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-    console.log('📤 Sending email via SMTP...');
-    await sendEmail(userEmail, subject, htmlContent);
+    const table = `
+<table style="width:100%;border-collapse:collapse;margin-top:6px;border:1px solid #e5e7eb;">
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Original Amount</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${fmt(originalAmount)}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Service Charge</b></td><td style="padding:8px;border:1px solid #e5e7eb;">-${fmt(serviceCharge)}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Net Amount Sent</b></td><td style="padding:8px;border:1px solid #e5e7eb;"><b>${fmt(netAmount)}</b></td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Recipient</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${recipientCode}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Transfer Reference</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${transferCode}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Transaction Date</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${transactionDate}</td></tr>
+</table>`;
+
+    await xMail({
+      xEmail: userEmail,
+      xTitle: subject,
+      xBodyTitle: 'Payout Transfer Successful',
+      xBody1: `Hello ${userName},<br />Your payout request has been processed successfully.`,
+      xBody2: `${table}<br />If funds are not reflected within 24 hours, please contact support.`,
+      xButtonTitle: 'View Dashboard',
+      xButtonLink: 'https://sureimports.com/dashboard',
+    });
 
     console.log(`✅ Payout email sent successfully to ${userEmail} (Transfer: ${transferCode})`);
     return true;
@@ -82,4 +90,3 @@ export default async function sendPayoutEmail(data: PayoutEmailData): Promise<bo
     return false;
   }
 }
-

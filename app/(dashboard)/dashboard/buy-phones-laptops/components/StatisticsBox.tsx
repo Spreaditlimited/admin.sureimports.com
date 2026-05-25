@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'sonner';
 
 interface StatCardProps {
   title: string;
@@ -25,7 +26,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, description, bgColor,
 const Statistics = () => {
   // Example click handler
   const handleClick = (title: string) => {
-    alert(`You clicked on ${title}!`);
+    toast.info(`You clicked on ${title}!`);
   };
 
   return (

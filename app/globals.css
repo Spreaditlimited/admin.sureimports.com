@@ -174,9 +174,51 @@
   color: #94a3b8 !important;
 }
 
+/* Premium admin picker style */
+.admin-theme-surface select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #64748b 50%),
+    linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.75rem !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  padding-right: 2.25rem !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.admin-theme-surface select:focus {
+  outline: none;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.dark .admin-theme-surface select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, #94a3b8 50%),
+    linear-gradient(135deg, #94a3b8 50%, transparent 50%);
+  border-color: #475569 !important;
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(148, 163, 184, 0.06);
+}
+
+.dark .admin-theme-surface select:focus {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
 
 
 
   /* END */
 }
-

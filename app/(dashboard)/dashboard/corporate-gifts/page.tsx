@@ -17,6 +17,7 @@ import {
   assignCorporateGiftRequestAction,
   updateCorporateGiftRequestAction,
 } from './actions';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -61,7 +62,12 @@ export default async function CorporateGiftsAdminPage() {
       ) : (
         <div className="space-y-6">
           {entries.map((entry) => {
-            const nextStatus = getNextCorporateGiftStatus(entry.status);
+            const entryView = entry as typeof entry & {
+              status?: string;
+              handledByName?: string | null;
+            };
+            const entryStatus = entryView.status || 'Pending';
+            const nextStatus = getNextCorporateGiftStatus(entryStatus);
             return (
               <div
               key={entry.id}
@@ -238,14 +244,20 @@ export default async function CorporateGiftsAdminPage() {
                       variant="outline"
                       className="border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                     >
-                      {entry.status || 'Pending'}
+                      {entryStatus}
                     </Badge>
                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                      Handler: {entry.handledByName || 'Unassigned'}
+                      Handler: {entryView.handledByName || 'Unassigned'}
                     </span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/dashboard/invoicing/create?linkedRequestId=${entry.pidRequest}`}
+                      className="rounded-md border border-indigo-600 bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                    >
+                      Create Invoice
+                    </Link>
                     <form action={assignCorporateGiftRequestAction}>
                       <input
                         type="hidden"
