@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function CustomerInvoiceClient({ accessToken }: { accessToken: string }) {
@@ -11,9 +12,14 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
   const [paymentReference, setPaymentReference] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchInvoice = async () => {
-    setLoading(true);
+  const fetchInvoice = async (background = false) => {
+    if (background) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError('');
     try {
       const res = await fetch(`/api/invoicing/public/invoice/${accessToken}`);
@@ -23,13 +29,19 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
     } catch (e: any) {
       setError(e.message || 'Failed to load invoice');
     } finally {
-      setLoading(false);
+      if (background) {
+        setIsRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchInvoice();
-    const id = setInterval(fetchInvoice, 20000);
+    fetchInvoice(false);
+    const id = setInterval(() => {
+      fetchInvoice(true);
+    }, 20000);
     return () => clearInterval(id);
   }, [accessToken]);
 
@@ -107,7 +119,19 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
       {/* Top Header/Nav */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="mx-auto max-w-5xl px-4 py-4 flex justify-between items-center">
-          <span className="text-sm font-bold tracking-tighter text-[#0b3b88]">SURE IMPORTS</span>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/assets/images/logo2.png"
+              alt="Sure Imports"
+              width={120}
+              height={28}
+              className="h-7 w-auto"
+              priority
+            />
+            {isRefreshing ? (
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Updating...</span>
+            ) : null}
+          </div>
           <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(invoice.status)}`}>
             {invoice.status}
           </div>
@@ -255,38 +279,38 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
           <div className="md:col-span-2">
             <div className="bg-slate-900 rounded-2xl p-6 shadow-xl sticky top-24">
               <h2 className="text-lg font-bold text-white mb-2">2. Confirm Payment</h2>
-              <p className="text-blue-200/60 text-sm mb-6">Notify us once you've made the transfer.</p>
+              <p className="text-blue-100 text-sm mb-6">Notify us once you've made the transfer.</p>
               
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold text-blue-200/80 uppercase mb-1 block">Amount Paid ({invoice.currency})</label>
+                  <label className="text-[10px] font-bold text-blue-100 uppercase mb-1 block">Amount Paid ({invoice.currency})</label>
                   <input
                     value={claimedAmount}
                     onChange={(e) => setClaimedAmount(e.target.value)}
                     type="number"
                     placeholder="0.00"
-                    className="w-full rounded-xl bg-white/10 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:bg-white/20 focus:outline-none transition-all"
+                    className="w-full rounded-xl bg-white/20 border border-white/30 px-4 py-3 text-white placeholder:text-white/60 focus:bg-white/30 focus:outline-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-blue-200/80 uppercase mb-1 block">Payment Reference</label>
+                  <label className="text-[10px] font-bold text-blue-100 uppercase mb-1 block">Payment Reference</label>
                   <input
                     value={paymentReference}
                     onChange={(e) => setPaymentReference(e.target.value)}
                     placeholder="Transaction ID or Name"
-                    className="w-full rounded-xl bg-white/10 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:bg-white/20 focus:outline-none transition-all"
+                    className="w-full rounded-xl bg-white/20 border border-white/30 px-4 py-3 text-white placeholder:text-white/60 focus:bg-white/30 focus:outline-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-blue-200/80 uppercase mb-1 block">Additional Note</label>
+                  <label className="text-[10px] font-bold text-blue-100 uppercase mb-1 block">Additional Note</label>
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     rows={3}
                     placeholder="Optional message..."
-                    className="w-full rounded-xl bg-white/10 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:bg-white/20 focus:outline-none transition-all resize-none"
+                    className="w-full rounded-xl bg-white/20 border border-white/30 px-4 py-3 text-white placeholder:text-white/60 focus:bg-white/30 focus:outline-none transition-all resize-none"
                   />
                 </div>
 
@@ -308,7 +332,7 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
                     </span>
                   ) : 'Confirm My Payment'}
                 </button>
-                <p className="text-[10px] text-center text-blue-200/40">
+                <p className="text-[10px] text-center text-blue-100/80">
                   Secure transmission to Sure Imports Admin.
                 </p>
               </div>

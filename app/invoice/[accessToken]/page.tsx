@@ -1,4 +1,4 @@
-import CustomerInvoiceClient from './CustomerInvoiceClient';
+import { redirect } from 'next/navigation';
 
 export default async function CustomerInvoicePage({
   params,
@@ -6,5 +6,5 @@ export default async function CustomerInvoicePage({
   params: Promise<{ accessToken: string }>;
 }) {
   const { accessToken } = await params;
-  return <CustomerInvoiceClient accessToken={accessToken} />;
+  redirect(`https://www.sureimports.com/invoice/${encodeURIComponent(accessToken)}`);
 }

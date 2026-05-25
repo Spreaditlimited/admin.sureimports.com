@@ -1,4 +1,4 @@
-const DEFAULT_CUSTOMER_INVOICE_BASE_URL = 'https://admin.sureimports.com';
+const DEFAULT_CUSTOMER_INVOICE_BASE_URL = 'https://www.sureimports.com';
 
 function sanitizeBaseUrl(value?: string | null): string | null {
   if (!value) return null;
