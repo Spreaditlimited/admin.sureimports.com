@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createOrGetInvoiceAccessToken, ensureInvoicingCoreTables, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
 import { sendInvoiceIssuedNotification } from '@/lib/notifications/invoicing';
+import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 
 export async function POST(
   _request: NextRequest,
@@ -38,10 +39,7 @@ export async function POST(
       pidInvoice,
       createdByPidUser: admin.pidUser,
     });
-    const customerBaseUrl =
-      process.env.CUSTOMER_INVOICE_BASE_URL ||
-      process.env.ROOT_URL ||
-      'https://admin.sureimports.com';
+    const customerBaseUrl = getCustomerInvoiceBaseUrl();
     const customerInvoiceLink = `${customerBaseUrl}/invoice/${token.accessToken}`;
 
     await sendInvoiceIssuedNotification({
