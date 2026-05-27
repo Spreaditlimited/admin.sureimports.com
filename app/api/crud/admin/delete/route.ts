@@ -1,39 +1,26 @@
-// app/api/upload/route.ts
-import { PrismaClient } from '@prisma/client';
-import { random } from 'lodash';
-import getFileExt from '@/app/utils/fileExt'
-import fileFilter from '@/app/utils/fileFilter'
-import randomGenerator from "@/lib/helpers/randomGenerator";
 import { NextRequest, NextResponse } from 'next/server';
-import { generateSlug } from '@/app/utils/slugGenerator'
-import bcrypt from "bcryptjs"
+import { prisma } from '@/lib/prisma';
+import { ADMIN_SERVICE_KEY, requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
-const prisma = new PrismaClient();
+export async function GET(request: NextRequest) {
+  const access = await requireAdminServiceAccess(ADMIN_SERVICE_KEY, 'edit');
+  if (!access.ok) return access.response;
 
+  const pidUser = request.nextUrl.searchParams.get('pidUser') as string;
 
-//export async function POST(request: Request) {
-  export async function GET(request: NextRequest) {
+  try {
+    await prisma.admin.delete({
+      where: { pidUser },
+    });
 
-const pidUser = request.nextUrl.searchParams.get('pidUser') as any;
-
-        try {
-            await prisma.admin.delete({
-              where: { pidUser: pidUser },
-        });
-
-      return NextResponse.json(
+    return NextResponse.json(
       { statusx: 'SUCCESS', message: 'Admin User was successfully deleted!' },
-      { status: 200 },
+      { status: 200 }
     );
-
-    } catch (error) {
-      return NextResponse.json(
-        { statusx: 'FAILED', message: 'Failed to delete admin user' },
-        { status: 401 },
-      );
-    }finally {
-        await prisma.$disconnect();
-    }
-
-  //END
+  } catch {
+    return NextResponse.json(
+      { statusx: 'FAILED', message: 'Failed to delete admin user' },
+      { status: 401 }
+    );
+  }
 }

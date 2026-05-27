@@ -123,7 +123,24 @@ model admin {
   xStaus            String?
   createdAt         DateTime? @default(now())
   updatedAt         DateTime?
+  permissions       admin_permissions[]
   //posts     Post[]
+}
+
+model admin_permissions {
+  id            Int       @id @default(autoincrement())
+  pidPermission String    @unique()
+  pidUser       String
+  serviceKey    String    @db.VarChar(100)
+  canView       Boolean   @default(true)
+  canEdit       Boolean   @default(false)
+  createdAt     DateTime? @default(now())
+  updatedAt     DateTime?
+  admin         admin     @relation(fields: [pidUser], references: [pidUser], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([pidUser, serviceKey], map: "admin_permissions_pidUser_serviceKey_key")
+  @@index([pidUser], map: "admin_permissions_pidUser_idx")
+  @@index([serviceKey], map: "admin_permissions_serviceKey_idx")
 }
 
 model users {
@@ -994,6 +1011,7 @@ enum WarrantyPeriod {
 model corporate_gift_request {
   id                            Int      @id @default(autoincrement())
   pidRequest                    String   @unique()
+  pidUser                       String?
   businessName                  String
   contactPersonFullName         String
   productOrItemNeeded           String

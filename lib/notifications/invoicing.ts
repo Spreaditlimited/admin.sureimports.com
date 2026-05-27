@@ -26,6 +26,7 @@ type ReceiptSentInput = {
   paymentMethod: string;
   paymentReference?: string | null;
   paidAt: Date;
+  receiptLink?: string | null;
 };
 
 export async function sendInvoiceIssuedNotification(input: InvoiceIssuedInput) {
@@ -72,7 +73,7 @@ We have received your payment successfully.`,
   <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Paid At</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${new Date(input.paidAt).toLocaleString('en-NG')}</td></tr>
 </table><br />
 Thank you for your patronage.`,
-    xButtonTitle: 'View Dashboard',
-    xButtonLink: 'https://sureimports.com/dashboard',
+    xButtonTitle: input.receiptLink ? 'Download Receipt (PDF)' : undefined,
+    xButtonLink: input.receiptLink || undefined,
   });
 }

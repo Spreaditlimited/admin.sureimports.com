@@ -9,6 +9,16 @@ import {
   writeAuditLog,
 } from '../../_lib/invoicing';
 
+function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
+  const normalizedContact = String(contactName || '').trim();
+  const normalizedBusiness = String(businessName || '').trim();
+  const normalizedFallback = String(fallbackName || '').trim();
+  const baseName = normalizedContact || normalizedFallback;
+  if (!baseName && !normalizedBusiness) return null;
+  if (baseName && normalizedBusiness) return `${baseName} (${normalizedBusiness})`;
+  return baseName || normalizedBusiness;
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ pidInvoice: string }> },
@@ -50,7 +60,31 @@ export async function GET(
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ statusx: 'SUCCESS', data: invoice });
+    let enrichedInvoice: any = invoice;
+    if (invoice.linkedRequestId) {
+      const gift = await prisma.corporate_gift_request.findUnique({
+        where: { pidRequest: invoice.linkedRequestId },
+        select: {
+          businessName: true,
+          contactPersonFullName: true,
+          contactEmail: true,
+        },
+      });
+
+      if (gift) {
+        enrichedInvoice = {
+          ...invoice,
+          customerName: buildCustomerDisplayName(
+            gift.contactPersonFullName,
+            gift.businessName,
+            invoice.customerName,
+          ) || invoice.customerName,
+          customerEmail: invoice.customerEmail || gift.contactEmail || null,
+        };
+      }
+    }
+
+    return NextResponse.json({ statusx: 'SUCCESS', data: enrichedInvoice });
   } catch (error: any) {
     return NextResponse.json(
       { statusx: 'ERROR', message: 'Failed to fetch invoice', error: error.message },

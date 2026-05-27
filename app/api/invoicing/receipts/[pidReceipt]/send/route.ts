@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
+import { createOrGetInvoiceAccessToken, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
+import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { sendReceiptNotification } from '@/lib/notifications/invoicing';
 
 export async function POST(
@@ -29,6 +30,13 @@ export async function POST(
       return NextResponse.json({ statusx: 'ERROR', message: 'Customer email not found on invoice' }, { status: 400 });
     }
 
+    const token = await createOrGetInvoiceAccessToken({
+      pidInvoice: receipt.pidInvoice,
+      createdByPidUser: admin.pidUser,
+    });
+    const customerBaseUrl = getCustomerInvoiceBaseUrl();
+    const receiptLink = `${customerBaseUrl}/receipt/${receipt.pidReceipt}?accessToken=${encodeURIComponent(token.accessToken)}`;
+
     await sendReceiptNotification({
       toEmail: receipt.invoice.customerEmail,
       customerName: receipt.invoice.customerName || 'Customer',
@@ -41,6 +49,7 @@ export async function POST(
       paymentMethod: receipt.payment.paymentMethod,
       paymentReference: receipt.payment.reference || null,
       paidAt: receipt.payment.paidAt,
+      receiptLink,
     });
 
     const updated = await prisma.receipts.update({

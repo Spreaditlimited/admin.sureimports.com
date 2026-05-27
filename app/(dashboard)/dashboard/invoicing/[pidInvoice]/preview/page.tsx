@@ -29,6 +29,33 @@ export default async function InvoicePreviewPage({
     notFound();
   }
 
+  let corporateBusinessName: string | null = null;
+  if (invoice.linkedRequestId) {
+    const gift = await prisma.corporate_gift_request.findUnique({
+      where: { pidRequest: invoice.linkedRequestId },
+      select: {
+        businessName: true,
+        contactPersonFullName: true,
+        contactEmail: true,
+      },
+    });
+
+    if (gift) {
+      corporateBusinessName = gift.businessName || null;
+      const derivedNameBase =
+        gift.contactPersonFullName ||
+        invoice.customerName ||
+        `${invoice.user.userFirstname || ''} ${invoice.user.userLastname || ''}`.trim() ||
+        'Customer';
+      invoice.customerName = gift.businessName
+        ? `${derivedNameBase} (${gift.businessName})`
+        : derivedNameBase;
+      if (!invoice.customerEmail && gift.contactEmail) {
+        invoice.customerEmail = gift.contactEmail;
+      }
+    }
+  }
+
   const customerName =
     invoice.customerName ||
     `${invoice.user.userFirstname || ''} ${invoice.user.userLastname || ''}`.trim() ||
@@ -60,6 +87,9 @@ export default async function InvoicePreviewPage({
           <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
             <h2 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Billed To</h2>
             <p className="text-sm text-slate-700 dark:text-slate-300">{customerName}</p>
+            {corporateBusinessName && (
+              <p className="text-sm text-slate-700 dark:text-slate-300">{corporateBusinessName}</p>
+            )}
             <p className="text-sm text-slate-600 dark:text-slate-400">{customerEmail}</p>
             <p className="text-sm text-slate-600 dark:text-slate-400">{customerPhone}</p>
           </div>

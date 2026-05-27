@@ -2,8 +2,8 @@ import xMail from '@/lib/email/xMail2';
 
 export const CORPORATE_GIFT_STATUSES = [
   'Pending',
-  'Invoiced',
   'Sourced',
+  'Invoiced',
   'Production Started',
   'Ready for Shipping',
   'Shipped',
@@ -71,13 +71,11 @@ async function sendWhatsAppTemplate(input: NotifyInput) {
 }
 
 export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {
-  const ownerLine = input.handledByName ? input.handledByName : 'Unassigned';
   const bodyTable = `
 <table style="width:100%;border-collapse:collapse;margin-top:6px;border:1px solid #e5e7eb;">
   <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Request ID</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${input.requestId}</td></tr>
   <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Business</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${input.businessName}</td></tr>
   <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Current Status</b></td><td style="padding:8px;border:1px solid #e5e7eb;"><b>${input.status}</b></td></tr>
-  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Handled By</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${ownerLine}</td></tr>
 </table>`;
 
   await Promise.allSettled([

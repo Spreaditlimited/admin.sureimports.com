@@ -1,12 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { MdAddToPhotos } from 'react-icons/md';
 import { prisma } from '@/lib/prisma';
 import { toast } from 'sonner';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
+
+const SERVICE_OPTIONS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'procurement', label: 'Procurement' },
+  { key: 'corporate_gifts', label: 'Corporate Gifts' },
+  { key: 'pay_supplier', label: 'Pay Supplier' },
+  { key: 'shipping_only', label: 'Shipping Only' },
+  { key: 'verify_supplier', label: 'Verify Supplier' },
+  { key: 'pay_small_small', label: 'Pay Small Small' },
+  { key: 'store_mgt', label: 'Store Mgt.' },
+  { key: 'customer_accounts', label: 'Customer Accounts' },
+  { key: 'payout_requests', label: 'Payout Requests' },
+  { key: 'invoicing', label: 'Invoicing' },
+  { key: 'admin_mgt', label: 'Admin Mgt.' },
+  { key: 'shipping_plans', label: 'Shipping Plans' },
+  { key: 'exchange_rates', label: 'Exchanges & Rates' },
+  { key: 'blog_management', label: 'Blog Management' },
+] as const;
 
 // interface User {
 //   id: number;
@@ -36,6 +54,10 @@ export default function ProductsTable() {
       const [error, setError] = useState<string | null>(null);
       const [page, setPage] = useState<number>(1);
       const [totalPages, setTotalPages] = useState<number>(1);
+      const [editingPermissionsFor, setEditingPermissionsFor] = useState<string | null>(null);
+      const [selectedServices, setSelectedServices] = useState<string[]>([]);
+      const [permissionsLoading, setPermissionsLoading] = useState<boolean>(false);
+      const [permissionsSaving, setPermissionsSaving] = useState<boolean>(false);
 
   const getCategories = async (search: string, page: number) => {
             setLoading(true);
@@ -45,8 +67,11 @@ export default function ProductsTable() {
                 //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
                 const response = await fetch(`/api/get-data/admin`);
                 const responseData:any = await response.json();
+                if (!Array.isArray(responseData)) {
+                  throw new Error(responseData?.message || 'Failed to fetch users');
+                }
                 setAdminUsers(responseData);
-                setTotalPages(responseData.totalPages);
+                setTotalPages(1);
             } catch (error) {
                 setError('Failed to fetch users');
             } finally {
@@ -97,6 +122,73 @@ export default function ProductsTable() {
       }
   }
 
+  const toggleService = (serviceKey: string) => {
+    setSelectedServices((current) =>
+      current.includes(serviceKey)
+        ? current.filter((item) => item !== serviceKey)
+        : [...current, serviceKey]
+    );
+  };
+
+  async function openPermissionsEditor(pidUser: string, userStatus: string) {
+    if (userStatus === 'L1' || userStatus === 'superadmin') {
+      toast.info('Super Admin has implicit full access.');
+      return;
+    }
+
+    setPermissionsLoading(true);
+    try {
+      const response = await fetch(`/api/crud/admin/permissions?pidUser=${encodeURIComponent(pidUser)}`);
+      const raw = await response.text();
+      const data: any = raw ? JSON.parse(raw) : {};
+      if (!response.ok || data.statusx !== 'SUCCESS') {
+        throw new Error(data?.message || 'Unable to fetch permissions');
+      }
+
+      const keys = Array.isArray(data.permissions)
+        ? data.permissions
+            .filter((item: any) => item?.canView === true && typeof item?.serviceKey === 'string')
+            .map((item: any) => item.serviceKey)
+        : [];
+
+      setSelectedServices(keys);
+      setEditingPermissionsFor(pidUser);
+    } catch (err: any) {
+      toast.error(err?.message || 'Unable to fetch permissions');
+    } finally {
+      setPermissionsLoading(false);
+    }
+  }
+
+  async function savePermissions() {
+    if (!editingPermissionsFor) return;
+    setPermissionsSaving(true);
+    try {
+      const response = await fetch('/api/crud/admin/permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pidUser: editingPermissionsFor,
+          serviceKeys: selectedServices,
+        }),
+      });
+
+      const raw = await response.text();
+      const data: any = raw ? JSON.parse(raw) : {};
+      if (!response.ok || data.statusx !== 'SUCCESS') {
+        throw new Error(data?.message || 'Unable to save permissions');
+      }
+
+      toast.success(data.message || 'Permissions updated');
+      setEditingPermissionsFor(null);
+      setSelectedServices([]);
+    } catch (err: any) {
+      toast.error(err?.message || 'Unable to save permissions');
+    } finally {
+      setPermissionsSaving(false);
+    }
+  }
+
   return (
 
     <>
@@ -135,7 +227,8 @@ export default function ProductsTable() {
 
         {(adminUsers || []).length ? (
               adminUsers.map((user:AdminProps, index:number) => (
-          <tr key={index + 1} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+          <Fragment key={user.pidUser}>
+          <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
             <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
             {index + 1}
             </td>
@@ -165,12 +258,63 @@ export default function ProductsTable() {
             <td className="px-6 py-4">
               {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
               <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
+              <button
+                type="button"
+                onClick={() => openPermissionsEditor(user.pidUser as any, user.userStatus)}
+                className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                disabled={permissionsLoading}
+              >
+                Permissions
+              </button>
+              &nbsp; | &nbsp;
               { user.userStatus != 'superadmin' &&
               <a href="#" onClick={() => handleDelete(user.pidUser as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Delete</a>
               }
               </td>
             
           </tr>
+          {editingPermissionsFor === user.pidUser && (
+            <tr className="bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700">
+              <td colSpan={4} className="px-6 py-4">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  Manage Service Access for {user.userFirstname} {user.userLastname}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+                  {SERVICE_OPTIONS.map((service) => (
+                    <label key={service.key} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedServices.includes(service.key)}
+                        onChange={() => toggleService(service.key)}
+                      />
+                      <span>{service.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={savePermissions}
+                    disabled={permissionsSaving}
+                    className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
+                  >
+                    {permissionsSaving ? 'Saving...' : 'Save Permissions'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingPermissionsFor(null);
+                      setSelectedServices([]);
+                    }}
+                    className="bg-gray-300 text-gray-900 px-3 py-1 rounded-md text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
+          </Fragment>
                         ))
                       ) : (
                         <tr className="flex border p-5 m-5 text-center justify-center">

@@ -12,6 +12,16 @@ import {
   writeAuditLog,
 } from '../_lib/invoicing';
 
+function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
+  const normalizedContact = String(contactName || '').trim();
+  const normalizedBusiness = String(businessName || '').trim();
+  const normalizedFallback = String(fallbackName || '').trim();
+  const baseName = normalizedContact || normalizedFallback;
+  if (!baseName && !normalizedBusiness) return null;
+  if (baseName && normalizedBusiness) return `${baseName} (${normalizedBusiness})`;
+  return baseName || normalizedBusiness;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdmin();
@@ -86,9 +96,48 @@ export async function GET(request: NextRequest) {
       totalCount = Number(countRows?.[0]?.totalCount || 0);
     }
 
+    const linkedRequestIds = Array.from(
+      new Set(
+        items
+          .map((it: any) => String(it.linkedRequestId || '').trim())
+          .filter(Boolean),
+      ),
+    );
+
+    let giftMap = new Map<string, { businessName: string; contactPersonFullName: string; contactEmail: string }>();
+    if (linkedRequestIds.length > 0) {
+      const gifts = await prisma.corporate_gift_request.findMany({
+        where: { pidRequest: { in: linkedRequestIds } },
+        select: {
+          pidRequest: true,
+          businessName: true,
+          contactPersonFullName: true,
+          contactEmail: true,
+        },
+      });
+      giftMap = new Map(gifts.map((g) => [g.pidRequest, g]));
+    }
+
+    const enrichedItems = items.map((it: any) => {
+      const linkedId = String(it.linkedRequestId || '').trim();
+      if (!linkedId) return it;
+      const gift = giftMap.get(linkedId);
+      if (!gift) return it;
+      const derivedName = buildCustomerDisplayName(
+        gift.contactPersonFullName,
+        gift.businessName,
+        it.customerName,
+      );
+      return {
+        ...it,
+        customerName: derivedName || it.customerName,
+        customerEmail: it.customerEmail || gift.contactEmail || null,
+      };
+    });
+
     return NextResponse.json({
       statusx: 'SUCCESS',
-      data: items,
+      data: enrichedItems,
       pagination: {
         page,
         limit: take,
@@ -171,13 +220,37 @@ export async function POST(request: NextRequest) {
     const pidInvoice = generatePid('INV');
     const invoiceNumber = await createUniqueInvoiceNumber();
 
+    const userFullName = `${existingUser.userFirstname || ''} ${existingUser.userLastname || ''}`.trim() || null;
+    let customerName = userFullName;
+    let customerEmail = existingUser.userEmail;
+
+    if (linkedRequestId) {
+      const gift = await prisma.corporate_gift_request.findUnique({
+        where: { pidRequest: linkedRequestId },
+        select: {
+          businessName: true,
+          contactPersonFullName: true,
+          contactEmail: true,
+        },
+      });
+
+      if (gift) {
+        customerName = buildCustomerDisplayName(
+          gift.contactPersonFullName,
+          gift.businessName,
+          userFullName,
+        );
+        customerEmail = gift.contactEmail || existingUser.userEmail;
+      }
+    }
+
     const created = await prisma.invoices.create({
       data: {
         pidInvoice,
         invoiceNumber,
         pidUser,
-        customerName: `${existingUser.userFirstname || ''} ${existingUser.userLastname || ''}`.trim() || null,
-        customerEmail: existingUser.userEmail,
+        customerName,
+        customerEmail,
         customerPhone: existingUser.userPhone || existingUser.phone || null,
         currency,
         subtotal: toMoneyInput(subtotalNum),

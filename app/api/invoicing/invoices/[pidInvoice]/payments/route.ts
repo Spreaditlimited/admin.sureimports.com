@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {
+  createOrGetInvoiceAccessToken,
   createUniqueReceiptNumber,
   derivePaymentStatus,
   generatePid,
@@ -8,6 +9,7 @@ import {
   toMoneyInput,
   unauthorized,
 } from '../../../_lib/invoicing';
+import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { sendReceiptNotification } from '@/lib/notifications/invoicing';
 
 export async function POST(
@@ -123,6 +125,13 @@ export async function POST(
 
     const customerEmail = invoice.customerEmail;
     if (customerEmail) {
+      const token = await createOrGetInvoiceAccessToken({
+        pidInvoice,
+        createdByPidUser: admin.pidUser,
+      });
+      const customerBaseUrl = getCustomerInvoiceBaseUrl();
+      const receiptLink = `${customerBaseUrl}/receipt/${result.receipt.pidReceipt}?accessToken=${encodeURIComponent(token.accessToken)}`;
+
       const sent = await sendReceiptNotification({
         toEmail: customerEmail,
         customerName: invoice.customerName || 'Customer',
@@ -135,6 +144,7 @@ export async function POST(
         paymentMethod,
         paymentReference: reference || null,
         paidAt: result.payment.paidAt,
+        receiptLink,
       })
         .then(() => true)
         .catch(() => false);

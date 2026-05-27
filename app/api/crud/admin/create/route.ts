@@ -1,119 +1,108 @@
-// app/api/upload/route.ts
-import { PrismaClient } from '@prisma/client';
-import { random } from 'lodash';
-import getFileExt from '@/app/utils/fileExt'
-import fileFilter from '@/app/utils/fileFilter'
-import randomGenerator from "@/lib/helpers/randomGenerator";
 import { NextResponse } from 'next/server';
-import { generateSlug } from '@/app/utils/slugGenerator'
-import bcrypt from "bcryptjs"
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+import { ADMIN_SERVICE_KEY, requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
-const prisma = new PrismaClient();
-
+const SERVICE_KEYS = new Set([
+  'dashboard',
+  'procurement',
+  'corporate_gifts',
+  'pay_supplier',
+  'shipping_only',
+  'verify_supplier',
+  'pay_small_small',
+  'store_mgt',
+  'customer_accounts',
+  'payout_requests',
+  'invoicing',
+  'admin_mgt',
+  'shipping_plans',
+  'exchange_rates',
+  'blog_management',
+]);
 
 export async function POST(request: Request) {
+  const access = await requireAdminServiceAccess(ADMIN_SERVICE_KEY, 'edit');
+  if (!access.ok) return access.response;
 
-        const formData = await request.formData();
-        const pidUser = formData.get('pidUser') as string;
-        const pidAdminUser = formData.get('pidAdminUser') as string;
-        const accountName = formData.get('accountName') as string;
-        const firstName = formData.get('firstName') as string;
-        const lastName = formData.get('lastName') as string;
-        const email = formData.get('email') as string;
-        const phone = formData.get('phone') as any;
-        const password = formData.get('password') as string;
-        const authorizationLevel = formData.get('authorizationLevel') as string;
+  const formData = await request.formData();
+  const pidAdminUser = formData.get('pidAdminUser') as string;
+  const accountName = formData.get('accountName') as string;
+  const firstName = formData.get('firstName') as string;
+  const lastName = formData.get('lastName') as string;
+  const email = formData.get('email') as string;
+  const phone = formData.get('phone') as string;
+  const password = formData.get('password') as string;
+  const authorizationLevel = formData.get('authorizationLevel') as string;
+  const serviceKeysRaw = formData.get('serviceKeys') as string | null;
 
-console.log(formData)
+  let serviceKeys: string[] = [];
+  if (serviceKeysRaw) {
+    try {
+      const parsed = JSON.parse(serviceKeysRaw);
+      if (Array.isArray(parsed)) {
+        serviceKeys = parsed.filter(
+          (key): key is string => typeof key === 'string' && SERVICE_KEYS.has(key)
+        );
+      }
+    } catch {
+      serviceKeys = [];
+    }
+  }
 
-  //GET FILE FROM FROM
-  //const file = formData.get('file') as File;
+  const existingUser = await prisma.admin.findUnique({ where: { userEmail: email } });
+  if (existingUser) {
+    return NextResponse.json(
+      { statusx: 'USER_EXISTS', message: 'Admin User already exists!' },
+      { status: 401 }
+    );
+  }
 
-  //CHECK IF FILE IS UPLOADED
-  // if (!file) {
-  //   const responsex = {
-  //     message:
-  //       'No Image file has been selected',
-  //     status: 'NO_IMAGE_SELECTED',
-  //   };
-  //   return NextResponse.json(
-  //     { responsex, successx: true, userx: null },
-  //     { status: 401 },
-  //   );
-  // }
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  //const productCode:string = randomGenerator(20);
+  const now = new Date();
 
-  //SET FILE NAME & GET FILE PARAMS
-  // const originalFileName = file.name;
-  // const fileType = file.type;
-  // const fileExt = getFileExt(originalFileName);
-  // const fileSize = file.size;
-  // const newFileName = "IMG"+productCode;
+  const admin = await prisma.$transaction(async (tx) => {
+    const createdAdmin = await tx.admin.create({
+      data: {
+        pidUser: pidAdminUser,
+        userFirstname: firstName,
+        userLastname: lastName,
+        userEmail: email,
+        userPhone: Number.parseInt(phone, 10),
+        userPassword: hashedPassword,
+        userStatus: authorizationLevel,
+        userExt1: accountName,
+        createdAt: now,
+      },
+    });
 
-  //CHECK FILE VALIDITY
-  // const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG'];//enter only permitted extensions
-  // const fileOK = fileFilter(fileExt, allowedExt);
+    if (serviceKeys.length > 0 && authorizationLevel !== 'L1') {
+      await tx.admin_permissions.createMany({
+        data: serviceKeys.map((serviceKey) => ({
+          pidPermission: `ADMPERM_${pidAdminUser}_${serviceKey}`,
+          pidUser: pidAdminUser,
+          serviceKey,
+          canView: true,
+          canEdit: false,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      });
+    }
 
-  // if(fileOK){}else{
-  //       const responsex = {
-  //         message:
-  //           'Please select only valid images '+fileExt+' is not allowed',
-  //         status: 'INVALID_IMAGE_UPLOAD',
-  //       };
-  //       return NextResponse.json(
-  //         { responsex, successx: true, userx: null },
-  //         { status: 401 },
-  //       );
-  // }
+    return createdAdmin;
+  });
 
+  if (admin && admin.id) {
+    return NextResponse.json(
+      { statusx: 'SUCCESS', message: 'Admin User was successfuly created.' },
+      { status: 200 }
+    );
+  }
 
-  //GENERATE PRODUCT ID AND SLUG STRING
-  //const pidProduct = "PRD"+productCode;
-  //const categorySlug = generateSlug(categoryName);
-
-
-const existingUser = await prisma.admin.findUnique({ where: { userEmail:email } })
-if (existingUser) {
-            return NextResponse.json(
-              { statusx:'USER_EXISTS', message: 'Admin User already exists!'},
-              { status: 401 },
-            );
-}
-
-
-const hashedPassword = await bcrypt.hash(password, 10)
-
-  //UPLOAD PRODUCT DETAILS
-  const admin = await prisma.admin.create({
-    data: { 
-            pidUser: pidAdminUser, 
-            userFirstname: firstName, 
-            userLastname: lastName, 
-            userEmail: email, 
-            userPhone: parseInt(phone), 
-            userPassword: hashedPassword, 
-            userStatus: authorizationLevel, 
-            userExt1: accountName,
-            createdAt: new Date(),
-         }
-  })
-
-
-      //CHECK IF PRODUCT DETAILS HAVE BEEN SUCCESSFULY UPLOADED THEN UPLOAD IMAGE
-      if(admin && admin.id)
-          {
-              return NextResponse.json(
-              { statusx:'SUCCESS', message: 'Admin User was successfuly created.'},
-              { status: 200 },
-            );
-          }else{
-            return NextResponse.json(
-              { statusx:'FAILED', message: 'Admin User Creation Failed!'},
-              { status: 401 },
-            );
-          }
- 
-
-  //END
+  return NextResponse.json(
+    { statusx: 'FAILED', message: 'Admin User Creation Failed!' },
+    { status: 401 }
+  );
 }

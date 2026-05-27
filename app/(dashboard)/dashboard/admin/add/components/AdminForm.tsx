@@ -18,6 +18,24 @@ import axios from 'axios';
 import { Save } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
+const SERVICE_OPTIONS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'procurement', label: 'Procurement' },
+  { key: 'corporate_gifts', label: 'Corporate Gifts' },
+  { key: 'pay_supplier', label: 'Pay Supplier' },
+  { key: 'shipping_only', label: 'Shipping Only' },
+  { key: 'verify_supplier', label: 'Verify Supplier' },
+  { key: 'pay_small_small', label: 'Pay Small Small' },
+  { key: 'store_mgt', label: 'Store Mgt.' },
+  { key: 'customer_accounts', label: 'Customer Accounts' },
+  { key: 'payout_requests', label: 'Payout Requests' },
+  { key: 'invoicing', label: 'Invoicing' },
+  { key: 'admin_mgt', label: 'Admin Mgt.' },
+  { key: 'shipping_plans', label: 'Shipping Plans' },
+  { key: 'exchange_rates', label: 'Exchanges & Rates' },
+  { key: 'blog_management', label: 'Blog Management' },
+] as const;
+
 
 export const metadata: Metadata = {
     title: 'Printin Admin Dashboard',
@@ -86,6 +104,15 @@ const Page = () => {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [authorizationLevel, setAuthorizationLevel] = useState('');
+    const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
+    const toggleService = (serviceKey: string) => {
+      setSelectedServices((current) =>
+        current.includes(serviceKey)
+          ? current.filter((item) => item !== serviceKey)
+          : [...current, serviceKey]
+      );
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 toast.info('Adding Admin User . . .');
@@ -106,6 +133,7 @@ const Page = () => {
                 formData.append('phone', phone);
                 formData.append('password', password);
                 formData.append('authorizationLevel', authorizationLevel);
+                formData.append('serviceKeys', JSON.stringify(selectedServices));
 
                 //formData.append('categoryImage', categoryImage);
 
@@ -243,6 +271,27 @@ const Page = () => {
             <option value="L2">Regular Admin L2 </option>
             <option value="L3">Regular Admin L3 </option>
           </select>
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Services Access
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-gray-300 dark:border-gray-600 rounded-md p-3">
+            {SERVICE_OPTIONS.map((service) => (
+              <label key={service.key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={selectedServices.includes(service.key)}
+                  onChange={() => toggleService(service.key)}
+                />
+                <span>{service.label}</span>
+              </label>
+            ))}
+          </div>
+          <small className="text-gray-500 dark:text-gray-400">
+            Super Admin L1 can access all services automatically.
+          </small>
         </div>
 
 

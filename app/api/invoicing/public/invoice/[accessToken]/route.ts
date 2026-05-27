@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ensureInvoicingCoreTables } from '../../../_lib/invoicing';
 
+function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
+  const normalizedContact = String(contactName || '').trim();
+  const normalizedBusiness = String(businessName || '').trim();
+  const normalizedFallback = String(fallbackName || '').trim();
+  const baseName = normalizedContact || normalizedFallback;
+  if (!baseName && !normalizedBusiness) return null;
+  if (baseName && normalizedBusiness) return `${baseName} (${normalizedBusiness})`;
+  return baseName || normalizedBusiness;
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ accessToken: string }> },
@@ -36,6 +46,30 @@ export async function GET(
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
+    let invoice = token.invoice as any;
+    if (invoice?.linkedRequestId) {
+      const gift = await prisma.corporate_gift_request.findUnique({
+        where: { pidRequest: invoice.linkedRequestId },
+        select: {
+          businessName: true,
+          contactPersonFullName: true,
+          contactEmail: true,
+        },
+      });
+
+      if (gift) {
+        invoice = {
+          ...invoice,
+          customerName: buildCustomerDisplayName(
+            gift.contactPersonFullName,
+            gift.businessName,
+            invoice.customerName,
+          ) || invoice.customerName,
+          customerEmail: invoice.customerEmail || gift.contactEmail || null,
+        };
+      }
+    }
+
     return NextResponse.json({
       statusx: 'SUCCESS',
       data: {
@@ -43,7 +77,7 @@ export async function GET(
           accessToken: token.accessToken,
           expiresAt: token.expiresAt,
         },
-        invoice: token.invoice,
+        invoice,
         bankAccounts,
       },
     });

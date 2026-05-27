@@ -27,6 +27,7 @@ interface InvoiceData {
 export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
   const [data, setData] = useState<InvoiceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [recording, setRecording] = useState(false);
   const [issuing, setIssuing] = useState(false);
   const [sendingInvoice, setSendingInvoice] = useState(false);
@@ -36,10 +37,16 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
 
   const fetchData = async () => {
     setLoading(true);
+    setError('');
     try {
-      const res = await fetch(`/api/invoicing/invoices/${pidInvoice}`);
+      const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}`);
       const json = await res.json();
-      setData(json.data || null);
+      if (!res.ok) throw new Error(json?.message || 'Failed to load invoice');
+      setData(json?.data || null);
+    } catch (e: any) {
+      setData(null);
+      setError(e?.message || 'Failed to load invoice');
+      toast.error(e?.message || 'Failed to load invoice');
     } finally {
       setLoading(false);
     }
@@ -52,7 +59,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
   const issueInvoice = async () => {
     setIssuing(true);
     try {
-      const res = await fetch(`/api/invoicing/invoices/${pidInvoice}/issue`, { method: 'POST' });
+      const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/issue`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.message || 'Failed to issue invoice');
       await fetchData();
@@ -66,7 +73,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
   const recordPayment = async () => {
     setRecording(true);
     try {
-      const res = await fetch(`/api/invoicing/invoices/${pidInvoice}/payments`, {
+      const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: Number(paymentAmount), paymentMethod, reference: paymentRef || null }),
@@ -86,7 +93,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
   const sendInvoice = async () => {
     setSendingInvoice(true);
     try {
-      const res = await fetch(`/api/invoicing/invoices/${pidInvoice}/send`, { method: 'POST' });
+      const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/send`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.message || 'Failed to send invoice');
       toast.success('Invoice email sent successfully.');
@@ -106,6 +113,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
   };
 
   if (loading) return <div className="rounded-xl border p-6 bg-white dark:bg-gray-800">Loading...</div>;
+  if (error) return <div className="rounded-xl border p-6 bg-white text-red-600 dark:bg-gray-800">{error}</div>;
   if (!data) return <div className="rounded-xl border p-6 bg-white dark:bg-gray-800">Invoice not found.</div>;
 
   return (
