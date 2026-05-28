@@ -238,9 +238,9 @@ model store {
   productBrand         String?
   productPrice         Float?
   productMOQ           Float?
-  productDescription   String?
-  productFeature       String?
-  productSpecification String?
+  productDescription   String?           @db.LongText
+  productFeature       String?           @db.LongText
+  productSpecification String?           @db.LongText
   productVisibility    Boolean?
   productStatus        String?
   productImage         String?

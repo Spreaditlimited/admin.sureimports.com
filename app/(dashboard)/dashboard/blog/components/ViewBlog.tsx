@@ -27,6 +27,10 @@ import {
   Clock,
   TrendingUp,
   Star,
+  Layers,
+  ArrowRight,
+  Fingerprint,
+  Globe
 } from 'lucide-react';
 
 interface Blog {
@@ -88,11 +92,10 @@ const ViewBlog = () => {
         setBlogs(data.data);
         setPagination(data.pagination);
       } else {
-        toast.error('Failed to fetch blogs');
+        toast.error('Archive synchronization failed');
       }
     } catch (error) {
-      console.error('Error fetching blogs:', error);
-      toast.error('An error occurred while fetching blogs');
+      toast.error('Network error during sync');
     } finally {
       setLoading(false);
     }
@@ -100,17 +103,7 @@ const ViewBlog = () => {
 
   useEffect(() => {
     fetchBlogs();
-  }, []);
-
-  const handleSearch = () => {
-    fetchBlogs(1, searchTerm, statusFilter);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+  }, [fetchBlogs]);
 
   const handleDelete = async (pidBlog: string) => {
     try {
@@ -120,43 +113,29 @@ const ViewBlog = () => {
       const data = await res.json();
 
       if (data.responsex.status === 'SUCCESS') {
-        toast.success('Blog deleted successfully');
+        toast.success('Manuscript purged from archive');
         setDeleteConfirm(null);
         fetchBlogs(pagination.page);
-      } else {
-        toast.error(data.responsex.message);
       }
     } catch (error) {
-      console.error('Error deleting blog:', error);
-      toast.error('Failed to delete blog');
+      toast.error('Purge operation failed');
     }
   };
 
   const copySlug = (slug: string) => {
     navigator.clipboard.writeText(`/blog/${slug}`);
-    toast.success('URL copied to clipboard');
+    toast.success('URI copied to clipboard');
   };
 
   const getImageUrl = (imageName: string | null) => {
     if (!imageName) return null;
-    if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
-      return imageName;
-    }
+    if (imageName.startsWith('http')) return imageName;
     return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
   };
 
   const stripHtml = (html: string | null) => {
-    if (!html) return '';
-    return html.replace(/<[^>]*>/g, '').substring(0, 150);
-  };
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    if (!html) return 'No content provisioned.';
+    return html.replace(/<[^>]*>/g, '').substring(0, 120) + '...';
   };
 
   const getRelativeTime = (date: Date | null) => {
@@ -164,570 +143,241 @@ const ViewBlog = () => {
     const now = new Date();
     const diff = now.getTime() - new Date(date).getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
     if (days === 0) return 'Today';
     if (days === 1) return 'Yesterday';
     if (days < 7) return `${days} days ago`;
-    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
-    return formatDate(date);
+    return new Date(date).toLocaleDateString();
   };
 
-  const publishedCount = blogs.filter(b => b.blogPublished).length;
-  const draftCount = blogs.filter(b => !b.blogPublished).length;
-
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-              <FileText className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            Blog Management
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Create, manage, and publish your blog content
-          </p>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+      
+      {/* 1. Control Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border pb-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary">
+            <FileText className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Editorial Archive</h1>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">Platform Content Ledger</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => fetchBlogs(pagination.page)}
-            className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+
+        <div className="flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-1.5 mr-2">
+            <Link href="/dashboard/blog/categories" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-border rounded-lg bg-card shadow-sm flex items-center gap-2">
+              <Layers className="w-3 h-3" /> Taxonomy
+            </Link>
+            <Link href="/dashboard/blog/publishers" className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors border border-border rounded-lg bg-card shadow-sm flex items-center gap-2">
+              <User className="w-3 h-3" /> Board
+            </Link>
+          </div>
+          <button onClick={() => fetchBlogs(pagination.page)} className="p-2.5 border border-border rounded-lg hover:bg-muted text-muted-foreground transition-all">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <Link href="/dashboard/blog/categories">
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all border border-gray-200 dark:border-gray-700">
-              <Filter className="w-4 h-4" />
-              <span>Categories</span>
-            </button>
-          </Link>
-          <Link href="/dashboard/blog/publishers">
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all border border-gray-200 dark:border-gray-700">
-              <User className="w-4 h-4" />
-              <span>Publishers</span>
-            </button>
-          </Link>
-          <Link href="/dashboard/blog/create">
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all">
-              <Plus className="w-5 h-5" />
-              <span>New Post</span>
-            </button>
+          <Link href="/dashboard/blog/create" className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all">
+            <Plus className="w-4 h-4" /> New Manuscript
           </Link>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Posts</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{pagination.total}</p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Published</p>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">{publishedCount}</p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-              <Eye className="w-6 h-6 text-green-600 dark:text-green-400" />
+      {/* 2. Statistical Pulse */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Manuscripts', val: pagination.total, icon: FileText, color: 'text-primary' },
+          { label: 'Live Content', val: blogs.filter(b => b.blogPublished).length, icon: Globe, color: 'text-emerald-500' },
+          { label: 'Manuscript Drafts', val: blogs.filter(b => !b.blogPublished).length, icon: EyeOff, color: 'text-amber-500' },
+          { label: 'Recent Activity', val: blogs.length, icon: Clock, color: 'text-blue-500' }
+        ].map((stat, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-5 shadow-soft">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-bold mt-1 text-foreground font-mono">{stat.val}</p>
+              </div>
+              <div className={`p-2.5 rounded-lg bg-muted/50 ${stat.color}`}>
+                <stat.icon className="w-5 h-5" />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Drafts</p>
-              <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{draftCount}</p>
-            </div>
-            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl">
-              <EyeOff className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">This Page</p>
-              <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{blogs.length}</p>
-            </div>
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search posts by title, content, or author..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  fetchBlogs(1, searchTerm, e.target.value);
-                }}
-                className="pl-10 pr-8 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white appearance-none cursor-pointer min-w-[140px]"
-              >
-                <option value="">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Drafts</option>
-              </select>
-            </div>
-
-            <button
-              onClick={handleSearch}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors"
+      {/* 3. Archive Filters */}
+      <div className="bg-card border border-border rounded-xl shadow-soft p-4 flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search archive by title, author or URI..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && fetchBlogs(1)}
+            className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+          />
+        </div>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full md:w-44">
+            <Filter className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); fetchBlogs(1, searchTerm, e.target.value); }}
+              className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-xs font-bold uppercase tracking-widest text-foreground appearance-none cursor-pointer"
             >
-              Search
-            </button>
-
-            {/* View Toggle */}
-            <div className="hidden md:flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'grid'
-                    ? 'bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-                title="Grid View"
-              >
-                <LayoutGrid className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'list'
-                    ? 'bg-white dark:bg-gray-700 shadow-sm text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-                title="List View"
-              >
-                <List className="w-5 h-5" />
-              </button>
-            </div>
+              <option value="">Status: ALL</option>
+              <option value="published">Status: LIVE</option>
+              <option value="draft">Status: DRAFT</option>
+            </select>
+          </div>
+          <div className="flex items-center bg-muted/50 border border-border rounded-lg p-1 shrink-0">
+             <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded transition-all ${viewMode === 'grid' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><LayoutGrid className="w-4 h-4" /></button>
+             <button onClick={() => setViewMode('list')} className={`p-1.5 rounded transition-all ${viewMode === 'list' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><List className="w-4 h-4" /></button>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">Loading posts...</p>
-            </div>
-          </div>
-        ) : blogs.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center max-w-md">
-              <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FileText className="w-10 h-10 text-gray-400" />
+      {/* 4. The Manuscript Vault */}
+      {loading ? (
+        <div className="py-24 flex flex-col items-center justify-center gap-4 text-muted-foreground border border-border rounded-xl bg-card/50">
+          <RefreshCw className="w-10 h-10 animate-spin opacity-20" />
+          <p className="text-[10px] font-bold uppercase tracking-widest">Synchronizing Archive Metadata...</p>
+        </div>
+      ) : blogs.length === 0 ? (
+        <div className="py-24 text-center border border-dashed border-border rounded-xl bg-muted/5">
+           <FileText className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+           <p className="text-sm text-muted-foreground italic px-6">No manuscripts match the current search criteria.</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {blogs.map((blog) => (
+            <div key={blog.pidBlog} className="group bg-card border border-border rounded-xl overflow-hidden shadow-soft hover:border-primary/40 transition-all duration-300 flex flex-col">
+              <div className="relative h-44 bg-muted overflow-hidden">
+                {getImageUrl(blog.blogImage) ? (
+                  <img src={getImageUrl(blog.blogImage)!} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center opacity-10"><ImageIcon className="w-12 h-12" /></div>
+                )}
+                <div className="absolute top-3 inset-x-3 flex items-center justify-between">
+                   <span className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border backdrop-blur-md ${blog.blogPublished ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'}`}>
+                      {blog.blogPublished ? 'Live' : 'Draft'}
+                   </span>
+                   {blog.blogFeatured && <Star className="w-4 h-4 fill-amber-500 text-amber-500 drop-shadow-sm" />}
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No posts found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                {searchTerm || statusFilter
-                  ? 'Try adjusting your filters or search terms'
-                  : 'Get started by creating your first blog post'}
-              </p>
-              <Link href="/dashboard/blog/create">
-                <button className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors">
-                  <Plus className="w-5 h-5" />
-                  Create Your First Post
-                </button>
-              </Link>
-            </div>
-          </div>
-        ) : viewMode === 'grid' ? (
-          /* Grid View */
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {blogs.map((blog) => (
-                <article
-                  key={blog.pidBlog}
-                  className="group bg-gray-50 dark:bg-gray-800/50 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-lg transition-all duration-300"
-                >
-                  {/* Image */}
-                  <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
-                    {getImageUrl(blog.blogImage) ? (
-                      <img
-                        src={getImageUrl(blog.blogImage)!}
-                        alt={blog.blogTitle}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-16 h-16 text-gray-400 dark:text-gray-600" />
-                      </div>
-                    )}
 
-                    {/* Status Badge */}
-                    <div className="absolute top-3 left-3 flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
-                          blog.blogPublished
-                            ? 'bg-green-500/90 text-white'
-                            : 'bg-yellow-500/90 text-white'
-                        }`}
-                      >
-                        {blog.blogPublished ? (
-                          <>
-                            <Eye className="w-3.5 h-3.5" />
-                            Published
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="w-3.5 h-3.5" />
-                            Draft
-                          </>
-                        )}
-                      </span>
-                      {blog.blogFeatured && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/90 text-white backdrop-blur-sm">
-                          <Star className="w-3.5 h-3.5 fill-white" />
-                          Featured
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Actions Dropdown */}
-                    <div className="absolute top-3 right-3">
-                      <div className="relative">
-                        <button
-                          onClick={() => setActiveDropdown(activeDropdown === blog.pidBlog ? null : blog.pidBlog)}
-                          className="p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors shadow-sm"
-                        >
-                          <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                        </button>
-
-                        {activeDropdown === blog.pidBlog && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-10"
-                              onClick={() => setActiveDropdown(null)}
-                            />
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-20">
-                              <button
-                                onClick={() => {
-                                  router.push(`/dashboard/blog/edit?pidBlog=${blog.pidBlog}`);
-                                  setActiveDropdown(null);
-                                }}
-                                className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
-                              >
-                                <Edit3 className="w-4 h-4" />
-                                Edit Post
-                              </button>
-                              {blog.blogSlug && (
-                                <>
-                                  <a
-                                    href={`/blog/${blog.blogSlug}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
-                                    onClick={() => setActiveDropdown(null)}
-                                  >
-                                    <ExternalLink className="w-4 h-4" />
-                                    View Live
-                                  </a>
-                                  <button
-                                    onClick={() => {
-                                      copySlug(blog.blogSlug!);
-                                      setActiveDropdown(null);
-                                    }}
-                                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
-                                  >
-                                    <Copy className="w-4 h-4" />
-                                    Copy URL
-                                  </button>
-                                </>
-                              )}
-                              <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                              <button
-                                onClick={() => {
-                                  setDeleteConfirm(blog.pidBlog);
-                                  setActiveDropdown(null);
-                                }}
-                                className="w-full px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                <div className="space-y-2">
+                   <div className="flex items-center gap-2 text-[9px] font-mono text-muted-foreground uppercase tracking-tight">
+                      <Fingerprint className="w-3 h-3" /> {blog.pidBlog}
+                   </div>
+                   <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors leading-tight line-clamp-2">
                       {blog.blogTitle}
-                    </h3>
-
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                      {stripHtml(blog.blogContent)}
-                    </p>
-
-                    {/* Meta */}
-                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5" />
-                        <span>{blog.blogBy || 'Admin'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{getRelativeTime(blog.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* List View */
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
-            {blogs.map((blog) => (
-              <div
-                key={blog.pidBlog}
-                className="flex items-center gap-5 p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-              >
-                {/* Thumbnail */}
-                <div className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  {getImageUrl(blog.blogImage) ? (
-                    <img
-                      src={getImageUrl(blog.blogImage)!}
-                      alt={blog.blogTitle}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
+                   </h3>
+                   <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2 italic">
+                      "{stripHtml(blog.blogContent)}"
+                   </p>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                        {blog.blogTitle}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
-                        {stripHtml(blog.blogContent)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {blog.blogFeatured && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                          <Star className="w-3 h-3 fill-current" />
-                          Featured
-                        </span>
-                      )}
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                          blog.blogPublished
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                        }`}
-                      >
-                        {blog.blogPublished ? 'Published' : 'Draft'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Meta */}
-                  <div className="flex items-center gap-5 mt-3 text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-1.5">
-                      <User className="w-4 h-4" />
-                      <span>{blog.blogBy || 'Admin'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(blog.createdAt)}</span>
-                    </div>
-                    {blog.blogSlug && (
-                      <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
-                        <ExternalLink className="w-4 h-4" />
-                        <span className="truncate max-w-[200px]">/blog/{blog.blogSlug}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => router.push(`/dashboard/blog/edit?pidBlog=${blog.pidBlog}`)}
-                    className="p-2.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
-                    title="Edit"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  {blog.blogSlug && (
-                    <a
-                      href={`/blog/${blog.blogSlug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                      title="View Live"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                  <button
-                    onClick={() => setDeleteConfirm(blog.pidBlog)}
-                    className="p-2.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div className="pt-4 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground font-medium">
+                   <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {blog.blogBy || 'Admin'}</div>
+                      <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {getRelativeTime(blog.createdAt)}</div>
+                   </div>
+                   <div className="flex items-center gap-1">
+                      <button onClick={() => router.push(`/dashboard/blog/edit?pidBlog=${blog.pidBlog}`)} className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
+                      <button onClick={() => setDeleteConfirm(blog.pidBlog)} className="p-2 hover:bg-destructive/10 text-destructive rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
+                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && !loading && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Showing <span className="font-semibold text-gray-900 dark:text-white">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
-              <span className="font-semibold text-gray-900 dark:text-white">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-              <span className="font-semibold text-gray-900 dark:text-white">{pagination.total}</span> posts
-            </p>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => fetchBlogs(pagination.page - 1)}
-                disabled={pagination.page === 1}
-                className={`inline-flex items-center gap-1 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                  pagination.page === 1
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 border border-gray-200 dark:border-gray-700'
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (pagination.totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (pagination.page <= 3) {
-                    pageNum = i + 1;
-                  } else if (pagination.page >= pagination.totalPages - 2) {
-                    pageNum = pagination.totalPages - 4 + i;
-                  } else {
-                    pageNum = pagination.page - 2 + i;
-                  }
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => fetchBlogs(pageNum)}
-                      className={`w-10 h-10 rounded-lg font-medium text-sm transition-colors ${
-                        pagination.page === pageNum
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-gray-200 dark:border-gray-700'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => fetchBlogs(pagination.page + 1)}
-                disabled={pagination.page === pagination.totalPages}
-                className={`inline-flex items-center gap-1 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                  pagination.page === pagination.totalPages
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 border border-gray-200 dark:border-gray-700'
-                }`}
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </button>
             </div>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-soft">
+           <table className="w-full text-left text-sm">
+              <thead className="bg-muted/50 border-b border-border text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                 <tr>
+                    <th className="px-6 py-4">Manuscript Information</th>
+                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4">Identity</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                 </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                 {blogs.map((blog) => (
+                    <tr key={blog.pidBlog} className="hover:bg-muted/30 transition-colors">
+                       <td className="px-6 py-4 max-w-md">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 rounded-lg bg-muted flex-shrink-0 overflow-hidden border border-border">
+                                {getImageUrl(blog.blogImage) ? <img src={getImageUrl(blog.blogImage)!} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="w-5 h-5 m-auto opacity-10" />}
+                             </div>
+                             <div className="min-w-0">
+                                <h4 className="font-bold text-foreground truncate">{blog.blogTitle}</h4>
+                                <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground font-mono">
+                                   <Calendar className="w-3 h-3" /> {new Date(blog.createdAt!).toLocaleDateString()}
+                                </div>
+                             </div>
+                          </div>
+                       </td>
+                       <td className="px-6 py-4 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter border ${blog.blogPublished ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'}`}>
+                             {blog.blogPublished ? 'Live' : 'Draft'}
+                          </span>
+                       </td>
+                       <td className="px-6 py-4 font-mono text-[10px] text-muted-foreground">
+                          {blog.pidBlog}
+                       </td>
+                       <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-1">
+                             <button onClick={() => router.push(`/dashboard/blog/edit?pidBlog=${blog.pidBlog}`)} className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
+                             <button onClick={() => setDeleteConfirm(blog.pidBlog)} className="p-2 hover:bg-destructive/10 text-destructive rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                       </td>
+                    </tr>
+                 ))}
+              </tbody>
+           </table>
+        </div>
+      )}
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-            <div className="p-6">
-              <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-7 h-7 text-red-600 dark:text-red-400" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
-                Delete Post?
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
-                This action cannot be undone. The post and its associated image will be permanently deleted.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDelete(deleteConfirm)}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
+      {/* 5. Pagination Ledger */}
+      {pagination.totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Indexing <span className="text-foreground">{(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="text-foreground">{pagination.total}</span> Manuscripts
+          </p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => fetchBlogs(pagination.page - 1)} disabled={pagination.page === 1} className="p-2 border border-border rounded-lg bg-card hover:bg-muted disabled:opacity-30 transition-all"><ChevronLeft className="w-4 h-4" /></button>
+            <div className="flex items-center gap-1">
+               {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(num => (
+                 <button key={num} onClick={() => fetchBlogs(num)} className={`w-8 h-8 rounded-lg text-xs font-bold font-mono transition-all ${pagination.page === num ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'}`}>{num}</button>
+               ))}
             </div>
+            <button onClick={() => fetchBlogs(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="p-2 border border-border rounded-lg bg-card hover:bg-muted disabled:opacity-30 transition-all"><ChevronRight className="w-4 h-4" /></button>
           </div>
         </div>
       )}
 
-      {/* Click outside to close dropdown */}
-      {activeDropdown && (
-        <div
-          className="fixed inset-0 z-0"
-          onClick={() => setActiveDropdown(null)}
-        />
+      {/* 6. Revocation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in zoom-in-95 duration-200 px-4">
+          <div className="bg-card border border-border rounded-xl shadow-2xl max-w-sm w-full p-8 text-center space-y-6">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto ring-1 ring-destructive/20">
+              <Trash2 className="w-8 h-8 text-destructive" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Confirm Manuscript Purge</h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                This operation is final. The record and associated media will be permanently decoupled from the global archive.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 text-[10px] font-bold text-foreground hover:bg-muted border border-border rounded-lg uppercase tracking-widest">Cancel</button>
+              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 px-4 py-2.5 bg-destructive text-white text-[10px] font-bold rounded-lg uppercase tracking-widest shadow-sm">Confirm Purge</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

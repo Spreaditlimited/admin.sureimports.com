@@ -1,6 +1,22 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+const ACTIVE_ORDER_STATUSES = [
+  'pending',
+  'approved',
+  'pay-for-shipping',
+  'in-transit',
+  'ready-for-pickup',
+]
+
+const SUCCESS_PAYMENT_STATUSES = [
+  'PAID',
+  'paid',
+  'success',
+  'successful',
+  'SUCCESS',
+]
+
 export async function GET() {
   try {
     // Fetch all stats in parallel for better performance
@@ -32,11 +48,11 @@ export async function GET() {
       // Total orders
       prisma.orders.count(),
 
-      // Active orders (pending/processing)
+      // Active orders in current lifecycle pipeline
       prisma.orders.count({
         where: {
-          orderStatus: {
-            in: ['pending', 'processing', 'shipped', 'Pending', 'Processing', 'Shipped']
+          status: {
+            in: ACTIVE_ORDER_STATUSES
           }
         }
       }),
@@ -57,8 +73,14 @@ export async function GET() {
         prisma.pay_supplier.count(),
       ]).then(counts => counts.reduce((a, b) => a + b, 0)),
 
-      // Total payments
-      prisma.payments.count(),
+      // Total successful payments
+      prisma.payments.count({
+        where: {
+          paymentStatus: {
+            in: SUCCESS_PAYMENT_STATUSES,
+          },
+        },
+      }),
 
       // Pending pay supplier requests
       prisma.pay_supplier.count({
@@ -88,19 +110,15 @@ export async function GET() {
       }),
     ])
 
-    // Calculate total revenue - check for multiple possible success statuses
+    // Calculate total revenue from successful payments
     const totalRevenue = await prisma.payments.aggregate({
       _sum: {
         amount: true,
       },
       where: {
-        OR: [
-          { paymentStatus: 'PAID' },
-          { paymentStatus: 'paid' },
-          { paymentStatus: 'success' },
-          { paymentStatus: 'successful' },
-          { paymentStatus: 'SUCCESS' },
-        ]
+        paymentStatus: {
+          in: SUCCESS_PAYMENT_STATUSES,
+        },
       },
     })
 

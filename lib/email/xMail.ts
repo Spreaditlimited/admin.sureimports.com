@@ -1,6 +1,6 @@
 'use server';
 import sendEmail from '@/lib/email/config/sendEmail';
-import mailTemplate from '@/lib/email/temp/mailTemplate';
+import mailTemplate from '@/lib/email/temp/mailTemplate2';
 
 interface Props {
   xEmail: any;

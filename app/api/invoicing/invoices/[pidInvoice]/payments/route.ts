@@ -76,6 +76,27 @@ export async function POST(
           recordedByPidUser: admin.pidUser,
         },
       });
+      const legacyTxRef = reference || pidInvoicePayment;
+      await tx.payments.create({
+        data: {
+          pidPayment: generatePid('PMT'),
+          pidUser: invoice.pidUser,
+          payerName: invoice.customerName || 'Invoice Customer',
+          payerEmail: invoice.customerEmail || null,
+          txID: pidInvoicePayment,
+          txRef: legacyTxRef,
+          paymentStatus: newStatus === 'PAID' ? 'PAID' : 'PENDING',
+          paymentType: paymentMethod,
+          currency: invoice.currency,
+          amount: amountNum,
+          serviceID: invoice.pidInvoice,
+          serviceName: 'Invoice Payment',
+          serviceDescription: `Invoice ${invoice.invoiceNumber}`,
+          txDateProcesser: (paidAt ? new Date(paidAt) : new Date()).toISOString(),
+          txDateServer: new Date().toISOString(),
+          xStatus: 'active',
+        },
+      });
 
       const updatedInvoice = await tx.invoices.update({
         where: { pidInvoice },

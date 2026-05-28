@@ -60,6 +60,26 @@ export async function POST(
           recordedByPidUser: admin.pidUser,
         },
       });
+      await tx.payments.create({
+        data: {
+          pidPayment: generatePid('PMT'),
+          pidUser: claim.invoice.pidUser,
+          payerName: claim.invoice.customerName || 'Invoice Customer',
+          payerEmail: claim.invoice.customerEmail || null,
+          txID: pidInvoicePayment,
+          txRef: claim.paymentReference || pidInvoicePayment,
+          paymentStatus: newStatus === 'PAID' ? 'PAID' : 'PENDING',
+          paymentType: 'CUSTOMER_CLAIM',
+          currency: claim.currency,
+          amount: amountNum,
+          serviceID: claim.pidInvoice,
+          serviceName: 'Invoice Payment Claim',
+          serviceDescription: `Claim approved for invoice ${claim.invoice.invoiceNumber}`,
+          txDateProcesser: claim.claimedAt.toISOString(),
+          txDateServer: new Date().toISOString(),
+          xStatus: 'active',
+        },
+      });
 
       const updatedInvoice = await tx.invoices.update({
         where: { pidInvoice: claim.pidInvoice },

@@ -1,6 +1,5 @@
 'use client';
 
-import { PhotoIcon } from '@heroicons/react/16/solid';
 import React, { useState, ChangeEvent, DragEvent } from 'react';
 import Image from 'next/image';
 
@@ -10,16 +9,16 @@ interface ImageUploadProps {
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange, imagex }) => {
-  //const [previewImage, setPreviewImage] = useState<string | null>('/icons/profile-update/default.png');
-  if (imagex == null || imagex == undefined || imagex == '') {
-    imagex = 'default2.png';
-  } //set default image value
+  const resolveInitialImage = (value: unknown): string => {
+    const raw = typeof value === 'string' ? value.trim() : '';
+    if (!raw) return '/assets/images/auth/user.png';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const base = process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL?.trim();
+    if (!base) return '/assets/images/auth/user.png';
+    return `${base.replace(/\/+$/, '')}/${raw.replace(/^\/+/, '')}`;
+  };
 
-  const url =
-    process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL +
-    '/' +
-    imagex;
-  const [previewImage, setPreviewImage] = useState<string | null>(url);
+  const [previewImage, setPreviewImage] = useState<string>(resolveInitialImage(imagex));
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -75,6 +74,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange, imagex }) => {
         type="file"
         ref={fileInputRef}
         onChange={handleImageChange}
+        accept="image/*"
         style={{ display: 'none' }}
       />
 
@@ -91,23 +91,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange, imagex }) => {
             style={{ maxWidth: '300px' }}
           />
 
-          <p className="m-2 p-5 pb-2 text-[12px]">
+          <div className="m-2 p-5 pb-2 text-[12px]">
             Click or drag and drop an image to upload <br />
             <div className="pb-2 text-[10px]">
               Max image size 2.5MB (Use a square sized photo e.g. 150px x 150px
               for best fit.)
             </div>
-          </p>
+          </div>
         </>
       ) : (
         <>
-          <p className="m-2 p-5 pb-2 text-[12px]">
+          <div className="m-2 p-5 pb-2 text-[12px]">
             Click or drag and drop an image to upload <br />
             <div className="pb-2 text-[10px]">
               Max image size 2.5MB (Use a square sized photo e.g. 150px x 150px
               for best fit.)
             </div>
-          </p>
+          </div>
         </>
       )}
     </div>

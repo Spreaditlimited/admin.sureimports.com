@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import {
@@ -12,10 +12,13 @@ import {
   FolderOpen,
   FileText,
   X,
-  GripVertical,
   Palette,
   Tag,
   ArrowLeft,
+  Hash,
+  Activity,
+  Layers,
+  ChevronRight
 } from 'lucide-react';
 
 interface BlogCategory {
@@ -80,23 +83,16 @@ const BlogCategories = () => {
       setLoading(true);
       const res = await fetch('/api/crud/blog-category/fetch');
       const data = await res.json();
-
-      if (data.success) {
-        setCategories(data.data);
-      } else {
-        toast.error('Failed to fetch categories');
-      }
+      if (data.success) setCategories(data.data);
+      else toast.error('Taxonomy sync failed');
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      toast.error('An error occurred while fetching categories');
+      toast.error('Network error during sync');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const filteredCategories = categories.filter((cat) =>
     cat.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -105,7 +101,6 @@ const BlogCategories = () => {
   const openCreateModal = () => {
     setFormData(initialFormData);
     setIsEditing(false);
-    setEditingCategory(null);
     setIsModalOpen(true);
   };
 
@@ -122,51 +117,26 @@ const BlogCategories = () => {
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setIsEditing(false);
-    setEditingCategory(null);
-    setFormData(initialFormData);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.categoryName.trim()) {
-      toast.error('Category name is required');
-      return;
-    }
-
+    if (!formData.categoryName.trim()) return toast.error('Identity name required');
     setSubmitting(true);
 
     try {
-      const url = isEditing
-        ? '/api/crud/blog-category/update'
-        : '/api/crud/blog-category/create';
-      const method = isEditing ? 'PUT' : 'POST';
-
-      const body = isEditing
-        ? { ...formData, pidCategory: editingCategory?.pidCategory }
-        : formData;
-
+      const url = isEditing ? '/api/crud/blog-category/update' : '/api/crud/blog-category/create';
+      const body = isEditing ? { ...formData, pidCategory: editingCategory?.pidCategory } : formData;
       const res = await fetch(url, {
-        method,
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
       const data = await res.json();
-
       if (data.successx) {
         toast.success(data.responsex.message);
-        closeModal();
+        setIsModalOpen(false);
         fetchCategories();
-      } else {
-        toast.error(data.responsex?.message || 'Operation failed');
       }
-    } catch (error) {
-      console.error('Error submitting category:', error);
-      toast.error('An error occurred');
     } finally {
       setSubmitting(false);
     }
@@ -174,376 +144,208 @@ const BlogCategories = () => {
 
   const handleDelete = async (pidCategory: string) => {
     try {
-      const res = await fetch(
-        `/api/crud/blog-category/delete?pidCategory=${pidCategory}`,
-        { method: 'DELETE' }
-      );
+      const res = await fetch(`/api/crud/blog-category/delete?pidCategory=${pidCategory}`, { method: 'DELETE' });
       const data = await res.json();
-
       if (data.successx) {
-        toast.success(data.responsex.message);
+        toast.success('Classification removed');
         setDeleteConfirm(null);
         fetchCategories();
-      } else {
-        toast.error(data.responsex?.message || 'Failed to delete category');
       }
     } catch (error) {
-      console.error('Error deleting category:', error);
-      toast.error('An error occurred');
+      toast.error('Revocation failed');
     }
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Link
-              href="/dashboard/blog/view"
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-                <FolderOpen className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              Blog Categories
-            </h1>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      
+      {/* 1. Control Bar & Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard/blog/view"
+            className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="relative w-full max-w-xs">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search Taxonomy..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all"
+            />
           </div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400 ml-12">
-            Organize your blog posts with categories
-          </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-2">
           <button
             onClick={fetchCategories}
-            className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-            title="Refresh"
+            className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground transition-all"
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all"
           >
-            <Plus className="w-5 h-5" />
-            <span>New Category</span>
+            <Plus className="w-4 h-4" /> Create Category
           </button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Total Categories
-              </p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                {categories.length}
-              </p>
-            </div>
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
-              <FolderOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Total Posts
-              </p>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">
-                {categories.reduce((acc, cat) => acc + cat._count.blogs, 0)}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm col-span-2 md:col-span-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Active Categories
-              </p>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
-                {categories.filter((c) => c.status === 'active').length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-              <Tag className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search categories..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-          />
-        </div>
-      </div>
-
-      {/* Categories Grid */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">
-                Loading categories...
-              </p>
-            </div>
-          </div>
-        ) : filteredCategories.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center max-w-md">
-              <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FolderOpen className="w-10 h-10 text-gray-400" />
+      {/* 2. Statistical Pulse */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { label: 'Total Categories', val: categories.length, icon: Layers, color: 'text-primary' },
+          { label: 'Manuscript Volume', val: categories.reduce((acc, cat) => acc + cat._count.blogs, 0), icon: FileText, color: 'text-blue-500' },
+          { label: 'Active Clusters', val: categories.filter(c => c.status === 'active').length, icon: Activity, color: 'text-emerald-500' }
+        ].map((stat, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-5 shadow-soft">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-bold mt-1 text-foreground">{stat.val}</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No categories found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                {searchTerm
-                  ? 'Try a different search term'
-                  : 'Get started by creating your first category'}
-              </p>
-              <button
-                onClick={openCreateModal}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Create First Category
-              </button>
+              <div className={`p-2.5 rounded-lg bg-muted/50 ${stat.color}`}>
+                <stat.icon className="w-5 h-5" />
+              </div>
             </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 3. Taxonomy Ledger Grid */}
+      <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
+            <RefreshCw className="w-8 h-8 animate-spin opacity-20" />
+            <p className="text-xs font-bold uppercase tracking-widest">Synchronizing Archive...</p>
           </div>
         ) : (
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCategories.map((category) => (
-                <div
-                  key={category.pidCategory}
-                  className="group bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-lg transition-all duration-300"
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 divide-x divide-y divide-border border-l border-t border-border">
+            {filteredCategories.map((category) => (
+              <div
+                key={category.pidCategory}
+                className="group p-6 hover:bg-muted/30 transition-all duration-300 relative flex flex-col justify-between min-h-[180px]"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: `${category.categoryColor}20` }}
+                        className="w-10 h-10 rounded-lg flex items-center justify-center ring-1 ring-border/50"
+                        style={{ backgroundColor: `${category.categoryColor}15` }}
                       >
-                        <FolderOpen
-                          className="w-6 h-6"
-                          style={{ color: category.categoryColor || '#6366f1' }}
-                        />
+                        <Tag className="w-4 h-4" style={{ color: category.categoryColor || '#6366f1' }} />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                           {category.categoryName}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {category._count.blogs} post
-                          {category._count.blogs !== 1 ? 's' : ''}
+                        <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-tighter">
+                          UID: {category.pidCategory}
                         </p>
                       </div>
                     </div>
-
-                    {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openEditModal(category)}
-                        className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
-                        title="Edit"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(category.pidCategory)}
-                        className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <button onClick={() => openEditModal(category)} className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors"><Edit3 className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setDeleteConfirm(category.pidCategory)} className="p-2 hover:bg-destructive/10 text-destructive rounded-md transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
-
-                  {/* Description */}
-                  {category.categoryDescription && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                      {category.categoryDescription}
-                    </p>
-                  )}
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: category.categoryColor || '#6366f1' }}
-                      />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Order: {category.categoryOrder || 0}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatDate(category.createdAt)}
-                    </span>
-                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+                    {category.categoryDescription || 'No classification briefing provided.'}
+                  </p>
                 </div>
-              ))}
-            </div>
+
+                <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
+                   <div className="flex items-center gap-1.5">
+                      <FileText className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-bold text-foreground uppercase">{category._count.blogs} Posts</span>
+                   </div>
+                   <div className="flex items-center gap-1.5">
+                      <Hash className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-mono text-muted-foreground">Order: {category.categoryOrder || 0}</span>
+                   </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Create/Edit Modal */}
+      {/* 4. Taxonomy Configuration Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {isEditing ? 'Edit Category' : 'Create New Category'}
-                </h2>
-                <button
-                  onClick={closeModal}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+            <div className="px-6 py-4 border-b border-border bg-muted/20 flex items-center justify-between">
+              <h2 className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                <Settings2 className="w-4 h-4 text-primary" />
+                {isEditing ? 'Modify Classification' : 'Provision Taxonomy'}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-1 hover:bg-muted rounded text-muted-foreground"><X className="w-4 h-4" /></button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              {/* Category Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Category Name <span className="text-red-500">*</span>
-                </label>
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category Identity *</label>
                 <input
                   type="text"
                   value={formData.categoryName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, categoryName: e.target.value })
-                  }
-                  placeholder="e.g., Import Guide"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400"
+                  onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                  placeholder="e.g. Strategic Logistics"
                 />
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description
-                </label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Functional Description</label>
                 <textarea
                   value={formData.categoryDescription}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      categoryDescription: e.target.value,
-                    })
-                  }
-                  placeholder="Brief description of this category..."
+                  onChange={(e) => setFormData({ ...formData, categoryDescription: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 resize-none"
+                  className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  placeholder="Classification briefing..."
                 />
               </div>
 
-              {/* Color */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Category Color
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {colorOptions.map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() =>
-                        setFormData({ ...formData, categoryColor: color.value })
-                      }
-                      className={`w-10 h-10 rounded-xl transition-all ${
-                        formData.categoryColor === color.value
-                          ? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white dark:ring-offset-gray-800 scale-110'
-                          : 'hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.label}
-                    />
-                  ))}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Palette className="w-3 h-3" /> Brand Accent</label>
+                  <div className="flex flex-wrap gap-2">
+                    {colorOptions.map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, categoryColor: color.value })}
+                        className={`w-6 h-6 rounded-md transition-all ring-offset-2 ring-offset-background ${
+                          formData.categoryColor === color.value ? 'ring-2 ring-primary scale-110 shadow-sm' : 'hover:scale-105 opacity-60'
+                        }`}
+                        style={{ backgroundColor: color.value }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Hash className="w-3 h-3" /> Display Weight</label>
+                  <input
+                    type="number"
+                    value={formData.categoryOrder}
+                    onChange={(e) => setFormData({ ...formData, categoryOrder: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-background font-mono font-bold"
+                  />
                 </div>
               </div>
 
-              {/* Order */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Display Order
-                </label>
-                <input
-                  type="number"
-                  value={formData.categoryOrder}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      categoryOrder: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  min="0"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Lower numbers appear first
-                </p>
-              </div>
-
-              {/* Actions */}
               <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 text-xs font-bold text-foreground hover:bg-muted border border-border rounded-lg transition-colors uppercase tracking-widest">Cancel</button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium rounded-xl transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground font-bold rounded-lg text-xs uppercase tracking-widest hover:bg-primary/90 shadow-sm transition-all disabled:opacity-50"
                 >
-                  {submitting ? (
-                    <span className="inline-flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      {isEditing ? 'Updating...' : 'Creating...'}
-                    </span>
-                  ) : isEditing ? (
-                    'Update Category'
-                  ) : (
-                    'Create Category'
-                  )}
+                  {submitting ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : isEditing ? 'Sync Changes' : 'Provision Category'}
                 </button>
               </div>
             </form>
@@ -551,35 +353,22 @@ const BlogCategories = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* 5. Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-            <div className="p-6">
-              <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-7 h-7 text-red-600 dark:text-red-400" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
-                Delete Category?
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
-                This action cannot be undone. Categories with blog posts cannot
-                be deleted.
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border rounded-xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center space-y-6">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto ring-1 ring-destructive/20">
+              <Trash2 className="w-8 h-8 text-destructive" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Revoke Classification</h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed px-4">
+                This action is destructive. Associated content will remain, but the taxonomic link will be severed.
               </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDelete(deleteConfirm)}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 text-[10px] font-bold text-foreground hover:bg-muted border border-border rounded-lg uppercase tracking-widest transition-colors">Abort</button>
+              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 px-4 py-2.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-destructive/90 transition-all shadow-sm">Confirm Delete</button>
             </div>
           </div>
         </div>
@@ -587,5 +376,10 @@ const BlogCategories = () => {
     </div>
   );
 };
+
+// Internal icon for the modal title
+const Settings2 = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+);
 
 export default BlogCategories;

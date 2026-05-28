@@ -18,6 +18,16 @@ import {
   Globe,
   User,
   Briefcase,
+  Camera,
+  Link as LinkIcon,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Twitter,
+  Calendar,
+  Fingerprint,
+  MoreHorizontal,
+  ShieldCheck
 } from 'lucide-react';
 
 interface BlogPublisher {
@@ -85,23 +95,16 @@ const BlogPublishers = () => {
       setLoading(true);
       const res = await fetch('/api/crud/blog-publisher/fetch');
       const data = await res.json();
-
-      if (data.successx) {
-        setPublishers(data.data);
-      } else {
-        toast.error('Failed to fetch publishers');
-      }
+      if (data.successx) setPublishers(data.data);
+      else toast.error('Editorial Board sync failed');
     } catch (error) {
-      console.error('Error fetching publishers:', error);
-      toast.error('An error occurred while fetching publishers');
+      toast.error('Network error during sync');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchPublishers();
-  }, [fetchPublishers]);
+  useEffect(() => { fetchPublishers(); }, [fetchPublishers]);
 
   const filteredPublishers = publishers.filter((pub) =>
     pub.publisherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,17 +114,13 @@ const BlogPublishers = () => {
 
   const getImageUrl = (imageName: string | null) => {
     if (!imageName) return null;
-    if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
-      return imageName;
-    }
+    if (imageName.startsWith('http')) return imageName;
     return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
   };
 
   const openCreateModal = () => {
     setFormData(initialFormData);
     setIsEditing(false);
-    setEditingPublisher(null);
-    setImageFile(null);
     setImagePreview(null);
     setIsModalOpen(true);
   };
@@ -140,88 +139,43 @@ const BlogPublishers = () => {
     });
     setIsEditing(true);
     setEditingPublisher(publisher);
-    setImageFile(null);
     setImagePreview(publisher.publisherImage ? getImageUrl(publisher.publisherImage) : null);
     setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setIsEditing(false);
-    setEditingPublisher(null);
-    setFormData(initialFormData);
-    setImageFile(null);
-    setImagePreview(null);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image must be less than 5MB');
-        return;
-      }
+      if (file.size > 2 * 1024 * 1024) return toast.error('Signature image must be under 2MB');
       setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
+      reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.publisherName.trim()) {
-      toast.error('Publisher name is required');
-      return;
-    }
-
+    if (!formData.publisherName.trim()) return toast.error('Identity name required');
     setSubmitting(true);
 
     try {
       const formDataObj = new FormData();
-      formDataObj.append('publisherName', formData.publisherName);
-      formDataObj.append('publisherEmail', formData.publisherEmail);
-      formDataObj.append('publisherBio', formData.publisherBio);
-      formDataObj.append('publisherRole', formData.publisherRole);
-      formDataObj.append('publisherSocialX', formData.publisherSocialX);
-      formDataObj.append('publisherSocialLinkedin', formData.publisherSocialLinkedin);
-      formDataObj.append('publisherSocialFacebook', formData.publisherSocialFacebook);
-      formDataObj.append('publisherSocialInstagram', formData.publisherSocialInstagram);
-      formDataObj.append('publisherWebsite', formData.publisherWebsite);
+      Object.entries(formData).forEach(([key, val]) => formDataObj.append(key, val));
+      if (imageFile) formDataObj.append('image', imageFile);
+      if (isEditing && editingPublisher) formDataObj.append('pidPublisher', editingPublisher.pidPublisher);
 
-      if (imageFile) {
-        formDataObj.append('image', imageFile);
-      }
-
-      if (isEditing && editingPublisher) {
-        formDataObj.append('pidPublisher', editingPublisher.pidPublisher);
-      }
-
-      const url = isEditing
-        ? '/api/crud/blog-publisher/update'
-        : '/api/crud/blog-publisher/create';
-      const method = isEditing ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(isEditing ? '/api/crud/blog-publisher/update' : '/api/crud/blog-publisher/create', {
+        method: isEditing ? 'PUT' : 'POST',
         body: formDataObj,
       });
 
       const data = await res.json();
-
       if (data.successx) {
         toast.success(data.responsex.message);
-        closeModal();
+        setIsModalOpen(false);
         fetchPublishers();
-      } else {
-        toast.error(data.responsex?.message || 'Operation failed');
       }
-    } catch (error) {
-      console.error('Error submitting publisher:', error);
-      toast.error('An error occurred');
     } finally {
       setSubmitting(false);
     }
@@ -229,503 +183,277 @@ const BlogPublishers = () => {
 
   const handleDelete = async (pidPublisher: string) => {
     try {
-      const res = await fetch(
-        `/api/crud/blog-publisher/delete?pidPublisher=${pidPublisher}`,
-        { method: 'DELETE' }
-      );
+      const res = await fetch(`/api/crud/blog-publisher/delete?pidPublisher=${encodeURIComponent(pidPublisher)}`, {
+        method: 'DELETE',
+      });
       const data = await res.json();
-
-      if (data.successx) {
-        toast.success(data.responsex.message);
-        setDeleteConfirm(null);
-        fetchPublishers();
-      } else {
-        toast.error(data.responsex?.message || 'Failed to delete publisher');
+      if (!res.ok || !data?.successx) {
+        throw new Error(data?.responsex?.message || 'Failed to revoke publisher');
       }
-    } catch (error) {
-      console.error('Error deleting publisher:', error);
-      toast.error('An error occurred');
+      toast.success(data?.responsex?.message || 'Publisher removed');
+      setDeleteConfirm(null);
+      fetchPublishers();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to revoke publisher');
     }
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Link
-              href="/dashboard/blog/view"
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                <Users className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+    <div className="space-y-8 animate-in fade-in duration-500">
+      
+      {/* 1. Control Bar & Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard/blog/view"
+            className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="relative w-full max-w-xs">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search Editorial Board..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button onClick={fetchPublishers} className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground transition-all">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button onClick={openCreateModal} className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all">
+            <Plus className="w-4 h-4" /> Add Publisher
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Board Statistics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { label: 'Board Members', val: publishers.length, icon: Users, color: 'text-primary' },
+          { label: 'Cumulative Posts', val: publishers.reduce((acc, pub) => acc + pub._count.blogs, 0), icon: FileText, color: 'text-blue-500' },
+          { label: 'Active Authors', val: publishers.filter(p => p.status === 'active').length, icon: ShieldCheck, color: 'text-emerald-500' }
+        ].map((stat, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-5 shadow-soft">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-bold mt-1 text-foreground">{stat.val}</p>
               </div>
-              Blog Publishers
-            </h1>
+              <div className={`p-2.5 rounded-lg bg-muted/50 ${stat.color}`}>
+                <stat.icon className="w-5 h-5" />
+              </div>
+            </div>
           </div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400 ml-12">
-            Manage authors and content creators for your blog
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={fetchPublishers}
-            className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            <span>New Publisher</span>
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Total Publishers
-              </p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                {publishers.length}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-              <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Total Posts
-              </p>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">
-                {publishers.reduce((acc, pub) => acc + pub._count.blogs, 0)}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm col-span-2 md:col-span-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Active Publishers
-              </p>
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
-                {publishers.filter((p) => p.status === 'active').length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-              <User className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-5">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search publishers by name, email, or role..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-          />
-        </div>
-      </div>
-
-      {/* Publishers Grid */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+      {/* 3. Publisher Ledger Grid */}
+      <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400">
-                Loading publishers...
-              </p>
-            </div>
+          <div className="py-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
+            <RefreshCw className="w-8 h-8 animate-spin opacity-20" />
+            <p className="text-xs font-bold uppercase tracking-widest">Syncing Board Metadata...</p>
           </div>
         ) : filteredPublishers.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center max-w-md">
-              <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Users className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No publishers found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                {searchTerm
-                  ? 'Try a different search term'
-                  : 'Get started by adding your first publisher'}
-              </p>
-              <button
-                onClick={openCreateModal}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Add First Publisher
-              </button>
-            </div>
+          <div className="py-20 text-center space-y-4">
+             <Users className="w-12 h-12 text-muted-foreground/20 mx-auto" />
+             <p className="text-sm text-muted-foreground italic">No editorial members found in the current ledger.</p>
           </div>
         ) : (
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredPublishers.map((publisher) => (
-                <div
-                  key={publisher.pidPublisher}
-                  className="group bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-lg transition-all duration-300"
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 divide-x divide-y divide-border border-l border-t border-border">
+            {filteredPublishers.map((publisher) => (
+              <div key={publisher.pidPublisher} className="group p-6 hover:bg-muted/30 transition-all duration-300 relative flex flex-col justify-between min-h-[260px]">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                      <div className="w-14 h-14 rounded-xl overflow-hidden ring-1 ring-border bg-muted shrink-0">
                         {getImageUrl(publisher.publisherImage) ? (
-                          <img
-                            src={getImageUrl(publisher.publisherImage)!}
-                            alt={publisher.publisherName}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={getImageUrl(publisher.publisherImage)!} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <User className="w-7 h-7 text-gray-400" />
-                          </div>
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground/30"><User className="w-6 h-6" /></div>
                         )}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
+                        <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
                           {publisher.publisherName}
                         </h3>
-                        {publisher.publisherRole && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <Briefcase className="w-3.5 h-3.5" />
-                            {publisher.publisherRole}
-                          </p>
-                        )}
+                        <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-tighter truncate">
+                          UID: {publisher.pidPublisher}
+                        </p>
+                        <div className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 bg-primary/5 text-primary text-[9px] font-bold uppercase rounded border border-primary/10">
+                          <Briefcase className="w-2.5 h-2.5" /> {publisher.publisherRole || 'Author'}
+                        </div>
                       </div>
                     </div>
-
-                    {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openEditModal(publisher)}
-                        className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
-                        title="Edit"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(publisher.pidPublisher)}
-                        className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <button onClick={() => openEditModal(publisher)} className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors"><Edit3 className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setDeleteConfirm(publisher.pidPublisher)} className="p-2 hover:bg-destructive/10 text-destructive rounded-md transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
 
-                  {/* Bio */}
-                  {publisher.publisherBio && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                      {publisher.publisherBio}
-                    </p>
-                  )}
+                  <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
+                    {publisher.publisherBio || 'No editorial briefing provided.'}
+                  </p>
 
-                  {/* Contact Info */}
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-1.5 pt-2">
                     {publisher.publisherEmail && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        <span className="truncate">{publisher.publisherEmail}</span>
-                      </p>
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                        <Mail className="w-3 h-3" /> <span className="truncate">{publisher.publisherEmail}</span>
+                      </div>
                     )}
                     {publisher.publisherWebsite && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                        <Globe className="w-4 h-4" />
-                        <span className="truncate">{publisher.publisherWebsite}</span>
-                      </p>
+                      <div className="flex items-center gap-2 text-[10px] text-primary font-bold">
+                        <Globe className="w-3 h-3" /> <span className="truncate">{publisher.publisherWebsite.replace(/https?:\/\//, '')}</span>
+                      </div>
                     )}
                   </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 text-sm">
-                      <FileText className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {publisher._count.blogs} post{publisher._count.blogs !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatDate(publisher.createdAt)}
-                    </span>
-                  </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
+                   <div className="flex items-center gap-1.5">
+                      <FileText className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-bold text-foreground uppercase">{publisher._count.blogs} Manuscripts</span>
+                   </div>
+                   <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-mono text-muted-foreground uppercase">{new Date(publisher.createdAt!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                   </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Create/Edit Modal */}
+      {/* 4. Publisher Configuration Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {isEditing ? 'Edit Publisher' : 'Add New Publisher'}
-                </h2>
-                <button
-                  onClick={closeModal}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm overflow-y-auto py-10 animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden my-auto">
+            <div className="px-6 py-4 border-b border-border bg-muted/20 flex items-center justify-between">
+              <h2 className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                {isEditing ? 'Modify Editorial Signature' : 'Provision New Author'}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-1 hover:bg-muted rounded text-muted-foreground transition-colors"><X className="w-4 h-4" /></button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-              {/* Profile Image */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Profile Image
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-                    {imagePreview ? (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
+            <form onSubmit={handleSubmit} className="p-6 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
+              
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Author Signature Image */}
+                <div className="flex flex-col items-center gap-4">
+                  <div 
+                    className="relative group cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="w-32 h-32 rounded-2xl overflow-hidden bg-muted border-2 border-border shadow-inner flex items-center justify-center ring-1 ring-primary/5">
+                      {imagePreview ? (
+                        <img src={imagePreview} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                      ) : (
+                        <User className="w-10 h-10 text-muted-foreground/30" />
+                      )}
+                    </div>
+                    <div className="absolute inset-0 bg-black/40 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                       <Camera className="w-6 h-6 text-white mb-1" />
+                       <span className="text-[9px] text-white font-bold uppercase">Signature</span>
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-primary rounded-full border-2 border-background flex items-center justify-center shadow-lg">
+                       <Upload className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  </div>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  <p className="text-[9px] text-muted-foreground italic text-center leading-tight">Portrait Signature<br/>Max 2MB (JPG/PNG)</p>
+                </div>
+
+                {/* Primary Identity */}
+                <div className="flex-1 space-y-5">
+                   <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Full Editorial Name *</label>
+                      <input
+                        required
+                        value={formData.publisherName}
+                        onChange={(e) => setFormData({ ...formData, publisherName: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all"
+                        placeholder="e.g. Elena Vance"
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <User className="w-10 h-10 text-gray-400" />
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Board Role</label>
+                        <input
+                          value={formData.publisherRole}
+                          onChange={(e) => setFormData({ ...formData, publisherRole: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground"
+                          placeholder="e.g. Senior Strategist"
+                        />
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageChange}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      <Upload className="w-4 h-4" />
-                      {imagePreview ? 'Change Image' : 'Upload Image'}
-                    </button>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Max 5MB. JPG, PNG, or WebP.
-                    </p>
-                  </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Work Email</label>
+                        <input
+                          type="email"
+                          value={formData.publisherEmail}
+                          onChange={(e) => setFormData({ ...formData, publisherEmail: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground"
+                          placeholder="elena@sureimports.com"
+                        />
+                      </div>
+                   </div>
                 </div>
               </div>
 
-              {/* Publisher Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.publisherName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, publisherName: e.target.value })
-                  }
-                  placeholder="e.g., John Doe"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400"
-                />
-              </div>
-
-              {/* Email & Role */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.publisherEmail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, publisherEmail: e.target.value })
-                    }
-                    placeholder="john@example.com"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Role
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.publisherRole}
-                    onChange={(e) =>
-                      setFormData({ ...formData, publisherRole: e.target.value })
-                    }
-                    placeholder="e.g., Content Lead"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400"
-                  />
-                </div>
-              </div>
-
-              {/* Bio */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Bio
-                </label>
+              {/* Editorial Briefing */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Author Biography / Briefing</label>
                 <textarea
                   value={formData.publisherBio}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      publisherBio: e.target.value,
-                    })
-                  }
-                  placeholder="Brief biography of the publisher..."
-                  rows={3}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400 resize-none"
+                  onChange={(e) => setFormData({ ...formData, publisherBio: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  placeholder="Professional biography for manuscript attribution..."
                 />
               </div>
 
-              {/* Website */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Website
-                </label>
-                <input
-                  type="url"
-                  value={formData.publisherWebsite}
-                  onChange={(e) =>
-                    setFormData({ ...formData, publisherWebsite: e.target.value })
-                  }
-                  placeholder="https://example.com"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400"
-                />
-              </div>
-
-              {/* Social Media Links */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  Social Media Links
-                </label>
+              {/* Connectivity Ledger */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                   <LinkIcon className="w-3.5 h-3.5 text-primary" />
+                   <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest">Connectivity Ledger</h4>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      X (Twitter)
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.publisherSocialX}
-                      onChange={(e) =>
-                        setFormData({ ...formData, publisherSocialX: e.target.value })
-                      }
-                      placeholder="https://x.com/username"
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      LinkedIn
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.publisherSocialLinkedin}
-                      onChange={(e) =>
-                        setFormData({ ...formData, publisherSocialLinkedin: e.target.value })
-                      }
-                      placeholder="https://linkedin.com/in/username"
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Facebook
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.publisherSocialFacebook}
-                      onChange={(e) =>
-                        setFormData({ ...formData, publisherSocialFacebook: e.target.value })
-                      }
-                      placeholder="https://facebook.com/username"
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Instagram
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.publisherSocialInstagram}
-                      onChange={(e) =>
-                        setFormData({ ...formData, publisherSocialInstagram: e.target.value })
-                      }
-                      placeholder="https://instagram.com/username"
-                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white placeholder-gray-400 text-sm"
-                    />
-                  </div>
+                  {[
+                    { icon: Globe, key: 'publisherWebsite', label: 'Personal Website' },
+                    { icon: Twitter, key: 'publisherSocialX', label: 'X (Twitter) Profile' },
+                    { icon: Linkedin, key: 'publisherSocialLinkedin', label: 'LinkedIn Handle' },
+                    { icon: Instagram, key: 'publisherSocialInstagram', label: 'Instagram Profile' },
+                  ].map((field) => (
+                    <div key={field.key} className="relative group">
+                       <field.icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                       <input
+                        value={(formData as any)[field.key]}
+                        onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-xs text-foreground focus:ring-2 focus:ring-primary/20 transition-all"
+                        placeholder={field.label}
+                       />
+                    </div>
+                  ))}
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
+              <div className="flex gap-3 pt-6 border-t border-border">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 text-xs font-bold text-foreground hover:bg-muted border border-border rounded-lg transition-colors uppercase tracking-widest">Abort</button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium rounded-xl transition-colors"
+                  className="flex-1 px-4 py-3 bg-primary text-primary-foreground font-bold rounded-lg text-xs uppercase tracking-widest hover:bg-primary/90 shadow-sm transition-all disabled:opacity-50"
                 >
-                  {submitting ? (
-                    <span className="inline-flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      {isEditing ? 'Updating...' : 'Creating...'}
-                    </span>
-                  ) : isEditing ? (
-                    'Update Publisher'
-                  ) : (
-                    'Create Publisher'
-                  )}
+                  {submitting ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : isEditing ? 'Sync Editorial Record' : 'Provision Member'}
                 </button>
               </div>
             </form>
@@ -733,35 +461,22 @@ const BlogPublishers = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* 5. Revocation Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-            <div className="p-6">
-              <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-7 h-7 text-red-600 dark:text-red-400" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
-                Delete Publisher?
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
-                This action cannot be undone. Publishers with blog posts cannot
-                be deleted.
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border rounded-xl shadow-2xl max-w-sm w-full mx-4 p-8 text-center space-y-6">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto ring-1 ring-destructive/20">
+              <Trash2 className="w-8 h-8 text-destructive" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Revoke Board Privileges</h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed px-4">
+                This will remove the author from the global board. Manuscripts attributed to this publisher will remain but link to a generic attribution.
               </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDelete(deleteConfirm)}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 text-[10px] font-bold text-foreground hover:bg-muted border border-border rounded-lg uppercase tracking-widest transition-colors">Cancel</button>
+              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 px-4 py-2.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-destructive/90 transition-all shadow-sm">Confirm Revocation</button>
             </div>
           </div>
         </div>

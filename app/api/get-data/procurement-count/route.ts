@@ -8,86 +8,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import  {prisma} from '@/lib/prisma'; // Assuming you have Prisma setup
 
 export async function GET(request: NextRequest) {
-
-  const status = request.nextUrl.searchParams.get('status');
-
   try {
-    const savedOrderCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'saved',
-      },
+    const grouped = await prisma.orders.groupBy({
+      by: ['status'],
+      _count: { _all: true },
     });
 
-    const pendingOrderCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'pending',
-      },
-    });
+    const normalize = (value: string | null) => (value || '').trim().toLowerCase();
+    const statusCounts = new Map<string, number>();
+    for (const row of grouped) {
+      const key = normalize(row.status);
+      statusCounts.set(key, (statusCounts.get(key) || 0) + row._count._all);
+    }
 
-    const approvedOrderCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'approved',
-      },
-    });
+    const getCount = (...keys: string[]) =>
+      keys.reduce((sum, key) => sum + (statusCounts.get(key) || 0), 0);
 
-    const payForShippingOrderCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'pay-for-shipping',
-      },
-    });
-
-    const inTransitOrderCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'in-transit',
-      },
-    });
-
-    const readyForPickupOrderCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'ready-for-pickup',
-      },
-    });
-
-    const completedOrdersCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'completed',
-      },
-    });
-
-    const onHoldOrdersCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'on-hold',
-      },
-    });
-
-    const bankPendingSavedOrdersCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'bank-pending-saved-orders',
-      },
-    });
-
-    const bankPendingShippingOrdersCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'bank-pending-shipping-orders',
-      },
-    });
-
-    const cancelledOrdersCount: number = await prisma.orders.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'cancelled',
-      },
-    });
+    const savedOrderCount = getCount('saved');
+    const pendingOrderCount = getCount('pending');
+    const approvedOrderCount = getCount('approved');
+    const payForShippingOrderCount = getCount('pay-for-shipping');
+    const inTransitOrderCount = getCount('in-transit');
+    const readyForPickupOrderCount = getCount('ready-for-pickup');
+    const completedOrdersCount = getCount('completed');
+    const onHoldOrdersCount = getCount('on-hold');
+    const bankPendingSavedOrdersCount = getCount('bank-pending-saved-orders');
+    const bankPendingShippingOrdersCount = getCount('bank-pending-shipping-orders');
+    const cancelledOrdersCount = getCount('cancelled');
 
     return NextResponse.json(
       {

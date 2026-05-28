@@ -10,6 +10,8 @@ interface User {
   pidUser: string
   userEmail: string
   userFirstname?: string
+  userLastname?: string
+  userImage?: string
 }
 
 
@@ -125,4 +127,3 @@ export function useAuth() {
   }
   return context
 }
-

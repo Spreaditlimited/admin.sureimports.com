@@ -7,7 +7,7 @@ import { TokenValidator } from "@/lib/TokenValidator"
 import Head from "next/head"
 
 export const metadata: Metadata = {
-  title: "SureImports | Admin Dashboard",
+  title: "Sure Imports | Admin Dashboard",
   description: "Admin dashboard",
 }
 

@@ -2,15 +2,21 @@ import CustomersTable from "./components/CustomersTable"
 
 export default function CustomersPage() {
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Customers</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Manage and view all registered and active customers
+    <div className="space-y-6">
+        
+      {/* Page Header */}
+      <div className="flex flex-col gap-1 px-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Customers
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Manage and view all registered and active customers.
         </p>
       </div>
+
+      {/* Page Content */}
       <CustomersTable />
+      
     </div>
   )
 }
-

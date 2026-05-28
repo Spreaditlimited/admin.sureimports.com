@@ -13,11 +13,9 @@ import {
   Eye,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   ShoppingBag,
   RefreshCw,
-  Filter,
   Globe,
 } from 'lucide-react';
 
@@ -130,14 +128,14 @@ export default function CustomersTable() {
   const getStatusBadge = (userCid: string | null) => {
     if (userCid === 'VERIFIED') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           Active
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
         Registered
       </span>
@@ -152,157 +150,155 @@ export default function CustomersTable() {
 
   return (
     <div className="space-y-6">
+      
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Total Customers Card */}
         <div
           onClick={() => {
             setStatusFilter('all');
             setPagination((prev) => ({ ...prev, currentPage: 1 }));
           }}
-          className={`cursor-pointer p-5 rounded-xl border transition-all ${
+          className={`cursor-pointer p-6 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-ring ${
             statusFilter === 'all'
-              ? 'bg-indigo-50 border-indigo-300 dark:bg-indigo-900/20 dark:border-indigo-700'
-              : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600'
+              ? 'bg-primary/5 border-primary text-primary'
+              : 'bg-card border-border hover:bg-muted/30'
           }`}
+          role="button"
+          tabIndex={0}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.total.toLocaleString()}</p>
+            <div className="flex flex-col gap-1">
+              <span className={`text-sm font-medium ${statusFilter === 'all' ? 'text-primary' : 'text-muted-foreground'}`}>Total Customers</span>
+              <span className="text-3xl font-bold text-foreground">{stats.total.toLocaleString()}</span>
             </div>
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl">
-              <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <div className={`p-3 rounded-full ${statusFilter === 'all' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+              <Users className="w-6 h-6" />
             </div>
           </div>
         </div>
 
+        {/* Active Customers Card */}
         <div
           onClick={() => {
             setStatusFilter('active');
             setPagination((prev) => ({ ...prev, currentPage: 1 }));
           }}
-          className={`cursor-pointer p-5 rounded-xl border transition-all ${
+          className={`cursor-pointer p-6 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
             statusFilter === 'active'
-              ? 'bg-green-50 border-green-300 dark:bg-green-900/20 dark:border-green-700'
-              : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600'
+              ? 'bg-emerald-500/5 border-emerald-500 text-emerald-600'
+              : 'bg-card border-border hover:bg-muted/30'
           }`}
+          role="button"
+          tabIndex={0}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Customers</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.active.toLocaleString()}</p>
+            <div className="flex flex-col gap-1">
+              <span className={`text-sm font-medium ${statusFilter === 'active' ? 'text-emerald-600' : 'text-muted-foreground'}`}>Active Customers</span>
+              <span className="text-3xl font-bold text-foreground">{stats.active.toLocaleString()}</span>
             </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/40 rounded-xl">
-              <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className={`p-3 rounded-full ${statusFilter === 'active' ? 'bg-emerald-500/20 text-emerald-600' : 'bg-muted text-muted-foreground'}`}>
+              <UserCheck className="w-6 h-6" />
             </div>
           </div>
         </div>
 
+        {/* Registered Customers Card */}
         <div
           onClick={() => {
             setStatusFilter('registered');
             setPagination((prev) => ({ ...prev, currentPage: 1 }));
           }}
-          className={`cursor-pointer p-5 rounded-xl border transition-all ${
+          className={`cursor-pointer p-6 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
             statusFilter === 'registered'
-              ? 'bg-amber-50 border-amber-300 dark:bg-amber-900/20 dark:border-amber-700'
-              : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600'
+              ? 'bg-amber-500/5 border-amber-500 text-amber-600'
+              : 'bg-card border-border hover:bg-muted/30'
           }`}
+          role="button"
+          tabIndex={0}
         >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Registered Only</p>
-              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{stats.registered.toLocaleString()}</p>
+            <div className="flex flex-col gap-1">
+              <span className={`text-sm font-medium ${statusFilter === 'registered' ? 'text-amber-600' : 'text-muted-foreground'}`}>Registered Only</span>
+              <span className="text-3xl font-bold text-foreground">{stats.registered.toLocaleString()}</span>
             </div>
-            <div className="p-3 bg-amber-100 dark:bg-amber-900/40 rounded-xl">
-              <UserPlus className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            <div className={`p-3 rounded-full ${statusFilter === 'registered' ? 'bg-amber-500/20 text-amber-600' : 'bg-muted text-muted-foreground'}`}>
+              <UserPlus className="w-6 h-6" />
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      {/* Control Bar: Search & Refresh */}
+      <div className="bg-card border border-border rounded-lg shadow-sm p-4">
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <form onSubmit={handleSearch} className="flex-1 w-full sm:max-w-md">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
-                type="text"
+                type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, email, phone, or country..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Search name, email, phone..."
+                className="w-full pl-9 pr-4 py-2 border border-input rounded-md bg-background text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
               />
             </div>
           </form>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => fetchCustomers()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-          </div>
+          <button
+            onClick={() => fetchCustomers()}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-background border border-border text-foreground text-sm font-medium rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Data Table */}
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Country
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Orders
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Joined
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                  Action
-                </th>
+          <table className="w-full text-left text-sm text-foreground">
+            <thead className="bg-muted/50 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-4">Customer</th>
+                <th className="px-6 py-4">Contact</th>
+                <th className="px-6 py-4">Location</th>
+                <th className="px-6 py-4 text-center">Orders</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Joined</th>
+                <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            
+            <tbody className="divide-y divide-border bg-card">
+              
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={7} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-3">
-                      <RefreshCw className="w-8 h-8 text-gray-400 animate-spin" />
-                      <p className="text-gray-500 dark:text-gray-400">Loading customers...</p>
+                      <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin" />
+                      <p className="text-sm font-medium text-muted-foreground">Loading customer data...</p>
                     </div>
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={7} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-3">
-                      <Users className="w-12 h-12 text-gray-300 dark:text-gray-600" />
-                      <p className="text-gray-500 dark:text-gray-400">No customers found</p>
+                      <Users className="w-12 h-12 text-muted-foreground/50" />
+                      <p className="text-sm font-medium text-muted-foreground">No customers found.</p>
                       {search && (
                         <button
                           onClick={() => {
                             setSearch('');
                             setPagination((prev) => ({ ...prev, currentPage: 1 }));
                           }}
-                          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                          className="text-sm font-semibold text-primary hover:underline focus:outline-none"
                         >
-                          Clear search
+                          Clear search filters
                         </button>
                       )}
                     </div>
@@ -312,11 +308,13 @@ export default function CustomersTable() {
                 customers.map((customer) => (
                   <tr
                     key={customer.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="hover:bg-muted/30 transition-colors"
                   >
+                    
+                    {/* Customer Profile Column */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
+                        <div className="w-10 h-10 shrink-0 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm">
                           {customer.userImage ? (
                             <img
                               src={`${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${customer.userImage}`}
@@ -327,68 +325,83 @@ export default function CustomersTable() {
                             getInitials(customer.userFirstname, customer.userLastname)
                           )}
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-semibold text-foreground">
                             {customer.userFirstname || ''} {customer.userLastname || ''}
                             {!customer.userFirstname && !customer.userLastname && (
-                              <span className="text-gray-400">No name</span>
+                              <span className="text-muted-foreground italic">No Name Provided</span>
                             )}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            ID: {customer.pidUser.slice(0, 12)}...
-                          </p>
+                          </span>
+                          <span className="text-xs font-mono text-muted-foreground">
+                            ID: {customer.pidUser.slice(0, 8)}...
+                          </span>
                         </div>
                       </div>
                     </td>
+
+                    {/* Contact Column */}
                     <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Mail className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="truncate max-w-[180px]">{customer.userEmail || customer.email || 'N/A'}</span>
+                      <div className="flex flex-col gap-1.5 text-sm">
+                        <div className="flex items-center gap-2 text-foreground">
+                          <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate max-w-[150px]">{customer.userEmail || customer.email || 'N/A'}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                          <Phone className="w-3.5 h-3.5 text-gray-400" />
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Phone className="w-3.5 h-3.5 shrink-0" />
                           <span>{customer.phone || customer.userPhone || 'N/A'}</span>
                         </div>
                       </div>
                     </td>
+
+                    {/* Location Column */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="flex items-start gap-2">
+                        <Globe className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-foreground">
                             {customer.country || 'N/A'}
-                          </p>
+                          </span>
                           {customer.userState && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{customer.userState}</p>
+                            <span className="text-xs text-muted-foreground">{customer.userState}</span>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <ShoppingBag className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+
+                    {/* Orders Column */}
+                    <td className="px-6 py-4 text-center">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 border border-border">
+                        <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-sm font-bold text-foreground">
                           {customer._count.orders}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(customer.userCid)}</td>
+
+                    {/* Status Column */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                        <Calendar className="w-3.5 h-3.5" />
+                      {getStatusBadge(customer.userCid)}
+                    </td>
+
+                    {/* Date Column */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5 shrink-0" />
                         <span>{formatDate(customer.createdAt)}</span>
                       </div>
                     </td>
+
+                    {/* Action Column */}
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleViewDetails(customer.pidUser)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-background border border-border hover:bg-muted rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3.5 h-3.5" />
                         View
                       </button>
                     </td>
+
                   </tr>
                 ))
               )}
@@ -396,33 +409,34 @@ export default function CustomersTable() {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Custom Pagination System */}
         {!loading && customers.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+          <div className="px-6 py-4 border-t border-border bg-muted/10">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              
+              <p className="text-sm text-muted-foreground">
                 Showing{' '}
-                <span className="font-medium">
+                <span className="font-semibold text-foreground">
                   {(pagination.currentPage - 1) * pagination.limit + 1}
                 </span>{' '}
                 to{' '}
-                <span className="font-medium">
+                <span className="font-semibold text-foreground">
                   {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)}
                 </span>{' '}
-                of <span className="font-medium">{pagination.totalCount}</span> customers
+                of <span className="font-semibold text-foreground">{pagination.totalCount}</span> customers
               </p>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() =>
-                    setPagination((prev) => ({ ...prev, currentPage: prev.currentPage - 1 }))
-                  }
+                  onClick={() => setPagination((prev) => ({ ...prev, currentPage: prev.currentPage - 1 }))}
                   disabled={!pagination.hasPrev}
-                  className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium border border-border bg-background rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Previous
+                  Prev
                 </button>
-                <div className="flex items-center gap-1">
+                
+                <div className="hidden sm:flex items-center gap-1 px-2">
                   {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                     let pageNum;
                     if (pagination.totalPages <= 5) {
@@ -438,10 +452,10 @@ export default function CustomersTable() {
                       <button
                         key={pageNum}
                         onClick={() => setPagination((prev) => ({ ...prev, currentPage: pageNum }))}
-                        className={`w-10 h-10 text-sm font-medium rounded-lg transition-colors ${
+                        className={`w-9 h-9 flex items-center justify-center text-sm font-semibold rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${
                           pagination.currentPage === pageNum
-                            ? 'bg-indigo-600 text-white'
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`}
                       >
                         {pageNum}
@@ -449,17 +463,17 @@ export default function CustomersTable() {
                     );
                   })}
                 </div>
+
                 <button
-                  onClick={() =>
-                    setPagination((prev) => ({ ...prev, currentPage: prev.currentPage + 1 }))
-                  }
+                  onClick={() => setPagination((prev) => ({ ...prev, currentPage: prev.currentPage + 1 }))}
                   disabled={!pagination.hasNext}
-                  className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium border border-border bg-background rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
+
             </div>
           </div>
         )}

@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation"
-import { DashboardLayout } from "../../../dashboard/components/dashboard-layout"
 import ProductDetails from "./components/ProductDetails"
 import { db } from "@/lib/db"
-
-
 
 export default async function ProductDetailsPage({
   searchParams,
@@ -21,9 +18,6 @@ export default async function ProductDetailsPage({
     where: {
       pidProduct: id,
     },
-    // include: {
-    //   category: true,
-    // },
   })
 
   if (!product) {
@@ -31,10 +25,22 @@ export default async function ProductDetailsPage({
   }
   
   return (
-      <>
-          <h1 className="text-2xl font-bold mb-6">Products Details </h1>
-          <ProductDetails product={product as any} />
-      </>
+    <div className="space-y-6">
+      
+      {/* Page Header */}
+      <div className="flex flex-col gap-1 px-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Product Details
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Viewing <span className="font-medium text-foreground">{product.productName}</span> — ID: {product.pidProduct}
+        </p>
+      </div>
+
+      {/* Page Content */}
+      {/* We pass the product data to the details component which handles the specific UI cards */}
+      <ProductDetails product={product as any} />
+      
+    </div>
   )
 }
-

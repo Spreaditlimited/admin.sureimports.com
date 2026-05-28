@@ -1,21 +1,20 @@
 'use client'
 
-import Products from '@/componentsx/dashboard/Products';
-import { Metadata } from 'next';
-import React from 'react';
-import { useState } from 'react';
-import { MdAddShoppingCart, MdAddToPhotos, MdBook } from 'react-icons/md';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-//import toast from 'react-hot-toast';
-import { useAlert } from '@/app/context/AlertContext';
-import Image from 'next/image';
-import ImageUploadBox from '@/componentsx/ImageUploadBox';
-import ImageBox from '@/componentsx/ImageBox';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
-import axios from 'axios';
-import { Save } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  User, 
+  Lock, 
+  Key, 
+  CheckCircle2, 
+  RefreshCw, 
+  ShieldAlert,
+  Contact,
+  Fingerprint
+} from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
 const SERVICE_OPTIONS = [
@@ -36,67 +35,15 @@ const SERVICE_OPTIONS = [
   { key: 'blog_management', label: 'Blog Management' },
 ] as const;
 
-
-export const metadata: Metadata = {
-    title: 'Printin Admin Dashboard',
-    description: 'Printin'
-};
-
-//USER DATA
-interface User {
-    pidUser: string;
-    email: string;
-    name: string;
-  }
-  
-//API RESPONSE
-interface ApiResponse {
-    responsex: any;
-    successx: boolean;
-    userx: User;
-  }
-
-interface ProductFormProps {
-    product?: {
-      id: number
-      pidProduct: string
-      pidCategory: string
-      productName: string
-      productDescription: number
-      productCategory: string
-      productPrice: number
-      productPriceInfo: string
-      productGeneralInfo: string
-      productMOQ: number
-      productVAT: number
-      productAdditionalPrice: number
-      productAdditionalDescription: string
-    }
-  }
-
-
-
 const Page = () => {
-    const {user} = useAuth();
-    //initialize alert system
+    const { user } = useAuth();
     const navigateWithAlert = useNavigationWithAlert();
-
-    //SET VARIABLES DATA
     const router = useRouter();
-    //const [value, setValue] = useState('<h3>Product Description Title</h3><br /><p> Product description goes here...</p>');
-    //const [file, setFile] = useState<File | null>(null)
+
     const [isLoading, setIsLoading] = useState(false);
 
-
-    const handleImageChange = (file: File) => {
-      //setFile(file);
-    };
-
-
-    //SET FORM DATA
-    let AdminUserID = 'ADM' + new Date().getTime().toString();
-    //const [pidUser, setPidUser] = useState(user?.pidUser as string);
-    const [pidAdminUser, setAdminUser] = useState(AdminUserID);
+    // Form State
+    const [pidAdminUser] = useState('ADM' + new Date().getTime().toString());
     const [accountName, setAccountName] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -115,202 +62,207 @@ const Page = () => {
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                toast.info('Adding Admin User . . .');
-                e.preventDefault();
-                setIsLoading(true);
+        e.preventDefault();
+        setIsLoading(true);
+        toast.info('Provisioning administrative account...');
 
-                //if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
+        const formData = new FormData();
+        formData.append('pidAdminUser', pidAdminUser);
+        formData.append('accountName', accountName);
+        formData.append('firstName', firstName);
+        formData.append('lastName', lastName);
+        formData.append('email', email);
+        formData.append('phone', phone);
+        formData.append('password', password);
+        formData.append('authorizationLevel', authorizationLevel);
+        formData.append('serviceKeys', JSON.stringify(selectedServices));
 
-                //collecting form data
-                const formData = new FormData();
-                //formData.append('file', file);
-                //formData.append('pidUser', pidUser);
-                formData.append('pidAdminUser', pidAdminUser);
-                formData.append('accountName', accountName);
-                formData.append('firstName', firstName);
-                formData.append('lastName', lastName);
-                formData.append('email', email);
-                formData.append('phone', phone);
-                formData.append('password', password);
-                formData.append('authorizationLevel', authorizationLevel);
-                formData.append('serviceKeys', JSON.stringify(selectedServices));
+        try {
+            const res = await fetch('/api/crud/admin/create', {
+                method: 'POST',
+                body: formData,
+            });
 
-                //formData.append('categoryImage', categoryImage);
-
-                //MAKE REQUEST ATTEMPT
-                try {
-                    //MAKE REQUEST
-                            const res = await fetch('/api/crud/admin/create', {
-                            method: 'POST',
-                            //headers: { 'Content-Type': 'application/json' },
-                            //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            //headers: { 'Content-Type': 'multipart/form-data' },
-                            body: formData,
-                    });
-
-
-                    //PROCESS POST RESPONSE
-                    const data: any = await res.json();
-                    //if (data.responsex.status == 'SUCCESS'){toast.success(data.responsex.message);}
-                    if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', 'Admin User was successfully created!');}
-                    if (data.statusx == 'USER_EXISTS'){toast.error(data.message);}
-                    if (data.statusx == 'FAILED'){toast.error(data.responsex.message);}
-
-            } catch (error: any) {
-                toast.error(error.message);
-                //navigateWithAlert('/dashboard', 'success', 'Action was successfully!')
-            } finally {
-                setIsLoading(false);
+            const data = await res.json();
+            if (data.statusx === 'SUCCESS') {
+                navigateWithAlert('/dashboard/admin/view', 'success', 'Admin account successfully provisioned');
+            } else {
+                toast.error(data.message || 'Enrollment failed');
             }
-    }
-//END FORM...
-
-
-
-
-
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <>
+        <form onSubmit={handleSubmit} className="space-y-8 pb-20">
+            
+            {/* SECTION 1: IDENTITY */}
+            <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+                <div className="px-6 py-4 border-b border-border bg-muted/20">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <Contact className="w-4 h-4 text-primary" /> 1. Admin Identity
+                    </h3>
+                </div>
+                <div className="p-6 space-y-6">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Internal Account Name *</label>
+                        <input
+                            value={accountName}
+                            onChange={(e) => setAccountName(e.target.value)}
+                            type="text"
+                            required
+                            placeholder="e.g. Operations Manager - Lagos"
+                            className="w-full px-4 py-2.5 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring transition-all"
+                        />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">First Name *</label>
+                            <input
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                type="text"
+                                required
+                                className="w-full px-4 py-2.5 text-sm border border-input rounded-md bg-background text-foreground"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Last Name *</label>
+                            <input
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                type="text"
+                                required
+                                className="w-full px-4 py-2.5 text-sm border border-input rounded-md bg-background text-foreground"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Work Email *</label>
+                            <input
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                type="email"
+                                required
+                                className="w-full px-4 py-2.5 text-sm border border-input rounded-md bg-background text-foreground"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Contact Number *</label>
+                            <input
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                type="text"
+                                required
+                                className="w-full px-4 py-2.5 text-sm border border-input rounded-md bg-background text-foreground"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<form className="space-y-5" onSubmit={handleSubmit} >
-    <div className="">
-      <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Admin Users Form</h2>
+            {/* SECTION 2: SECURITY CREDENTIALS */}
+            <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+                <div className="px-6 py-4 border-b border-border bg-muted/20">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-primary" /> 2. Security & Security Level
+                    </h3>
+                </div>
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">System Password *</label>
+                            <div className="relative">
+                                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    placeholder="••••••••"
+                                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring font-mono tracking-widest"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Authorization Tier *</label>
+                            <select
+                                value={authorizationLevel}
+                                onChange={(e) => setAuthorizationLevel(e.target.value)}
+                                required
+                                className="w-full px-3 py-2.5 text-sm border border-input rounded-md bg-background text-foreground font-semibold focus:ring-2 focus:ring-ring"
+                            >
+                                <option value="">Select Level</option>
+                                <option value="L1">Super Admin (L1)</option>
+                                <option value="L2">Regular Admin (L2)</option>
+                                <option value="L3">Restricted Admin (L3)</option>
+                            </select>
+                        </div>
+                    </div>
 
+                    <div className="p-5 bg-muted/30 border border-border rounded-lg space-y-3">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest">
+                            <ShieldAlert className="w-4 h-4" /> Security Note
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            <span className="font-bold text-foreground">Tier L1</span> grants unrestricted access to all modules, including financial settlement and system settings. Tier L2 and L3 accounts are restricted to the specific services selected in the next step.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-        {/* Single Column */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Account Name *</label>
-          <input
-            name='accountName'
-            onChange={(e) => setAccountName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-        </div>
+            {/* SECTION 3: PERMISSIONS GRID */}
+            <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+                <div className="px-6 py-4 border-b border-border bg-muted/20">
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                        <Fingerprint className="w-4 h-4 text-primary" /> 3. Service Access Control
+                    </h3>
+                </div>
+                <div className="p-6">
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 rounded-lg border border-dashed border-border transition-opacity ${authorizationLevel === 'L1' ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                        {SERVICE_OPTIONS.map((service) => (
+                            <label key={service.key} className="flex items-center gap-3 p-3 bg-muted/30 border border-border rounded-md hover:bg-muted transition-colors cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={authorizationLevel === 'L1' || selectedServices.includes(service.key)}
+                                    onChange={() => toggleService(service.key)}
+                                    className="w-4 h-4 rounded border-input text-primary focus:ring-ring"
+                                />
+                                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{service.label}</span>
+                            </label>
+                        ))}
+                    </div>
+                    {authorizationLevel === 'L1' && (
+                        <div className="mt-4 flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-md w-fit">
+                            <ShieldCheck className="w-4 h-4" /> Super Admin overrides service selection.
+                        </div>
+                    )}
+                </div>
+            </div>
 
+            {/* ACTION BAR */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-1">
+                <div className="flex flex-col">
+                    <span className="text-xs font-bold text-foreground italic">Verification Status</span>
+                    <span className="text-[10px] text-muted-foreground">Admin ID: <span className="font-mono">{pidAdminUser}</span></span>
+                </div>
 
-
-        {/* Double Column */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name *</label>
-          <input
-            name='firstName'
-            onChange={(e) => setFirstName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name *</label>
-          <input
-            name='lastName'
-            onChange={(e) => setLastName(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-        </div>
-
-
-         {/* Double Column */}
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
-          <input
-            name='email'
-            onChange={(e) => setEmail(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-          <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number *</label>
-          <input
-            name='phone'
-            onChange={(e) => setPhone(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          </div>
-        </div>
-
-
-
-        {/* Single Column */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Admin Password *</label>
-          <input
-            name='password'
-            onChange={(e) => setPassword(e.target.value)}
-            type="text"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-        </div>
-
-
-
-        {/* Dropdown (Select) */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Authorization Level *</label>
-          <select
-            name='authorizationLevel'
-            onChange={(e) => setAuthorizationLevel(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value=""> - Level - </option>
-            <option value="L1">Super Admin L1</option>
-            <option value="L2">Regular Admin L2 </option>
-            <option value="L3">Regular Admin L3 </option>
-          </select>
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Services Access
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-gray-300 dark:border-gray-600 rounded-md p-3">
-            {SERVICE_OPTIONS.map((service) => (
-              <label key={service.key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <input
-                  type="checkbox"
-                  checked={selectedServices.includes(service.key)}
-                  onChange={() => toggleService(service.key)}
-                />
-                <span>{service.label}</span>
-              </label>
-            ))}
-          </div>
-          <small className="text-gray-500 dark:text-gray-400">
-            Super Admin L1 can access all services automatically.
-          </small>
-        </div>
-
-
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
-          >
-            <Save /> &nbsp; Create Admin
-          </button>
-        </div>
-
-
-      </div>
-    </div>
-</form>
-      
-        </>
+                <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-3 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all disabled:opacity-50"
+                >
+                    {isLoading ? (
+                        <><RefreshCw className="w-4 h-4 animate-spin" /> Provisioning Account...</>
+                    ) : (
+                        <><CheckCircle2 className="w-4 h-4" /> Create Administrative Account</>
+                    )}
+                </button>
+            </div>
+        </form>
     );
 };
 

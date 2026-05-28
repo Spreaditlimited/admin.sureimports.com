@@ -1,57 +1,73 @@
 // components/Modal.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import { X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  title?: string; // Added optional title prop for better reuse
   children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  // Prevent scrolling on the body when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900 bg-opacity-75">
-        <div className="w-full max-w-4xl rounded-lg bg-white p-6 shadow-xl">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">...</h3>
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-600"
-              onClick={onClose}
-            >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      
+      {/* 1. Backdrop: Soft Blur instead of solid heavy gray */}
+      <div 
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300" 
+        onClick={onClose} 
+      />
 
-          <div className="max-h-[80vh] overflow-y-auto">{children}</div>
-
-          <div className="mt-4 flex justify-end">
-            <button
-              type="button"
-              className="rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-              onClick={onClose}
-            >
-              Close
-            </button>
-          </div>
+      {/* 2. Modal Content Card */}
+      <div className="relative w-full max-w-4xl bg-card border border-border rounded-xl shadow-soft animate-in zoom-in-95 fade-in duration-300 flex flex-col max-h-[90vh] overflow-hidden">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h3 className="text-lg font-bold tracking-tight text-foreground">
+            {title || 'Sure Imports Details'}
+          </h3>
+          <button
+            type="button"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            onClick={onClose}
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
+
+        {/* Scrollable Body Area */}
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar text-sm text-foreground leading-relaxed">
+          {children}
+        </div>
+
+        {/* Footer Area */}
+        <div className="px-6 py-4 border-t border-border bg-muted/20 flex justify-end">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,74 +1,91 @@
 'use client'
 
 import React, { useEffect, useState } from 'react';
-import { BiSolidShoppingBags, BiUser } from 'react-icons/bi';
-import { HiShoppingBag } from 'react-icons/hi2';
-import { MdPayment } from 'react-icons/md';
-import { RiShipFill } from 'react-icons/ri';
-import StatisticsBox from '../../../../../componentsx/dashboard/StatisticsBox';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+// Defined the interface to replace 'any' for better TypeScript support
+interface PaySmallSmallCounts {
+  savedPaySmallSmall: number;
+  startedPaySmallSmall: number;
+  completedPaySmallSmall: number;
+  cancelledPaySmallSmall: number;
+}
 
-// interface Record {
-//   pendingPaymentOrder: number;
-//   processingRequestOrder: number;
-//   requestProcessedOrder: number;
-//   cancelledOrder: number;
-// }
-
-
-const CounterBoxVerifySupplier = () => {
+const CounterBoxPaySmallSmall = () => {
   const router = useRouter();
-  const status = useSearchParams().get('status') || 'none';
-  const [recordx, setRecord] = useState<any | null>(null);
-  //const [recordx, setRecord] = useState<Record[]>([]);
+  const searchParams = useSearchParams();
+  const status = searchParams.get('status') || 'none';
+  const [recordx, setRecord] = useState<PaySmallSmallCounts | null>(null);
 
-useEffect(() => {
-const fetchRecord = async () => {
-  const res = await fetch(
-    `/api/get-data/pay-small-small-count?status=${status}`,
-  );
-  const data = await res.json();
-  setRecord(data);
-};
-fetchRecord();
-}, []);
+  useEffect(() => {
+    const fetchRecord = async () => {
+      try {
+        const res = await fetch(`/api/get-data/pay-small-small-count?status=${status}`);
+        if (res.ok) {
+          const data = await res.json();
+          setRecord(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch Pay Small Small counts:", error);
+      }
+    };
+    fetchRecord();
+  }, [status]);
 
+  const handleClick = (newStatus: string) => {
+    router.push('/dashboard/pay-small-small?status=' + newStatus);
+  };
 
-const handleClick = (status: string) => {
-//alert(`You clicked on ${title}!`);
-router.push('/dashboard/pay-small-small?status='+status)
-};
+  // Array of filter configurations to keep the code DRY and easy to manage
+  const filterButtons = [
+    { id: 'SAVED', label: 'Saved', count: recordx?.savedPaySmallSmall },
+    { id: 'STARTED', label: 'Started', count: recordx?.startedPaySmallSmall },
+    { id: 'COMPLETED', label: 'Completed', count: recordx?.completedPaySmallSmall },
+    { id: 'CANCELLED', label: 'Cancelled', count: recordx?.cancelledPaySmallSmall },
+  ];
 
   return (
-    <>
+    <div className="w-full bg-card border border-border shadow-soft rounded-lg p-2 sm:p-4">
+      {/* Using our global custom-scrollbar to keep the UI clean on overflow */}
+      <div className="flex space-x-3 overflow-x-auto custom-scrollbar pb-2 pt-1 px-2">
+        
+        {filterButtons.map((btn) => {
+          // Check if this button represents the currently active status filter
+          const isActive = status === btn.id;
 
-<div className="w-full overflow-x-auto scrollbar-hide">
-      <div className="flex space-x-2 px-4 py-2">
-        {/* Buttons with one-line text */}
-        <button type="button" onClick={()=>handleClick('SAVED')} className="whitespace-nowrap btn btn-dark my-4 bg-indigo-700 text-white px-3 py-1 text-sm rounded-full hover:bg-indigo-800 flex items-center justify-between min-w-[120px]">
-          <span>Saved </span>&nbsp;&nbsp;
-          <span className="bg-gray-100 text-black text-xs font-bold rounded-full px-2 py-0.5">{recordx?.savedPaySmallSmall}</span>
-        </button>
-        <button type="button" onClick={()=>handleClick('STARTED')} className="whitespace-nowrap btn btn-dark my-4 bg-indigo-700 text-white px-3 py-1 text-sm rounded-full hover:bg-indigo-800 flex items-center justify-between min-w-[120px]">
-          <span>Started </span>&nbsp;&nbsp;
-          <span className="bg-gray-100 text-black text-xs font-bold rounded-full px-2 py-0.5">{recordx?.startedPaySmallSmall}</span>
-        </button>
-        <button type="button" onClick={()=>handleClick('COMPLETED')} className="whitespace-nowrap btn btn-dark my-4 bg-indigo-700 text-white px-3 py-1 text-sm rounded-full hover:bg-indigo-800 flex items-center justify-between min-w-[120px]">
-          <span>Completed </span>&nbsp;&nbsp;
-          <span className="bg-gray-100 text-black text-xs font-bold rounded-full px-2 py-0.5">{recordx?.completedPaySmallSmall}</span>
-        </button>
-        <button type="button" onClick={()=>handleClick('CANCELLED')} className="whitespace-nowrap btn btn-dark my-4 bg-indigo-700 text-white px-3 py-1 text-sm rounded-full hover:bg-indigo-800 flex items-center justify-between min-w-[120px]">
-          <span>Cancelled </span>&nbsp;&nbsp;
-          <span className="bg-gray-100 text-black text-xs font-bold rounded-full px-2 py-0.5">{recordx?.cancelledPaySmallSmall}</span>
-        </button>
+          return (
+            <button
+              key={btn.id}
+              type="button"
+              onClick={() => handleClick(btn.id)}
+              className={`
+                inline-flex items-center justify-between whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card
+                ${isActive 
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm' 
+                  : 'bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                }
+              `}
+            >
+              <span>{btn.label}</span>
+              <span 
+                className={`
+                  ml-3 rounded-full px-2 py-0.5 text-xs font-bold
+                  ${isActive 
+                    ? 'bg-primary-foreground text-primary' 
+                    : 'bg-muted text-muted-foreground'
+                  }
+                `}
+              >
+                {/* Fallback to 0 if recordx is still loading */}
+                {btn.count ?? 0} 
+              </span>
+            </button>
+          );
+        })}
         
       </div>
     </div>
-
-
-    </>
   );
 };
 
-export default CounterBoxVerifySupplier;
+export default CounterBoxPaySmallSmall;

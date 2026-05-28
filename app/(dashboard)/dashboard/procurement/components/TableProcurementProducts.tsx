@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 
+// (Assuming PrismaClient is used in an API route, not directly here since this is 'use client', 
+// but leaving your imports intact as requested)
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
@@ -30,46 +32,29 @@ interface ProductProps {
   shippingAddress: string;
 }
 
-// USER DATA
 interface User {
   pidUser: string;
   email: string;
   name: string;
 }
 
-//API RESPONSE
 interface ApiResponse {
   responsex: any;
   successx: boolean;
   userx: User;
 }
 
-
-  
-
 const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, orderName, shippingAddress}) => {
 
-  //initialize alert system
   const navigateWithAlert = useNavigationWithAlert();
-
-
-  //status
   const status = useSearchParams().get('status') || 'none';
   let newStatus:string = '';
 
-
-  //important variables
   const [loading, setLoading] = useState<boolean>(true);
   const [productALL, setProductALL] = useState<Product[]>([]);
   const [message, setMessage] = useState<any>('');
   const [actionType, setActionType] = useState<string>('');
-  //const [newStatus, setNewStatus] = useState<string>('');
 
-
-
-  //************************************ CALCULATIONS ************************************//
-  //------------------------- PRODUCTS DATA FOR CALCULATIONS --------------------------//
-  //const [pidOrder, setPidOrder] = useState<string>(products[0]?.pidOrder || '');
   const router = useRouter();
   const [getAllProducts, setGetAllProducts] = useState<any[]>([]) as any;
   const [productsTotalPrice, setProductsTotalPrice] = useState<number>(0);
@@ -103,10 +88,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [shippingPlanName, setShippingPlanName] = useState<string>('...');
   const [shippingPlanRate, setShippingPlanRate] = useState<number>(0);
   const [domesticShippingCost, setDomesticShippingCost] = useState<number>(0);
-  const [internationalShippingCost, setInternationalShippingCost] =
-    useState<number>(0);
-  const [estimatedTotalShippingCost, setEstimatedTotalShippingCost] =
-    useState<number>(0);
+  const [internationalShippingCost, setInternationalShippingCost] = useState<number>(0);
+  const [estimatedTotalShippingCost, setEstimatedTotalShippingCost] = useState<number>(0);
 
   const [trackingCompany, setTrackingCompany] = useState<string>('');
   const [trackingNumber, setTrackingNumber] = useState<string>('');
@@ -116,24 +99,13 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [additionalCostDescription, setAdditionalCostDescription] = useState<string>('');
 
   const [grandTotalCost, setGrandTotalCost] = useState<number>(0);
-
-  
-
-  //================OTHER VALUES===============//
   const [amountNaira, setAmountNaira] = useState<number>(0);
   const [amountPounds, setAmountPounds] = useState<number>(0);
 
-
-
-
-  //REPLACE NULL VALUES WITH ZERO
   function replaceNullWithZero<T>(value: T | null): T | number {
     return value === null ? 0 : value;
   }
 
-
-
-  //------------------------- GET ALL PRODUCTS DATA & CALCULATIONS FUNCTION --------------------------//
   async function getProductsDetails() {
     try {
       setLoading(true);
@@ -142,16 +114,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         { cache: 'no-store' },
       );
 
-      if (!res.ok) {
-        //throw new Error('Failed to fetch data');
-        return <div>No Records</div>;
-      }
-
+      if (!res.ok) return <div>No Records</div>;
       const data = await res.json();
 
-      // Check if data.productsGetAll is empty or not
       if (data.productsGetAll && data.productsGetAll.length > 0) {
-
         setProductALL(data.productsGetAll);
         setGetAllProducts(data.productsGetAll) as any;
         setProductsTotalPrice(replaceNullWithZero(data.productsTotalPrice));
@@ -182,1519 +148,575 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         setShippingPlanName(data.shippingPlanName);
         setShippingPlanRate(replaceNullWithZero(data.shippingPlanRate));
         setDomesticShippingCost(replaceNullWithZero(data.domesticShippingCost));
-        setInternationalShippingCost(
-          replaceNullWithZero(data.internationalShippingCost),
-        );
-        setEstimatedTotalShippingCost(
-          replaceNullWithZero(data.estimatedTotalShippingCost),
-        );
+        setInternationalShippingCost(replaceNullWithZero(data.internationalShippingCost));
+        setEstimatedTotalShippingCost(replaceNullWithZero(data.estimatedTotalShippingCost));
 
-        setAmountNaira(
-          replaceNullWithZero(data.grandTotalCost) *
-            replaceNullWithZero(data.exNairaToDollar),
-        );
+        setAmountNaira(replaceNullWithZero(data.grandTotalCost) * replaceNullWithZero(data.exNairaToDollar));
         setAmountPounds(replaceNullWithZero(data.grandTotalCost) * 0.8);
-
         setGrandTotalCost(replaceNullWithZero(data.grandTotalCost));
       } else {
-        // Set to an empty array if no records are found
         setGetAllProducts([]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      // Handle the error appropriately (e.g., display an error message)
     } finally {
-      setLoading(false); // Set loading to false when done
+      setLoading(false); 
     }
   }
 
-  //------------------------- RUN THE GET PRODUCT DETAILS FUNCTION --------------------------//
   useEffect(() => {
     getProductsDetails();
   }, []);
 
-
-   //LOADER & EMPTY RECORD PROCESSING 
-   if (loading) {return <Loader />;} //show loader
-   if (productALL.length === 0) {
+  if (loading) return <Loader />;
+  if (productALL.length === 0) {
     return (
-      <div className="m-7 flex border-spacing-1 items-center justify-center p-7 font-bold">
-        <div className="rounded border-2 border-dotted border-gray-500 p-4">
-          <p className="text-center text-gray-500">No {status} orders available</p>
-        </div>
+      <div className="flex items-center justify-center p-8 mt-4 bg-card border border-border shadow-soft rounded-lg">
+        <p className="text-muted-foreground font-medium">No {status} orders available</p>
       </div>
     ); 
   }
 
-
-
-
-
-
-
-  ///////////////////////////////// HANDLE FORM SUBMISSION /////////////////////////////////
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-          event.preventDefault();
+    event.preventDefault();
+    let pidMessage = 'MSG' + new Date().getTime().toString();
+    let currentStatus = status;
 
-          let pidMessage = 'MSG' + new Date().getTime().toString();
-          let currentStatus = status;
- 
-          const formData = new FormData(event.currentTarget);
-          formData.append('pidOrder', pidOrder);
-          formData.append('pidUser', pidUser);
-          formData.append('currentStatus', currentStatus);
-          formData.append('newStatus', actionType);
-          formData.append('message', message);
-          formData.append('pidMessage', pidMessage);
+    const formData = new FormData(event.currentTarget);
+    formData.append('pidOrder', pidOrder);
+    formData.append('pidUser', pidUser);
+    formData.append('currentStatus', currentStatus);
+    formData.append('newStatus', actionType);
+    formData.append('message', message);
+    formData.append('pidMessage', pidMessage);
+    formData.append('orderShippingCost', estimatedTotalShippingCost.toString());
+    formData.append('orderTotalCost', grandTotalCost.toString());
+    formData.append('vat', vat.toString());
+    formData.append('serviceCharge', serviceCharge.toString());
+    formData.append('exchangeRate1', exNairaToDollar.toString());
+    formData.append('exchangeRate2', exYuanToDollar.toString());
+    formData.append('exchangeRate3', exNairaToYuan.toString());
+    formData.append('actualWeight', actualWeight.toString());
+    formData.append('actualDomesticShippingCost', actualDomesticShippingCost.toString());
+    formData.append('trackingNumber', trackingNumber.toString());
+    formData.append('additionalCost', additionalCost.toString());
+    formData.append('additionalCostDescription', additionalCostDescription.toString());
 
-          formData.append('orderShippingCost', estimatedTotalShippingCost.toString());
-          formData.append('orderTotalCost', grandTotalCost.toString());
-          formData.append('vat', vat.toString());
-          formData.append('serviceCharge', serviceCharge.toString());
-          formData.append('exchangeRate1', exNairaToDollar.toString());
-          formData.append('exchangeRate2', exYuanToDollar.toString());
-          formData.append('exchangeRate3', exNairaToYuan.toString());
+    try {
+      toast.info('Processing . . .');
+      const res = await fetch('/api/status-processing/procurement', {
+        method: 'POST',
+        body: formData,
+      });
 
-          formData.append('actualWeight', actualWeight.toString());
-          formData.append('actualDomesticShippingCost', actualDomesticShippingCost.toString());
+      const data:any = await res.json();
 
-          formData.append('trackingNumber', trackingNumber.toString());
-          formData.append('additionalCost', additionalCost.toString());
-          formData.append('additionalCostDescription', additionalCostDescription.toString());
-
-          
-          
-
-          //MAKE REQUEST ATTEMPT
-          try {
-            toast.info('Processing . . .');
-            //MAKE REQUEST
-            const res = await fetch('/api/status-processing/procurement', {
-              method: 'POST',
-              body: formData,
-            });
-  
-        // GET & PROCESS RESPONSE FROM API
-        const data:any = await res.json();
-  
-        if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+actionType);}
-        if (data.statusx == 'SUCCESS_MESSAGE'){navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+actionType);}
-        if (data.statusx == 'ACTION_FAILED') {toast.warning(data.message);}
-        if (data.statusx == 'REVERT_TO_APPROVED') {toast.success(data.message);  router.push('/dashboard/procurement?status=approved');}
-        if (data.statusx == 'SUCCESS_TRACKING_NUMBER') {toast.info(data.message);}
-        if (data.statusx == 'EMPTY_TRACKING_DATA') {toast.warning(data.message);}
-        
-        } catch (error: any) {
-            console.log(error.message);
-        } finally {
-          //setLoading(false);
-        }
-        
-
+      if (data.statusx == 'SUCCESS') navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+actionType);
+      if (data.statusx == 'SUCCESS_MESSAGE') navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+actionType);
+      if (data.statusx == 'ACTION_FAILED') toast.warning(data.message);
+      if (data.statusx == 'REVERT_TO_APPROVED') {toast.success(data.message);  router.push('/dashboard/procurement?status=approved');}
+      if (data.statusx == 'SUCCESS_TRACKING_NUMBER') toast.info(data.message);
+      if (data.statusx == 'EMPTY_TRACKING_DATA') toast.warning(data.message);
+      
+    } catch (error: any) {
+        console.log(error.message);
+    }
   }
 
-
-
-
-
-
-
-
-
-
-
   return (
-    <div className="bg-gray-600 dark:bg-gray-900 min-h-screen p-0 flex flex-col items-center divide-gray-800">
-      <div className="w-full bg-yellow bg-gray-200 dark:bg-gray-900 shadow-md p-6 space-y-6">
-        
-
-        {/* Order Info */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold dark:text-gray-200">{orderName}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              ORDER ID: {pidOrder}
-            </p>
-            <p>
-            <span className="font-medium dark:text-gray-300"><b>Delivery Address:</b></span> {shippingAddress}
-            </p>
-          </div>
-          {/* <div className="flex space-x-4">
-            <button className="bg-red-500 text-white text-sm py-2 px-4 rounded hover:bg-red-600">
-              Take Charge of Order
-            </button>
-            <button className="bg-blue-500 text-white text-sm py-2 px-4 rounded hover:bg-blue-600">
-              Generate Invoice
-            </button>
-          </div> */}
-        </div>
-
-
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border-collapse border border-gray-200 dark:border-gray-300">
-  <thead>
-    <tr className="bg-gray-100 dark:bg-gray-400 text-gray-700 dark:text-primary-light">
-      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">S/N</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Product Name</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Unit Price ({currencyType})</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Quantity</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Weight (Kg)</th>
-      <th className="border border-gray-300 dark:border-gray-600 px-4 py-2">Total Price ({currencyType})</th>
-    </tr>
-  </thead>
-
-  <tbody>
-    {productALL.map((datax: Product, index: number) => (
-      <tr key={index + 1} className="dark:text-gray-100">
-        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-          {index + 1}
-        </td>
-        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
-          <p className="text-dark">
-            <Link href={datax.productLink} target="blank">
-              <b>{datax.productName}</b>
-            </Link>
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Info: {datax.productInfo}</p>
-        </td>
-        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-          {datax.productPrice}
-        </td>
-        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-          {datax.productQuantity}
-        </td>
-        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-          {datax.productWeight}
-        </td>
-        <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
-        {(parseFloat(datax.productQuantity) * parseFloat(datax.productPrice)).toFixed(2)}
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-          {/* <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Showing 1 to 1 of 1 entries (filtered from 7 total entries)
-          </p> */}
-        </div>
-
+    <div className="w-full mt-4 space-y-6">
       
-
-
-
-        {/****************************** TOTAL COST OF ORDER *****************************/}
-        <div className="flex flex-col gap-4 rounded-lg border border-slate-400 p-[25px]">
-          <div>
-            <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-              Total Cost of Products
-            </div><hr />
-            <div className="text-base text-slate-600 dark:text-slate-300 lg:flex lg:gap-3">
-              {/* IF IN YAUN DOLLAR VALUE */}
-              {currencyType == 'USD' && (
-                <>
-                  <span className="font-medium text-slate-600">
-                    <span className="font font-bold text-gray-800 dark:text-blue-400">
-                      {' '}
-                      $
-                      {
-                        (productsTotalPrice as number)
-                          .toFixed(2)
-                          .toString()
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                      }{' '}
-                      USD
-                    </span>
-                  </span>
-                </>
-              )}
-
-              {/* IF IN YAUN DOLLAR VALUE */}
-              {currencyType == 'CNY' && (
-                <>
-                  <span className="font-medium text-slate-600">
-                    <span className="font font-bold text-gray-800 dark:text-blue-400">
-                      {' '}
-                      ¥
-                      {
-                        (((productsTotalPrice as number) / 1) * exYuanToDollar)
-                          .toFixed(2)
-                          .toString()
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                      }{' '}
-                      Yuan
-                    </span>
-
-                    <>
-                      {'  |  '}
-                      <span className="font-medium text-slate-600 dark:text-gray-400">
-                        {' '}
-                        $
-                        {
-                          ((productsTotalPrice as number) / 1)
-                            .toFixed(2)
-                            .toString()
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                        }{' '}
-                        USD
-                      </span>
-                    </>
-                  </span>
-                </>
-              )}
-
-              {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
-              {destinationCountry == 'Nigeria' && (
-                <>
-                  {'  |  '}
-                  <span className="font-medium text-slate-600 dark:text-gray-400">
-                    {' '}
-                    ₦
-                    {
-                      (((productsTotalPrice as number) / 1) * exNairaToDollar)
-                        .toFixed(2)
-                        .toString()
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                    }{' '}
-                    Naira
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
+      {/* Order Info */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card border border-border rounded-lg p-5 shadow-sm">
+        <div>
+          <h2 className="text-xl font-bold text-foreground mb-1">{orderName}</h2>
+          <p className="text-sm text-muted-foreground mb-2">ORDER ID: <span className="font-medium text-foreground">{pidOrder}</span></p>
+          <p className="text-sm text-foreground">
+            <span className="font-semibold text-muted-foreground uppercase tracking-wider text-xs">Delivery Address: </span> 
+            {shippingAddress}
+          </p>
         </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-lg border border-border shadow-sm">
+        <table className="min-w-full text-sm text-left">
+          <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
+            <tr>
+              <th className="px-4 py-3 text-center">S/N</th>
+              <th className="px-4 py-3">Product Name</th>
+              <th className="px-4 py-3 text-center">Unit Price ({currencyType})</th>
+              <th className="px-4 py-3 text-center">Quantity</th>
+              <th className="px-4 py-3 text-center">Weight (Kg)</th>
+              <th className="px-4 py-3 text-center">Total Price ({currencyType})</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border bg-card text-foreground">
+            {productALL.map((datax: Product, index: number) => (
+              <tr key={index + 1} className="hover:bg-muted/30 transition-colors">
+                <td className="px-4 py-3 text-center">{index + 1}</td>
+                <td className="px-4 py-3">
+                  <Link href={datax.productLink} target="blank" className="font-semibold text-primary hover:underline">
+                    {datax.productName}
+                  </Link>
+                  <p className="text-xs text-muted-foreground mt-1">Info: {datax.productInfo}</p>
+                </td>
+                <td className="px-4 py-3 text-center">{datax.productPrice}</td>
+                <td className="px-4 py-3 text-center">{datax.productQuantity}</td>
+                <td className="px-4 py-3 text-center">{datax.productWeight}</td>
+                <td className="px-4 py-3 text-center font-medium">
+                  {(parseFloat(datax.productQuantity) * parseFloat(datax.productPrice)).toFixed(2)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-
-
-
-
-        {/****************************** TOTAL ESTIMATED SHIPPING COST (SAVED STAGE & ON-HOLD STAGE) *****************************/}
-        {['saved', 'on-hold'].includes(status) && (
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Estimated Shipping Cost of Order
-          </div><hr />
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Domestic Shipping Cost within China:</p>
-            <p>
-            $
-              {
-                ((domesticShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
-            </p>
-          </div>
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">International Shipping Cost:</p>
-            <p>
-            $
-              {
-                ((internationalShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
-            </p>
-          </div>
-
-          <div className="flex max-md:justify-between md:gap-3">
-            <p className="md:w-64"><b>Total Cost:</b></p>
-            <span className="font-semibold">
-              $<b>
-              {
-                ((estimatedTotalShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              </b>
-              &nbsp; USD
-            </span>
-
-                {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
-                {destinationCountry == 'Nigeria' && (
-                  <>
-                    &nbsp;{' | '}&nbsp;
-                    <span className="">
-                    ₦
-                  {
-                      (
-                        ((estimatedTotalShippingCost as number) / 1) *
-                        exNairaToDollar
-                      )
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }
-              &nbsp; Naira
-            </span>
-                  </>
-                )}
-          </div>
-        </div>
-        )}
-
-
-
-        {/****************************** TOTAL ESTIMATED SHIPPING COST (OTHER STAGES) *****************************/}
-        {!['saved', 'on-hold'].includes(status) && (
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Estimated Shipping Cost of Order
-          </div><hr />
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Domestic Shipping Cost within China:</p>
-            <p>
-            $
-              {
-                ((domesticShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
-            </p>
-          </div>
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">International Shipping Cost:</p>
-            <p>
-            $
-              {
-                ((estimatedTotalShippingCost - domesticShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
-            </p>
-          </div>
-
-          <div className="flex max-md:justify-between md:gap-3">
-            <p className="md:w-64"><b>Total Cost:</b></p>
-            <span className="font-semibold">
-              $<b>
-              {
-                ((estimatedTotalShippingCost as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              </b>
-              &nbsp; USD
-            </span>
-
-                {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
-                {destinationCountry == 'Nigeria' && (
-                  <>
-                    &nbsp;{' | '}&nbsp;
-                    <span className="">
-                    ₦
-                  {
-                      (
-                        ((estimatedTotalShippingCost as number) / 1) *
-                        exNairaToDollar
-                      )
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }
-              &nbsp; Naira
-            </span>
-                  </>
-                )}
-          </div>
-        </div>
-        )}
-
-
-        {/****************************** SHIPPING DETAILS *****************************/}
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Shipping Details
-          </div><hr />
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Shipping Plan:</p>{' '}
-            <p>
-              {shippingPlanName || 'Not Specified'}
-            </p>
-          </div>
-
-          
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Shipping Rate:</p>{' '}
-            <p>
-              { '$'+shippingPlanRate+'/Kg' || 'Not Specified'}
-            </p>
-          </div>
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Estimated Total Weight of Order:</p>{' '}
-            <p>
-              {
-                ((productsTotalWeight as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              {' Kg'}
-            </p>
-          </div>
-
-          {/* SHIPPING DETAILS 1 */}
-          {shippingPlanName == 'NORMAL_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Normal Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (per Kg)</p>
-              </div>
-            </>
-          )}
-
-
-          {/* SHIPPING DETAILS 2 */}
-          {shippingPlanName == 'EXPRESS_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Express Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (per Kg)</p>
-              </div>
-            </>
-          )}
-
-
-          {/* SHIPPING DETAILS 3 */}
-          {shippingPlanName == 'SPECIAL_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Special Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (per Kg)</p>
-              </div>
-            </>
-          )}
-
-
-          {/* SHIPPING DETAILS 4 */}
-          {shippingPlanName == 'SEA_SHIPPING' && (
-            <>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Shipping Type:</p>
-                <p>Sea Shipping</p>
-              </div>
-              <div className="flex max-md:justify-between md:gap-20">
-                <p className="md:w-64"> Rate:</p>
-                <p>${shippingPlanRate} (N500,000/CBM)</p>
-              </div>
-            </>
-          )}
-
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Destination Country:</p>
-            <p>{destinationCountry}</p>
-          </div>
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Port of Exit:</p>
-            <p>HONG KONG</p>
-          </div>
-        </div>
-
-
-
-
-
-        {/****************************** SERVICE AND VAT CHARGES *****************************/}
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-            Service Charge & VAT
-          </div><hr />
-          <p>
-            {serviceCharge}% Service Charge of{' '}
-            <span className="font-semibold text-slate-600 dark:text-slate-500">
-              $
-              {
-                ((serviceChargeValue as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }{' '}
-              USD
-            </span>{' '}
-            inclusive.<span></span>
-          </p>
-
-          <p>
-            {vat}% VAT of{' '}
-            <span className="font-semibold text-slate-600 dark:text-slate-500">
-              $
-              {
-                (vatValue as number)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }{' '}
-              USD
-            </span>{' '}
-            inclusive.
-          </p>
-
-
-          {/* EXCHANGE RATE FOR USD | YUAN */}
-          {currencyType == 'CNY' && (
-            <p>
-              Exchange Rate (USD | Yuan):
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                $1 USD{' '}
-              </span>
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                = ¥{exYuanToDollar} Yuan
-              </span>
-            </p>
-          )}
-
-
-          {/* EXCHANGE RATE FOR USD | NAIRA */}
-          {destinationCountry == 'Nigeria' && (
-            <p>
-              Exchange Rate (USD | Naira):
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                $1 USD{' '}
-              </span>
-              <span className="font-semibold text-slate-600 dark:text-slate-500">
-                {' '}
-                = ₦{exNairaToDollar} Naira
-              </span>
-            </p>
-          )}
-        </div>
-
-
-
-
-
-
-        {/***************************** GRAND TOTAL COST ***************************/}
-        <div className="flex items-center gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <p className="text-xl font-bold md:pr-[84px]">Grand Total Cost :</p>
-          <div>
-            {/* GRAND TOTAL */}
-
-            {/* IF IN YAUN DOLLAR VALUE */}
+        {/* Total Cost of Products */}
+        <div className="bg-card border border-border shadow-sm rounded-lg p-5">
+          <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Total Cost of Products</h3>
+          <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
             {currencyType == 'USD' && (
+              <span className="font-bold text-primary text-xl">
+                ${((productsTotalPrice as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
+              </span>
+            )}
+            {currencyType == 'CNY' && (
               <>
-                <span className="text-2xl font-bold dark:text-blue-400">
-                  {' '}
-                  $
-                  {
-                    ((grandTotalCost as number)/1)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  USD
+                <span className="font-bold text-primary text-xl">
+                  ¥{(((productsTotalPrice as number) / 1) * exYuanToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Yuan
+                </span>
+                <span className="text-foreground font-medium"> | </span>
+                <span className="font-semibold text-foreground">
+                  ${((productsTotalPrice as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
                 </span>
               </>
             )}
-
-            {/* IF IN YAUN DOLLAR VALUE */}
-            {currencyType == 'CNY' && (
-              <>
-                <span className="text-2xl font-bold dark:text-blue-400">
-                  {' '}
-                  ¥
-                  {
-                    ((grandTotalCost as number) * exYuanToDollar)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  Yuan
-                </span>{' '}
-                {'  |  '}
-                <span className="text-xl font-bold text-gray-500 dark:text-gray-200">
-                  {' '}
-                  $
-                  {
-                    (grandTotalCost as number/1)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  USD
-                </span>{' '}
-              </>
-            )}
-
-            {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
             {destinationCountry == 'Nigeria' && (
               <>
-                {'  |  '}
-                <span className="text-xl font-bold text-gray-500 dark:text-gray-200">
-                  {' '}
-                  ₦
-                  {
-                    ((grandTotalCost as number) * exNairaToDollar)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  Naira
-                </span>{' '}
+                <span className="text-foreground font-medium"> | </span>
+                <span className="font-semibold text-foreground">
+                  ₦{(((productsTotalPrice as number) / 1) * exNairaToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Naira
+                </span>
               </>
             )}
-
-            {/* IF DESTINATION COUNTRY United Kingdom, SHOW VALUE IN Pounds */}
-            {destinationCountry == 'United Kingdom' && (
-              <>
-                {'  |  '}
-                <span className="text-xl font-bold text-gray-500 dark:text-gray-200">
-                  {' '}
-                  £
-                  {
-                    (amountPounds as number)
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }{' '}
-                  Pounds
-                </span>{' '}
-              </>
-            )}
-
-            {/* EXTRA CHARGES */}
           </div>
         </div>
 
-
-
-
-
-{/*------------------ ACTUAL SHIPPING COST DETAILS -----------------*/}
-{(status == 'pay-for-shipping') && (
-          <>
-        {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-          Actual Shipping Cost of Order Details
-          </div><hr />
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Actual (Real) Weight of Order:</p>
-            <p>
-              {
-                ((actualWeightValue as number)/1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; Kg
-            </p>
-          </div>
-
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Selected Shipping Plan Rate:</p>
-            <p>
-            $
-              {
-                ((shippingPlanRate as number)/1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; / Kg
-            </p>
-          </div>
-
-          <hr />
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Actual Domestic Shipping Cost within China:</p>
-            <p>
-            $
-              {
-                ((actualDomesticShippingCostValue as number) / 1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
-            </p>
-          </div>
-
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Actual International Shipping Cost:</p>
-            <p>
-            $
-              {
-                (actualInternationalShippingCost as number)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
-            </p>
-          </div>
-
-          <hr />
-
-          <div className="flex max-md:justify-between md:gap-3">
-            <p className="md:w-64"><b>Actual Total Shipping Cost:</b></p>
-            <span className="font-semibold">
-              $
-              <b>
-                {
-                  (((actualTotalShippingCost as number)/1 ))
-                    .toFixed(2)
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                }
-              </b>
-              &nbsp; USD
-            </span>
-
-                {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
+        {/* Estimated Shipping Cost */}
+        <div className="bg-card border border-border shadow-sm rounded-lg p-5">
+          <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Estimated Shipping Cost</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Domestic Shipping (China):</span>
+              <span className="font-medium text-foreground">${((domesticShippingCost as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">International Shipping:</span>
+              <span className="font-medium text-foreground">
+                ${(['saved', 'on-hold'].includes(status) ? internationalShippingCost : (estimatedTotalShippingCost - domesticShippingCost)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-3 border-t border-border mt-3">
+              <span className="font-bold text-foreground">Total Cost:</span>
+              <div className="text-right">
+                <span className="font-bold text-primary text-lg">
+                  ${((estimatedTotalShippingCost as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
+                </span>
                 {destinationCountry == 'Nigeria' && (
-                  <>
-                    &nbsp;{' | '}&nbsp;
-                    <span className="">
-                    ₦
-                  {
-                      (
-                        (((actualTotalShippingCost as number)/1 )) *
-                        exNairaToDollar
-                      )
-                      .toFixed(2)
-                      .toString()
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                  }
-              &nbsp; Naira
-            </span>
-                  </>
+                  <span className="block text-xs font-medium text-muted-foreground mt-1">
+                    ₦{(((estimatedTotalShippingCost as number) / 1) * exNairaToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Naira
+                  </span>
                 )}
+              </div>
+            </div>
           </div>
         </div>
-        </>
-   )}
 
-
-
-{/*------------------ ACTUAL TOTAL SHIPPING COST -----------------*/}
-{(status == 'pay-for-shipping') && (
-          <>
-        {/****************************** TOTAL ESTIMATED SHIPPING COST *****************************/}
-        <div className="flex flex-col gap-4 border rounded-lg border-slate-400 p-[25px]">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-          Shipping Refund or Balance Payment Calculation
-          </div><hr />
-
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Actual Total Shipping Cost:</p>
-            <p>
-            $
-              {
-                (((actualTotalShippingCost as number)/1 ))
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
-            </p>
+        {/* Shipping Details */}
+        <div className="bg-card border border-border shadow-sm rounded-lg p-5">
+          <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Shipping Details</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Shipping Plan:</span>
+              <span className="font-medium text-foreground">{shippingPlanName || 'Not Specified'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Shipping Rate:</span>
+              <span className="font-medium text-foreground">${shippingPlanRate}/Kg</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Estimated Total Weight:</span>
+              <span className="font-medium text-foreground">{((productsTotalWeight as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Kg</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Destination:</span>
+              <span className="font-medium text-foreground">{destinationCountry}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Port of Exit:</span>
+              <span className="font-medium text-foreground">HONG KONG</span>
+            </div>
           </div>
+        </div>
 
-
-          <div className="flex max-md:justify-between md:gap-20">
-            <p className="md:w-64">Initial Estimated Shipping Cost:</p>
+        {/* Service & VAT Charges */}
+        <div className="bg-card border border-border shadow-sm rounded-lg p-5">
+          <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Service Charge & VAT</h3>
+          <div className="space-y-4 text-sm text-muted-foreground">
             <p>
-            $
-              {
-                ((estimatedTotalShippingCost as number)/1)
-                  .toFixed(2)
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-              }
-              &nbsp; USD
+              <span className="font-semibold text-foreground">{serviceCharge}%</span> Service Charge of <span className="font-semibold text-foreground">${((serviceChargeValue as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span> inclusive.
             </p>
+            <p>
+              <span className="font-semibold text-foreground">{vat}%</span> VAT of <span className="font-semibold text-foreground">${(vatValue as number).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span> inclusive.
+            </p>
+            <div className="pt-3 border-t border-border mt-3 space-y-1">
+              <p className="font-medium text-foreground mb-2">Exchange Rates:</p>
+              {currencyType == 'CNY' && <p>$1 USD = <span className="font-semibold text-foreground">¥{exYuanToDollar} Yuan</span></p>}
+              {destinationCountry == 'Nigeria' && <p>$1 USD = <span className="font-semibold text-foreground">₦{exNairaToDollar} Naira</span></p>}
+            </div>
           </div>
+        </div>
+      </div>
 
-          <hr />
-
-          <div className="flex max-md:justify-between md:gap-3">
-
-
-            { (actualTotalShippingCost - estimatedTotalShippingCost) > 0 && (
-              <>
-            <p className="md:w-64"><b>Amount to Pay:</b></p>
-            <span className="font-semibold">
-              $
-              <b>
-                {
-                  ((actualTotalShippingCost - estimatedTotalShippingCost  as number)/1)
-                    .toFixed(2)
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                }
-              </b>
-              &nbsp; USD
+      {/* Grand Total Cost */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-primary/10 border border-primary/20 rounded-lg p-6 shadow-sm">
+        <p className="text-lg font-bold text-foreground">Grand Total Cost</p>
+        <div className="flex flex-wrap items-center gap-3">
+          {currencyType == 'USD' && (
+            <span className="text-2xl font-bold text-primary">
+              ${((grandTotalCost as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
             </span>
-            </>
           )}
-
-
-
-            { (actualTotalShippingCost - estimatedTotalShippingCost) < 0 && (
+          {currencyType == 'CNY' && (
             <>
-            <p className="md:w-64"><b>Shipping Refund Balance:</b></p>
-            <span className="font-semibold">
-              $
-              <b>
-                {
-                  ((actualTotalShippingCost - estimatedTotalShippingCost as number)/1)
-                    .toFixed(2)
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                }
-              </b>
-              &nbsp; USD
-            </span>
+              <span className="text-2xl font-bold text-primary">
+                ¥{((grandTotalCost as number) * exYuanToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Yuan
+              </span>
+              <span className="text-muted-foreground"> | </span>
+              <span className="text-xl font-bold text-foreground">
+                ${((grandTotalCost as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
+              </span>
             </>
           )}
-
-
-
-        { (actualTotalShippingCost - estimatedTotalShippingCost) == 0 && (
+          {destinationCountry == 'Nigeria' && (
             <>
-            <p className="md:w-64"><b>No Payment is Required </b></p>
-            {/* <span className="font-semibold">
-              $
-              <b>
-                {
-                  ((costDifference as number)/1)
-                    .toFixed(2)
-                    .toString()
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                }
-              </b>
-              &nbsp; USD
-            </span> */}
+              <span className="text-muted-foreground"> | </span>
+              <span className="text-xl font-bold text-foreground">
+                ₦{((grandTotalCost as number) * exNairaToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Naira
+              </span>
             </>
           )}
+          {destinationCountry == 'United Kingdom' && (
+            <>
+              <span className="text-muted-foreground"> | </span>
+              <span className="text-xl font-bold text-foreground">
+                £{(amountPounds as number).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Pounds
+              </span>
+            </>
+          )}
+        </div>
+      </div>
 
-
-
-
-                {/* IF DESTINATION COUNTRY NIGERIA, SHOW VALUE IN NAIRA */}
-                {destinationCountry == 'Nigeria' && (
-                  <>
-                    &nbsp;{' | '}&nbsp;
-                    <span className="">
-                            ₦
-                            {
-                                (
-                                  ((actualTotalShippingCost - estimatedTotalShippingCost) *
-                                  exNairaToDollar)/1
-                                )
-                                .toFixed(2)
-                                .toString()
-                                .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string
-                            }
-                            &nbsp; Naira
+      {/* Actual Shipping Cost Details (If Status: Pay For Shipping) */}
+      {(status == 'pay-for-shipping') && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-card border border-border shadow-sm rounded-lg p-5">
+            <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Actual Shipping Details</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Actual Weight:</span>
+                <span className="font-medium text-foreground">{((actualWeightValue as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Kg</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Plan Rate:</span>
+                <span className="font-medium text-foreground">${((shippingPlanRate as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} / Kg</span>
+              </div>
+              <div className="flex justify-between pt-3 border-t border-border mt-3">
+                <span className="text-muted-foreground">Actual Domestic (China):</span>
+                <span className="font-medium text-foreground">${((actualDomesticShippingCostValue as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Actual International:</span>
+                <span className="font-medium text-foreground">${(actualInternationalShippingCost as number).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span>
+              </div>
+              <div className="flex justify-between items-center pt-3 border-t border-border mt-3">
+                <span className="font-bold text-foreground">Actual Total:</span>
+                <div className="text-right">
+                  <span className="font-bold text-primary text-lg">
+                    ${(((actualTotalShippingCost as number)/1 )).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
+                  </span>
+                  {destinationCountry == 'Nigeria' && (
+                    <span className="block text-xs font-medium text-muted-foreground mt-1">
+                      ₦{((((actualTotalShippingCost as number)/1 )) * exNairaToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Naira
                     </span>
-                  </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-card border border-border shadow-sm rounded-lg p-5">
+            <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Balance / Refund Calculation</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Actual Total Cost:</span>
+                <span className="font-medium text-foreground">${(((actualTotalShippingCost as number)/1 )).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Initial Estimated Cost:</span>
+                <span className="font-medium text-foreground">${((estimatedTotalShippingCost as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span>
+              </div>
+              
+              <div className="flex justify-between items-center pt-3 border-t border-border mt-3">
+                { (actualTotalShippingCost - estimatedTotalShippingCost) > 0 && <span className="font-bold text-destructive">Amount to Pay:</span> }
+                { (actualTotalShippingCost - estimatedTotalShippingCost) < 0 && <span className="font-bold text-emerald-600">Refund Balance:</span> }
+                { (actualTotalShippingCost - estimatedTotalShippingCost) == 0 && <span className="font-bold text-muted-foreground">No Payment Required</span> }
+                
+                { (actualTotalShippingCost - estimatedTotalShippingCost) !== 0 && (
+                  <div className="text-right">
+                    <span className={`font-bold text-lg ${actualTotalShippingCost > estimatedTotalShippingCost ? 'text-destructive' : 'text-emerald-600'}`}>
+                      ${Math.abs(((actualTotalShippingCost - estimatedTotalShippingCost as number)/1)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD
+                    </span>
+                    {destinationCountry == 'Nigeria' && (
+                      <span className="block text-xs font-medium text-muted-foreground mt-1">
+                        ₦{Math.abs((((actualTotalShippingCost - estimatedTotalShippingCost) * exNairaToDollar)/1)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Naira
+                      </span>
+                    )}
+                  </div>
                 )}
+              </div>
+            </div>
           </div>
         </div>
-        </>
-   )}
+      )}
 
-
-
-
-
-
-
-
-
-
-{/*************************** FORM ***************************/}
- <form onSubmit={handleSubmit}>
-
-
- {status != 'completed' && (
-  <>
-        {/* Confirm Action */}
-        <div className="space-y-4 pb-5">
-          <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="confirm"
-              className="rounded border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-              required
-            />
-            <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-              Check this box to confirm your action
-            </label>
+      {/* Form Area */}
+      <form onSubmit={handleSubmit} className="bg-card border border-border shadow-sm rounded-lg p-5 sm:p-6 space-y-6 mt-8">
+        
+        {status != 'completed' && (
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">Message to Buyer</label>
+              <textarea
+                id="message"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                rows={3}
+                placeholder="Type your message here..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-md border border-border">
+              <input
+                type="checkbox"
+                id="confirm"
+                className="h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+                required
+              />
+              <label htmlFor="confirm" className="text-sm font-medium text-foreground cursor-pointer">
+                Confirm action to proceed
+              </label>
+            </div>
           </div>
-        </div>
-
-
-        {/* Message to Buyer */}
-        <div>
-          <textarea
-            className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-            rows={3}
-            placeholder="Send Message to Buyer"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          ></textarea>
-        </div><br />
-        </>
         )}
 
-
-
-
         {status == 'approved' && (
-          <>
-        {/****************************** ACTUAL WEIGHT OF ORDER *****************************/}
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="flex-1">
-            <label
-              htmlFor="weight"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Actual Weight of Order
-            </label>
-            <input
-              required
-              name="actualWeight"
-              type="text"
-              id="actualWeight"
-              placeholder="Weight in (Kg)Kilograms"
-              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-            />
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-              *Note: This value must be in (Kg)Kilograms
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
+            <div>
+              <label htmlFor="actualWeight" className="block text-sm font-medium text-foreground mb-1">Actual Weight (Kg)</label>
+              <input
+                required
+                name="actualWeight"
+                type="number"
+                step="any"
+                id="actualWeight"
+                placeholder="e.g. 2.5"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="actualDomesticShippingCost" className="block text-sm font-medium text-foreground mb-1">Actual Domestic Shipping (¥ Yuan)</label>
+              <input
+                required
+                name="actualDomesticShippingCost"
+                type="number"
+                step="any"
+                id="actualDomesticShippingCost"
+                placeholder="e.g. 45"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+              />
+            </div>
           </div>
+        )}
 
-
-
-
-          {/****************************** ACTUAL DOMESTIC SHIPPING COST OF ORDER *****************************/}
-          <div className="flex-1">
-
-            <label
-              htmlFor="totalCost"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Actual Domestic Shipping Cost
-            </label>
-
-            <input
-              required
-              name="actualDomesticShippingCost"
-              type="text"
-              id="actualDomesticShippingCost"
-              placeholder="Total Cost of Order in (¥)Yuan"
-              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-            />
-
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-              *Note: This value must be in (¥)Yuan
-            </p>
-          </div>
-        </div><br />
-        </>
-        )
-      }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-{/* ******************************************* ACTION BUTTONS ************************************************* */}
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ SAVED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'saved') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">       
-            <div className="w-full md:w-1/1">
-                <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  Send Message
-                </button>
-                <small>You may remind the buyer by sending a message to this order</small>
-            </div>
-        </div>
-        </>
- )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ PENDING - APPROVED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'pending') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
-                </button>
-                <small>Decline Order if there are issues</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="approved" onClick={() => setActionType('approved')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE (Move to Approved)
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div>
-        </div>
-        </>
-   )}
-
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ APPROVED - PAY FOR SHIPPING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'approved') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
-                </button>
-                <small>Decline Order if there are issues</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="ready-to-ship" onClick={() => setActionType('pay-for-shipping')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE (Move to Pay-for-Shipping)
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div>
-        </div>
-        </>
-   )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ PAY FOR SHIPPING - IN TRANSIT ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'pay-for-shipping') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-        <div className="w-full md:w-1/1">
-            <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  Send Message
-                </button>
-                <small>Send message to the the customer of this order</small>
-            </div>
-
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="decline" onClick={() => setActionType('revert_to_approved')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  Revert (Back to Approved)
-                </button>
-                <small>Revert Order if there are issues</small>
-            </div>
-
-            {/* <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
-                </button>
-                <small>Decline Order if there are issues</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="in-transit" onClick={() => setActionType('in-transit')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div> */}
-        </div>
-        </>
-   )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ IN TRANSIT - READY FOR PICKUP ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'in-transit') && (
-          <>
-
-
-{/* TRACKING NUMBER */}
-<div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6 pb-10">
-
-
-          <div className="w-full md:w-1/5">
-              <div className="flex-1">
-                <label
-                  htmlFor="weight"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                 Tracking Company
-                </label>
+        {status == 'in-transit' && (
+          <div className="space-y-6 pt-4 border-t border-border">
+            <h3 className="text-sm font-bold text-foreground">Tracking Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Tracking Company</label>
                 <input
-                  //required
                   defaultValue={trackingCompany}
                   name="trackingCompany"
                   type="text"
-                  id="trackingCompany"
-                  placeholder="Enter Tracking Company Name"
-                  className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  placeholder="Company Name"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring"
                 />
-                {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                  *Provide Tracking Numger for this Order if availave
-                </p> */}
               </div>
-          </div>
-
-
-          <div className="w-full md:w-1/5">
-              <div className="flex-1">
-                <label
-                  htmlFor="weight"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Order Tracking Number
-                </label>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Tracking Number</label>
                 <input
-                  //required
                   name="trackingNumber"
                   type="text"
-                  id="trackingNumber"
-                  placeholder="Enter Tracking Number"
-                  className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  placeholder="Number"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring"
                 />
-                {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                  *Provide Tracking Numger for this Order if availave
-                </p> */}
               </div>
-          </div>
-
-          <div className="w-full md:w-1/3">
-              <div className="flex-1">
-                <label
-                  htmlFor="weight"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                 Tracking Link
-                </label>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Tracking Link</label>
                 <input
-                  //required
                   name="trackingLink"
                   type="text"
-                  id="trackingLink"
-                  placeholder="Enter Tracking Link"
-                  className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  placeholder="URL"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring"
                 />
-                {/* <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                  *Provide Tracking Numger for this Order if availave
-                </p> */}
               </div>
-          </div>
-            
-          <div className="w-full md:w-1/5">
-              <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('tracking-number-update')} className="btn btn-secondary mt-4 w-full bg-gray-600 dark:bg-gray-500 text-white py-3 rounded-md text-sm shadow hover:bg-gray-700 dark:hover:bg-gray-600">
-                Update Tracking Number
+            </div>
+            <div className="flex justify-end">
+               <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('tracking-number-update')} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                Update Tracking Data
               </button>
-              {/* <small>Approve this Order for further processing</small> */}
+            </div>
+
+            <h3 className="text-sm font-bold text-foreground pt-4 border-t border-border">Additional Costs</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Additional Cost (USD)</label>
+                <input
+                  name="additionalCost"
+                  type="number"
+                  step="any"
+                  placeholder="0.00"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Description</label>
+                <input
+                  name="additionalCostDescription"
+                  type="text"
+                  placeholder="Reason for cost..."
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
           </div>
+        )}
 
-  </div>
+        {/* Action Buttons Container */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-border">
+          
+          {(status == 'saved') && (
+            <button type="submit" onClick={() => setActionType('message')} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+              Send Message to Buyer
+            </button>
+          )}
 
+          {(status == 'pending') && (
+            <>
+              <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+                Decline (On-Hold)
+              </button>
+              <button type="submit" onClick={() => setActionType('approved')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+                Approve Order
+              </button>
+            </>
+          )}
 
+          {(status == 'approved') && (
+            <>
+              <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+                Decline (On-Hold)
+              </button>
+              <button type="submit" onClick={() => setActionType('pay-for-shipping')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+                Approve (Move to Pay Shipping)
+              </button>
+            </>
+          )}
 
-{/* ADDITIONAL COST */}
-        <div className="flex flex-col md:flex-row gap-6">
+          {(status == 'pay-for-shipping') && (
+            <>
+              <button type="submit" onClick={() => setActionType('message')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+                Send Message
+              </button>
+              <button type="submit" onClick={() => setActionType('revert_to_approved')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+                Revert to Approved
+              </button>
+            </>
+          )}
 
-          {/******************* ADDITIONAL COST *******************/}
-          <div className="flex-1">
-            <label
-              htmlFor="weight"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Additional Cost (USD)
-            </label>
-            <input
-              //required
-              name="additionalCost"
-              type="text"
-              id="additionalCost"
-              placeholder="Enter Additional Cost in USD"
-              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-            />
-            {/* <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-              Provide Additional Cost for this Order if available
-            </p> */}
-          </div>
+          {(status == 'in-transit') && (
+             <>
+             <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+               Decline (On-Hold)
+             </button>
+             <button type="submit" onClick={() => setActionType('ready-for-pickup')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+               Approve (Ready for Pickup)
+             </button>
+           </>
+          )}
 
+          {(status == 'ready-for-pickup') && (
+             <>
+             <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+               Decline (On-Hold)
+             </button>
+             <button type="submit" onClick={() => setActionType('completed')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+               Approve (Completed)
+             </button>
+           </>
+          )}
 
-          {/******************* DESCRIPTION *******************/}
-          <div className="flex-1">
+          {(status == 'on-hold') && (
+             <>
+             <button type="submit" onClick={() => setActionType('cancelled')} className="w-full sm:w-1/2 bg-destructive text-destructive-foreground hover:bg-destructive/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+               Cancel Order (Refund)
+             </button>
+             <button type="submit" onClick={() => setActionType('pending')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+               Move back to Pending
+             </button>
+           </>
+          )}
 
-            <label
-              htmlFor="totalCost"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Description
-            </label>
+          {(status == 'bank-pending-saved-orders') && (
+             <>
+             <button type="submit" onClick={() => setActionType('saved')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+               Decline (Back to Saved)
+             </button>
+             <button type="submit" onClick={() => setActionType('pending')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+               Approve (Move to Pending)
+             </button>
+           </>
+          )}
 
-            <input
-              //required
-              name="additionalCostDescription"
-              type="text"
-              id="additionalCostDescription"
-              placeholder="Enter Description of Additional Cost"
-              className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-            />
+          {(status == 'bank-pending-shipping-orders') && (
+             <>
+             <button type="submit" onClick={() => setActionType('pay-for-shipping')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+               Decline (Back to Pay Shipping)
+             </button>
+             <button type="submit" onClick={() => setActionType('in-transit')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+               Approve (Move to In-Transit)
+             </button>
+           </>
+          )}
 
-            {/* <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-              Describe the Additional Cost
-            </p> */}
-          </div>
-        </div><br />
-
-
-
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
-                </button>
-                <small>Decline Order if there are issues</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('ready-for-pickup')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE (Move to Ready for Pickup)
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div>
         </div>
-        </>
-   )}
+      </form>
 
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ READY FOR PICKUP - COMPLETED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'ready-for-pickup') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('on-hold')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
-                </button>
-                <small>Decline Order if there are issues</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="completed" onClick={() => setActionType('completed')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE (Move to Completed)
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div>
-        </div>
-        </>
-   )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ COMPLETED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'completed') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            {/* <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
-                </button>
-                <small>Decline Order if there are issues</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="approve" onClick={() => setActionType('completed')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div> */}
-        </div>
-        </>
-   )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ ON HOLD - PENDING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'on-hold') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="on-hold" onClick={() => setActionType('cancelled')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  Cancel Order (Refund Customer)
-                </button>
-                <small>Cancel Order if persisting issue cannot be resolved</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="pending" onClick={() => setActionType('pending')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  Move back to Pending
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div>
-            
-        </div>
-        </>
-   )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ BANK PENDING (SAVED) - PENDING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'bank-pending-saved-orders') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="saved" onClick={() => setActionType('saved')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Move back to Saved Order)
-                </button>
-                <small>Decline Order if Bank Payment failed confirmation</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="pending" onClick={() => setActionType('pending')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE (Move to Pending Order)
-                </button>
-                <small>Approve this Order for further processing if Bank Payment has been confirmed</small>
-            </div>
-        </div>
-        </>
-   )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ BANK PENDING (SHIPPING) - PAY FOR SHIPPING ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'bank-pending-shipping-orders') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="pay-for-shipping" onClick={() => setActionType('pay-for-shipping')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Move back to Pay for Shipiing)
-                </button>
-                <small>Decline Order if Bank Payment failed confirmation</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="in-transit" onClick={() => setActionType('in-transit')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                 APPROVED (Move Order to In-Transit)
-                </button>
-                <small>Approve this Order for further processing if Bank Payment has been confirmed</small>
-            </div>
-        </div>
-        </>
-   )}
-
-
-
-
-{/* ~~~~~~~~~~~~~~~~~~~~~~~~~~ CANCELLED ~~~~~~~~~~~~~~~~~~~~~~~~~~ */}
-{(status == 'cancelled') && (
-          <>
-        {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            
-            {/* <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  DECLINE (Place On-Hold)
-                </button>
-                <small>Decline Order if there are issues</small>
-            </div>
-            
-            <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="approve" onClick={() => setActionType('approcacve')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE
-                </button>
-                <small>Approve this Order for further processing</small>
-            </div> */}
-        </div>
-        </>
-   )}
-
-
-
-
-</form>
-
-
-
-
-
-      </div>
     </div>
   );
 };

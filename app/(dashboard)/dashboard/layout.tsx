@@ -7,7 +7,7 @@ import Head from "next/head"
 import { DashboardLayout } from "./components/dashboard-layout"
 
 export const metadata: Metadata = {
-  title: "SureImports | Admin Dashboard",
+  title: "Sure Imports | Admin Dashboard",
   description: "Admin dashboard",
 }
 

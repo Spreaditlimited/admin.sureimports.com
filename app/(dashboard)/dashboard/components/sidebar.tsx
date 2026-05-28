@@ -1,4 +1,5 @@
 "use client"
+
 import { useAuth } from "@/lib/AuthContext"
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
@@ -6,26 +7,14 @@ import {
   ChevronDown,
   LayoutDashboard,
   ShoppingCart,
-  Folder,
   Package,
-  HelpCircle,
-  Users,
-  MessageSquare,
-  CreditCard,
-  Settings,
   UserCog,
-  User,
   FileText,
-  MessageCircle,
-  Ticket,
   LogOut,
   Menu,
   X,
-  ShoppingBag,
   HandCoins,
-  UserCheck,
   Ship,
-  MonitorSmartphone,
   ChartCandlestick,
   Store,
   Wallet,
@@ -44,97 +33,13 @@ interface MenuItem {
   submenu?: { title: string; path: string }[]
 }
 
+// --- Menu Configurations ---
+const dashboardItem: MenuItem = { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" }
+
 const features: MenuItem[] = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    path: "/dashboard",
-  },
-  {
-    title: "Procurement",
-    icon: ShoppingCart,
-    path: "/dashboard/procurement?status=pending",
-  },
-  {
-    title: "Corporate Gifts",
-    icon: Package,
-    path: "/dashboard/corporate-gifts",
-  },
-  // {
-  //   title: "Buy Phones & Laptops",
-  //   icon: MonitorSmartphone ,
-  //   path: "/orders",
-  //   submenu: [
-  //     { title: "Buy Phones & Laptops", path: "/dashboard/buy-phones-laptops" },
-  //     { title: "Add Devices", path: "/dashboard/buy-phones-laptops/add-devices" },
-  //     { title: "Add Categories", path: "/dashboard/buy-phones-laptops/add-category" },
-  //     { title: "View Categories", path: "/dashboard/buy-phones-laptops/view-category" },
-  //   ],
-  // },
-  // {
-  //   title: "Special Sourcing",
-  //   icon: ShoppingBag,
-  //   path: "/dashboard/special-sourcing?status=pending",
-  // },
-  {
-    title: "Pay Supplier",
-    icon: HandCoins,
-    path: "/dashboard/pay-supplier?status=saved",
-  },
-  {
-    title: "Shipping Only",
-    icon: Ship,
-    path: "/dashboard/shipping-only?status=request-received",
-  },
-  {
-    title: "Verify Supplier",
-    icon: UserCheck,
-    path: "/dashboard/verify-supplier?status=pending-payment",
-  },
-  {
-    title: "Pay Small Small",
-    icon: HandCoins,
-    path: "/dashboard/pay-small-small?status=SAVED",
-  },
-  
-  // {
-  //   title: "Dashboard",
-  //   icon: LayoutDashboard,
-  //   path: "/",
-  // },
-  // {
-  //   title: "Orders",
-  //   icon: ShoppingCart,
-  //   path: "/orders",
-  //   submenu: [
-  //     { title: "All Orders", path: "/orders" },
-  //     { title: "Pending", path: "/orders/pending" },
-  //     { title: "Completed", path: "/orders/completed" },
-  //   ],
-  // },
-  // {
-  //   title: "Category",
-  //   icon: Folder,
-  //   path: "/category",
-  //   submenu: [
-  //     { title: "All Categories", path: "/category" },
-  //     { title: "Add Category", path: "/category/add" },
-  //   ],
-  // },
-  // {
-  //   title: "Products",
-  //   icon: Package,
-  //   path: "/products",
-  //   submenu: [
-  //     { title: "All Products", path: "/products" },
-  //     { title: "Add Product", path: "/products/add" },
-  //     { title: "Categories", path: "/products/categories" },
-  //   ],
-  // },
-  // { title: "FAQs", icon: HelpCircle, path: "/faqs" },
-  // { title: "Subscribers", icon: Users, path: "/subscribers" },
-  // { title: "Messages", icon: MessageSquare, path: "/messages" },
-  // { title: "Payments", icon: CreditCard, path: "/payments" },
+  { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending" },
+  { title: "Corporate Gifts", icon: Package, path: "/dashboard/corporate-gifts" },
+  { title: "Pay Small Small", icon: HandCoins, path: "/dashboard/pay-small-small?status=SAVED" },
 ]
 
 const store: MenuItem[] = [
@@ -150,7 +55,6 @@ const store: MenuItem[] = [
   },
 ]
 
-
 const customerAccounts: MenuItem[] = [
   {
     title: "Customer Accounts",
@@ -159,11 +63,9 @@ const customerAccounts: MenuItem[] = [
     submenu: [
       { title: "Customers", path: "/dashboard/customer-accounts/customers" },
       { title: "Transactions", path: "/dashboard/customer-accounts/transactions" },
-      // { title: "Roles", path: "/admin/roles" },
     ],
   },
 ]
-
 
 const customerPayouts: MenuItem[] = [
   {
@@ -173,29 +75,18 @@ const customerPayouts: MenuItem[] = [
     submenu: [
       { title: "Payout Requests", path: "/dashboard/payout-requests/requests" },
       { title: "Payout History", path: "/dashboard/payout-requests/transactions" },
-      // { title: "Roles", path: "/admin/roles" },
     ],
   },
 ]
 
-const invoicing: MenuItem[] = [
-  {
-    title: "Invoicing",
-    icon: CreditCard,
-    path: "/dashboard/invoicing",
-    submenu: [
-      { title: "All Invoices", path: "/dashboard/invoicing" },
-      { title: "Create Invoice", path: "/dashboard/invoicing/create" },
-      { title: "Receipts", path: "/dashboard/invoicing/receipts" },
-      { title: "Payment Claims", path: "/dashboard/invoicing/payment-claims" },
-      { title: "Bank Accounts", path: "/dashboard/invoicing/bank-accounts" },
-      { title: "Settings", path: "/dashboard/invoicing/settings" },
-    ],
-  },
+const financials: MenuItem[] = [
+  { title: "Payments", icon: Wallet, path: "/dashboard/financials" },
+  { title: "Invoicing", icon: Wallet, path: "/dashboard/invoicing" },
 ]
-
 
 const systemSettings: MenuItem[] = [
+  { title: "Profile", icon: UserCog, path: "/dashboard/profile" },
+  { title: "Settings", icon: UserCog, path: "/dashboard/settings" },
   {
     title: "Admin Mgt.",
     icon: UserCog,
@@ -203,37 +94,23 @@ const systemSettings: MenuItem[] = [
     submenu: [
       { title: "Manage Admins", path: "/dashboard/admin/view" },
       { title: "Add Admin", path: "/dashboard/admin/add" },
-      // { title: "Roles", path: "/admin/roles" },
     ],
   },
-  // {
-  //   title: "User Mgt.",
-  //   icon: User,
-  //   path: "/users",
-  //   submenu: [
-  //     { title: "All Users", path: "/users" },
-  //     { title: "Add User", path: "/users/add" },
-  //     { title: "User Roles", path: "/users/roles" },
-  //   ],
-  // },
   {
     title: "Shipping Plans",
     icon: Ship,
     path: "/shipping-plans",
     submenu: [
       { title: "Shipping Plans", path: "/dashboard/shipping-plans/add" },
-      // { title: "Add Shipping Plan", path: "/dashboard/shipping-plans/add" },
-      // { title: "Roles", path: "/admin/roles" },
     ],
   },
   {
     title: "Exchanges & Rates",
-    icon: ChartCandlestick ,
+    icon: ChartCandlestick,
     path: "/exchange-rates",
     submenu: [
       { title: "Exchange Rates", path: "/dashboard/exchange-rates" },
       { title: "Service Charge & VAT", path: "/dashboard/service-charges" },
-      // { title: "Roles", path: "/admin/roles" },
     ],
   },
   {
@@ -245,20 +122,6 @@ const systemSettings: MenuItem[] = [
       { title: "Create New Post", path: "/dashboard/blog/create" },
     ],
   },
-  // { title: "Blog", icon: FileText, path: "/blog" },
-  // {
-  //   title: "Settings & Config.",
-  //   icon: Settings,
-  //   path: "/settings",
-  //   submenu: [
-  //     { title: "General", path: "/settings" },
-  //     { title: "Security", path: "/settings/security" },
-  //     { title: "Appearance", path: "/settings/appearance" },
-  //   ],
-  // },
-  // { title: "Messages", icon: MessageCircle, path: "/system-messages" },
-  // { title: "Coupon Mgt.", icon: Ticket, path: "/coupons" },
-  // { title: "Payments & Refunds", icon: CreditCard, path: "/payment-settings" },
 ]
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
@@ -269,6 +132,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
+  // Handle responsive behavior
   useEffect(() => {
     const checkWidth = () => {
       const width = window.innerWidth
@@ -293,26 +157,29 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const handleItemClick = (path: string) => {
     router.push(path)
+    if (isMobile) setIsOpen(false) // Auto-close on mobile after navigation
   }
 
-  const MenuItem = ({ item }: { item: MenuItem }) => {
-    const isActive = pathname === item.path
-    const isSubmenuOpen = openMenus[item.title]
+  // Individual Menu Item Component
+  const MenuItemComponent = ({ item }: { item: MenuItem }) => {
+    const isActive = pathname === item.path || item.submenu?.some(sub => pathname === sub.path)
+    const isSubmenuOpen = openMenus[item.title] ?? isActive
     const hasSubmenu = item.submenu && item.submenu.length > 0
 
     return (
       <div className="relative group">
         <button
           onClick={() => (hasSubmenu ? toggleSubmenu(item.title) : handleItemClick(item.path))}
-          className={`flex w-full items-center px-3 py-2 text-sm rounded-lg transition-colors ${
-            isActive ? "bg-primary/10 text-primary" : "hover:bg-secondary"
-          }`}
-        >
-          <item.icon className="h-4 w-4 min-w-[1rem]" />
-          <span
-            className={`flex-1 ml-3 text-left whitespace-nowrap overflow-hidden transition-all duration-300 ${
-              isCollapsed ? "w-0 ml-0" : "w-auto"
+          className={`flex w-full items-center px-3 py-2.5 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset
+            ${isActive 
+              ? "bg-primary/10 text-primary font-medium" 
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
+        >
+          <item.icon className={`h-4 w-4 min-w-[1rem] ${isActive ? "text-primary" : ""}`} />
+          <span
+            className={`flex-1 ml-3 text-left whitespace-nowrap overflow-hidden transition-all duration-300 
+              ${isCollapsed ? "w-0 ml-0 opacity-0" : "w-auto opacity-100"}`}
           >
             {item.title}
           </span>
@@ -321,40 +188,44 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           )}
         </button>
 
+        {/* Submenu Logic */}
         {hasSubmenu && (
           <div
             className={`
-            ${
-              isCollapsed
-                ? "invisible group-hover:visible absolute left-full top-0 ml-2 w-48 bg-card rounded-lg shadow-lg border"
-                : "relative ml-6"
+            ${isCollapsed
+                ? "invisible group-hover:visible absolute left-full top-0 ml-2 w-48 bg-popover rounded-md shadow-soft border border-border z-50"
+                : "relative ml-5 border-l border-border mt-1"
             }
             ${!isCollapsed && !isSubmenuOpen ? "hidden" : ""}
           `}
           >
             <div
-              className={`
-              overflow-hidden transition-all duration-300 ease-in-out
-              ${isSubmenuOpen || isCollapsed ? "max-h-96" : "max-h-0"}
-            `}
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${isSubmenuOpen || isCollapsed ? "max-h-96" : "max-h-0"}`}
             >
-              {item.submenu?.map((subitem) => (
-                <a
-                  key={subitem.path}
-                  href={subitem.path}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleItemClick(subitem.path)
-                  }}
-                  className={`
-                    block px-3 py-2 text-sm rounded-lg hover:bg-secondary
-                    ${isCollapsed ? "m-1" : "mt-1"}
-                    ${pathname === subitem.path ? "bg-primary/10 text-primary" : ""}
-                  `}
-                >
-                  {subitem.title}
-                </a>
-              ))}
+              <div className={isCollapsed ? "p-1" : "py-1"}>
+                {item.submenu?.map((subitem) => {
+                  const isSubActive = pathname === subitem.path;
+                  return (
+                    <a
+                      key={`${item.title}-${subitem.path}`}
+                      href={subitem.path}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleItemClick(subitem.path)
+                      }}
+                      className={`block px-3 py-2 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset
+                        ${isCollapsed ? "" : "ml-2"}
+                        ${isSubActive 
+                          ? "bg-primary/10 text-primary font-medium" 
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }
+                      `}
+                    >
+                      {subitem.title}
+                    </a>
+                  )
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -362,153 +233,117 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     )
   }
 
+  // Reusable Category Header
+  const CategoryHeader = ({ title }: { title: string }) => (
+    <h2 className={`px-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 mt-6 overflow-hidden whitespace-nowrap transition-all duration-300 
+      ${isCollapsed ? "opacity-0 h-0 mt-0" : "opacity-100"}`}>
+      {title}
+    </h2>
+  )
+
   return (
     <>
+      {/* Mobile Menu Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-background border`}
+        className="md:hidden fixed top-3 left-4 z-50 p-2 text-foreground rounded-md bg-card border border-border shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
-      {isMobile && isOpen && <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsOpen(false)} />}
+      {/* Modern Glassmorphism Mobile Overlay */}
+      {isMobile && isOpen && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity" 
+          onClick={() => setIsOpen(false)} 
+        />
+      )}
 
+      {/* Sidebar Container */}
       <aside
         className={`
-        ${isOpen ? (isCollapsed ? "w-16" : "w-64") : "w-0"}
-        ${isMobile ? "fixed left-0 z-40" : "relative"}
-        flex flex-col border-r bg-card transition-all duration-300 overflow-hidden h-screen
-      `}
+          ${isOpen ? (isCollapsed ? "w-16" : "w-64") : "w-0"}
+          ${isMobile ? "fixed left-0 z-40 shadow-soft" : "relative"}
+          flex flex-col border-r border-border bg-card transition-all duration-300 overflow-hidden h-screen
+        `}
       >
         
-        <div className={`p-5 border-b flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
-          <div className={`flex items-center space-x-2 overflow-hidden ${isCollapsed ? "w-0" : "w-auto"}`}>
-            <img
-              src="/assets/images/logo2.png"
-              alt="Logo"
-              className="h-8 w-8 min-w-[2rem]"
-            />
-            <span className="font-semibold whitespace-nowrap">SureImports</span>
+        {/* Header / Logo Area */}
+        <div className={`p-4 border-b border-border flex items-center h-16 ${isCollapsed ? "justify-center" : "justify-between"}`}>
+          <div className={`flex items-center space-x-3 overflow-hidden ${isCollapsed ? "w-0" : "w-auto"}`}>
+            <img src="/assets/images/logo2.png" alt="Sure Imports Logo" className="h-8 w-8 min-w-[2rem]" />
+            <span className="font-bold text-foreground whitespace-nowrap tracking-tight text-lg">Sure Imports</span>
           </div>
           {!isMobile && (
-            <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1 rounded-lg hover:bg-secondary">
-              <Menu className="h-5 w-5" />
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)} 
+              className="p-1.5 text-muted-foreground rounded-md hover:bg-muted hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <Menu className="h-4 w-4" />
             </button>
           )}
         </div>
 
-
-        <div
-          className={`mt-2 text-sm text-orange-500 text-muted-foreground px-4 overflow-hidden whitespace-nowrap transition-all duration-300 ${
-            isCollapsed ? "opacity-0" : "opacity-100"
-          }`}
+        {/* User Greeting Panel */}
+        <div className={`border-b border-border bg-muted/20 transition-all duration-300 overflow-hidden
+          ${isCollapsed ? "h-0 opacity-0" : "p-4 opacity-100"}`}
         >
-          <i>{user?.userFirstname && 'Hi'} {user?.userFirstname || user?.userEmail}</i>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">Welcome back,</p>
+          <p className="text-sm font-bold text-foreground truncate">
+            {user?.userFirstname || user?.userEmail || "Admin"}
+          </p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-2 space-y-6 custom-scrollbar pt-7">
+        {/* Navigation Area */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+          <div className="space-y-0.5">
+            <MenuItemComponent item={dashboardItem} />
+          </div>
           
-          
-          <div>
-            <h2
-              className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                isCollapsed ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              FEATURES
-            </h2>
-            <div className="space-y-1">
-              {features.map((item) => (
-                <MenuItem key={item.path} item={item} />
-              ))}
-            </div>
+          <CategoryHeader title="Services" />
+          <div className="space-y-0.5">
+            {features.map((item) => <MenuItemComponent key={item.path} item={item} />)}
           </div>
 
-
-          <div>
-            <h2
-              className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                isCollapsed ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              CUSTOMER ACCOUNTS
-            </h2>
-            <div className="space-y-1">
-              {customerAccounts.map((item) => (
-                <MenuItem key={item.path} item={item} />
-              ))}
-            </div>
-
-            <div className="space-y-1">
-              {customerPayouts.map((item) => (
-                <MenuItem key={item.path} item={item} />
-              ))}
-            </div>
-
-            <div className="space-y-1">
-              {invoicing.map((item) => (
-                <MenuItem key={item.path} item={item} />
-              ))}
-            </div>
-
+          <CategoryHeader title="Customer Accounts" />
+          <div className="space-y-0.5">
+            {customerAccounts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+            {customerPayouts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
           </div>
 
-
-          <div>
-            <h2
-              className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                isCollapsed ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              STORE
-            </h2>
-            <div className="space-y-1">
-              {store.map((item) => (
-                <MenuItem key={item.path} item={item} />
-              ))}
-            </div>
+          <CategoryHeader title="Financials" />
+          <div className="space-y-0.5">
+            {financials.map((item) => <MenuItemComponent key={item.path} item={item} />)}
           </div>
 
-
-          <div>
-            <h2
-              className={`px-3 text-xs font-semibold text-muted-foreground mb-2 overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                isCollapsed ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              SYSTEM & SETTINGS
-            </h2>
-            <div className="space-y-1">
-              {systemSettings.map((item) => (
-                <MenuItem key={item.path} item={item} />
-              ))}
-            </div>
+          <CategoryHeader title="Store" />
+          <div className="space-y-0.5">
+            {store.map((item) => <MenuItemComponent key={item.path} item={item} />)}
           </div>
+
+          <CategoryHeader title="System & Settings" />
+          <div className="space-y-0.5">
+            {systemSettings.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+          </div>
+
         </nav>
 
-
-
-        <div className="border-t p-4">
+        {/* Footer Actions */}
+        <div className="border-t border-border p-4 bg-muted/10">
           <button
             onClick={logout}
-            className="flex w-full items-center px-3 py-2 text-sm rounded-lg hover:bg-secondary"
+            className="flex w-full items-center px-3 py-2 text-sm font-medium text-destructive rounded-md hover:bg-destructive/10 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-inset"
           >
             <LogOut className="h-4 w-4 min-w-[1rem]" />
-            <span
-              className={`ml-3 transition-all duration-300 ${isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"}`}
-            >
+            <span className={`ml-3 whitespace-nowrap transition-all duration-300 ${isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
               Logout
             </span>
           </button>
-          <div
-            className={`mt-4 text-xs text-center text-muted-foreground transition-all duration-300 ${
-              isCollapsed ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            © 2025. All rights reserved.
+          
+          <div className={`mt-3 text-xs text-center font-medium text-muted-foreground whitespace-nowrap transition-all duration-300 ${isCollapsed ? "opacity-0 h-0" : "opacity-100"}`}>
+            © {new Date().getFullYear()} Sure Imports
           </div>
         </div>
-
 
       </aside>
     </>

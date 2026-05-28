@@ -4,48 +4,68 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
+    /* Modern Functional Minimalism - Light Mode */
+    --background: 210 40% 98.1%; /* Off-white/slate-50 canvas */
+    --foreground: 222.2 84% 4.9%; /* Sharp slate text */
+    
+    --card: 0 0% 100%; /* Pure white cards */
     --card-foreground: 222.2 84% 4.9%;
+    
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    
+    /* Primary Accent: Deep Indigo (#4F46E5) */
+    --primary: 243 75% 59%; 
     --primary-foreground: 210 40% 98%;
+    
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
+    
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
+    
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
+    
+    --border: 214.3 31.8% 91.4%; /* Subtle borders */
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 243 75% 59%; /* Indigo focus rings */
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Modern Functional Minimalism - Dark Mode */
+    --background: 222.2 47.4% 11.2%; /* Deep slate canvas */
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    
+    --card: 217.2 32.6% 17.5%; /* Slightly elevated dark surface */
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    
+    --popover: 217.2 32.6% 17.5%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+    
+    /* Primary Accent: Indigo, slightly brighter for dark mode contrast */
+    --primary: 243 75% 65%; 
     --primary-foreground: 222.2 47.4% 11.2%;
+    
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+    
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
+    
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
+    
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+    
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 243 75% 65%;
   }
 }
 
@@ -54,7 +74,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
@@ -94,7 +114,7 @@
 }
 
 .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
-  color: #adb5bd;
+  color: hsl(var(--muted-foreground));
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -108,30 +128,28 @@
 }
 
 .tiptap-editor .ProseMirror blockquote {
-  border-left: 3px solid #e2e8f0;
+  border-left: 3px solid hsl(var(--border));
   padding-left: 1rem;
   margin-left: 0;
   margin-right: 0;
 }
 
 .tiptap-editor .ProseMirror pre {
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
   font-family: monospace;
   padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   overflow-x: auto;
 }
 
 .tiptap-editor .ProseMirror code {
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
   font-family: monospace;
   padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  border-radius: calc(var(--radius) - 4px);
 }
-
-
 
 /* TinyMCE Dark Mode Overrides */
 .tox-tinymce-aux {
@@ -139,58 +157,58 @@
 }
 
 .tox:not(.tox-tinymce-inline) .tox-editor-header {
-  background-color: var(--background);
-  border-bottom: 1px solid var(--border);
+  background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .dark .tox .tox-menubar,
 .dark .tox .tox-toolbar,
 .dark .tox .tox-toolbar__overflow,
 .dark .tox .tox-toolbar__primary {
-  background: #1e293b !important;
-  border-color: #334155 !important;
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 .dark .tox .tox-tbtn {
-  color: #95a4b3 !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 .dark .tox .tox-tbtn:hover {
-  background: #334155 !important;
+  background: hsl(var(--muted)) !important;
 }
 
 .dark .tox .tox-tbtn--enabled {
-  background: #475569 !important;
+  background: hsl(var(--accent)) !important;
 }
 
 .dark .tox .tox-statusbar {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #94a3b8 !important;
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 .dark .tox .tox-statusbar__path-item,
 .dark .tox .tox-statusbar__wordcount {
-  color: #94a3b8 !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
-/* Premium admin picker style */
+/* Premium admin picker style - Realigned to match theme variables */
 .admin-theme-surface select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   background-image:
-    linear-gradient(45deg, transparent 50%, #64748b 50%),
-    linear-gradient(135deg, #64748b 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, hsl(var(--muted-foreground)) 50%),
+    linear-gradient(135deg, hsl(var(--muted-foreground)) 50%, transparent 50%);
   background-position:
     calc(100% - 18px) calc(50% - 3px),
     calc(100% - 12px) calc(50% - 3px);
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 0.75rem !important;
-  background-color: #ffffff !important;
-  color: #0f172a !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
   padding-right: 2.25rem !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
@@ -198,23 +216,17 @@
 
 .admin-theme-surface select:focus {
   outline: none;
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 3px hsla(var(--ring), 0.15);
 }
 
 .dark .admin-theme-surface select {
   background-image:
-    linear-gradient(45deg, transparent 50%, #94a3b8 50%),
-    linear-gradient(135deg, #94a3b8 50%, transparent 50%);
-  border-color: #475569 !important;
-  background-color: #0f172a !important;
-  color: #e2e8f0 !important;
+    linear-gradient(45deg, transparent 50%, hsl(var(--muted-foreground)) 50%),
+    linear-gradient(135deg, hsl(var(--muted-foreground)) 50%, transparent 50%);
   box-shadow: 0 1px 2px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(148, 163, 184, 0.06);
 }
 
 .dark .admin-theme-surface select:focus {
-  border-color: #818cf8 !important;
-  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+  box-shadow: 0 0 0 3px hsla(var(--ring), 0.2);
 }
-
-/* END */

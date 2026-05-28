@@ -31,12 +31,23 @@ async function getCurrentAdmin() {
   });
 }
 
+async function ensureCancellationReasonColumn() {
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE corporate_gift_request ADD COLUMN IF NOT EXISTS cancellationReason LONGTEXT NULL`,
+  );
+}
+
 export async function updateCorporateGiftRequestAction(formData: FormData) {
   const pidRequest = String(formData.get('pidRequest') || '');
   const status = String(formData.get('status') || '');
+  const cancellationReason = String(formData.get('cancellationReason') || '').trim();
 
   if (!pidRequest || !STATUS_SET.has(status)) {
     throw new Error('Invalid request payload');
+  }
+
+  if (status === 'Cancelled' && !cancellationReason) {
+    throw new Error('Cancellation reason is required');
   }
 
   const currentAdmin = await getCurrentAdmin();
@@ -52,9 +63,17 @@ export async function updateCorporateGiftRequestAction(formData: FormData) {
     throw new Error('Request not found');
   }
 
-  const expectedNextStatus = getNextCorporateGiftStatus(existing.status);
-  if (!expectedNextStatus || status !== expectedNextStatus) {
-    throw new Error('Invalid status transition');
+  const isCancellation = status === 'Cancelled';
+
+  if (!isCancellation) {
+    const expectedNextStatus = getNextCorporateGiftStatus(existing.status);
+    if (!expectedNextStatus || status !== expectedNextStatus) {
+      throw new Error('Invalid status transition');
+    }
+  }
+
+  if (isCancellation) {
+    await ensureCancellationReasonColumn();
   }
 
   const updated = await prisma.corporate_gift_request.update({
@@ -67,6 +86,14 @@ export async function updateCorporateGiftRequestAction(formData: FormData) {
     },
   });
 
+  if (isCancellation) {
+    await prisma.$executeRawUnsafe(
+      `UPDATE corporate_gift_request SET cancellationReason = ?, updatedAt = NOW(3) WHERE pidRequest = ?`,
+      cancellationReason,
+      pidRequest,
+    );
+  }
+
   if (existing.status !== status) {
     await notifyCustomerCorporateGiftStatus({
       requestId: updated.pidRequest,
@@ -76,6 +103,7 @@ export async function updateCorporateGiftRequestAction(formData: FormData) {
       whatsappNumber: updated.whatsappNumber,
       status: status as CorporateGiftStatus,
       handledByName: updated.handledByName,
+      cancellationReason: isCancellation ? cancellationReason : null,
     });
   }
 

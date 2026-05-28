@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Eye, Search, X, Filter, CheckCircle } from 'lucide-react';
+import { Eye, Search, CheckCircle, RefreshCw } from 'lucide-react';
 import Modal from '@/app/uix/ModalLarge';
 import ApprovalModal from './ApprovalModal';
 
@@ -56,12 +56,11 @@ export default function PayoutRequestsTable() {
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
 
-  // Selection state for bulk approval
+  // Selection state
   const [selectedPayouts, setSelectedPayouts] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
 
-  // Fetch payout requests
   const fetchPayoutRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -84,104 +83,57 @@ export default function PayoutRequestsTable() {
         setTotalAmount(data.totalAmount || 0);
       } else {
         setError(data.message || 'Failed to fetch payout requests');
-        toast.error(data.message || 'Failed to fetch payout requests');
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch payout requests. Please try again.');
-      console.error('Fetch error:', err);
-      toast.error('Failed to fetch payout requests');
+      setError('Connection error. Please try again.');
       setPayoutRequests([]);
-      setTotalPages(1);
-      setTotalCount(0);
     } finally {
       setLoading(false);
     }
   }, [page, itemsPerPage, search, status]);
 
-  // Debounced fetch
   useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchPayoutRequests();
-    }, 300);
+    const handler = setTimeout(fetchPayoutRequests, 300);
     return () => clearTimeout(handler);
   }, [fetchPayoutRequests]);
 
-  // Fetch user details
   const fetchUserDetails = async (pidUser: string) => {
     setLoadingUser(true);
     try {
       const response = await fetch(`/api/get-data/user-one?pidUser=${pidUser}`);
       const data = await response.json();
-      
-      if (data) {
-        setUserDetails(data);
-      } else {
-        toast.error('Failed to fetch user details');
-      }
+      if (data) setUserDetails(data);
     } catch (err) {
-      console.error('Error fetching user details:', err);
-      toast.error('Failed to fetch user details');
+      toast.error('User details unavailable');
     } finally {
       setLoadingUser(false);
     }
   };
 
-  // Handle details button click
   const handleDetailsClick = (payout: PayoutRequest) => {
     setSelectedPayout(payout);
     setUserDetails(null);
     setIsModalOpen(true);
-    
-    if (payout.pidUser) {
-      fetchUserDetails(payout.pidUser);
-    }
+    if (payout.pidUser) fetchUserDetails(payout.pidUser);
   };
 
-  // Handle modal close
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedPayout(null);
     setUserDetails(null);
   };
 
-  // Handle filter change
-  const handleFilterChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
-    setter(value);
-    setPage(1);
-  };
-
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
-    }
-  };
-
-  // Handle items per page change
-  const handleItemsPerPageChange = (value: number) => {
-    setItemsPerPage(value);
-    setPage(1);
-  };
-
-  // Handle checkbox selection
   const handleSelectPayout = (pidPayout: string, isChecked: boolean) => {
     const newSelected = new Set(selectedPayouts);
-    if (isChecked) {
-      newSelected.add(pidPayout);
-    } else {
-      newSelected.delete(pidPayout);
-    }
+    isChecked ? newSelected.add(pidPayout) : newSelected.delete(pidPayout);
     setSelectedPayouts(newSelected);
     setSelectAll(false);
   };
 
-  // Handle select all
   const handleSelectAll = (isChecked: boolean) => {
     if (isChecked) {
-      const pendingPayouts = payoutRequests
-        .filter((p) => p.status?.toLowerCase() === 'pending')
-        .map((p) => p.pidPayout);
-      setSelectedPayouts(new Set(pendingPayouts));
+      const pending = payoutRequests.filter(p => p.status?.toLowerCase() === 'pending').map(p => p.pidPayout);
+      setSelectedPayouts(new Set(pending));
       setSelectAll(true);
     } else {
       setSelectedPayouts(new Set());
@@ -189,542 +141,290 @@ export default function PayoutRequestsTable() {
     }
   };
 
-  // Calculate selected total amount
-  const selectedTotalAmount = payoutRequests
-    .filter((p) => selectedPayouts.has(p.pidPayout))
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
-
-  // Get pending payouts count
-  const pendingPayoutsCount = payoutRequests.filter(
-    (p) => p.status?.toLowerCase() === 'pending'
-  ).length;
-
-  // Clear selections when data changes
-  useEffect(() => {
-    setSelectedPayouts(new Set());
-    setSelectAll(false);
-  }, [status, search]);
-
-  // Handle opening approval modal
-  const handleOpenApprovalModal = () => {
-    setIsApprovalModalOpen(true);
+  const handlePageChange = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > totalPages) return;
+    setPage(nextPage);
   };
 
-  // Handle approval success
   const handleApprovalSuccess = () => {
     setSelectedPayouts(new Set());
     setSelectAll(false);
-    setIsApprovalModalOpen(false);
     fetchPayoutRequests();
   };
 
-  // Get selected payout objects
-  const selectedPayoutObjects = payoutRequests.filter((p) =>
-    selectedPayouts.has(p.pidPayout)
-  );
+  const selectedTotalAmount = payoutRequests
+    .filter(p => selectedPayouts.has(p.pidPayout))
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
 
-  // Format currency
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return 'N/A';
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-    }).format(amount);
+    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
   };
 
-  // Format date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  // Get status badge color
-  const getStatusColor = (status: string | null) => {
-    switch (status?.toLowerCase()) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'paid':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
+  const getStatusBadge = (status: string | null) => {
+    const s = status?.toLowerCase() || '';
+    let style = 'bg-muted text-muted-foreground border-border';
+    if (s === 'pending') style = 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+    else if (s === 'paid') style = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+    else if (s === 'cancelled') style = 'bg-destructive/10 text-destructive border-destructive/20';
+
+    return (
+      <span className={`px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded-full border uppercase tracking-wider ${style}`}>
+        {status || 'N/A'}
+      </span>
+    );
   };
 
   return (
-    <div className="space-y-4">
-      {/* Total Amount Summary */}
-      {!loading && !error && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 p-6 rounded-lg shadow-lg">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div className="flex-1">
-              <p className="text-blue-100 text-sm font-medium mb-1">
-                Total Payout Amount {status && `(${status})`}
-              </p>
-              <p className="text-white text-3xl font-bold">
+    <div className="space-y-6">
+      
+      {/* Summary Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-3 bg-card border border-border shadow-soft rounded-lg p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Total Volume {status && `(${status})`}
+              </span>
+              <p className="text-3xl font-bold text-foreground">
                 {formatCurrency(totalAmount)}
               </p>
-              {selectedPayouts.size > 0 && (
-                <div className="mt-3 pt-3 border-t border-blue-500">
-                  <p className="text-blue-100 text-sm font-medium mb-1">
-                    Selected for Approval
-                  </p>
-                  <p className="text-white text-2xl font-bold">
-                    {formatCurrency(selectedTotalAmount)}
-                  </p>
-                  <p className="text-blue-200 text-xs mt-1">
-                    {selectedPayouts.size} of {totalCount} requests selected
-                  </p>
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground">Across {totalCount} total requests</p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full lg:w-auto">
-              <div className="flex flex-col sm:flex-row gap-4 text-blue-100">
-                <div className="text-center sm:text-right">
-                  <p className="text-xs font-medium mb-1">Total Requests</p>
-                  <p className="text-xl font-semibold text-white">{totalCount}</p>
-                </div>
-                {status && (
-                  <div className="text-center sm:text-right">
-                    <p className="text-xs font-medium mb-1">Status</p>
-                    <p className="text-xl font-semibold text-white">{status}</p>
-                  </div>
-                )}
-              </div>
-              {selectedPayouts.size > 0 && (
+            
+            {selectedPayouts.size > 0 && (
+              <div className="sm:border-l border-border sm:pl-8 space-y-1 animate-in fade-in slide-in-from-right-4 duration-300">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                  Selected for Approval ({selectedPayouts.size})
+                </span>
+                <p className="text-2xl font-bold text-foreground">
+                  {formatCurrency(selectedTotalAmount)}
+                </p>
                 <button
-                  onClick={handleOpenApprovalModal}
-                  className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg transition-colors whitespace-nowrap"
+                  onClick={() => setIsApprovalModalOpen(true)}
+                  className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
                 >
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Approve Payment ({selectedPayouts.size})
+                  <CheckCircle className="w-4 h-4" />
+                  Approve Batch
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Filters and Search */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Search */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Search
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search by ID, recipient, reference..."
-                value={search}
-                onChange={(e) => handleFilterChange(setSearch, e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              {search && (
-                <button
-                  onClick={() => handleFilterChange(setSearch, '')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+        <div className="bg-card border border-border rounded-lg p-6 flex flex-col justify-center items-center text-center">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Queue Status</span>
+            <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-2xl font-bold text-foreground">
+                    {payoutRequests.filter(p => p.status?.toLowerCase() === 'pending').length}
+                </span>
             </div>
-          </div>
-
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => handleFilterChange(setStatus, e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Paid">Paid</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
-
-          {/* Items per page */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Items per page
-            </label>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              {ITEMS_PER_PAGE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
+            <span className="text-[10px] font-medium text-muted-foreground mt-1">PENDING REQUESTS</span>
         </div>
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && !loading && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-red-800 dark:text-red-200">{error}</p>
-        </div>
-      )}
-
-      {/* Table */}
-      {!loading && !error && (
-        <>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left">
-                      <input
-                        type="checkbox"
-                        checked={selectAll}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        disabled={pendingPayoutsCount === 0}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Select all pending payouts"
-                      />
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      S/N
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Payout ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      User ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Recipient
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Reference
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Date Created
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {payoutRequests.length > 0 ? (
-                    payoutRequests.map((payout, index) => {
-                      const isPending = payout.status?.toLowerCase() === 'pending';
-                      const isSelected = selectedPayouts.has(payout.pidPayout);
-
-                      return (
-                        <tr
-                          key={payout.pidPayout}
-                          className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                            isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                          }`}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={(e) => handleSelectPayout(payout.pidPayout, e.target.checked)}
-                              disabled={!isPending}
-                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                              title={isPending ? 'Select for approval' : 'Only pending payouts can be selected'}
-                            />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {(page - 1) * itemsPerPage + index + 1}
-                          </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                          {payout.pidPayout}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                          {payout.pidUser || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-semibold">
-                          {formatCurrency(payout.amount)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                          {payout.recipient || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                          {payout.reference || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                              payout.status
-                            )}`}
-                          >
-                            {payout.status || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                          {formatDate(payout.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                          <button
-                            onClick={() => handleDetailsClick(payout)}
-                            className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Details
-                          </button>
-                        </td>
-                      </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={10}
-                        className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400"
-                      >
-                        No payout requests found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+      {/* Control Bar */}
+      <div className="bg-card border border-border rounded-lg p-4 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search by ID, Recipient..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full pl-9 pr-4 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:ring-2 focus:ring-ring"
+            />
           </div>
 
-          {/* Pagination */}
-          {totalCount > 0 && totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                Showing <span className="font-semibold">{(page - 1) * itemsPerPage + 1}</span> to{' '}
-                <span className="font-semibold">
-                  {Math.min(page * itemsPerPage, totalCount)}
-                </span>{' '}
-                of <span className="font-semibold">{totalCount}</span> results
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage(1)}
-                  disabled={page === 1}
-                  className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  First
-                </button>
-                <button
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1}
-                  className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  Previous
-                </button>
+          <select
+            value={status}
+            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:ring-2 focus:ring-ring"
+          >
+            <option value="">All Status</option>
+            <option value="Pending">Pending Only</option>
+            <option value="Paid">Completed (Paid)</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
 
-                {/* Page numbers */}
-                <div className="hidden sm:flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
-                    if (pageNum > totalPages) return null;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 text-sm border rounded-md ${
-                          page === pageNum
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
+            className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:ring-2 focus:ring-ring"
+          >
+            {ITEMS_PER_PAGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt} per page</option>)}
+          </select>
+        </div>
+      </div>
 
-                <button
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === totalPages}
-                  className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  Next
-                </button>
-                <button
-                  onClick={() => setPage(totalPages)}
-                  disabled={page === totalPages}
-                  className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  Last
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+      {/* Main Table */}
+      <div className="bg-card border border-border rounded-lg shadow-soft overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-foreground">
+            <thead className="bg-muted/50 border-b border-border text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="px-6 py-4">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="h-4 w-4 rounded border-input text-primary focus:ring-ring"
+                  />
+                </th>
+                <th className="px-6 py-4">S/N</th>
+                <th className="px-6 py-4">Payout ID</th>
+                <th className="px-6 py-4">Amount</th>
+                <th className="px-6 py-4">Recipient</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border bg-card">
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-16 text-center">
+                    <RefreshCw className="w-8 h-8 text-muted-foreground animate-spin mx-auto mb-3" />
+                    <p className="text-muted-foreground font-medium">Fetching payout requests...</p>
+                  </td>
+                </tr>
+              ) : payoutRequests.length > 0 ? (
+                payoutRequests.map((payout, index) => {
+                  const isPending = payout.status?.toLowerCase() === 'pending';
+                  const isSelected = selectedPayouts.has(payout.pidPayout);
+                  return (
+                    <tr key={payout.pidPayout} className={`transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-muted/30'}`}>
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => handleSelectPayout(payout.pidPayout, e.target.checked)}
+                          disabled={!isPending}
+                          className="h-4 w-4 rounded border-input text-primary focus:ring-ring disabled:opacity-30"
+                        />
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">{(page - 1) * itemsPerPage + index + 1}</td>
+                      <td className="px-6 py-4 font-mono text-xs">{payout.pidPayout}</td>
+                      <td className="px-6 py-4 font-bold text-foreground">{formatCurrency(payout.amount)}</td>
+                      <td className="px-6 py-4 truncate max-w-[150px]">{payout.recipient || 'N/A'}</td>
+                      <td className="px-6 py-4">{getStatusBadge(payout.status)}</td>
+                      <td className="px-6 py-4 text-xs text-muted-foreground">{formatDate(payout.createdAt)}</td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleDetailsClick(payout)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border hover:bg-muted text-foreground rounded-md text-xs font-medium transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-6 py-16 text-center text-muted-foreground">No matching payout requests found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Pagination Controls */}
+      {totalCount > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-1 py-2 text-sm text-muted-foreground">
+          <p>
+            Showing <span className="font-bold text-foreground">{(page - 1) * itemsPerPage + 1}</span> to{' '}
+            <span className="font-bold text-foreground">{Math.min(page * itemsPerPage, totalCount)}</span> of {totalCount}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className="p-2 rounded-md border border-border bg-card hover:bg-muted disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4 rotate-180" />
+            </button>
+            <span className="px-4 font-semibold text-foreground">Page {page} of {totalPages}</span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+              className="p-2 rounded-md border border-border bg-card hover:bg-muted disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
-      {/* Details Modal */}
+      {/* Modals remain structurally similar but inherit standard styles via Modal components */}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         {selectedPayout && (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Payout Request Details
-              </h3>
-            </div>
+            <h3 className="text-xl font-bold tracking-tight text-foreground border-b border-border pb-4">Payout Request Details</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Transaction Info</h4>
+                    <div className="space-y-3">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-muted-foreground">Payout ID</span>
+                            <span className="text-sm font-semibold text-foreground">{selectedPayout.pidPayout}</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs text-muted-foreground">Amount Requested</span>
+                            <span className="text-base font-bold text-primary">{formatCurrency(selectedPayout.amount)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xs text-muted-foreground">Reason/Reference</span>
+                            <span className="text-sm text-foreground italic">"{selectedPayout.reason || 'No reason provided'}"</span>
+                        </div>
+                    </div>
+                </div>
 
-            {/* Payout Information */}
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                Payout Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Payout ID</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-white">
-                    {selectedPayout.pidPayout}
-                  </p>
+                <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">User/Bank Account</h4>
+                    {loadingUser ? (
+                         <div className="flex items-center gap-3 py-4">
+                            <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">Loading sensitive data...</span>
+                         </div>
+                    ) : userDetails ? (
+                        <div className="space-y-3">
+                             <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground">Full Name</span>
+                                <span className="text-sm font-semibold text-foreground">{userDetails.userFirstname} {userDetails.userLastname}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground">Settlement Bank</span>
+                                <span className="text-sm font-semibold text-foreground">{userDetails.bank_name || 'N/A'}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground">Account Number</span>
+                                <span className="text-sm font-mono font-bold text-foreground tracking-widest">{userDetails.bank_account_number || 'N/A'}</span>
+                            </div>
+                        </div>
+                    ) : <span className="text-sm text-destructive">User profile data inaccessible</span>}
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Amount</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-white">
-                    {formatCurrency(selectedPayout.amount)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Recipient</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-white">
-                    {selectedPayout.recipient || 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Reference</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-white">
-                    {selectedPayout.reference || 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                  <span
-                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                      selectedPayout.status
-                    )}`}
-                  >
-                    {selectedPayout.status || 'N/A'}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Date Created</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-white">
-                    {formatDate(selectedPayout.createdAt)}
-                  </p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Reason</p>
-                  <p className="text-base font-medium text-gray-900 dark:text-white">
-                    {selectedPayout.reason || 'N/A'}
-                  </p>
-                </div>
-              </div>
             </div>
-
-            {/* User Information */}
-            {selectedPayout.pidUser && (
-              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  User Information
-                </h4>
-                {loadingUser ? (
-                  <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : userDetails ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">User ID</p>
-                      <p className="text-base font-medium text-gray-900 dark:text-white">
-                        {userDetails.pidUser}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Name</p>
-                      <p className="text-base font-medium text-gray-900 dark:text-white">
-                        {userDetails.userFirstname} {userDetails.userLastname}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                      <p className="text-base font-medium text-gray-900 dark:text-white">
-                        {userDetails.userEmail}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
-                      <p className="text-base font-medium text-gray-900 dark:text-white">
-                        {userDetails.userPhone || 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Bank Name</p>
-                      <p className="text-base font-medium text-gray-900 dark:text-white">
-                        {userDetails.bank_name || 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Account Number</p>
-                      <p className="text-base font-medium text-gray-900 dark:text-white">
-                        {userDetails.bank_account_number || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Account Name</p>
-                      <p className="text-base font-medium text-gray-900 dark:text-white">
-                        {userDetails.bank_account_name || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Failed to load user details
-                  </p>
-                )}
-              </div>
-            )}
           </div>
         )}
       </Modal>
 
-      {/* Approval Modal */}
       <ApprovalModal
         isOpen={isApprovalModalOpen}
         onClose={() => setIsApprovalModalOpen(false)}
-        selectedPayouts={selectedPayoutObjects}
+        selectedPayouts={payoutRequests.filter(p => selectedPayouts.has(p.pidPayout))}
         onSuccess={handleApprovalSuccess}
       />
     </div>
   );
 }
-

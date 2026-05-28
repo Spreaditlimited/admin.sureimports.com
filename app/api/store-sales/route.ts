@@ -116,6 +116,78 @@ export async function GET(request: NextRequest) {
       allFilteredSales = allSales;
     }
 
+    // Build a fallback lookup for product names in case legacy rows have empty product_name.
+    const pidProducts = Array.from(
+      new Set(
+        allSales
+          .map((sale) => sale.pidProduct)
+          .filter((pid): pid is string => typeof pid === 'string' && pid.trim().length > 0)
+      )
+    );
+
+    const storeProducts = pidProducts.length
+      ? await prisma.store.findMany({
+          where: { pidProduct: { in: pidProducts } },
+          select: { pidProduct: true, productName: true },
+        })
+      : [];
+
+    const productNameByPid = new Map<string, string>();
+    for (const p of storeProducts) {
+      if (p.pidProduct) {
+        productNameByPid.set(p.pidProduct, p.productName || '');
+      }
+    }
+
+    // Preload user records for main store in one query (avoids N+1 lookups).
+    const userByPid = new Map<
+      string,
+      {
+        userFirstname: string | null;
+        userLastname: string | null;
+        userEmail: string | null;
+        userPhone: string | null;
+        userShippingAddress: string | null;
+        userShippingAddress2: string | null;
+      }
+    >();
+
+    if (store === 'main') {
+      const pidUsers = Array.from(
+        new Set(
+          allSales
+            .map((sale) => sale.pidUser)
+            .filter((pid): pid is string => typeof pid === 'string' && pid.trim().length > 0)
+        )
+      );
+
+      if (pidUsers.length) {
+        const users = await prisma.users.findMany({
+          where: { pidUser: { in: pidUsers } },
+          select: {
+            pidUser: true,
+            userFirstname: true,
+            userLastname: true,
+            userEmail: true,
+            userPhone: true,
+            userShippingAddress: true,
+            userShippingAddress2: true,
+          },
+        });
+
+        for (const u of users) {
+          userByPid.set(u.pidUser, {
+            userFirstname: u.userFirstname,
+            userLastname: u.userLastname,
+            userEmail: u.userEmail,
+            userPhone: u.userPhone,
+            userShippingAddress: u.userShippingAddress,
+            userShippingAddress2: u.userShippingAddress2,
+          });
+        }
+      }
+    }
+
     // Group sales by order ID (ext1)
     const groupedSalesMap = groupSalesByOrderId(allSales);
 
@@ -133,27 +205,16 @@ export async function GET(request: NextRequest) {
       const productItems: ProductItem[] = items.map(item => ({
         pidStore: item.pidStore,
         pidProduct: item.pidProduct,
-        product_name: item.product_name,
+        product_name: item.product_name || productNameByPid.get(item.pidProduct) || 'Unnamed Product',
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.total_price,
       }));
 
       // Get user details for main store (includes shipping addresses)
-      let userDetails = null;
-      if (store === 'main' && firstItem.pidUser) {
-        userDetails = await prisma.users.findUnique({
-          where: { pidUser: firstItem.pidUser },
-          select: {
-            userFirstname: true,
-            userLastname: true,
-            userEmail: true,
-            userPhone: true,
-            userShippingAddress: true,
-            userShippingAddress2: true,
-          },
-        });
-      }
+      const userDetails = store === 'main' && firstItem.pidUser
+        ? userByPid.get(firstItem.pidUser) || null
+        : null;
 
       // For main store: use userShippingAddress2 as primary, fallback to userShippingAddress
       const mainStoreShippingAddress = userDetails
@@ -234,4 +295,3 @@ export async function GET(request: NextRequest) {
     await prisma.$disconnect();
   }
 }
-

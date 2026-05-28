@@ -91,23 +91,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange, imagex }) => {
             style={{ maxWidth: '300px' }}
           />
 
-          <p className="m-2 p-5 pb-2 text-[12px]">
+          <div className="m-2 p-5 pb-2 text-[12px]">
             Click or drag and drop an image to upload <br />
             <div className="pb-2 text-[10px]">
               Max image size 2.5MB (Use a square sized photo e.g. 150px x 150px
               for best fit.)
             </div>
-          </p>
+          </div>
         </>
       ) : (
         <>
-          <p className="m-2 p-5 pb-2 text-[12px]">
+          <div className="m-2 p-5 pb-2 text-[12px]">
             Click or drag and drop an image to upload <br />
             <div className="pb-2 text-[10px]">
               Max image size 2.5MB (Use a square sized photo e.g. 150px x 150px
               for best fit.)
             </div>
-          </p>
+          </div>
         </>
       )}
     </div>

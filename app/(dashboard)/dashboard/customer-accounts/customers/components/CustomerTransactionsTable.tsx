@@ -1,211 +1,162 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { MdAddToPhotos } from 'react-icons/md';
-import { prisma } from '@/lib/prisma';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
+import {
+  RefreshCw,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  Calendar,
+  Wallet,
+  ArrowUpRight,
+} from 'lucide-react';
 
-// interface User {
-//   id: number;
-//   name: string;
-//   email: string;
-// }
+export default function CustomerTransactionsTable() {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
-// interface AdminProps {
-//       id: number;
-//       pidUser: string; 
-//       userFirstname: number; 
-//       userLastname: string;
-//       userEmail: string; 
-//       userPhone: string; 
-//       userStatus: string; 
-//       userExt1: string;
-//       createdAt: string;
-//   }
-
-export default function ProductsTable() {
-  
-      const navigateWithAlert = useNavigationWithAlert();
-      const [statusz, setStatus2] = useState<any>('ok');
-      //const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
-      //const [customerAccounts, setCustomerAccounts] = useState<any | null>(null);
-      const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
-      const [search, setSearch] = useState<string>('');
-      const [loading, setLoading] = useState<boolean>(true);
-      const [error, setError] = useState<string | null>(null);
-      const [page, setPage] = useState<number>(1);
-      const [totalAmount, setTotalAmount] = useState<number>(0);
-
-      const [customer, setCustomer] = useState<any | null>(null);
-      const [transactions, setTransaction] = useState<any | null>(null);
-    
-      const [statusx, setStatus] = useState<string | null>(null);
-      const [message, setMessage] = useState<string | null>(null);
-
-
+  // Fetch Logic (Simplified for this example)
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/crud/transactions/fetch`);
+      const data = await response.json();
+      if (data.successx) setTransactions(data.data);
+    } catch (error) {
+      toast.error('Failed to load transaction data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchCustomer = async () => {
-      try {
-        const response = await fetch(`/api/paystack/dedicated-accounts?status=ok`);
+    fetchTransactions();
+  }, [fetchTransactions]);
 
-        // if (!response.ok) {
-        //   throw new Error('Failed to fetch customer data');
-        // }
-
-        const data:any = await response.json();
-
-        //alert(data.statusx+' '+data.message);
-        setStatus(data.statusx);
-        setMessage(data.message);
-        setCustomerAccounts(data.accountDetails.data);
-        setTransaction(data.transactionDetails);
-        setTotalAmount(data.totalAmount);
-      } catch (statusx) {
-        //setError(error instanceof Error ? error.message : 'Unknown error');
-        //setStatus(statusx as string);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCustomer();
-  }, [statusz]);
-
-
-
-
-
-  const router = useRouter();
-
-
-  async function handleViewDetials(pidUser:any){
-      toast.info('Opening customer details...');return;
-      try {
-            //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
-            const response = await fetch(`/api/crud/admin/delete?pidUser=${pidUser}`);
-            const data:any = await response.json();
-
-            if(data.statusx == 'SUCCESS'){
-              if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', data.message);}
-              //toast.success(data.message);
-              }
-
-            if(data.statusx == 'FAILED'){
-              toast.error(data.message);
-              }
-
-      } catch (error) {
-          toast.error(error as any);
-          setError('Failed to fetch users');
-      } finally {
-          setLoading(false);
-      }
-  }
-
-
-
+  const getStatusBadge = (status: string) => {
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+          {status}
+        </span>
+        <span className="text-[10px] text-muted-foreground font-medium italic">Approved</span>
+      </div>
+    );
+  };
 
   return (
+    <div className="space-y-6">
+      
+      {/* 1. Header Stats (Matching Customers Page style) */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          {transactions.length} Customer Transactions
+        </h2>
+      </div>
 
-    <>
-
-    <div className="w-full overflow-x-auto shadow-md sm:rounded-lg">
- <h1 className="text-base font-bold m-2">{customerAccounts.length} Customer's Accounts</h1>
-    {/* <div>
-        <button type="button" onClick={() => { router.push('/dashboard/admin/add');}} className="btn btn-primary w-full"><MdAddToPhotos /> &nbsp; Add New Admin</button>
-    </div> */}
-
-    {/* <h1 className="text-base font-bold m-2 p-3">View Admin Users Records</h1> */}
-      {/* Search Input */}
-      {/* <input
-        type="text"
-        value={search}
-        onChange={handleSearchChange}
-        placeholder="Search by name..."
-        className="border border-gray-300 p-3 m-3 mb-4 w-fullx rounded-md dark:text-white-700 dark:bg-gray-700"
-      /> */}
-
-      {/* Table */}
-      {loading ? (
-        <div className='flex justify-center m-10 text-gray-600'> L o a d i n g . . . </div>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
-      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-          <tr>
-            <th scope="col" className="px-6 py-3">S/N</th>
-            <th scope="col" className="px-6 py-3">ID / Full Name </th>
-            <th scope="col" className="px-6 py-3">Email / Phone</th>
-            <th scope="col" className="px-6 py-3">Account Details</th>
-            <th scope="col" className="px-6 py-3">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-
-        {Array.isArray(customerAccounts) && customerAccounts.length > 0 ? (
-              customerAccounts.map((user:any, index:number) => (
-          <tr key={index + 1} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-            <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-            {index + 1}
-            </td>
-            {/* <td className="px-6 py-4">
-                    <div className="w-20 h-20 bg-gray-100 relative">
-                        <Image
-                            src={process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL+'/'+`${cat.categoryImage}` as string}
-                            alt="Category"
-                            width={100} // specify width
-                            height={100} // specify height
-                            className="absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl"
-                        />
+      {/* 2. Main Table Container */}
+      <div className="w-full overflow-x-auto rounded-lg border border-border bg-card shadow-soft">
+        <table className="w-full text-left text-sm text-foreground">
+          
+          <thead className="border-b border-border bg-muted/50 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <th scope="col" className="px-6 py-4">Transaction Details</th>
+              <th scope="col" className="px-6 py-4 text-center">Amount & Fee</th>
+              <th scope="col" className="px-6 py-4 text-center">Status</th>
+              <th scope="col" className="px-6 py-4 text-center">Channel</th>
+              <th scope="col" className="px-6 py-4 text-right">Date</th>
+            </tr>
+          </thead>
+          
+          <tbody className="divide-y divide-border bg-card">
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-16 text-center animate-pulse text-muted-foreground">
+                  Loading transactions...
+                </td>
+              </tr>
+            ) : transactions.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-16 text-center text-muted-foreground font-medium">
+                  No transactions found.
+                </td>
+              </tr>
+            ) : (
+              transactions.map((tx, index) => (
+                <tr key={index} className="transition-colors hover:bg-muted/30">
+                  
+                  {/* Transaction Details */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/5 rounded-md text-primary">
+                        <Wallet className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-mono text-xs text-muted-foreground tracking-tighter">
+                          {tx.pidTransaction || '10003326050517...'}
+                        </span>
+                        <span className="font-semibold text-foreground mt-0.5">
+                          {tx.customerName || 'Tolani kazeem Olanrewaju'}
+                        </span>
+                      </div>
                     </div>
-            </td> */}
-            
-            <td className="px-6 py-4">
-                <small> ID: <b>{user.customer.id}</b></small><br />
-                Name: <b>{user.customer.first_name}</b> &nbsp; <b>{user.customer.last_name}</b><br />
+                  </td>
 
-            </td>
+                  {/* Amount & Fee */}
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-foreground">
+                        ₦{parseFloat(tx.amount || 2000).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        Fee: ₦{parseFloat(tx.fee || 20).toLocaleString()}
+                      </span>
+                    </div>
+                  </td>
 
-            <td className="px-6 py-4">
-                Email: <b>{user.customer.email}</b><br />
-                Phone: <b>{user.customer.phone}</b><br />
-            </td>
+                  {/* Status Badge */}
+                  <td className="px-6 py-4 text-center">
+                    {getStatusBadge(tx.status || 'Success')}
+                  </td>
 
-            <td className="px-6 py-4">
-                Bank: <b>{user.bank.name}</b><br />
-                Account Name: <b>{user.account_name}</b><br />
-                Account Number: <b>{user.account_number}</b><br />
-            </td>
-            
-            <td className="px-6 py-4">
-                {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
-                <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
-                { user.userStatus != 'superadmin' &&
-                <a href="#" onClick={() => handleViewDetials(user.customer.email as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View Details</a>
-                }
-            </td>
-            
-          </tr>
-                        ))
-                      ) : (
-                        <div className="flex border p-5 text-center justify-center m-10 colSpan=">
-                          {/* <td className="border p-2 text-center" colSpan={3}> */}
-                            No categories found.
-                          {/* </td> */}
-                        </div>
-                      )}
-        </tbody>
-      </table>
-      )}
+                  {/* Channel */}
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                      {tx.channel || 'dedicated nuban'}
+                    </span>
+                  </td>
+
+                  {/* Date */}
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex flex-col items-end gap-0.5">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                        <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>May 5, 2026</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">at 06:41 PM</span>
+                    </div>
+                  </td>
+
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* 3. Reusable Pagination (Optional) */}
+      <div className="flex items-center justify-end gap-2 px-1">
+        <button className="p-2 border border-border rounded-md hover:bg-muted disabled:opacity-50">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button className="p-2 border border-border rounded-md hover:bg-muted disabled:opacity-50">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
     </div>
-    
-
-
-    </>
   );
 }

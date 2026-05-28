@@ -8,6 +8,7 @@ interface User {
   pidUser: string;
   userEmail: string;
   userFirstname?: string;
+  userLastname?: string;
 }
 
 interface AuthContextType {

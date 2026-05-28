@@ -1,72 +1,38 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { MdAddToPhotos } from 'react-icons/md';
-import { prisma } from '@/lib/prisma';
 import { toast } from 'sonner';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 
-// interface User {
-//   id: number;
-//   name: string;
-//   email: string;
-// }
+export default function CustomersTable() {
+  const navigateWithAlert = useNavigationWithAlert();
+  const router = useRouter();
 
-// interface AdminProps {
-//       id: number;
-//       pidUser: string; 
-//       userFirstname: number; 
-//       userLastname: string;
-//       userEmail: string; 
-//       userPhone: string; 
-//       userStatus: string; 
-//       userExt1: string;
-//       createdAt: string;
-//   }
+  const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default function ProductsTable() {
-  
-      const navigateWithAlert = useNavigationWithAlert();
-      const [statusz, setStatus2] = useState<any>('ok');
-      //const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
-      //const [customerAccounts, setCustomerAccounts] = useState<any | null>(null);
-      const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
-      const [search, setSearch] = useState<string>('');
-      const [loading, setLoading] = useState<boolean>(true);
-      const [error, setError] = useState<string | null>(null);
-      const [page, setPage] = useState<number>(1);
-      const [totalAmount, setTotalAmount] = useState<number>(0);
-
-      const [customer, setCustomer] = useState<any | null>(null);
-      const [transactions, setTransaction] = useState<any | null>(null);
-    
-      const [statusx, setStatus] = useState<string | null>(null);
-      const [message, setMessage] = useState<string | null>(null);
-
-
+  // We kept your other state variables in case you need them later
+  const [statusz, setStatusz] = useState<any>('ok');
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [transactions, setTransaction] = useState<any | null>(null);
+  const [statusx, setStatus] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
         const response = await fetch(`/api/paystack/dedicated-accounts?status=ok`);
+        const data: any = await response.json();
 
-        // if (!response.ok) {
-        //   throw new Error('Failed to fetch customer data');
-        // }
-
-        const data:any = await response.json();
-
-        //alert(data.statusx+' '+data.message);
         setStatus(data.statusx);
         setMessage(data.message);
-        setCustomerAccounts(data.accountDetails.data);
+        setCustomerAccounts(data.accountDetails?.data || []);
         setTransaction(data.transactionDetails);
-        setTotalAmount(data.totalAmount);
-      } catch (statusx) {
-        //setError(error instanceof Error ? error.message : 'Unknown error');
-        //setStatus(statusx as string);
+        setTotalAmount(data.totalAmount || 0);
+      } catch (err) {
+        setError('Failed to load customer accounts.');
       } finally {
         setLoading(false);
       }
@@ -75,138 +41,121 @@ export default function ProductsTable() {
     fetchCustomer();
   }, [statusz]);
 
-
-
-
-
-  const router = useRouter();
-
-
-  async function handleViewDetials(pidUser:any){
-      toast.info('Opening customer details...');return;
-      try {
-            //const response = await fetch(`/api/users?search=${search}&page=${page}&limit=5`);
-            const response = await fetch(`/api/crud/admin/delete?pidUser=${pidUser}`);
-            const data:any = await response.json();
-
-            if(data.statusx == 'SUCCESS'){
-              if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', data.message);}
-              //toast.success(data.message);
-              }
-
-            if(data.statusx == 'FAILED'){
-              toast.error(data.message);
-              }
-
-      } catch (error) {
-          toast.error(error as any);
-          setError('Failed to fetch users');
-      } finally {
-          setLoading(false);
-      }
+  async function handleViewDetails(pidUser: any) {
+    toast.info('Opening customer details...');
+    // Add your navigation or fetch logic here
+    // Example: router.push(`/dashboard/customer-accounts/view?id=${pidUser}`);
   }
 
-
-
-
   return (
+    <div className="space-y-4">
+      {/* Table Header / Stats */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          {customerAccounts.length} Dedicated Accounts
+        </h2>
+      </div>
 
-    <>
-
-    <div className="w-full overflow-x-auto shadow-md sm:rounded-lg">
- <h1 className="text-base font-bold m-2">{customerAccounts.length} Customer's Accounts</h1>
-    {/* <div>
-        <button type="button" onClick={() => { router.push('/dashboard/admin/add');}} className="btn btn-primary w-full"><MdAddToPhotos /> &nbsp; Add New Admin</button>
-    </div> */}
-
-    {/* <h1 className="text-base font-bold m-2 p-3">View Admin Users Records</h1> */}
-      {/* Search Input */}
-      {/* <input
-        type="text"
-        value={search}
-        onChange={handleSearchChange}
-        placeholder="Search by name..."
-        className="border border-gray-300 p-3 m-3 mb-4 w-fullx rounded-md dark:text-white-700 dark:bg-gray-700"
-      /> */}
-
-      {/* Table */}
-      {loading ? (
-        <div className='flex justify-center m-10 text-gray-600'> L o a d i n g . . . </div>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
+      {/* Main Table Container */}
+      <div className="w-full overflow-x-auto rounded-lg border border-border bg-card shadow-soft">
         
-      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-          <tr>
-            <th scope="col" className="px-6 py-3">S/N</th>
-            <th scope="col" className="px-6 py-3">ID / Full Name </th>
-            <th scope="col" className="px-6 py-3">Email / Phone</th>
-            <th scope="col" className="px-6 py-3">Account Details</th>
-            <th scope="col" className="px-6 py-3">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-
-        {Array.isArray(customerAccounts) && customerAccounts.length > 0 ? (
-              customerAccounts.map((user:any, index:number) => (
-          <tr key={index + 1} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-            <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-            {index + 1}
-            </td>
-            {/* <td className="px-6 py-4">
-                    <div className="w-20 h-20 bg-gray-100 relative">
-                        <Image
-                            src={process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL+'/'+`${cat.categoryImage}` as string}
-                            alt="Category"
-                            width={100} // specify width
-                            height={100} // specify height
-                            className="absolute w-full h-full object-contain border-solid border-4 border-gray-300 rounded-xl"
-                        />
-                    </div>
-            </td> */}
+        {loading ? (
+          <div className="flex items-center justify-center p-12 text-sm font-medium text-muted-foreground animate-pulse">
+            Loading accounts...
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center p-12 text-sm font-medium text-destructive">
+            {error}
+          </div>
+        ) : (
+          <table className="w-full text-left text-sm text-foreground">
             
-            <td className="px-6 py-4">
-                <small> ID: <b>{user.customer.id}</b></small><br />
-                Name: <b>{user.customer.first_name}</b> &nbsp; <b>{user.customer.last_name}</b><br />
-
-            </td>
-
-            <td className="px-6 py-4">
-                Email: <b>{user.customer.email}</b><br />
-                Phone: <b>{user.customer.phone}</b><br />
-            </td>
-
-            <td className="px-6 py-4">
-                Bank: <b>{user.bank.name}</b><br />
-                Account Name: <b>{user.account_name}</b><br />
-                Account Number: <b>{user.account_number}</b><br />
-            </td>
+            <thead className="border-b border-border bg-muted/50 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th scope="col" className="px-6 py-4">S/N</th>
+                <th scope="col" className="px-6 py-4">ID & Full Name</th>
+                <th scope="col" className="px-6 py-4">Contact Info</th>
+                <th scope="col" className="px-6 py-4">Bank Details</th>
+                <th scope="col" className="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
             
-            <td className="px-6 py-4">
-                {/* <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</a> | &nbsp;
-                <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a> | &nbsp; */}
-                { user.userStatus != 'superadmin' &&
-                <a href="#" onClick={() => handleViewDetials(user.customer.email as any)} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View Details</a>
-                }
-            </td>
-            
-          </tr>
-                        ))
-                      ) : (
-                        <div className="flex border p-5 text-center justify-center m-10 colSpan=">
-                          {/* <td className="border p-2 text-center" colSpan={3}> */}
-                            No categories found.
-                          {/* </td> */}
-                        </div>
+            <tbody className="divide-y divide-border bg-card">
+              {Array.isArray(customerAccounts) && customerAccounts.length > 0 ? (
+                customerAccounts.map((user: any, index: number) => (
+                  <tr 
+                    key={user.id || index} 
+                    className="transition-colors hover:bg-muted/30"
+                  >
+                    {/* S/N */}
+                    <td className="whitespace-nowrap px-6 py-4 font-medium text-muted-foreground">
+                      {index + 1}
+                    </td>
+
+                    {/* ID & Full Name */}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          ID: {user.customer?.id}
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {user.customer?.first_name} {user.customer?.last_name}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Contact Info */}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm text-foreground">
+                          {user.customer?.email}
+                        </span>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {user.customer?.phone || 'No phone provided'}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Bank Details */}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {user.bank?.name}
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {user.account_name}
+                        </span>
+                        <span className="font-mono text-sm tracking-wide text-primary">
+                          {user.account_number}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Action */}
+                    <td className="px-6 py-4 text-right">
+                      {user.userStatus !== 'superadmin' && (
+                        <button
+                          onClick={() => handleViewDetails(user.customer?.email)}
+                          className="inline-flex items-center justify-center rounded-md bg-background px-3 py-1.5 text-xs font-medium text-primary border border-border shadow-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
+                        >
+                          View Details
+                        </button>
                       )}
-        </tbody>
-      </table>
-      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                /* Properly structured empty state for a table */
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-sm font-medium text-muted-foreground">
+                    No customer accounts found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
-    
-
-
-    </>
   );
 }

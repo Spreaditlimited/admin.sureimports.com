@@ -1,193 +1,150 @@
 'use client'
 
-import Products from '@/componentsx/dashboard/Products';
-import { Metadata } from 'next';
-import React from 'react';
-import { useState } from 'react';
-import { MdAddShoppingCart, MdAddToPhotos, MdBook } from 'react-icons/md';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-//import toast from 'react-hot-toast';
-import { useAlert } from '@/app/context/AlertContext';
-import Image from 'next/image';
-import ImageUploadBox from '@/componentsx/ImageUploadBox';
-import ImageBox from '@/componentsx/ImageBox';
-import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
-import axios from 'axios';
-import { Save } from 'lucide-react';
+import { 
+  Save, 
+  RefreshCw, 
+  Percent, 
+  Info,
+  BadgePercent,
+  Settings2,
+  Receipt
+} from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
-
-export const metadata: Metadata = {
-    title: 'Printin Admin Dashboard',
-    description: 'Printin'
-};
-
-//USER DATA
-interface User {
-    pidUser: string;
-    email: string;
-    name: string;
-  }
-  
-//API RESPONSE
-interface ApiResponse {
-    responsex: any;
-    successx: boolean;
-    userx: User;
-  }
-
-interface ProductFormProps {
-    product?: {
-      id: number
-      pidProduct: string
-      pidCategory: string
-      productName: string
-      productDescription: number
-      productCategory: string
-      productPrice: number
-      productPriceInfo: string
-      productGeneralInfo: string
-      productMOQ: number
-      productVAT: number
-      productAdditionalPrice: number
-      productAdditionalDescription: string
+interface ServiceRateProps {
+    rates: {
+        service_charge: number;
+        vat: number;
     }
-  }
+}
 
-
-  const Page: React.FC<any> = ({ rates }) => {
-//const Page = (rates:any) => {
-    const {user} = useAuth();
-    //initialize alert system
-    const navigateWithAlert = useNavigationWithAlert();
-    //const box = JSON.stringify(rates['vat']);
-
-    //SET VARIABLES DATA
-    const router = useRouter();
-    //const [value, setValue] = useState('<h3>Product Description Title</h3><br /><p> Product description goes here...</p>');
-    //const [file, setFile] = useState<File | null>(null)
+const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
+    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
 
-
-    const handleImageChange = (file: File) => {
-      //setFile(file);
-    };
-
-
-    //SET FORM DATA
-    //let AdminUserID = 'ADM' + new Date().getTime().toString();
-    //const [pidUser, setPidUser] = useState(user?.pidUser as string);
-    const [serviceCharge, setServiceCharge] = useState<number>(rates.service_charge);
-    const [vat, setVat] = useState<number>(rates.vat);
+    // Form State prefilled from DB
+    const [serviceCharge, setServiceCharge] = useState<number>(rates?.service_charge || 0);
+    const [vat, setVat] = useState<number>(rates?.vat || 0);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-                toast.info('Updating Service Charge & VAT . . .');
-                e.preventDefault();
-                setIsLoading(true);
+        e.preventDefault();
+        setIsLoading(true);
+        toast.info('Synchronizing platform tax ledger...');
 
-                //if (!file) {toast.error('No Product Image selected'); setIsLoading(false); return;}else{}
+        const formData = new FormData();
+        formData.append('serviceCharge', serviceCharge.toString());
+        formData.append('vat', vat.toString());
 
-                //collecting form data
-                const formData = new FormData();
-                //formData.append('file', file);
-                formData.append('serviceCharge', serviceCharge as any);
-                formData.append('vat', vat as any);
+        try {
+            const res = await fetch('/api/crud/service-charges/update', {
+                method: 'PUT',
+                body: formData,
+            });
 
-
-
-                //formData.append('categoryImage', categoryImage);
-
-                //MAKE REQUEST ATTEMPT
-                try {
-                    //MAKE REQUEST
-                            const res = await fetch('/api/crud/service-charges/update', {
-                            method: 'PUT',
-                            //headers: { 'Content-Type': 'application/json' },
-                            //headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            //headers: { 'Content-Type': 'multipart/form-data' },
-                            body: formData,
-                    });
-
-                    //PROCESS POST RESPONSE
-                    const data: any = await res.json();
-                    if (data.statusx == 'SUCCESS'){toast.success(data.message);}
-                    //if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/admin/view', 'success', data.message);}
-                    if (data.statusx == 'FAILED'){toast.error(data.message);}
-
-            } catch (error: any) {
-                toast.error(error.message);
-                //navigateWithAlert('/dashboard', 'success', 'Action was successfully!')
-            } finally {
-                setIsLoading(false);
+            const data = await res.json();
+            if (data.statusx === 'SUCCESS') {
+                toast.success('Global charges and VAT updated successfully');
+            } else {
+                toast.error(data.message || 'Synchronization failed');
             }
-    }
-//END FORM...
-
-
-
-
-
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <>
+        <div className="space-y-6 max-w-4xl">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                
+                {/* 1. Fee Configuration Card */}
+                <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+                    <div className="px-6 py-4 border-b border-border bg-muted/20 flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                            <Settings2 className="w-4 h-4 text-primary" /> Platform Surcharge Ledger
+                        </h3>
+                        <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 rounded border border-emerald-500/20 text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                            Fiscal Core
+                        </div>
+                    </div>
 
-<form className="space-y-5" onSubmit={handleSubmit} >
-    <div className="">
-      <div className="max-w-4xlx mx-auto bg-white dark:bg-gray-900 p-8 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Update Charges & VAT </h2>
+                    <div className="p-6 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            
+                            {/* Service Charge */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <Receipt className="w-3.5 h-3.5" /> Platform Service Charge (%)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={serviceCharge}
+                                        onChange={(e) => setServiceCharge(Number(e.target.value))}
+                                        required
+                                        className="w-full px-4 py-3 text-lg border border-input rounded-md bg-background text-foreground font-bold font-mono focus:ring-2 focus:ring-ring transition-all pr-10"
+                                    />
+                                    <Percent className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground italic">Applied to all custom procurement and sourcing tasks.</p>
+                            </div>
 
+                            {/* VAT Percentage */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <BadgePercent className="w-3.5 h-3.5" /> Value Added Tax (VAT %)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={vat}
+                                        onChange={(e) => setVat(Number(e.target.value))}
+                                        required
+                                        className="w-full px-4 py-3 text-lg border border-input rounded-md bg-background text-foreground font-bold font-mono focus:ring-2 focus:ring-ring transition-all pr-10"
+                                    />
+                                    <Percent className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground italic">Governed by regional tax regulations on total invoice value.</p>
+                            </div>
+                        </div>
 
-        {/* Single Column */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Service Charge</label>
-          <input
-            step="0.01"
-            defaultValue={rates.service_charge}
-            name='exNairaToDollar'
-            onChange={(e) => setServiceCharge(Number(e.target.value))}
-            type="number"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
+                        {/* Critical Advisory Box */}
+                        <div className="flex gap-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+                            <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                                <p className="text-xs font-bold text-amber-700 uppercase">System-Wide Impact</p>
+                                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                    Modifying these values affects the final checkout cost for <span className="font-bold text-foreground">every transaction</span>. Ensure these percentages align with your current operational overhead and legal tax obligations.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Submit Bar */}
+                    <div className="px-6 py-4 bg-muted/10 border-t border-border flex justify-end">
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-3 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-sm hover:bg-primary/90 transition-all disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Save className="w-4 h-4" />
+                            )}
+                            {isLoading ? 'Updating Ledger...' : 'Commit Surcharge Changes'}
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-
-
-        {/* Single Column */}
-         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Value Added Tax (VAT)</label>
-          <input
-            step="0.01"
-            defaultValue={rates.vat}
-            name='exNairaToDollar'
-            onChange={(e) => setVat(Number(e.target.value))}
-            type="number"
-            required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-        </div>
-
-
-
-
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="btn bg-slate-600 !mt-6 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 "
-          >
-            <Save /> &nbsp; Update Service Charge
-          </button>
-        </div>
-
-
-      </div>
-    </div>
-</form>
-      
-        </>
     );
 };
 
-export default Page;
+export default ServiceChargeForm;

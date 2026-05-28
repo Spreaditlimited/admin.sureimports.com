@@ -10,6 +10,14 @@ const config: Config = {
   darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        // Enforces a clean, modern typography scale
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        // A bespoke soft shadow for elevated form cards and dropdowns
+        soft: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -56,4 +64,3 @@ const config: Config = {
 }
 
 export default config
-

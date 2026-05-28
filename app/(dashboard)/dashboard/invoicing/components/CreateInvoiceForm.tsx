@@ -3,6 +3,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { 
+  Search, 
+  UserPlus, 
+  Plus, 
+  Trash2, 
+  FileText, 
+  User, 
+  Calendar, 
+  Calculator, 
+  RefreshCw,
+  Save,
+  Send
+} from 'lucide-react';
 
 interface Customer {
   pidUser: string;
@@ -30,6 +43,7 @@ export default function CreateInvoiceForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const linkedRequestId = searchParams.get('linkedRequestId') || '';
+
   const [customerSearch, setCustomerSearch] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -43,6 +57,7 @@ export default function CreateInvoiceForm() {
     country: 'Nigeria',
     sendSetupLink: true,
   });
+
   const [headerSnapshot, setHeaderSnapshot] = useState('');
   const [footerSnapshot, setFooterSnapshot] = useState('');
   const [notes, setNotes] = useState('');
@@ -74,21 +89,14 @@ export default function CreateInvoiceForm() {
 
       const gift = data.data.request;
       const matched = (data.data.matchedUsers || []) as Customer[];
-      if (matched.length > 0) {
-        setSelectedCustomer(matched[0]);
-      }
+      if (matched.length > 0) setSelectedCustomer(matched[0]);
+      
       setCustomerSearch(gift.contactEmail || gift.businessName || '');
       setNotes((prev) => {
-        const prefix = `Corporate Gift Request: ${gift.pidRequest}\nBusiness: ${gift.businessName}\nContact: ${gift.contactPersonFullName}\nEmail: ${gift.contactEmail}\nWhatsApp: ${gift.whatsappNumber}\nExpected Delivery: ${gift.expectedDeliveryDate}\nLocation: ${gift.finalDeliveryLocationNigeria}\n`;
-        return prev ? `${prefix}\n${prev}` : prefix;
+        const prefix = `Corporate Gift Request: ${gift.pidRequest}\nBusiness: ${gift.businessName}\nContact: ${gift.contactPersonFullName}\nDelivery Location: ${gift.finalDeliveryLocationNigeria}`;
+        return prev ? `${prefix}\n\n${prev}` : prefix;
       });
-      setItems([
-        {
-          description: `${gift.productOrItemNeeded} (${gift.preferredQualityLevel})`,
-          quantity: Number(gift.quantityNeeded || 1),
-          unitPrice: 0,
-        },
-      ]);
+      setItems([{ description: `${gift.productOrItemNeeded} (${gift.preferredQualityLevel})`, quantity: Number(gift.quantityNeeded || 1), unitPrice: 0 }]);
     };
     loadCorporateGiftPrefill();
   }, [linkedRequestId]);
@@ -116,32 +124,11 @@ export default function CreateInvoiceForm() {
 
       const created = json.data as Customer;
       setSelectedCustomer(created);
-      setCustomers((prev) => [created, ...prev.filter((x) => x.pidUser !== created.pidUser)]);
-      setCustomerSearch(created.userEmail || '');
+      setCustomers((prev) => [created, ...prev]);
       setShowQuickAddUser(false);
-      setQuickUser({
-        userFirstname: '',
-        userLastname: '',
-        userEmail: '',
-        phone: '',
-        country: 'Nigeria',
-        sendSetupLink: true,
-      });
-      if (json?.statusx === 'EXISTS') {
-        toast.success(
-          json?.setupLinkSent
-            ? 'Existing user selected. Password setup link sent.'
-            : 'Existing user selected. Password setup link was not sent.',
-        );
-      } else {
-        toast.success(
-          json?.setupLinkSent
-            ? 'User created, selected, and password setup link sent.'
-            : 'User created and selected. Password setup link was not sent.',
-        );
-      }
+      toast.success('User created and selected.');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create user');
+      toast.error(error.message);
     } finally {
       setQuickUserSaving(false);
     }
@@ -150,6 +137,7 @@ export default function CreateInvoiceForm() {
   const subtotal = useMemo(() => {
     return items.reduce((sum, it) => sum + Number(it.quantity || 0) * Number(it.unitPrice || 0), 0);
   }, [items]);
+  
   const grandTotal = useMemo(() => subtotal - Number(discountTotal || 0) + Number(taxTotal || 0), [subtotal, discountTotal, taxTotal]);
 
   const setRow = (index: number, key: keyof ItemRow, value: string) => {
@@ -157,8 +145,8 @@ export default function CreateInvoiceForm() {
   };
 
   const createInvoice = async (issueNow: boolean) => {
-    if (!selectedCustomer) return toast.error('Select a registered user first');
-    if (!items.length || items.some((i) => !i.description || i.quantity <= 0)) return toast.error('Add valid line items');
+    if (!selectedCustomer) return toast.error('Please select a customer');
+    if (!items.length || items.some((i) => !i.description || i.quantity <= 0)) return toast.error('Incomplete line items');
 
     setSaving(true);
     try {
@@ -179,173 +167,224 @@ export default function CreateInvoiceForm() {
         }),
       });
       const created = await createRes.json();
-      if (!createRes.ok || !created?.data?.pidInvoice) {
-        throw new Error(created?.message || 'Failed to create invoice');
-      }
+      if (!createRes.ok) throw new Error(created?.message);
 
-      const pidInvoice = created.data.pidInvoice;
       if (issueNow) {
-        const issueRes = await fetch(`/api/invoicing/invoices/${pidInvoice}/issue`, { method: 'POST' });
-        if (!issueRes.ok) {
-          const x = await issueRes.json();
-          throw new Error(x?.message || 'Failed to issue invoice');
-        }
+        await fetch(`/api/invoicing/invoices/${created.data.pidInvoice}/issue`, { method: 'POST' });
       }
-
-      router.push(`/dashboard/invoicing/${pidInvoice}`);
+      router.push(`/dashboard/invoicing/${created.data.pidInvoice}`);
     } catch (error: any) {
-      toast.error(error.message || 'Action failed');
+      toast.error(error.message);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border p-4 bg-white dark:bg-gray-800">
-        <h3 className="font-semibold mb-3">1. Select Registered User</h3>
-        <div className="flex gap-2">
-          <input
-            value={customerSearch}
-            onChange={(e) => setCustomerSearch(e.target.value)}
-            placeholder="Search name or email"
-            className="flex-1 px-3 py-2 border rounded-lg bg-white dark:bg-gray-700"
-          />
-          <button onClick={searchCustomers} className="px-4 py-2 rounded-lg bg-gray-900 text-white">Search</button>
-          <button
-            type="button"
-            onClick={() => setShowQuickAddUser((prev) => !prev)}
-            className="px-4 py-2 rounded-lg border"
-          >
-            {showQuickAddUser ? 'Close Quick Add' : 'Quick Add User'}
-          </button>
+    <div className="space-y-8 pb-20">
+      
+      {/* 1. Customer Identity Section */}
+      <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+        <div className="px-6 py-4 border-b border-border bg-muted/20 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" /> 1. Customer Selection
+            </h3>
+            {selectedCustomer && (
+                <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-600 text-[10px] font-bold uppercase tracking-tighter">
+                   Customer Linked
+                </div>
+            )}
         </div>
-        {showQuickAddUser && (
-          <div className="mt-3 rounded-lg border p-3 space-y-3 bg-gray-50 dark:bg-gray-900/30">
-            <p className="text-sm font-medium">Create user in standard user system</p>
-            <div className="grid md:grid-cols-2 gap-2">
-              <input
-                value={quickUser.userFirstname}
-                onChange={(e) => setQuickUser((prev) => ({ ...prev, userFirstname: e.target.value }))}
-                placeholder="First name *"
-                className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-700"
-              />
-              <input
-                value={quickUser.userLastname}
-                onChange={(e) => setQuickUser((prev) => ({ ...prev, userLastname: e.target.value }))}
-                placeholder="Last name"
-                className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-700"
-              />
-              <input
-                type="email"
-                value={quickUser.userEmail}
-                onChange={(e) => setQuickUser((prev) => ({ ...prev, userEmail: e.target.value }))}
-                placeholder="Email *"
-                className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-700"
-              />
-              <input
-                value={quickUser.phone}
-                onChange={(e) => setQuickUser((prev) => ({ ...prev, phone: e.target.value }))}
-                placeholder="Phone"
-                className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-700"
-              />
-              <input
-                value={quickUser.country}
-                onChange={(e) => setQuickUser((prev) => ({ ...prev, country: e.target.value }))}
-                placeholder="Country"
-                className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 md:col-span-2"
-              />
-              <label className="md:col-span-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        
+        <div className="p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
-                  type="checkbox"
-                  checked={quickUser.sendSetupLink}
-                  onChange={(e) =>
-                    setQuickUser((prev) => ({ ...prev, sendSetupLink: e.target.checked }))
-                  }
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder="Search registered name or email..."
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring transition-all"
                 />
-                Send password setup link now
-              </label>
+              </div>
+              <button 
+                onClick={searchCustomers} 
+                className="px-4 py-2 bg-background border border-border text-foreground rounded-md text-sm font-semibold hover:bg-muted transition-colors shadow-sm"
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQuickAddUser(!showQuickAddUser)}
+                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all shadow-sm border ${showQuickAddUser ? 'bg-destructive/5 border-destructive/20 text-destructive' : 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'}`}
+              >
+                {showQuickAddUser ? 'Cancel Quick Add' : 'Quick Add User'}
+              </button>
             </div>
-            <button
-              type="button"
-              disabled={quickUserSaving}
-              onClick={createQuickUser}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white"
-            >
-              {quickUserSaving ? 'Creating...' : 'Create User'}
-            </button>
-          </div>
-        )}
-        <div className="mt-3 max-h-48 overflow-auto border rounded-lg">
-          {customers.map((c) => (
-            <button
-              key={c.pidUser}
-              onClick={() => setSelectedCustomer(c)}
-              className={`w-full text-left px-3 py-2 border-b hover:bg-gray-50 dark:hover:bg-gray-700 ${selectedCustomer?.pidUser === c.pidUser ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
-            >
-              <p className="font-medium">{`${c.userFirstname || ''} ${c.userLastname || ''}`.trim() || 'Unnamed User'}</p>
-              <p className="text-xs text-gray-500">{c.userEmail} • {c.pidUser}</p>
-            </button>
-          ))}
-          {!customers.length && <p className="px-3 py-3 text-sm text-gray-500">No search results yet.</p>}
-        </div>
-      </div>
 
-      <div className="rounded-xl border p-4 bg-white dark:bg-gray-800 space-y-3">
-        <h3 className="font-semibold">2. Invoice Details</h3>
-        <label className="block text-sm">Due Date
-          <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="mt-1 w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700" />
-        </label>
-        <label className="block text-sm">Header Snapshot
-          <textarea value={headerSnapshot} onChange={(e) => setHeaderSnapshot(e.target.value)} rows={5} className="mt-1 w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700" />
-        </label>
-        <label className="block text-sm">Footer Snapshot
-          <textarea value={footerSnapshot} onChange={(e) => setFooterSnapshot(e.target.value)} rows={7} className="mt-1 w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700" />
-        </label>
-        <label className="block text-sm">Notes
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="mt-1 w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700" />
-        </label>
-      </div>
+            {showQuickAddUser && (
+              <div className="p-5 rounded-lg border border-primary/20 bg-primary/5 space-y-4 animate-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider">
+                    <UserPlus className="w-3.5 h-3.5" /> Fast Enrollment
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <input value={quickUser.userFirstname} onChange={(e) => setQuickUser({ ...quickUser, userFirstname: e.target.value })} placeholder="First Name *" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                    <input value={quickUser.userLastname} onChange={(e) => setQuickUser({ ...quickUser, userLastname: e.target.value })} placeholder="Last Name" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                    <input value={quickUser.userEmail} onChange={(e) => setQuickUser({ ...quickUser, userEmail: e.target.value })} placeholder="Email *" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                    <input value={quickUser.phone} onChange={(e) => setQuickUser({ ...quickUser, phone: e.target.value })} placeholder="Phone" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                    <input value={quickUser.country} onChange={(e) => setQuickUser({ ...quickUser, country: e.target.value })} placeholder="Country" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                    <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
+                        <input type="checkbox" checked={quickUser.sendSetupLink} onChange={(e) => setQuickUser({ ...quickUser, sendSetupLink: e.target.checked })} className="rounded border-input text-primary focus:ring-ring" />
+                        Send setup link via email
+                    </label>
+                </div>
+                <button type="button" disabled={quickUserSaving} onClick={createQuickUser} className="w-full sm:w-auto px-6 py-2 rounded-md bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider shadow-sm hover:bg-primary/90 transition-all">
+                    {quickUserSaving ? 'Registering...' : 'Complete Enrollment'}
+                </button>
+              </div>
+            )}
 
-      <div className="rounded-xl border p-4 bg-white dark:bg-gray-800 space-y-3">
-        <h3 className="font-semibold">3. Line Items</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr><th className="text-left p-2">Description</th><th className="text-left p-2">Qty</th><th className="text-left p-2">Unit Price</th><th className="text-right p-2">Line Total</th></tr></thead>
-            <tbody>
-              {items.map((row, i) => (
-                <tr key={i} className="border-t">
-                  <td className="p-2"><input value={row.description} onChange={(e) => setRow(i, 'description', e.target.value)} className="w-full px-2 py-1 border rounded bg-white dark:bg-gray-700" /></td>
-                  <td className="p-2"><input type="number" min="1" value={row.quantity} onChange={(e) => setRow(i, 'quantity', e.target.value)} className="w-24 px-2 py-1 border rounded bg-white dark:bg-gray-700" /></td>
-                  <td className="p-2"><input type="number" min="0" value={row.unitPrice} onChange={(e) => setRow(i, 'unitPrice', e.target.value)} className="w-32 px-2 py-1 border rounded bg-white dark:bg-gray-700" /></td>
-                  <td className="p-2 text-right">₦{(row.quantity * row.unitPrice).toLocaleString()}</td>
-                </tr>
+            <div className="max-h-52 overflow-y-auto border border-border rounded-lg bg-muted/10 divide-y divide-border">
+              {customers.map((c) => (
+                <button
+                  key={c.pidUser}
+                  onClick={() => setSelectedCustomer(c)}
+                  className={`w-full text-left px-4 py-3 flex flex-col gap-0.5 transition-colors ${selectedCustomer?.pidUser === c.pidUser ? 'bg-primary/10 border-l-4 border-l-primary' : 'hover:bg-muted/50'}`}
+                >
+                  <span className="font-bold text-sm text-foreground">
+                    {`${c.userFirstname || ''} ${c.userLastname || ''}`.trim() || 'Unnamed Account'}
+                  </span>
+                  <span className="text-xs text-muted-foreground font-mono">{c.userEmail} • {c.pidUser}</span>
+                </button>
               ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setItems((prev) => [...prev, { description: '', quantity: 1, unitPrice: 0 }])} className="px-3 py-1.5 border rounded-lg">Add Row</button>
-          <button onClick={() => setItems((prev) => prev.length > 1 ? prev.slice(0, -1) : prev)} className="px-3 py-1.5 border rounded-lg">Remove Last</button>
-        </div>
-        <div className="grid md:grid-cols-3 gap-3">
-          <label className="text-sm">Discount
-            <input type="number" min="0" value={discountTotal} onChange={(e) => setDiscountTotal(Number(e.target.value || 0))} className="mt-1 w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700" />
-          </label>
-          <label className="text-sm">Tax
-            <input type="number" min="0" value={taxTotal} onChange={(e) => setTaxTotal(Number(e.target.value || 0))} className="mt-1 w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700" />
-          </label>
-          <div className="text-sm">
-            <p className="text-gray-500 mt-1">Subtotal: ₦{subtotal.toLocaleString()}</p>
-            <p className="text-gray-500">Grand Total: ₦{grandTotal.toLocaleString()}</p>
-          </div>
+              {!customers.length && <p className="px-4 py-6 text-sm text-muted-foreground text-center italic">Use the search bar above to find a registered user.</p>}
+            </div>
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <button disabled={saving} onClick={() => createInvoice(false)} className="px-4 py-2 rounded-lg border">Save Draft</button>
-        <button disabled={saving} onClick={() => createInvoice(true)} className="px-4 py-2 rounded-lg bg-indigo-600 text-white">Issue Invoice</button>
+      {/* 2. Content & Logistics Section */}
+      <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+        <div className="px-6 py-4 border-b border-border bg-muted/20">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" /> 2. Invoice Meta & Notes
+            </h3>
+        </div>
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3" /> Due Date
+                    </label>
+                    <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring" />
+                </div>
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Header Details (Snapshot)</label>
+                    <textarea value={headerSnapshot} onChange={(e) => setHeaderSnapshot(e.target.value)} rows={3} className="w-full px-3 py-2 text-xs border border-input rounded-md bg-background text-foreground font-medium resize-none focus:ring-2 focus:ring-ring" />
+                </div>
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Payment Footer & Instructions</label>
+                    <textarea value={footerSnapshot} onChange={(e) => setFooterSnapshot(e.target.value)} rows={3} className="w-full px-3 py-2 text-xs border border-input rounded-md bg-background text-foreground font-medium resize-none focus:ring-2 focus:ring-ring" />
+                </div>
+            </div>
+            <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Internal Notes & Reference</label>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={11} className="w-full px-3 py-2 text-xs border border-input rounded-md bg-background text-foreground italic resize-none focus:ring-2 focus:ring-ring" />
+            </div>
+        </div>
       </div>
+
+      {/* 3. Line Items & Totals */}
+      <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+        <div className="px-6 py-4 border-b border-border bg-muted/20">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-primary" /> 3. Financial Ledger
+            </h3>
+        </div>
+        <div className="p-6 space-y-6">
+            <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left text-sm text-foreground">
+                    <thead className="bg-muted/50 border-b border-border text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <tr>
+                            <th className="px-4 py-3">Description</th>
+                            <th className="px-4 py-3 w-32 text-center">Qty</th>
+                            <th className="px-4 py-3 w-44 text-right">Unit Price (₦)</th>
+                            <th className="px-4 py-3 w-44 text-right">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border bg-card">
+                        {items.map((row, i) => (
+                            <tr key={i} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-3">
+                                    <input value={row.description} onChange={(e) => setRow(i, 'description', e.target.value)} placeholder="Item description..." className="w-full bg-transparent border-none focus:ring-0 text-sm font-medium placeholder:text-muted-foreground/50" />
+                                </td>
+                                <td className="px-4 py-3">
+                                    <div className="flex justify-center">
+                                        <input type="number" min="1" value={row.quantity} onChange={(e) => setRow(i, 'quantity', e.target.value)} className="w-20 text-center py-1 border border-input rounded bg-background text-sm font-bold" />
+                                    </div>
+                                </td>
+                                <td className="px-6 py-3">
+                                    <div className="flex justify-end">
+                                        <input type="number" min="0" value={row.unitPrice} onChange={(e) => setRow(i, 'unitPrice', e.target.value)} className="w-32 text-right py-1 border border-input rounded bg-background text-sm font-bold font-mono" />
+                                    </div>
+                                </td>
+                                <td className="px-6 py-3 text-right font-bold text-foreground font-mono">
+                                    ₦{(row.quantity * row.unitPrice).toLocaleString()}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4">
+                <div className="flex gap-2 w-full sm:w-auto">
+                    <button onClick={() => setItems([...items, { description: '', quantity: 1, unitPrice: 0 }])} className="inline-flex items-center gap-2 px-4 py-2 border border-border bg-background rounded-md text-xs font-bold text-foreground hover:bg-muted transition-colors">
+                        <Plus className="w-3.5 h-3.5" /> Add Row
+                    </button>
+                    <button onClick={() => setItems(prev => prev.length > 1 ? prev.slice(0, -1) : prev)} className="inline-flex items-center gap-2 px-4 py-2 border border-border bg-background rounded-md text-xs font-bold text-destructive hover:bg-destructive/5 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" /> Remove Last
+                    </button>
+                </div>
+
+                <div className="w-full sm:w-auto flex flex-wrap justify-end gap-6 p-4 bg-muted/20 border border-border rounded-lg">
+                    <div className="space-y-1.5 min-w-[120px]">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Discount (₦)</label>
+                        <input type="number" min="0" value={discountTotal} onChange={(e) => setDiscountTotal(Number(e.target.value || 0))} className="w-full px-3 py-1.5 text-sm font-bold font-mono border border-input rounded-md bg-background text-destructive" />
+                    </div>
+                    <div className="space-y-1.5 min-w-[120px]">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tax (₦)</label>
+                        <input type="number" min="0" value={taxTotal} onChange={(e) => setTaxTotal(Number(e.target.value || 0))} className="w-full px-3 py-1.5 text-sm font-bold font-mono border border-input rounded-md bg-background text-foreground" />
+                    </div>
+                    <div className="flex flex-col justify-center items-end min-w-[150px] border-l border-border pl-6">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Subtotal</span>
+                        <span className="text-sm font-medium text-muted-foreground font-mono">₦{subtotal.toLocaleString()}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary mt-2">Grand Total</span>
+                        <span className="text-xl font-bold text-foreground font-mono">₦{grandTotal.toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      {/* 4. Submission Actions */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-6 px-1">
+        <button 
+          disabled={saving} 
+          onClick={() => createInvoice(false)} 
+          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3 bg-background border border-border text-foreground rounded-lg text-sm font-bold hover:bg-muted transition-all shadow-sm focus:ring-2 focus:ring-ring"
+        >
+          <Save className="w-4 h-4" /> Save as Draft
+        </button>
+        <button 
+          disabled={saving} 
+          onClick={() => createInvoice(true)} 
+          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-all shadow-sm focus:ring-2 focus:ring-ring"
+        >
+          {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          Finalize & Issue Invoice
+        </button>
+      </div>
+
     </div>
   );
 }

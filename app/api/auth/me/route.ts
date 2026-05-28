@@ -45,6 +45,8 @@ export async function GET() {
         pidUser: user.pidUser,
         userEmail: user.userEmail,
         userFirstname: user.userFirstname,
+        userLastname: user.userLastname,
+        userImage: user.userImage,
       },
     });
   } catch (error) {
