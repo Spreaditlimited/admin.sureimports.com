@@ -47,6 +47,7 @@ export async function GET() {
         userFirstname: user.userFirstname,
         userLastname: user.userLastname,
         userImage: user.userImage,
+        userStatus: user.userStatus,
       },
     });
   } catch (error) {

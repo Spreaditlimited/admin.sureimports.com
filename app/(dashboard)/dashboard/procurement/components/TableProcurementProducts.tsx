@@ -1,7 +1,7 @@
 import Loader from "@/app/uix/Loader";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 
@@ -54,6 +54,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [productALL, setProductALL] = useState<Product[]>([]);
   const [message, setMessage] = useState<any>('');
   const [actionType, setActionType] = useState<string>('');
+  const [confirmAction, setConfirmAction] = useState<boolean>(false);
+  const [isActionConfirmOpen, setIsActionConfirmOpen] = useState<boolean>(false);
+  const [pendingAction, setPendingAction] = useState<{ value: string; label: string } | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const router = useRouter();
   const [getAllProducts, setGetAllProducts] = useState<any[]>([]) as any;
@@ -168,6 +172,29 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
     getProductsDetails();
   }, []);
 
+  const openActionConfirm = (value: string, label: string) => {
+    if (!confirmAction) {
+      toast.warning('Please confirm action to proceed.');
+      return;
+    }
+    setPendingAction({ value, label });
+    setIsActionConfirmOpen(true);
+  };
+
+  const confirmPendingAction = () => {
+    if (!pendingAction) return;
+    setActionType(pendingAction.value);
+    setIsActionConfirmOpen(false);
+    formRef.current?.requestSubmit();
+  };
+
+  const getActionConfirmText = () => {
+    if (!pendingAction) return 'Are you sure you want to proceed with this order action?';
+    return pendingAction.value.includes('on-hold') || pendingAction.value.includes('saved') || pendingAction.value.includes('pay-for-shipping')
+      ? 'Are you sure you want to decline this order?'
+      : 'Are you sure you want to approve this order?';
+  };
+
   if (loading) return <Loader />;
   if (productALL.length === 0) {
     return (
@@ -179,6 +206,25 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const nativeSubmitEvent = event.nativeEvent as SubmitEvent;
+    const submitter = nativeSubmitEvent.submitter as HTMLButtonElement | null;
+    const nextAction = submitter?.value || actionType;
+
+    if (!confirmAction) {
+      toast.warning('Please confirm action to proceed.');
+      return;
+    }
+
+    if (status === 'approved' && nextAction === 'pay-for-shipping') {
+      const actualWeightInput = (event.currentTarget.elements.namedItem('actualWeight') as HTMLInputElement | null)?.value?.trim() || '';
+      const actualDomesticInput = (event.currentTarget.elements.namedItem('actualDomesticShippingCost') as HTMLInputElement | null)?.value?.trim() || '';
+
+      if (!actualWeightInput || !actualDomesticInput) {
+        toast.warning('Actual weight and domestic shipping cost are required for approval.');
+        return;
+      }
+    }
+
     let pidMessage = 'MSG' + new Date().getTime().toString();
     let currentStatus = status;
 
@@ -186,7 +232,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
     formData.append('pidOrder', pidOrder);
     formData.append('pidUser', pidUser);
     formData.append('currentStatus', currentStatus);
-    formData.append('newStatus', actionType);
+    formData.append('newStatus', nextAction);
     formData.append('message', message);
     formData.append('pidMessage', pidMessage);
     formData.append('orderShippingCost', estimatedTotalShippingCost.toString());
@@ -211,8 +257,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
       const data:any = await res.json();
 
-      if (data.statusx == 'SUCCESS') navigateWithAlert('/dashboard/procurement?status='+actionType, 'success', 'Process update was successful, order has been moved to '+actionType);
-      if (data.statusx == 'SUCCESS_MESSAGE') navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+actionType);
+      if (data.statusx == 'SUCCESS') navigateWithAlert('/dashboard/procurement?status='+nextAction, 'success', 'Process update was successful, order has been moved to '+nextAction);
+      if (data.statusx == 'SUCCESS_MESSAGE') navigateWithAlert('/dashboard', 'success', 'Message has been successfuly sent to customer. '+nextAction);
       if (data.statusx == 'ACTION_FAILED') toast.warning(data.message);
       if (data.statusx == 'REVERT_TO_APPROVED') {toast.success(data.message);  router.push('/dashboard/procurement?status=approved');}
       if (data.statusx == 'SUCCESS_TRACKING_NUMBER') toast.info(data.message);
@@ -495,7 +541,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
       )}
 
       {/* Form Area */}
-      <form onSubmit={handleSubmit} className="bg-card border border-border shadow-sm rounded-lg p-5 sm:p-6 space-y-6 mt-8">
+      <form ref={formRef} onSubmit={handleSubmit} className="bg-card border border-border shadow-sm rounded-lg p-5 sm:p-6 space-y-6 mt-8">
         
         {status != 'completed' && (
           <div className="space-y-6">
@@ -514,8 +560,9 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               <input
                 type="checkbox"
                 id="confirm"
+                checked={confirmAction}
+                onChange={(e) => setConfirmAction(e.target.checked)}
                 className="h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-                required
               />
               <label htmlFor="confirm" className="text-sm font-medium text-foreground cursor-pointer">
                 Confirm action to proceed
@@ -529,7 +576,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             <div>
               <label htmlFor="actualWeight" className="block text-sm font-medium text-foreground mb-1">Actual Weight (Kg)</label>
               <input
-                required
                 name="actualWeight"
                 type="number"
                 step="any"
@@ -541,7 +587,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             <div>
               <label htmlFor="actualDomesticShippingCost" className="block text-sm font-medium text-foreground mb-1">Actual Domestic Shipping (¥ Yuan)</label>
               <input
-                required
                 name="actualDomesticShippingCost"
                 type="number"
                 step="any"
@@ -621,17 +666,17 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         <div className="flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-border">
           
           {(status == 'saved') && (
-            <button type="submit" onClick={() => setActionType('message')} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+            <button type="submit" value="message" onClick={() => setActionType('message')} disabled={!confirmAction} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
               Send Message to Buyer
             </button>
           )}
 
           {(status == 'pending') && (
             <>
-              <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+              <button type="button" onClick={() => openActionConfirm('on-hold', 'Decline (On-Hold)')} disabled={!confirmAction} className="w-full sm:w-1/2 whitespace-nowrap rounded-md bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-1 focus:ring-offset-card shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 Decline (On-Hold)
               </button>
-              <button type="submit" onClick={() => setActionType('approved')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+              <button type="button" onClick={() => openActionConfirm('approved', 'Approve Order')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 Approve Order
               </button>
             </>
@@ -639,10 +684,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'approved') && (
             <>
-              <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+              <button type="button" onClick={() => openActionConfirm('on-hold', 'Decline (On-Hold)')} disabled={!confirmAction} className="w-full sm:w-1/2 whitespace-nowrap rounded-md bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-1 focus:ring-offset-card shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 Decline (On-Hold)
               </button>
-              <button type="submit" onClick={() => setActionType('pay-for-shipping')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+              <button type="button" onClick={() => openActionConfirm('pay-for-shipping', 'Approve (Move to Pay Shipping)')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 Approve (Move to Pay Shipping)
               </button>
             </>
@@ -650,10 +695,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'pay-for-shipping') && (
             <>
-              <button type="submit" onClick={() => setActionType('message')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+              <button type="submit" value="message" onClick={() => setActionType('message')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 Send Message
               </button>
-              <button type="submit" onClick={() => setActionType('revert_to_approved')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+              <button type="submit" value="revert_to_approved" onClick={() => setActionType('revert_to_approved')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 Revert to Approved
               </button>
             </>
@@ -661,10 +706,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'in-transit') && (
              <>
-             <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+             <button type="button" onClick={() => openActionConfirm('on-hold', 'Decline (On-Hold)')} disabled={!confirmAction} className="w-full sm:w-1/2 whitespace-nowrap rounded-md bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-1 focus:ring-offset-card shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Decline (On-Hold)
              </button>
-             <button type="submit" onClick={() => setActionType('ready-for-pickup')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+             <button type="button" onClick={() => openActionConfirm('ready-for-pickup', 'Approve (Ready for Pickup)')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Approve (Ready for Pickup)
              </button>
            </>
@@ -672,10 +717,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'ready-for-pickup') && (
              <>
-             <button type="submit" onClick={() => setActionType('on-hold')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+             <button type="button" onClick={() => openActionConfirm('on-hold', 'Decline (On-Hold)')} disabled={!confirmAction} className="w-full sm:w-1/2 whitespace-nowrap rounded-md bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-1 focus:ring-offset-card shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Decline (On-Hold)
              </button>
-             <button type="submit" onClick={() => setActionType('completed')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+             <button type="button" onClick={() => openActionConfirm('completed', 'Approve (Completed)')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Approve (Completed)
              </button>
            </>
@@ -683,10 +728,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'on-hold') && (
              <>
-             <button type="submit" onClick={() => setActionType('cancelled')} className="w-full sm:w-1/2 bg-destructive text-destructive-foreground hover:bg-destructive/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+             <button type="submit" value="cancelled" onClick={() => setActionType('cancelled')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-destructive text-destructive-foreground hover:bg-destructive/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Cancel Order (Refund)
              </button>
-             <button type="submit" onClick={() => setActionType('pending')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+             <button type="submit" value="pending" onClick={() => setActionType('pending')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Move back to Pending
              </button>
            </>
@@ -694,10 +739,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'bank-pending-saved-orders') && (
              <>
-             <button type="submit" onClick={() => setActionType('saved')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+             <button type="button" onClick={() => openActionConfirm('saved', 'Decline (Back to Saved)')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                Decline (Back to Saved)
              </button>
-             <button type="submit" onClick={() => setActionType('pending')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+             <button type="button" onClick={() => openActionConfirm('pending', 'Approve (Move to Pending)')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Approve (Move to Pending)
              </button>
            </>
@@ -705,10 +750,10 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'bank-pending-shipping-orders') && (
              <>
-             <button type="submit" onClick={() => setActionType('pay-for-shipping')} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors">
+             <button type="button" onClick={() => openActionConfirm('pay-for-shipping', 'Decline (Back to Pay Shipping)')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-muted text-foreground hover:bg-muted/80 border border-border py-2.5 px-4 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                Decline (Back to Pay Shipping)
              </button>
-             <button type="submit" onClick={() => setActionType('in-transit')} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+             <button type="button" onClick={() => openActionConfirm('in-transit', 'Approve (Move to In-Transit)')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Approve (Move to In-Transit)
              </button>
            </>
@@ -716,6 +761,41 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
         </div>
       </form>
+
+      {isActionConfirmOpen && pendingAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md overflow-hidden rounded-xl bg-card border border-border shadow-soft">
+            <div className="p-6">
+              <h3 className="mb-2 text-center text-xl font-bold text-foreground tracking-tight">
+                Confirm Action
+              </h3>
+              <p className="mb-6 text-center text-sm text-muted-foreground">
+                {getActionConfirmText()}
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsActionConfirmOpen(false);
+                    setPendingAction(null);
+                  }}
+                  className="flex-1 rounded-md bg-muted px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmPendingAction}
+                  className="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

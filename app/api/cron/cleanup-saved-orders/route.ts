@@ -66,6 +66,12 @@ export async function GET(request: NextRequest) {
   if (!cronAuthorized) {
     const access = await requireAdminServiceAccess('procurement', 'edit');
     if (!access.ok) return access.response;
+    if (access.admin.userStatus !== 'superadmin' && access.admin.userStatus !== 'L1') {
+      return NextResponse.json(
+        { statusx: 'FORBIDDEN', message: 'Only super admins can run cleanup' },
+        { status: 403 }
+      );
+    }
   }
 
   const expiryDays = Number(process.env.SAVED_ORDER_EXPIRY_DAYS || DEFAULT_EXPIRY_DAYS);

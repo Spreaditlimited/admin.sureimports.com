@@ -12,6 +12,7 @@ interface User {
   userFirstname?: string
   userLastname?: string
   userImage?: string
+  userStatus?: string | null
 }
 
 

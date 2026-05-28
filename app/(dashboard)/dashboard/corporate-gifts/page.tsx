@@ -204,8 +204,8 @@ export default async function CorporateGiftsAdminPage() {
                   </div>
 
                   {/* Attached Files & UTM Data */}
-                  <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex gap-3 text-xs">
+                  <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="grid w-full grid-cols-1 gap-2 text-xs sm:grid-cols-2 lg:w-auto lg:flex lg:gap-3">
                       {entry.referenceFileUrl && (
                         <a
                           href={
@@ -214,10 +214,10 @@ export default async function CorporateGiftsAdminPage() {
                               : `${sourceSiteUrl}${entry.referenceFileUrl}`
                           }
                           target="_blank"
-                          className="flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 font-medium text-primary transition-colors hover:underline"
+                          className="flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 font-medium text-primary transition-colors hover:underline"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" /> Ref Image:{' '}
-                          {entry.referenceFileName || 'View'}
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">Ref Image: {entry.referenceFileName || 'View'}</span>
                         </a>
                       )}
                       {entry.logoFileUrl && (
@@ -228,15 +228,15 @@ export default async function CorporateGiftsAdminPage() {
                               : `${sourceSiteUrl}${entry.logoFileUrl}`
                           }
                           target="_blank"
-                          className="flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 font-medium text-primary transition-colors hover:underline"
+                          className="flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 font-medium text-primary transition-colors hover:underline"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" /> Logo:{' '}
-                          {entry.logoFileName || 'View'}
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">Logo: {entry.logoFileName || 'View'}</span>
                         </a>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap gap-2 sm:gap-3 font-mono text-[10px] text-muted-foreground">
+                    <div className="flex flex-wrap gap-2 font-mono text-[10px] text-muted-foreground sm:gap-3">
                       <span>Source: {entry.utmSource || 'direct'}</span>
                       <span className="hidden sm:inline">•</span>
                       <span>Medium: {entry.utmMedium || 'organic'}</span>
@@ -246,10 +246,11 @@ export default async function CorporateGiftsAdminPage() {
                   </div>
 
                   {/* Status & Administrative Actions */}
-                  <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
+                  <div className="mt-6 rounded-lg border border-border bg-muted/30 p-4">
                     
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                           Status:
                         </span>
@@ -259,7 +260,7 @@ export default async function CorporateGiftsAdminPage() {
                         >
                           {entryStatus}
                         </Badge>
-                        <span className="ml-2 text-xs font-medium text-muted-foreground border-l border-border pl-2">
+                        <span className="text-xs font-medium text-muted-foreground sm:border-l sm:border-border sm:pl-2 sm:ml-2">
                           Handler: <span className="text-foreground">{entryView.handledByName || 'Unassigned'}</span>
                         </span>
                       </div>
@@ -270,15 +271,15 @@ export default async function CorporateGiftsAdminPage() {
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-3 lg:gap-3">
                       <Link
                         href={`/dashboard/invoicing/create?linkedRequestId=${entry.pidRequest}`}
-                        className="flex-1 sm:flex-none text-center rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
+                        className="w-full text-center rounded-md bg-primary px-3 py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
                       >
                         Create Invoice
                       </Link>
                       
-                      <form action={assignCorporateGiftRequestAction} className="flex-1 sm:flex-none">
+                      <form action={assignCorporateGiftRequestAction} className="w-full">
                         <input type="hidden" name="pidRequest" value={entry.pidRequest} />
                         <button
                           type="submit"
@@ -288,14 +289,14 @@ export default async function CorporateGiftsAdminPage() {
                         </button>
                       </form>
 
-                      <form action={updateCorporateGiftRequestAction} className="flex-1 sm:flex-none">
+                      <form action={updateCorporateGiftRequestAction} className="w-full">
                         <input type="hidden" name="pidRequest" value={entry.pidRequest} />
                         {nextStatus ? (
                           <>
                             <input type="hidden" name="status" value={nextStatus} />
                             <button
                               type="submit"
-                              className="w-full rounded-md bg-foreground px-4 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
+                              className="w-full rounded-md bg-foreground px-4 py-2.5 text-xs font-medium text-background transition-colors hover:bg-foreground/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
                             >
                               Move to {nextStatus}
                             </button>
@@ -306,6 +307,8 @@ export default async function CorporateGiftsAdminPage() {
                           </span>
                         )}
                       </form>
+                    </div>
+
                     </div>
 
                   </div>

@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import { CornerRightDown } from 'lucide-react';
 import { getTimeDifference } from '@/lib/getTimeDifference';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/AuthContext';
 
 interface Product {
   id: number;
@@ -95,6 +96,8 @@ const ComponentsAccordionsBasic = () => {
   const status = useSearchParams().get('status') || 'none';
   const [orderALL, setOrderALL] = useState<Order[]>([]);
   const [cleanupRunning, setCleanupRunning] = useState(false);
+  const { user } = useAuth();
+  const canRunCleanup = user?.userStatus === 'superadmin' || user?.userStatus === 'L1';
 
   const togglePara = (value: string) => {
     setActive((oldValue) => (oldValue === value ? '' : value));
@@ -143,30 +146,32 @@ const ComponentsAccordionsBasic = () => {
         <h2 className="text-lg font-semibold text-foreground capitalize">
           {status} Orders
         </h2>
-        <button
-          type="button"
-          disabled={cleanupRunning}
-          onClick={async () => {
-            setCleanupRunning(true);
-            try {
-              const res = await fetch('/api/cron/cleanup-saved-orders');
-              const data = await res.json();
-              if (!res.ok || data.statusx !== 'SUCCESS') {
-                toast.error(data?.message || 'Cleanup failed');
-                return;
+        {canRunCleanup && (
+          <button
+            type="button"
+            disabled={cleanupRunning}
+            onClick={async () => {
+              setCleanupRunning(true);
+              try {
+                const res = await fetch('/api/cron/cleanup-saved-orders');
+                const data = await res.json();
+                if (!res.ok || data.statusx !== 'SUCCESS') {
+                  toast.error(data?.message || 'Cleanup failed');
+                  return;
+                }
+                toast.success(`Cleanup completed. Deleted ${data.deletedCount || 0} stale saved orders.`);
+                fetchDataOrder();
+              } catch {
+                toast.error('Cleanup failed');
+              } finally {
+                setCleanupRunning(false);
               }
-              toast.success(`Cleanup completed. Deleted ${data.deletedCount || 0} stale saved orders.`);
-              fetchDataOrder();
-            } catch {
-              toast.error('Cleanup failed');
-            } finally {
-              setCleanupRunning(false);
-            }
-          }}
-          className="inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-60"
-        >
-          {cleanupRunning ? 'Running Cleanup...' : 'Run Cleanup Now'}
-        </button>
+            }}
+            className="inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-60"
+          >
+            {cleanupRunning ? 'Running Cleanup...' : 'Run Cleanup Now'}
+          </button>
+        )}
       </div>
 
       {orderALL.map((datax, index) => {
