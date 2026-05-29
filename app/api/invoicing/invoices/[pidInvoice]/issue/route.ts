@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createOrGetInvoiceAccessToken, ensureInvoicingCoreTables, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
+import { canAdminAccessInvoiceCreatedBy, createOrGetInvoiceAccessToken, ensureInvoicingCoreTables, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
 import { sendInvoiceIssuedNotification } from '@/lib/notifications/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 
@@ -22,6 +22,9 @@ export async function POST(
 
     if (!existing) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
+    }
+    if (!(await canAdminAccessInvoiceCreatedBy(admin, existing.createdByPidUser))) {
+      return NextResponse.json({ statusx: 'ERROR', message: 'Forbidden' }, { status: 403 });
     }
 
     if (existing.status !== 'DRAFT') {

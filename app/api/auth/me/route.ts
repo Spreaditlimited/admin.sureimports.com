@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { isSuperAdminStatus } from "@/lib/accessControl";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -40,6 +41,22 @@ export async function GET() {
       return unauthorizedResponse();
     }
 
+    let serviceKeys: string[] = [];
+    if (!isSuperAdminStatus(user.userStatus)) {
+      try {
+        const permissions = await prisma.admin_permissions.findMany({
+          where: {
+            pidUser: user.pidUser,
+            canView: true,
+          },
+          select: { serviceKey: true },
+        });
+        serviceKeys = permissions.map((permission) => permission.serviceKey);
+      } catch {
+        serviceKeys = [];
+      }
+    }
+
     return NextResponse.json({
       user: {
         pidUser: user.pidUser,
@@ -48,6 +65,7 @@ export async function GET() {
         userLastname: user.userLastname,
         userImage: user.userImage,
         userStatus: user.userStatus,
+        serviceKeys,
       },
     });
   } catch (error) {

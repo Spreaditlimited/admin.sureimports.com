@@ -4,28 +4,41 @@ import { useAuth } from "@/lib/AuthContext"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import type React from "react"
-
-// Define protected routes
-const protectedRoutes = ["/dashboard", "/profile", "/settings", "/orders"]
+import {
+  getFirstAllowedDashboardRoute,
+  getRequiredServiceForPath,
+  hasServiceAccess,
+} from "@/lib/accessControl"
 
 export function TokenValidator({ children }: { children: React.ReactNode }) {
-  const { checkAuth } = useAuth()
+  const { checkAuth, user, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
     const validateToken = async () => {
       const isAuthenticated = await checkAuth()
-      const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
-
-      if (!isAuthenticated && isProtectedRoute) {
+      if (!isAuthenticated) {
         router.push("/auth/login")
       }
     }
 
-    validateToken()
-  }, [])
+    void validateToken()
+  }, [checkAuth, router])
+
+  useEffect(() => {
+    if (loading || !user) return
+    if (!pathname.startsWith("/dashboard")) return
+
+    const requiredService = getRequiredServiceForPath(pathname)
+    if (!requiredService) return
+
+    const allowed = hasServiceAccess(requiredService, user.userStatus, user.serviceKeys || [])
+    if (!allowed) {
+      const fallback = getFirstAllowedDashboardRoute(user.userStatus, user.serviceKeys || [])
+      router.push(fallback || "/auth/login")
+    }
+  }, [loading, pathname, router, user])
 
   return <>{children}</>
 }
-

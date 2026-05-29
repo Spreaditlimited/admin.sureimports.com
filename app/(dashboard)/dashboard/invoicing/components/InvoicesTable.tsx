@@ -9,10 +9,8 @@ import {
   RefreshCw, 
   FileText, 
   CheckCircle, 
-  Clock, 
-  AlertCircle 
+  Clock
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface Invoice {
   pidInvoice: string;
@@ -46,9 +44,10 @@ export default function InvoicesTable() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Failed to fetch invoices');
       setItems(data.data || []);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setItems([]);
-      setError(e.message);
+      const message = e instanceof Error ? e.message : 'Failed to fetch invoices';
+      setError(message);
     } finally {
       setLoading(false);
     }

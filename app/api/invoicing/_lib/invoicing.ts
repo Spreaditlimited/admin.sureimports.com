@@ -71,10 +71,36 @@ export async function requireAdmin() {
       pidUser: true,
       userEmail: true,
       userFirstname: true,
+      userStatus: true,
     },
   });
 
   return admin;
+}
+
+export function isSuperAdmin(userStatus?: string | null) {
+  return userStatus === 'superadmin' || userStatus === 'L1';
+}
+
+export async function getSuperAdminPidUsers() {
+  const users = await prisma.admin.findMany({
+    where: {
+      OR: [{ userStatus: 'superadmin' }, { userStatus: 'L1' }],
+    },
+    select: { pidUser: true },
+  });
+  return users.map((user) => user.pidUser);
+}
+
+export async function canAdminAccessInvoiceCreatedBy(
+  admin: { userStatus?: string | null },
+  createdByPidUser?: string | null,
+) {
+  if (isSuperAdmin(admin.userStatus)) return true;
+  if (!createdByPidUser) return true;
+
+  const superAdminPidUsers = await getSuperAdminPidUsers();
+  return !superAdminPidUsers.includes(createdByPidUser);
 }
 
 export async function createUniqueInvoiceNumber(): Promise<string> {

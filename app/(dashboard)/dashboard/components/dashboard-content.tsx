@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuth } from "@/app/context/AuthContext"
+import { useAuth } from "@/lib/AuthContext"
 import { useEffect, useState } from "react"
 
 interface StatCardProps {

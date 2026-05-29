@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 
 
@@ -13,12 +13,14 @@ interface User {
   userLastname?: string
   userImage?: string
   userStatus?: string | null
+  serviceKeys?: string[]
 }
 
 
 
 interface AuthContextType {
   user: User | null
+  loading: boolean
   login: (userEmail: string, userPassword: string) => Promise<void>
   logout: () => Promise<void>
   register: (userEmail: string, userPassword: string, userFirstname?: string) => Promise<void>
@@ -31,11 +33,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
 
   //Function to check authentication status
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
+    setLoading(true)
     try {
           const res = await fetch("/api/auth/me", {
             headers: {
@@ -60,15 +64,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error checking auth:", error)
       setUser(null)
       return false
+    } finally {
+      setLoading(false)
     }
-  }
+  }, [])
 
 
 
   //Check authentication status on initial load
   useEffect(() => {
-    checkAuth()
-  }, []) //This was the line that needed to be updated to include the dependency
+    void checkAuth()
+  }, [checkAuth])
   
 
 
@@ -115,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, login, logout, register, checkAuth }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, login, logout, register, checkAuth }}>{children}</AuthContext.Provider>
 }
 
 

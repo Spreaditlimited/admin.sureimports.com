@@ -4,7 +4,9 @@ import {
   createUniqueInvoiceNumber,
   ensureInvoicingCoreTables,
   generatePid,
+  getSuperAdminPidUsers,
   INVOICE_STATUSES,
+  isSuperAdmin,
   requireAdmin,
   syncOverdueInvoices,
   toMoneyInput,
@@ -47,6 +49,10 @@ export async function GET(request: NextRequest) {
       const where: any = {};
       if (status) where.status = status;
       if (pidUser) where.pidUser = pidUser;
+      if (!isSuperAdmin(admin.userStatus)) {
+        const superAdminPidUsers = await getSuperAdminPidUsers();
+        where.createdByPidUser = { notIn: superAdminPidUsers };
+      }
       if (search) {
         where.OR = [
           { invoiceNumber: { contains: search } },
@@ -75,6 +81,14 @@ export async function GET(request: NextRequest) {
       if (pidUser) {
         filters.push('pidUser = ?');
         values.push(pidUser);
+      }
+      if (!isSuperAdmin(admin.userStatus)) {
+        const superAdminPidUsers = await getSuperAdminPidUsers();
+        if (superAdminPidUsers.length > 0) {
+          const placeholders = superAdminPidUsers.map(() => '?').join(', ');
+          filters.push(`(createdByPidUser IS NULL OR createdByPidUser NOT IN (${placeholders}))`);
+          values.push(...superAdminPidUsers);
+        }
       }
       if (search) {
         filters.push('(invoiceNumber LIKE ? OR pidInvoice LIKE ? OR customerName LIKE ? OR customerEmail LIKE ?)');

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {
+  canAdminAccessInvoiceCreatedBy,
   createOrGetInvoiceAccessToken,
   createUniqueReceiptNumber,
   derivePaymentStatus,
@@ -34,6 +35,9 @@ export async function POST(
     const invoice = await prisma.invoices.findUnique({ where: { pidInvoice } });
     if (!invoice) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
+    }
+    if (!(await canAdminAccessInvoiceCreatedBy(admin, invoice.createdByPidUser))) {
+      return NextResponse.json({ statusx: 'ERROR', message: 'Forbidden' }, { status: 403 });
     }
 
     if (invoice.status === 'DRAFT' || invoice.status === 'CANCELLED') {

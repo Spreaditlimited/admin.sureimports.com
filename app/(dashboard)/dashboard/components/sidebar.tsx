@@ -20,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react"
 import type React from "react"
+import { hasServiceAccess, type ServiceKey } from "@/lib/accessControl"
 
 interface SidebarProps {
   isOpen: boolean
@@ -30,16 +31,17 @@ interface MenuItem {
   title: string
   icon: React.ElementType
   path: string
+  serviceKey?: ServiceKey
   submenu?: { title: string; path: string }[]
 }
 
 // --- Menu Configurations ---
-const dashboardItem: MenuItem = { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard" }
+const dashboardItem: MenuItem = { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", serviceKey: "dashboard" }
 
 const features: MenuItem[] = [
-  { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending" },
-  { title: "Corporate Gifts", icon: Package, path: "/dashboard/corporate-gifts" },
-  { title: "Pay Small Small", icon: HandCoins, path: "/dashboard/pay-small-small?status=SAVED" },
+  { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending", serviceKey: "procurement" },
+  { title: "Corporate Gifts", icon: Package, path: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
+  { title: "Pay Small Small", icon: HandCoins, path: "/dashboard/pay-small-small?status=SAVED", serviceKey: "pay_small_small" },
 ]
 
 const store: MenuItem[] = [
@@ -47,6 +49,7 @@ const store: MenuItem[] = [
     title: "Store Mgt.",
     icon: Store,
     path: "/store",
+    serviceKey: "store_mgt",
     submenu: [
       { title: "View Products", path: "/dashboard/store/view" },
       { title: "Add Products", path: "/dashboard/store/add" },
@@ -60,6 +63,7 @@ const customerAccounts: MenuItem[] = [
     title: "Customer Accounts",
     icon: Wallet,
     path: "/customer-accounts",
+    serviceKey: "customer_accounts",
     submenu: [
       { title: "Customers", path: "/dashboard/customer-accounts/customers" },
       { title: "Transactions", path: "/dashboard/customer-accounts/transactions" },
@@ -72,6 +76,7 @@ const customerPayouts: MenuItem[] = [
     title: "Payout Requests",
     icon: Wallet,
     path: "/payout-requests",
+    serviceKey: "payout_requests",
     submenu: [
       { title: "Payout Requests", path: "/dashboard/payout-requests/requests" },
       { title: "Payout History", path: "/dashboard/payout-requests/transactions" },
@@ -80,8 +85,8 @@ const customerPayouts: MenuItem[] = [
 ]
 
 const financials: MenuItem[] = [
-  { title: "Payments", icon: Wallet, path: "/dashboard/financials" },
-  { title: "Invoicing", icon: Wallet, path: "/dashboard/invoicing" },
+  { title: "Payments", icon: Wallet, path: "/dashboard/financials", serviceKey: "dashboard" },
+  { title: "Invoicing", icon: Wallet, path: "/dashboard/invoicing", serviceKey: "invoicing" },
 ]
 
 const systemSettings: MenuItem[] = [
@@ -91,6 +96,7 @@ const systemSettings: MenuItem[] = [
     title: "Admin Mgt.",
     icon: UserCog,
     path: "/admin",
+    serviceKey: "admin_mgt",
     submenu: [
       { title: "Manage Admins", path: "/dashboard/admin/view" },
       { title: "Add Admin", path: "/dashboard/admin/add" },
@@ -100,6 +106,7 @@ const systemSettings: MenuItem[] = [
     title: "Shipping Plans",
     icon: Ship,
     path: "/shipping-plans",
+    serviceKey: "shipping_plans",
     submenu: [
       { title: "Shipping Plans", path: "/dashboard/shipping-plans/add" },
     ],
@@ -108,6 +115,7 @@ const systemSettings: MenuItem[] = [
     title: "Exchanges & Rates",
     icon: ChartCandlestick,
     path: "/exchange-rates",
+    serviceKey: "exchange_rates",
     submenu: [
       { title: "Exchange Rates", path: "/dashboard/exchange-rates" },
       { title: "Service Charge & VAT", path: "/dashboard/service-charges" },
@@ -117,6 +125,7 @@ const systemSettings: MenuItem[] = [
     title: "Blog Management",
     icon: FileText,
     path: "/blog",
+    serviceKey: "blog_management",
     submenu: [
       { title: "View All Posts", path: "/dashboard/blog/view" },
       { title: "Create New Post", path: "/dashboard/blog/create" },
@@ -131,6 +140,17 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const serviceKeys = user?.serviceKeys || []
+  const canAccess = (serviceKey?: ServiceKey) => {
+    if (!serviceKey) return true
+    return hasServiceAccess(serviceKey, user?.userStatus, serviceKeys)
+  }
+  const visibleFeatures = features.filter((item) => canAccess(item.serviceKey))
+  const visibleCustomerAccounts = customerAccounts.filter((item) => canAccess(item.serviceKey))
+  const visibleCustomerPayouts = customerPayouts.filter((item) => canAccess(item.serviceKey))
+  const visibleFinancials = financials.filter((item) => canAccess(item.serviceKey))
+  const visibleStore = store.filter((item) => canAccess(item.serviceKey))
+  const visibleSystemSettings = systemSettings.filter((item) => canAccess(item.serviceKey))
 
   // Handle responsive behavior
   useEffect(() => {
@@ -297,34 +317,54 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Navigation Area */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
           <div className="space-y-0.5">
-            <MenuItemComponent item={dashboardItem} />
+            {canAccess(dashboardItem.serviceKey) && <MenuItemComponent item={dashboardItem} />}
           </div>
           
-          <CategoryHeader title="Services" />
-          <div className="space-y-0.5">
-            {features.map((item) => <MenuItemComponent key={item.path} item={item} />)}
-          </div>
+          {visibleFeatures.length > 0 && (
+            <>
+              <CategoryHeader title="Services" />
+              <div className="space-y-0.5">
+                {visibleFeatures.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+              </div>
+            </>
+          )}
 
-          <CategoryHeader title="Customer Accounts" />
-          <div className="space-y-0.5">
-            {customerAccounts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
-            {customerPayouts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
-          </div>
+          {(visibleCustomerAccounts.length > 0 || visibleCustomerPayouts.length > 0) && (
+            <>
+              <CategoryHeader title="Customer Accounts" />
+              <div className="space-y-0.5">
+                {visibleCustomerAccounts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+                {visibleCustomerPayouts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+              </div>
+            </>
+          )}
 
-          <CategoryHeader title="Financials" />
-          <div className="space-y-0.5">
-            {financials.map((item) => <MenuItemComponent key={item.path} item={item} />)}
-          </div>
+          {visibleFinancials.length > 0 && (
+            <>
+              <CategoryHeader title="Financials" />
+              <div className="space-y-0.5">
+                {visibleFinancials.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+              </div>
+            </>
+          )}
 
-          <CategoryHeader title="Store" />
-          <div className="space-y-0.5">
-            {store.map((item) => <MenuItemComponent key={item.path} item={item} />)}
-          </div>
+          {visibleStore.length > 0 && (
+            <>
+              <CategoryHeader title="Store" />
+              <div className="space-y-0.5">
+                {visibleStore.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+              </div>
+            </>
+          )}
 
-          <CategoryHeader title="System & Settings" />
-          <div className="space-y-0.5">
-            {systemSettings.map((item) => <MenuItemComponent key={item.path} item={item} />)}
-          </div>
+          {visibleSystemSettings.length > 0 && (
+            <>
+              <CategoryHeader title="System & Settings" />
+              <div className="space-y-0.5">
+                {visibleSystemSettings.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+              </div>
+            </>
+          )}
 
         </nav>
 

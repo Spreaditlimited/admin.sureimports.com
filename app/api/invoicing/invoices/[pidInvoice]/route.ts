@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {
+  canAdminAccessInvoiceCreatedBy,
   canTransitionStatus,
   requireAdmin,
   syncOverdueInvoices,
@@ -59,6 +60,9 @@ export async function GET(
     if (!invoice) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
     }
+    if (!(await canAdminAccessInvoiceCreatedBy(admin, invoice.createdByPidUser))) {
+      return NextResponse.json({ statusx: 'ERROR', message: 'Forbidden' }, { status: 403 });
+    }
 
     let enrichedInvoice: any = invoice;
     if (invoice.linkedRequestId) {
@@ -107,6 +111,9 @@ export async function PATCH(
     const existing = await prisma.invoices.findUnique({ where: { pidInvoice }, include: { items: true } });
     if (!existing) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
+    }
+    if (!(await canAdminAccessInvoiceCreatedBy(admin, existing.createdByPidUser))) {
+      return NextResponse.json({ statusx: 'ERROR', message: 'Forbidden' }, { status: 403 });
     }
 
     const data: any = {

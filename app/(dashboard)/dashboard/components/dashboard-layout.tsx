@@ -3,8 +3,6 @@ import { useAuth } from "@/lib/AuthContext"
 import { useState, useEffect, useRef, type KeyboardEvent, type ReactNode } from "react"
 import { Sidebar } from "./sidebar"
 import { Search, Sun, Moon, ChevronDown } from "lucide-react"
-import { AuthProvider } from "@/app/context/AuthContext"
-import { TokenValidator } from "@/lib/TokenValidator"
 import { useRouter } from "next/navigation"
 
 interface DashboardLayoutProps {
@@ -296,11 +294,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Main Canvas Area */}
         <main className="admin-theme-surface flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8 custom-scrollbar">
-          <AuthProvider>
-            <TokenValidator>
-                {children}
-            </TokenValidator>
-          </AuthProvider>
+          {children}
         </main>
 
       </div>
