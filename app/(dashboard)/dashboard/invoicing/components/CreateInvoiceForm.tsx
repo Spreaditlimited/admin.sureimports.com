@@ -39,9 +39,34 @@ interface QuickUserForm {
   sendSetupLink: boolean;
 }
 
-export default function CreateInvoiceForm() {
+interface CreateInvoiceFormProps {
+  pidInvoice?: string;
+}
+
+interface InvoiceEditPayload {
+  user?: {
+    pidUser?: string;
+    userFirstname?: string | null;
+    userLastname?: string | null;
+    userEmail?: string;
+  };
+  headerSnapshot?: string | null;
+  footerSnapshot?: string | null;
+  notes?: string | null;
+  dueAt?: string | null;
+  discountTotal?: string | number | null;
+  taxTotal?: string | number | null;
+  items?: Array<{
+    description?: string;
+    quantity?: string | number;
+    unitPrice?: string | number;
+  }>;
+}
+
+export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isEditMode = Boolean(pidInvoice);
   const linkedRequestId = searchParams.get('linkedRequestId') || '';
 
   const [customerSearch, setCustomerSearch] = useState('');
@@ -69,6 +94,7 @@ export default function CreateInvoiceForm() {
 
   useEffect(() => {
     const loadSettings = async () => {
+      if (isEditMode) return;
       const res = await fetch('/api/invoicing/settings');
       const data = await res.json();
       if (data?.data) {
@@ -78,10 +104,55 @@ export default function CreateInvoiceForm() {
       }
     };
     loadSettings();
-  }, []);
+  }, [isEditMode]);
+
+  useEffect(() => {
+    const loadExistingInvoice = async () => {
+      if (!pidInvoice) return;
+      const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}`);
+      const json = await res.json();
+      if (!res.ok || !json?.data) {
+        toast.error(json?.message || 'Failed to load draft invoice');
+        return;
+      }
+
+      const invoice = json.data as InvoiceEditPayload;
+      if (!invoice.user?.pidUser || !invoice.user?.userEmail) {
+        toast.error('Draft invoice is missing customer linkage');
+        return;
+      }
+      const customer: Customer = {
+        pidUser: invoice.user.pidUser,
+        userFirstname: invoice.user?.userFirstname || null,
+        userLastname: invoice.user?.userLastname || null,
+        userEmail: invoice.user.userEmail,
+      };
+      setSelectedCustomer(customer);
+      setCustomers([customer]);
+      setCustomerSearch(customer.userEmail || '');
+      setHeaderSnapshot(invoice.headerSnapshot || '');
+      setFooterSnapshot(invoice.footerSnapshot || '');
+      setNotes(invoice.notes || '');
+      setDueAt(invoice.dueAt ? new Date(invoice.dueAt).toISOString().slice(0, 10) : '');
+      setDiscountTotal(Number(invoice.discountTotal || 0));
+      setTaxTotal(Number(invoice.taxTotal || 0));
+      setItems(
+        Array.isArray(invoice.items) && invoice.items.length > 0
+          ? invoice.items.map((item) => ({
+              description: item.description || '',
+              quantity: Number(item.quantity || 0),
+              unitPrice: Number(item.unitPrice || 0),
+            }))
+          : [{ description: '', quantity: 1, unitPrice: 0 }],
+      );
+    };
+
+    void loadExistingInvoice();
+  }, [pidInvoice]);
 
   useEffect(() => {
     const loadCorporateGiftPrefill = async () => {
+      if (isEditMode) return;
       if (!linkedRequestId) return;
       const res = await fetch(`/api/invoicing/corporate-gifts/${linkedRequestId}/prefill`);
       const data = await res.json();
@@ -99,7 +170,7 @@ export default function CreateInvoiceForm() {
       setItems([{ description: `${gift.productOrItemNeeded} (${gift.preferredQualityLevel})`, quantity: Number(gift.quantityNeeded || 1), unitPrice: 0 }]);
     };
     loadCorporateGiftPrefill();
-  }, [linkedRequestId]);
+  }, [isEditMode, linkedRequestId]);
 
   const searchCustomers = async () => {
     const params = new URLSearchParams({ search: customerSearch, limit: '10', page: '1', status: 'all' });
@@ -127,8 +198,8 @@ export default function CreateInvoiceForm() {
       setCustomers((prev) => [created, ...prev]);
       setShowQuickAddUser(false);
       toast.success('User created and selected.');
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to create user');
     } finally {
       setQuickUserSaving(false);
     }
@@ -144,37 +215,58 @@ export default function CreateInvoiceForm() {
     setItems((prev) => prev.map((r, i) => (i === index ? { ...r, [key]: key === 'description' ? value : Number(value) } : r)));
   };
 
-  const createInvoice = async (issueNow: boolean) => {
+  const saveInvoice = async (issueNow: boolean) => {
     if (!selectedCustomer) return toast.error('Please select a customer');
     if (!items.length || items.some((i) => !i.description || i.quantity <= 0)) return toast.error('Incomplete line items');
 
     setSaving(true);
     try {
-      const createRes = await fetch('/api/invoicing/invoices', {
-        method: 'POST',
+      const endpoint = isEditMode
+        ? `/api/invoicing/invoices/${encodeURIComponent(pidInvoice || '')}`
+        : '/api/invoicing/invoices';
+      const method = isEditMode ? 'PATCH' : 'POST';
+      const payload = isEditMode
+        ? {
+            dueAt: dueAt || null,
+            headerSnapshot,
+            footerSnapshot,
+            notes,
+            discountTotal,
+            taxTotal,
+            items,
+          }
+        : {
+            pidUser: selectedCustomer.pidUser,
+            status: 'DRAFT',
+            dueAt: dueAt || null,
+            headerSnapshot,
+            footerSnapshot,
+            notes,
+            linkedRequestId: linkedRequestId || null,
+            discountTotal,
+            taxTotal,
+            items,
+          };
+
+      const createRes = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pidUser: selectedCustomer.pidUser,
-          status: 'DRAFT',
-          dueAt: dueAt || null,
-          headerSnapshot,
-          footerSnapshot,
-          notes,
-          linkedRequestId: linkedRequestId || null,
-          discountTotal,
-          taxTotal,
-          items,
-        }),
+        body: JSON.stringify(payload),
       });
       const created = await createRes.json();
       if (!createRes.ok) throw new Error(created?.message);
 
+      const targetPidInvoice = isEditMode ? pidInvoice : created.data.pidInvoice;
       if (issueNow) {
-        await fetch(`/api/invoicing/invoices/${created.data.pidInvoice}/issue`, { method: 'POST' });
+        const issueRes = await fetch(`/api/invoicing/invoices/${targetPidInvoice}/issue`, { method: 'POST' });
+        if (!issueRes.ok) {
+          const issueJson = await issueRes.json().catch(() => ({}));
+          throw new Error(issueJson?.message || 'Failed to issue invoice');
+        }
       }
-      router.push(`/dashboard/invoicing/${created.data.pidInvoice}`);
-    } catch (error: any) {
-      toast.error(error.message);
+      router.push(`/dashboard/invoicing/${targetPidInvoice}`);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save invoice');
     } finally {
       setSaving(false);
     }
@@ -203,18 +295,21 @@ export default function CreateInvoiceForm() {
                 <input
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
-                    placeholder="Search registered name or email..."
+                    placeholder={isEditMode ? "Customer is locked for draft edits" : "Search registered name or email..."}
+                    disabled={isEditMode}
                     className="w-full pl-9 pr-4 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring transition-all"
                 />
               </div>
               <button 
                 onClick={searchCustomers} 
+                disabled={isEditMode}
                 className="px-4 py-2 bg-background border border-border text-foreground rounded-md text-sm font-semibold hover:bg-muted transition-colors shadow-sm"
               >
                 Search
               </button>
               <button
                 type="button"
+                disabled={isEditMode}
                 onClick={() => setShowQuickAddUser(!showQuickAddUser)}
                 className={`px-4 py-2 rounded-md text-sm font-semibold transition-all shadow-sm border ${showQuickAddUser ? 'bg-destructive/5 border-destructive/20 text-destructive' : 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'}`}
               >
@@ -370,18 +465,18 @@ export default function CreateInvoiceForm() {
       <div className="flex flex-col sm:flex-row gap-3 pt-6 px-1">
         <button 
           disabled={saving} 
-          onClick={() => createInvoice(false)} 
+          onClick={() => saveInvoice(false)} 
           className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3 bg-background border border-border text-foreground rounded-lg text-sm font-bold hover:bg-muted transition-all shadow-sm focus:ring-2 focus:ring-ring"
         >
-          <Save className="w-4 h-4" /> Save as Draft
+          <Save className="w-4 h-4" /> {isEditMode ? 'Save Draft Changes' : 'Save as Draft'}
         </button>
         <button 
           disabled={saving} 
-          onClick={() => createInvoice(true)} 
+          onClick={() => saveInvoice(true)} 
           className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-all shadow-sm focus:ring-2 focus:ring-ring"
         >
           {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          Finalize & Issue Invoice
+          {isEditMode ? 'Save & Issue Invoice' : 'Finalize & Issue Invoice'}
         </button>
       </div>
 

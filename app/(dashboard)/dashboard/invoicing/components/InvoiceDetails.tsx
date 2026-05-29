@@ -7,6 +7,7 @@ import {
   FileText, 
   Send, 
   Eye, 
+  Pencil,
   CreditCard, 
   History, 
   Receipt, 
@@ -162,13 +163,21 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
           </Link>
           
           {data.status === 'DRAFT' ? (
-            <button 
-                disabled={issuing} 
-                onClick={() => {}} 
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
-            >
-              <FileText className="w-3.5 h-3.5" /> Issue Invoice
-            </button>
+            <>
+              <Link
+                href={`/dashboard/invoicing/${pidInvoice}/edit`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Edit Draft
+              </Link>
+              <button 
+                  disabled={issuing} 
+                  onClick={() => {}} 
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
+              >
+                <FileText className="w-3.5 h-3.5" /> Issue Invoice
+              </button>
+            </>
           ) : (
             <button
                 disabled={sendingInvoice}
