@@ -57,15 +57,49 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.message || 'Failed to load invoice');
       setData(json?.data || null);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setData(null);
-      setError(e?.message || 'Invoice inaccessible');
+      setError(e instanceof Error ? e.message : 'Invoice inaccessible');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => { fetchData(); }, [pidInvoice]);
+
+  const issueInvoice = async () => {
+    setIssuing(true);
+    try {
+      const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/issue`, {
+        method: 'POST',
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || 'Failed to issue invoice');
+      toast.success('Invoice issued successfully');
+      await fetchData();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to issue invoice');
+    } finally {
+      setIssuing(false);
+    }
+  };
+
+  const dispatchInvoice = async () => {
+    setSendingInvoice(true);
+    try {
+      const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/send`, {
+        method: 'POST',
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || 'Failed to send invoice');
+      toast.success('Invoice email sent successfully');
+      await fetchData();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to send invoice');
+    } finally {
+      setSendingInvoice(false);
+    }
+  };
 
   const recordPayment = async () => {
     if (!paymentAmount) return toast.error("Enter payment amount");
@@ -81,8 +115,8 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
       setPaymentRef('');
       toast.success("Payment recorded successfully");
       await fetchData();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to record payment');
     } finally {
       setRecording(false);
     }
@@ -172,16 +206,16 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
               </Link>
               <button 
                   disabled={issuing} 
-                  onClick={() => {}} 
+                  onClick={issueInvoice}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
               >
-                <FileText className="w-3.5 h-3.5" /> Issue Invoice
+                {issuing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />} Issue Invoice
               </button>
             </>
           ) : (
             <button
                 disabled={sendingInvoice}
-                onClick={() => {}}
+                onClick={dispatchInvoice}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
             >
               <Send className="w-3.5 h-3.5" /> {sendingInvoice ? 'Sending...' : 'Dispatch Email'}

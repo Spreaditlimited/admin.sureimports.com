@@ -19,6 +19,8 @@ export const ALL_SERVICE_KEYS = [
 export type ServiceKey = (typeof ALL_SERVICE_KEYS)[number];
 
 export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: ServiceKey }> = [
+  { prefix: "/dashboard/invoicing/payment-claims", serviceKey: "invoicing" },
+  { prefix: "/dashboard/invoicing/receipts", serviceKey: "invoicing" },
   { prefix: "/dashboard", serviceKey: "dashboard" },
   { prefix: "/dashboard/procurement", serviceKey: "procurement" },
   { prefix: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },

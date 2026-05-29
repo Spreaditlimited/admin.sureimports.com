@@ -5,7 +5,7 @@
 @layer base {
   :root {
     /* Modern Functional Minimalism - Light Mode */
-    --background: 210 40% 98.1%; /* Off-white/slate-50 canvas */
+    --background: 36 55% 97.2%; /* Warm off-white canvas with subtle orange tint */
     --foreground: 222.2 84% 4.9%; /* Sharp slate text */
     
     --card: 0 0% 100%; /* Pure white cards */

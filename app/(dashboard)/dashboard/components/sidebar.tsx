@@ -86,7 +86,19 @@ const customerPayouts: MenuItem[] = [
 
 const financials: MenuItem[] = [
   { title: "Payments", icon: Wallet, path: "/dashboard/financials", serviceKey: "dashboard" },
-  { title: "Invoicing", icon: Wallet, path: "/dashboard/invoicing", serviceKey: "invoicing" },
+  {
+    title: "Invoicing",
+    icon: Wallet,
+    path: "/dashboard/invoicing",
+    serviceKey: "invoicing",
+    submenu: [
+      { title: "Invoices", path: "/dashboard/invoicing" },
+      { title: "Create Invoice", path: "/dashboard/invoicing/create" },
+      { title: "Receipts", path: "/dashboard/invoicing/receipts" },
+      { title: "Payment Claims", path: "/dashboard/invoicing/payment-claims" },
+      { title: "Invoicing Settings", path: "/dashboard/invoicing/settings" },
+    ],
+  },
 ]
 
 const systemSettings: MenuItem[] = [
@@ -120,6 +132,12 @@ const systemSettings: MenuItem[] = [
       { title: "Exchange Rates", path: "/dashboard/exchange-rates" },
       { title: "Service Charge & VAT", path: "/dashboard/service-charges" },
     ],
+  },
+  {
+    title: "Bank Accounts",
+    icon: Wallet,
+    path: "/dashboard/invoicing/bank-accounts",
+    serviceKey: "invoicing",
   },
   {
     title: "Blog Management",

@@ -10,6 +10,8 @@
 import { AuthProvider } from "@/app/context/AuthContext"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { verifyToken } from "@/lib/jwt"
+import { prisma } from "@/lib/prisma"
 import type React from "react" // Import React
 
 export default async function AuthLayout({
@@ -18,14 +20,26 @@ export default async function AuthLayout({
   children: React.ReactNode
 }) {
   const cookieStore = await cookies()
-  const token = cookieStore.get("token")
+  const token = cookieStore.get("token")?.value
 
   if (token) {
-    redirect("/dashboard")
+    try {
+      const payload = verifyToken(token) as { pidUser?: string } | null
+      if (payload?.pidUser) {
+        const admin = await prisma.admin.findUnique({
+          where: { pidUser: payload.pidUser },
+          select: { pidUser: true },
+        })
+        if (admin) {
+          redirect("/dashboard")
+        }
+      }
+    } catch {
+      // Invalid/expired token: stay on auth pages.
+    }
   }
 
   return <><AuthProvider>{children}</AuthProvider></>
 }
-
 
 
