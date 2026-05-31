@@ -1,15 +1,35 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AnimateHeight from 'react-animate-height';
-import TableProcurementProducts from '../../../../../componentsx/dashboard/TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { BookDown } from 'lucide-react';
-
-
-
+import {
+    getShippingOnlyNextStatus,
+    getShippingOnlyStatusLabel,
+    normalizeShippingOnlyStatus,
+} from '@/lib/shippingOnlyStatus';
+import { 
+  ChevronDown, 
+  Package, 
+  Hash, 
+  User as UserIcon, 
+  MessageSquare, 
+  AlertCircle, 
+  CheckCircle2, 
+  Truck, 
+  ShieldCheck, 
+  Layers,
+  Globe,
+  Fingerprint,
+  Smartphone,
+  Scale,
+  Calendar,
+  XCircle,
+  Clock,
+  RefreshCw
+} from 'lucide-react';
 
 interface Order {
     id: number;
@@ -18,321 +38,297 @@ interface Order {
     whatsappNumber: string;
     shippingName: string;
     shippingTo: string;
+    shippingToName?: string;
     grossWeight: string;
     trackingNumber: string;
     shippingPlan: string;
+    shippingPlanName?: string;
+    expectedShipments: string;
     wantProductVerification: string;
     wantConsolidation: string;
     multipleSuppliers: string;
     description: string;
     status: string;
     createdAt: string;
-  }
+}
 
-
-
-  interface User {
-    id: any;
-    pidUser: string;
-    userFirstname: string;
-    userLastname: string;
-    userEmail: string;
-    userPassword: string;
-    userSession: string;
-    cidStatus: string;
-    loginStatus: string;
-    loginKey: string;
-    loginStamp: string;
-    gender: string;
-    dob: string;
-    email: string;
-    phone: string;
-    address: string;
-    country: string;
-    bank_name: string;
-    bank_account_number: string;
-    bank_account_name: string;
-    ref_id: string;
-    userPhone: string;
-    userCid: string;
-    userShippingAddress: string;
-    userShippingAddress2: string;
-    userCountry: string;
-    userState: string;
-    userAffiliateCode: string;
-    userAffiliateRef: string;
-    userStatus: string;
-    userImage: string;
-  }
-
-
-
-//USER DATA
-interface User {
-    pidUser: string;
-    email: string;
-    name: string;
-  }
-  
-  //API RESPONSE
-  interface ApiResponse {
-    responsex: any;
+interface ApiResponse {
+    responsex: {
+        status: string;
+        message: string;
+    };
     successx: boolean;
-    userx: User;
-  }
+}
 
-
-
-const ComponentsAccordionsBasic = () => {
-
-
-    // VARIABLES
-    const [active, setActive] = useState<string>('1');
+const OrdersBoxShippingOnly = () => {
+    const [active, setActive] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    const togglePara = (value: string) => {
-        setActive((oldValue) => {
-            return oldValue === value ? '' : value;
-        });
+    const [orderALL, setOrderALL] = useState<Order[]>([]);
+    const [message, setMessage] = useState<string>('');
+    const [pendingAction, setPendingAction] = useState<'approve' | 'decline' | ''>('');
+    
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const status = searchParams.get('status') || 'none';
+
+    const toggleAccordion = (id: string) => {
+        setActive(prev => prev === id ? null : id);
     };
 
-
-
-    // VARIABLES 
-    const status = useSearchParams().get('status') || 'none'; // Get the current 'status' value
-    const [orderALL, setOrderALL] = useState<Order[]>([]);
-    const [message, setMessage] = useState<String>('');
-
-
-    //GET RECORDS FROM DATABASE
-    async function fetchDataOrder() {
+    const fetchDataOrder = useCallback(async () => {
         try {
-           // Pull Records from database
-           //const res = await fetch(`/api/get-data/order-all?pidOrder=${pidOrder}&pidUser=${pidUser}`);
-           const res = await fetch(`/api/get-data/shipping-only-many?status=${status}`);
-           const data = await res.json();
-           setOrderALL(data);
+            setLoading(true);
+            const res = await fetch(`/api/get-data/shipping-only-many?status=${status}`);
+            const data = await res.json();
+            setOrderALL(data);
         } catch (error) {
-           console.error('Error fetching data:', error);
-           // Handle the error appropriately (e.g., display an error message)
+            toast.error('Failed to sync logistics ledger');
         } finally {
-           setLoading(false); // Set loading to false when done
+            setLoading(false);
         }
-  }
+    }, [status]);
 
-
-
-
-    //FETCH ORDERS AND PRODUCTS
     useEffect(() => {
-        setLoading(true);
         fetchDataOrder();
-    },[status]); // Empty dependency array to run only once on mount
+    }, [fetchDataOrder]);
 
+    const formatReadable = (value: string | null | undefined) => {
+        const source = String(value || '').trim();
+        if (!source) return 'N/A';
+        if (/^[A-Z]{2,4}$/.test(source)) return source;
+        return source
+            .replace(/[_-]+/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, (char) => char.toUpperCase());
+    };
 
-    function setActionType(value:string) {
-        toast.info(value);
-    }
+    const formatSelection = (value: unknown) => {
+        if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+        const normalized = String(value ?? '').trim().toLowerCase();
+        if (!normalized) return 'Not Provided';
+        if (['yes', 'true', '1'].includes(normalized)) return 'Yes';
+        if (['no', 'false', '0'].includes(normalized)) return 'No';
+        return formatReadable(String(value));
+    };
 
-
-
+    const getNextStatusForAction = (currentStatus: string, action: string) => {
+        if (action !== 'approve' && action !== 'decline') return '';
+        return getShippingOnlyNextStatus(currentStatus, action) || '';
+    };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-    
+        const action = pendingAction;
         const formData = new FormData(event.currentTarget);
-        // const buttonClicked = formData.get('action');
-        // alert(buttonClicked);
-        // if (buttonClicked === 'approve') {
-        //   alert('APPROVED');
-        // } else if (buttonClicked === 'decline') {
-        //   alert('DECLINE');
-        // } else {
-        //   //setResult('Unknown action!');
-        // }
-    
-        // if (actionType === 'save') {
-        //   setMessage('Save button clicked! Performing save action...');
-        //   // Perform save logic here
-        // } else if (actionType === 'delete') {
-        //   setMessage('Delete button clicked! Performing delete action...');
-        //   // Perform delete logic here
-        // } else {
-        //   setMessage('Unknown action!');
-        // }
-    
-    
-    
-              //formData.append('message', message);
-              //formData.append('pidOrder', pidOrder);
-              formData.append('status', status);
-    
-          //MAKE REQUEST ATTEMPT
-          try {
-            toast.info('Processing . . .');
-            //MAKE REQUEST
-            const res = await fetch('/api/stage-processing/shipping-only', {
-              method: 'POST',
-              body: formData,
+
+        const pidUser = String(formData.get('pidUser') || '');
+        const pidOrder = String(formData.get('pidOrder') || '');
+        const orderCurrentStatus = String(formData.get('currentStatus') || '');
+        const nextStatus = getNextStatusForAction(orderCurrentStatus, action);
+
+        if (!pidUser || !pidOrder || (action !== 'approve' && action !== 'decline')) {
+            toast.warning('Invalid status transition requested.');
+            return;
+        }
+
+        formData.append('serviceType', 'shipping-only');
+        formData.append('action', action);
+        formData.append('currentStatus', orderCurrentStatus);
+        if (nextStatus) {
+            formData.append('newStatus', nextStatus);
+        }
+        formData.append('pidMessage', `MSG${Date.now()}`);
+        formData.append('message', message);
+
+        try {
+            toast.info('Synchronizing logistics state...');
+            const res = await fetch('/api/status-processing', {
+                method: 'POST',
+                body: formData,
             });
-      
-            // GET & PROCESS RESPONSE FROM API
             const data: ApiResponse = await res.json();
-      
-            if (data.responsex.status == 'SUCCESS'){navigateWithAlert('/dashboard', 'success', 'Payment details was successfully submited, awaiting payment status confirmation.');}
-            // if (data.responsex.status == 'SUCCESS') {
-            //   toast.success(data.responsex.message);
-            // }
-            if (data.responsex.status == 'ACTION_FAILED') {
-              toast.warning(data.responsex.message);
+
+            if (data.responsex.status === 'SUCCESS') {
+                toast.success('Freight state updated');
+                fetchDataOrder();
+                setMessage('');
+            } else {
+                toast.error(data.responsex.message);
             }
-            if (data.responsex.status == 'EMPTY_BANK_PAYMENT_DETAILS') {
-              toast.warning(data.responsex.message);
-            }
-          } catch (error: any) {
-              console.log(error.message);
-          } finally {
-            //setLoading(false);
-          }
-    
-    
-      }
+        } catch (error) {
+            toast.error('Communication error with server');
+        } finally {
+            setPendingAction('');
+        }
+    };
 
+    if (loading) return <div className="py-20 flex justify-center"><RefreshCw className="animate-spin text-primary w-8 h-8 opacity-20" /></div>;
 
-
-
-   //LOADER & EMPTY RECORD PROCESSING 
-   if (loading) {return <Loader />;} //show loader
-   if (orderALL.length === 0) {
-    return (
-      <div className="m-7 flex border-spacing-1 items-center justify-center p-7 font-bold">
-        <div className="rounded border-2 border-dotted border-gray-500 p-4">
-          <p className="text-center text-gray-500">No {status} orders available</p>
-        </div>
-      </div>
-    ); 
-  }
-
-
-  
-
+    if (orderALL.length === 0) {
+        return (
+            <div className="py-24 text-center border-2 border-dashed border-border rounded-xl bg-muted/5 mx-2">
+                <Package className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+                <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground italic">No {getShippingOnlyStatusLabel(status)} records found</p>
+            </div>
+        );
+    }
 
     return (
+        <div className="space-y-4 animate-in fade-in duration-500 pb-20">
+            {/* Ledger Header */}
+            <div className="flex items-center gap-3 px-1 mb-6">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                    <h2 className="text-sm font-bold text-foreground uppercase tracking-widest">Freight Queue: {getShippingOnlyStatusLabel(status)}</h2>
+                    <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">Current Volume: {orderALL.length} Entries</p>
+                </div>
+            </div>
 
-                <>
-                <div className='text-xl p-3'>{status.toUpperCase() ?? 'No '} orders</div>
-                    
-                {
-                    orderALL.map(
-                        (datax: any, index: number) => {
-                        return (
-                        
-                            <div className="mb-5">
-                            <div className="space-y-2 font-semibold">
-                                <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
-                                    <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.shippingName}</b> &nbsp; | ORDER ID: {datax.pidShippingOnly}
-                                        
-                                        <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
-                                        <BookDown />
-                                        </div>   
+            {orderALL.map((order, index) => (
+                <div key={order.pidShippingOnly} className="bg-card border border-border rounded-xl shadow-soft overflow-hidden transition-all duration-300">
+                    {/* Header Row */}
+                    <button
+                        type="button"
+                        onClick={() => toggleAccordion(order.pidShippingOnly)}
+                        className={`w-full flex flex-col md:flex-row md:items-center justify-between p-5 text-left transition-colors ${active === order.pidShippingOnly ? 'bg-primary/5' : 'hover:bg-muted/30'}`}
+                    >
+                        <div className="flex items-center gap-4">
+                            <span className="text-xs font-bold font-mono text-muted-foreground opacity-50">#{index + 1}</span>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-foreground">{order.shippingName}</span>
+                                    <div className="px-2 py-0.5 rounded-md bg-muted text-[9px] font-bold uppercase tracking-widest border border-border">ID: {order.pidShippingOnly}</div>
+                                </div>
+                                <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+                                    <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> WhatsApp Number: {order.whatsappNumber}</span>
+                                    <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Shipping To: {formatReadable(order.shippingToName || order.shippingTo)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 mt-4 md:mt-0">
+                            <div className="flex flex-col items-end mr-4">
+                                <span className="text-[9px] font-bold text-muted-foreground uppercase">Provisioned On</span>
+                                <span className="text-[10px] font-mono font-bold text-foreground">{new Date(order.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className={`p-2 rounded-lg transition-transform duration-300 ${active === order.pidShippingOnly ? 'rotate-180 bg-primary text-white shadow-sm' : 'bg-muted text-muted-foreground'}`}>
+                                <ChevronDown className="w-4 h-4" />
+                            </div>
+                        </div>
+                    </button>
 
-                                        <br /><hr />
-                                                                                                                    
-                                    </button>
-                                    <div>
-                                        <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
-                                            <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[13px] text-white-dark dark:border-[#1b2e4b]">
-                                                {/* <TableProcurementProducts pidOrder={datax.pidOrder} orderName={datax.orderName} shippingAddress={datax.shippingAddress}  /> */}
-                                                Service ID: {datax.pidShippingOnly}
-                                                <hr />
-                                                Shipping Name: {datax.shippingName}
-                                                <hr />
-                                                WhatsApp Number: {datax.whatsappNumber}
-                                                <hr />
-                                                Destination Country: {datax.shippingTo}
-                                                <hr />
-                                                Gross Weight: {datax.grossWeight}
-                                                <hr />
-                                                Tracking Number: {datax.trackingNumber}
-                                                <hr />
-                                                Shipping Plan: {datax.shippingPlan}
-                                                <hr />
-                                                Expected Shippment: {datax.expectedShipments}
-                                                <hr />
-                                                Want Product Verification: {datax.wantProductVerification}
-                                                <hr />
-                                                Want Consolidation: {datax.wantConsolidation}
-                                                <hr />
-                                                Multiple Suppliers: {datax.multipleSuppliers}
-                                                <hr />
-                                                Description: {datax.description}
-                                                <hr />
+                    <AnimateHeight duration={300} height={active === order.pidShippingOnly ? 'auto' : 0}>
+                        <div className="border-t border-border bg-muted/10">
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {/* Details Column */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2"><Truck className="w-3.5 h-3.5" /> Logistics Specs</h4>
+                                    <div className="space-y-2.5">
+                                        {[
+                                            { label: 'Gross Weight', val: order.grossWeight, icon: Scale },
+                                            { label: 'Tracking Number', val: order.trackingNumber || 'N/A', icon: Fingerprint },
+                                            { label: 'Shipping Plan', val: formatReadable(order.shippingPlanName || order.shippingPlan), icon: Clock },
+                                            { label: 'Expected Shipments', val: order.expectedShipments || 'Standard', icon: Calendar },
+                                        ].map((item, i) => (
+                                            <div key={i} className="flex items-center justify-between text-xs">
+                                                <span className="text-muted-foreground flex items-center gap-1.5"><item.icon className="w-3 h-3" /> {item.label}</span>
+                                                <span className="font-bold text-foreground font-mono">{item.val}</span>
                                             </div>
-
-                                            <form onSubmit={handleSubmit}>
-                                                    {/* Confirm Action */}
-                                                    <div className="space-y-4 p-5">
-                                                    <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
-                                                    <div className="flex items-center space-x-2">
-                                                        <input
-                                                        type="checkbox"
-                                                        id="confirm"
-                                                        className="rounded border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
-                                                        required
-                                                        />
-                                                        <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300">
-                                                        Check this box to confirm your action
-                                                        </label>
-                                                    </div>
-                                                    </div>
-
-
-
-                                                    {/* Message to Buyer */}
-                                                    <div className='p-5'>
-                                                    <textarea
-                                                        className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                                                        rows={3}
-                                                        placeholder="Send Message to Buyer"
-                                                        //value={message}
-                                                        onChange={(e) => setMessage(e.target.value)}
-                                                    ></textarea>
-                                                    </div><br />
-
-                                                    {/* Action Buttons */}
-                                                    <div className="p-7 flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-                                                        <div className="w-full md:w-1/2">
-                                                            <button type="submit" name="action" value="decline" onClick={() => setActionType('decline')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                                                            DECLINE (Place On-Hold)
-                                                            </button>
-                                                            <small>Decline Order if there are issues</small>
-                                                        </div>
-                                                        
-                                                        <div className="w-full md:w-1/2">
-                                                            <button type="submit" name="action" value="approve" onClick={() => setActionType('approve')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                                                            APPROVE
-                                                            </button>
-                                                            <small>Approve this Order for further processing</small>
-                                                        </div>
-                                                    </div>
-
-                                                    </form>
-
-                                        </AnimateHeight>
+                                        ))}
                                     </div>
-                                </div> 
                                 </div>
-                                </div>
-                   
-                        )
-                    })
-                }
 
-</>
-    );    
+                                {/* Custom Requirements Column */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2"><ShieldCheck className="w-3.5 h-3.5" /> Handling Prefs</h4>
+                                    <div className="space-y-2">
+                                        {[
+                                            { label: 'Want Product Verification', val: order.wantProductVerification },
+                                            { label: 'Want Consolidation', val: order.wantConsolidation },
+                                            { label: 'Multiple Suppliers', val: order.multipleSuppliers },
+                                        ].map((item, i) => (
+                                            <div key={i} className="flex items-center justify-between p-2 rounded border text-[10px] uppercase font-bold tracking-tight bg-muted/50 border-border text-muted-foreground">
+                                                <span>{item.label}</span>
+                                                <span className="text-foreground">{formatSelection(item.val)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Description Column */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2"><MessageSquare className="w-3.5 h-3.5" /> Agent Briefing</h4>
+                                    <div className="p-3 rounded-lg bg-card border border-border text-[11px] leading-relaxed text-muted-foreground italic h-[110px] overflow-y-auto custom-scrollbar">
+                                        "{order.description || 'No additional instructions provided by the user.'}"
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Workflow Transition Block */}
+                            <form onSubmit={handleSubmit} className="p-6 bg-muted/30 border-t border-border">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+                                    <div className="lg:col-span-8 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2"><MessageSquare className="w-3.5 h-3.5 text-primary" /> Communicaton Bridge</label>
+                                            <div className="flex items-center gap-2">
+                                                <input type="checkbox" id={`confirm-${order.id}`} className="peer rounded border-border text-primary focus:ring-primary/20" required />
+                                                <label htmlFor={`confirm-${order.id}`} className="text-[10px] font-bold text-foreground/90 uppercase peer-checked:text-primary transition-colors">Confirm Workflow Jump</label>
+                                            </div>
+                                        </div>
+                                        <textarea
+                                            value={message}
+                                            onChange={(e) => setMessage(e.target.value)}
+                                            placeholder="Transmit instructions to buyer regarding this freight update..."
+                                            className="w-full p-4 bg-background border border-border rounded-xl text-xs font-medium focus:ring-2 focus:ring-primary/20 transition-all resize-none h-24"
+                                        />
+                                        <input type="hidden" name="pidUser" value={order.pidUser} />
+                                        <input type="hidden" name="pidOrder" value={order.pidShippingOnly} />
+                                        <input type="hidden" name="currentStatus" value={order.status} />
+                                    </div>
+
+                                    <div className="lg:col-span-4 space-y-3">
+                                        {normalizeShippingOnlyStatus(order.status) === 'product-arrived' && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.push(
+                                                        `/dashboard/invoicing/create?linkedShippingOnlyId=${order.pidShippingOnly}`,
+                                                    )
+                                                }
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-background border border-border text-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                                            >
+                                                Create Invoice
+                                            </button>
+                                        )}
+                                        <button 
+                                            type="submit" 
+                                            name="action" 
+                                            value="approve" 
+                                            onClick={() => setPendingAction('approve')}
+                                            className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all"
+                                        >
+                                            <CheckCircle2 className="w-4 h-4" /> Approve Entry
+                                        </button>
+                                        <button 
+                                            type="submit" 
+                                            name="action" 
+                                            value="decline" 
+                                            onClick={() => setPendingAction('decline')}
+                                            className="w-full flex items-center justify-center gap-2 py-3 bg-background border border-border text-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                                        >
+                                            <XCircle className="w-4 h-4 text-destructive" /> Hold / Decline
+                                        </button>
+                                        <p className="text-[9px] text-center text-muted-foreground uppercase font-bold tracking-tighter">Next Logistics Node: <span className="text-primary">{getShippingOnlyStatusLabel(getNextStatusForAction(order.status, 'approve'))}</span></p>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </AnimateHeight>
+                </div>
+            ))}
+        </div>
+    );
 };
 
-export default ComponentsAccordionsBasic;
-function navigateWithAlert(arg0: string, arg1: string, arg2: string) {
-  throw new Error('Function not implemented.');
-}
+export default OrdersBoxShippingOnly;

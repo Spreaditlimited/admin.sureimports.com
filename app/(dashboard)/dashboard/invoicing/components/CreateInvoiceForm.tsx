@@ -68,6 +68,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
   const searchParams = useSearchParams();
   const isEditMode = Boolean(pidInvoice);
   const linkedRequestId = searchParams.get('linkedRequestId') || '';
+  const linkedShippingOnlyId = searchParams.get('linkedShippingOnlyId') || '';
 
   const [customerSearch, setCustomerSearch] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -172,6 +173,34 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
     loadCorporateGiftPrefill();
   }, [isEditMode, linkedRequestId]);
 
+  useEffect(() => {
+    const loadShippingOnlyPrefill = async () => {
+      if (isEditMode) return;
+      if (!linkedShippingOnlyId) return;
+      const res = await fetch(`/api/invoicing/shipping-only/${linkedShippingOnlyId}/prefill`);
+      const data = await res.json();
+      if (!res.ok || !data?.data?.request) return;
+
+      const shippingOnly = data.data.request;
+      const matched = (data.data.matchedUsers || []) as Customer[];
+      if (matched.length > 0) setSelectedCustomer(matched[0]);
+
+      setCustomerSearch(shippingOnly.shippingName || shippingOnly.pidShippingOnly || '');
+      setNotes((prev) => {
+        const prefix = `Shipping Only Request: ${shippingOnly.pidShippingOnly}\nShipping Name: ${shippingOnly.shippingName || 'N/A'}\nDestination: ${shippingOnly.shippingTo || 'N/A'}\nWeight: ${shippingOnly.grossWeight || 'N/A'}`;
+        return prev ? `${prefix}\n\n${prev}` : prefix;
+      });
+      setItems([
+        {
+          description: `Shipping Service (${shippingOnly.shippingName || shippingOnly.pidShippingOnly})`,
+          quantity: 1,
+          unitPrice: 0,
+        },
+      ]);
+    };
+    loadShippingOnlyPrefill();
+  }, [isEditMode, linkedShippingOnlyId]);
+
   const searchCustomers = async () => {
     const params = new URLSearchParams({ search: customerSearch, limit: '10', page: '1', status: 'all' });
     const res = await fetch(`/api/crud/customers/fetch?${params.toString()}`);
@@ -243,6 +272,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
             footerSnapshot,
             notes,
             linkedRequestId: linkedRequestId || null,
+            linkedShippingOnlyId: linkedShippingOnlyId || null,
             discountTotal,
             taxTotal,
             items,

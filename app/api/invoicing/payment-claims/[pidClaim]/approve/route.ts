@@ -9,6 +9,7 @@ import {
   toMoneyInput,
   unauthorized,
 } from '../../../_lib/invoicing';
+import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 export async function POST(
   _request: NextRequest,
@@ -91,6 +92,22 @@ export async function POST(
           updatedByPidUser: admin.pidUser,
         },
       });
+
+      if (newStatus === 'PAID') {
+        const linkedService = parseInvoiceLinkedRequestId(claim.invoice.linkedRequestId);
+        if (linkedService.type === 'corporate-gift') {
+          await tx.corporate_gift_request.updateMany({
+            where: { pidRequest: linkedService.id },
+            data: { status: 'Paid' },
+          });
+        }
+        if (linkedService.type === 'shipping-only') {
+          await tx.shipping_only.updateMany({
+            where: { pidShippingOnly: linkedService.id },
+            data: { status: 'paid', updatedAt: new Date() },
+          });
+        }
+      }
 
       const receipt = await tx.receipts.create({
         data: {

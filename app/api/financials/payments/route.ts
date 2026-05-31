@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 const LEGACY_COMPLETED = new Set(['PAID', 'paid', 'SUCCESS', 'successful', 'success']);
 
@@ -147,15 +148,23 @@ export async function GET(request: NextRequest) {
       let serviceName = row.serviceName || 'Legacy Payment';
 
       if (linkedInvoice) {
-        serviceType = linkedInvoice.linkedRequestId ? 'CORPORATE_GIFT' : 'INVOICE';
-        serviceName = linkedInvoice.linkedRequestId
-          ? `Corporate Gift Payment - ${linkedInvoice.invoiceNumber}`
-          : `Invoice Payment - ${linkedInvoice.invoiceNumber}`;
+        const link = parseInvoiceLinkedRequestId(linkedInvoice.linkedRequestId);
+        serviceType = link.type === 'corporate-gift' ? 'CORPORATE_GIFT' : 'INVOICE';
+        serviceName =
+          link.type === 'corporate-gift'
+            ? `Corporate Gift Payment - ${linkedInvoice.invoiceNumber}`
+            : `Invoice Payment - ${linkedInvoice.invoiceNumber}`;
         links.push({ label: 'Invoice', href: `/dashboard/invoicing/${linkedInvoice.pidInvoice}` });
-        if (linkedInvoice.linkedRequestId) {
+        if (link.type === 'corporate-gift') {
           links.push({
             label: 'Gift Request',
-            href: `/dashboard/corporate-gifts?pidRequest=${linkedInvoice.linkedRequestId}`,
+            href: `/dashboard/corporate-gifts?pidRequest=${link.id}`,
+          });
+        }
+        if (link.type === 'shipping-only') {
+          links.push({
+            label: 'Shipping Request',
+            href: `/dashboard/shipping-only?pidRequest=${link.id}`,
           });
         }
       } else if (row.serviceID && orderIdSet.has(row.serviceID)) {
@@ -194,7 +203,8 @@ export async function GET(request: NextRequest) {
       .filter((row) => !mirroredInvoicePaymentIds.has(row.pidInvoicePayment))
       .map((row) => {
       const userName = [row.user?.userFirstname, row.user?.userLastname].filter(Boolean).join(' ').trim();
-      const isCorporateGift = Boolean(row.invoice?.linkedRequestId);
+      const link = parseInvoiceLinkedRequestId(row.invoice?.linkedRequestId);
+      const isCorporateGift = link.type === 'corporate-gift';
       return {
         id: row.pidInvoicePayment,
         source: 'invoice_payments',
@@ -209,8 +219,11 @@ export async function GET(request: NextRequest) {
         serviceType: isCorporateGift ? 'CORPORATE_GIFT' : 'INVOICE',
         links: [
           { label: 'Invoice', href: `/dashboard/invoicing/${row.invoice?.pidInvoice}` },
-          ...(row.invoice?.linkedRequestId
-            ? [{ label: 'Gift Request', href: `/dashboard/corporate-gifts?pidRequest=${row.invoice.linkedRequestId}` }]
+          ...(link.type === 'corporate-gift'
+            ? [{ label: 'Gift Request', href: `/dashboard/corporate-gifts?pidRequest=${link.id}` }]
+            : []),
+          ...(link.type === 'shipping-only'
+            ? [{ label: 'Shipping Request', href: `/dashboard/shipping-only?pidRequest=${link.id}` }]
             : []),
         ],
         customer: {
@@ -225,7 +238,8 @@ export async function GET(request: NextRequest) {
 
     const pendingClaimRows: FinancialPaymentRow[] = pendingClaims.map((row) => {
       const userName = [row.user?.userFirstname, row.user?.userLastname].filter(Boolean).join(' ').trim();
-      const isCorporateGift = Boolean(row.invoice?.linkedRequestId);
+      const link = parseInvoiceLinkedRequestId(row.invoice?.linkedRequestId);
+      const isCorporateGift = link.type === 'corporate-gift';
       return {
         id: row.pidClaim,
         source: 'invoice_payment_claims',
@@ -240,8 +254,11 @@ export async function GET(request: NextRequest) {
         serviceType: isCorporateGift ? 'CORPORATE_GIFT' : 'INVOICE',
         links: [
           { label: 'Invoice', href: `/dashboard/invoicing/${row.invoice?.pidInvoice}` },
-          ...(row.invoice?.linkedRequestId
-            ? [{ label: 'Gift Request', href: `/dashboard/corporate-gifts?pidRequest=${row.invoice.linkedRequestId}` }]
+          ...(link.type === 'corporate-gift'
+            ? [{ label: 'Gift Request', href: `/dashboard/corporate-gifts?pidRequest=${link.id}` }]
+            : []),
+          ...(link.type === 'shipping-only'
+            ? [{ label: 'Shipping Request', href: `/dashboard/shipping-only?pidRequest=${link.id}` }]
             : []),
         ],
         customer: {

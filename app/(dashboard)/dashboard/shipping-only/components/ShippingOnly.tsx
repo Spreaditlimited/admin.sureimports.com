@@ -1,27 +1,25 @@
-
 import { Metadata } from 'next';
-import Link from 'next/link';
 import React from 'react';
 import CounterBoxShippingOnly from './CounterBoxShippingOnly';
 import OrdersBoxShippingOnly from './OrdersBoxShippingOnly';
 
 export const metadata: Metadata = {
-    title: 'Dashboard',
+    title: 'Freight Provisioning Ledger | Admin Dashboard',
+    description: 'Standalone freight management and logistics tracking ledger.'
 };
 
 const Page = () => {
     return (
-        <div>
+        <div className="space-y-6 animate-in fade-in duration-500">
+            
+            {/* 1. Global Logistics Pulse */}
+            <div className="px-1">
+                <CounterBoxShippingOnly />
+            </div>
 
-            <div className="">
-                
-                <div className="p-2">
-                    <CounterBoxShippingOnly />
-                </div>
-
-                <div className="p-2">
-                    <OrdersBoxShippingOnly />
-                </div>
+            {/* 2. Active Freight Ledger */}
+            <div className="pt-2">
+                <OrdersBoxShippingOnly />
             </div>
             
         </div>

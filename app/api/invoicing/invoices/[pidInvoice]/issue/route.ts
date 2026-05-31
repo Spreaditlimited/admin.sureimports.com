@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { canAdminAccessInvoiceCreatedBy, createOrGetInvoiceAccessToken, ensureInvoicingCoreTables, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
 import { sendInvoiceIssuedNotification } from '@/lib/notifications/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
+import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 export async function POST(
   _request: NextRequest,
@@ -53,10 +54,17 @@ export async function POST(
       },
     });
 
-    if (updated.linkedRequestId) {
+    const linkedService = parseInvoiceLinkedRequestId(updated.linkedRequestId);
+    if (linkedService.type === 'corporate-gift') {
       await prisma.corporate_gift_request.updateMany({
-        where: { pidRequest: updated.linkedRequestId },
+        where: { pidRequest: linkedService.id },
         data: { status: 'Invoiced' },
+      });
+    }
+    if (linkedService.type === 'shipping-only') {
+      await prisma.shipping_only.updateMany({
+        where: { pidShippingOnly: linkedService.id },
+        data: { status: 'invoiced', updatedAt: new Date() },
       });
     }
 
@@ -68,7 +76,12 @@ export async function POST(
       newStatus: 'ISSUED',
       metadata: JSON.stringify({
         linkedRequestId: updated.linkedRequestId || null,
-        linkedRequestStatusSetTo: updated.linkedRequestId ? 'Invoiced' : null,
+        linkedRequestStatusSetTo:
+          linkedService.type === 'corporate-gift'
+            ? 'Invoiced'
+            : linkedService.type === 'shipping-only'
+              ? 'invoiced'
+              : null,
       }),
     });
 

@@ -5,7 +5,7 @@ import AnimateHeight from 'react-animate-height';
 import TableProcurementProducts from './TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useSearchParams } from 'next/navigation';
-import { CornerRightDown } from 'lucide-react';
+import { Check, Copy, CornerRightDown } from 'lucide-react';
 import { getTimeDifference } from '@/lib/getTimeDifference';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
@@ -96,6 +96,7 @@ const ComponentsAccordionsBasic = () => {
   const status = useSearchParams().get('status') || 'none';
   const [orderALL, setOrderALL] = useState<Order[]>([]);
   const [cleanupRunning, setCleanupRunning] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState<string>('');
   const { user } = useAuth();
   const canRunCleanup = user?.userStatus === 'superadmin' || user?.userStatus === 'L1';
 
@@ -103,10 +104,48 @@ const ComponentsAccordionsBasic = () => {
     setActive((oldValue) => (oldValue === value ? '' : value));
   };
 
+  const copyOrderId = async (event: React.MouseEvent, pidOrder: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(pidOrder);
+      setCopiedOrderId(pidOrder);
+      toast.success(`Copied ${pidOrder}`);
+      window.setTimeout(() => {
+        setCopiedOrderId((prev) => (prev === pidOrder ? '' : prev));
+      }, 1600);
+    } catch {
+      toast.error('Unable to copy order ID');
+    }
+  };
+
+  const copyOrderIdFromKeyboard = async (
+    event: React.KeyboardEvent,
+    pidOrder: string,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(pidOrder);
+      setCopiedOrderId(pidOrder);
+      toast.success(`Copied ${pidOrder}`);
+      window.setTimeout(() => {
+        setCopiedOrderId((prev) => (prev === pidOrder ? '' : prev));
+      }, 1600);
+    } catch {
+      toast.error('Unable to copy order ID');
+    }
+  };
+
   // GET RECORDS FROM DATABASE
   async function fetchDataOrder() {
     try {
-      const res = await fetch(`/api/get-data/order-many?status=${status}`);
+      const res = await fetch(`/api/get-data/order-many?status=${status}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setOrderALL(data);
@@ -122,6 +161,22 @@ const ComponentsAccordionsBasic = () => {
   useEffect(() => {
     setLoading(true);
     fetchDataOrder();
+    const intervalId = window.setInterval(() => {
+      fetchDataOrder();
+    }, 15000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDataOrder();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
@@ -196,8 +251,37 @@ const ComponentsAccordionsBasic = () => {
                 <span className={`text-base font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>
                   #{index + 1} : {datax.orderName}
                 </span>
-                <span className="text-sm text-muted-foreground font-medium">
-                  Order ID: {datax.pidOrder}
+                <span className="inline-flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                  <span>Order ID: {datax.pidOrder}</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(event) => copyOrderId(event, datax.pidOrder)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        copyOrderIdFromKeyboard(event, datax.pidOrder);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] transition-colors ${
+                      copiedOrderId === datax.pidOrder
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600'
+                        : 'border-border bg-background/70 text-foreground hover:bg-muted'
+                    }`}
+                    aria-label={`Copy order ID ${datax.pidOrder}`}
+                    title="Copy Order ID"
+                  >
+                    {copiedOrderId === datax.pidOrder ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        Copy
+                      </>
+                    )}
+                  </span>
                 </span>
               </div>
 

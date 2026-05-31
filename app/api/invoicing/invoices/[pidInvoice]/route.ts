@@ -9,6 +9,7 @@ import {
   unauthorized,
   writeAuditLog,
 } from '../../_lib/invoicing';
+import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
   const normalizedContact = String(contactName || '').trim();
@@ -65,9 +66,10 @@ export async function GET(
     }
 
     let enrichedInvoice: any = invoice;
-    if (invoice.linkedRequestId) {
+    const link = parseInvoiceLinkedRequestId(invoice.linkedRequestId);
+    if (link.type === 'corporate-gift') {
       const gift = await prisma.corporate_gift_request.findUnique({
-        where: { pidRequest: invoice.linkedRequestId },
+        where: { pidRequest: link.id },
         select: {
           businessName: true,
           contactPersonFullName: true,

@@ -13,6 +13,10 @@ import {
   unauthorized,
   writeAuditLog,
 } from '../_lib/invoicing';
+import {
+  encodeShippingOnlyLinkedRequestId,
+  parseInvoiceLinkedRequestId,
+} from '@/lib/invoiceLinkedService';
 
 function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
   const normalizedContact = String(contactName || '').trim();
@@ -110,18 +114,20 @@ export async function GET(request: NextRequest) {
       totalCount = Number(countRows?.[0]?.totalCount || 0);
     }
 
-    const linkedRequestIds = Array.from(
+    const linkedRequestIds = Array.from(new Set(items.map((it: any) => String(it.linkedRequestId || '').trim()).filter(Boolean)));
+    const corporateGiftIds = Array.from(
       new Set(
-        items
-          .map((it: any) => String(it.linkedRequestId || '').trim())
-          .filter(Boolean),
+        linkedRequestIds
+          .map((value) => parseInvoiceLinkedRequestId(value))
+          .filter((entry) => entry.type === 'corporate-gift')
+          .map((entry) => entry.id),
       ),
     );
 
     let giftMap = new Map<string, { businessName: string; contactPersonFullName: string; contactEmail: string }>();
-    if (linkedRequestIds.length > 0) {
+    if (corporateGiftIds.length > 0) {
       const gifts = await prisma.corporate_gift_request.findMany({
-        where: { pidRequest: { in: linkedRequestIds } },
+        where: { pidRequest: { in: corporateGiftIds } },
         select: {
           pidRequest: true,
           businessName: true,
@@ -133,9 +139,9 @@ export async function GET(request: NextRequest) {
     }
 
     const enrichedItems = items.map((it: any) => {
-      const linkedId = String(it.linkedRequestId || '').trim();
-      if (!linkedId) return it;
-      const gift = giftMap.get(linkedId);
+      const link = parseInvoiceLinkedRequestId(it.linkedRequestId);
+      if (link.type !== 'corporate-gift') return it;
+      const gift = giftMap.get(link.id);
       if (!gift) return it;
       const derivedName = buildCustomerDisplayName(
         gift.contactPersonFullName,
@@ -182,6 +188,7 @@ export async function POST(request: NextRequest) {
       footerSnapshot,
       notes,
       linkedRequestId,
+      linkedShippingOnlyId,
       status = 'DRAFT',
       items = [],
       discountTotal = 0,
@@ -238,9 +245,13 @@ export async function POST(request: NextRequest) {
     let customerName = userFullName;
     let customerEmail = existingUser.userEmail;
 
-    if (linkedRequestId) {
+    const normalizedLinkedRequestId = linkedShippingOnlyId
+      ? encodeShippingOnlyLinkedRequestId(String(linkedShippingOnlyId))
+      : linkedRequestId;
+
+    if (normalizedLinkedRequestId && !linkedShippingOnlyId) {
       const gift = await prisma.corporate_gift_request.findUnique({
-        where: { pidRequest: linkedRequestId },
+        where: { pidRequest: normalizedLinkedRequestId },
         select: {
           businessName: true,
           contactPersonFullName: true,
@@ -278,7 +289,7 @@ export async function POST(request: NextRequest) {
         headerSnapshot: headerSnapshot || null,
         footerSnapshot: footerSnapshot || null,
         notes: notes || null,
-        linkedRequestId: linkedRequestId || null,
+        linkedRequestId: normalizedLinkedRequestId || null,
         createdByPidUser: admin.pidUser,
         updatedByPidUser: admin.pidUser,
         items: {

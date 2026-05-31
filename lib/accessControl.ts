@@ -70,7 +70,7 @@ const SERVICE_DEFAULT_ROUTE_MAP: Record<ServiceKey, string> = {
   procurement: "/dashboard/procurement?status=pending",
   corporate_gifts: "/dashboard/corporate-gifts",
   pay_supplier: "/dashboard/pay-supplier",
-  shipping_only: "/dashboard/shipping-only?status=SAVED",
+  shipping_only: "/dashboard/shipping-only?status=request-received",
   verify_supplier: "/dashboard/verify-supplier?status=SAVED",
   pay_small_small: "/dashboard/pay-small-small?status=SAVED",
   store_mgt: "/dashboard/store/view",

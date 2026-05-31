@@ -12,6 +12,7 @@ import {
 } from '../../../_lib/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { sendReceiptNotification } from '@/lib/notifications/invoicing';
+import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 export async function POST(
   request: NextRequest,
@@ -112,6 +113,22 @@ export async function POST(
           updatedByPidUser: admin.pidUser,
         },
       });
+
+      if (newStatus === 'PAID') {
+        const linkedService = parseInvoiceLinkedRequestId(invoice.linkedRequestId);
+        if (linkedService.type === 'corporate-gift') {
+          await tx.corporate_gift_request.updateMany({
+            where: { pidRequest: linkedService.id },
+            data: { status: 'Paid' },
+          });
+        }
+        if (linkedService.type === 'shipping-only') {
+          await tx.shipping_only.updateMany({
+            where: { pidShippingOnly: linkedService.id },
+            data: { status: 'paid', updatedAt: new Date() },
+          });
+        }
+      }
 
       const receipt = await tx.receipts.create({
         data: {

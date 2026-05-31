@@ -6,6 +6,7 @@ import fileFilter from '@/utils/fileFilter';
 import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextRequest, NextResponse } from 'next/server';
 import  {prisma} from '@/lib/prisma'; // Assuming you have Prisma setup
+import { getShippingOnlyStatusVariantsForFilter } from '@/lib/shippingOnlyStatus';
 
 export async function GET(request: NextRequest) {
 
@@ -14,43 +15,43 @@ export async function GET(request: NextRequest) {
   try {
     const requestReceivedOrder: number = await prisma.shipping_only.count({
       where: {
-        //pidUser: pidUser,
-        status: 'request-received',
-      },
-    });
-
-    const readyToShipOrder: number = await prisma.shipping_only.count({
-      where: {
-        //pidUser: pidUser,
-        status: 'ready-to-ship',
+        status: { in: getShippingOnlyStatusVariantsForFilter('request-received') },
       },
     });
 
     const productShippedOrder: number = await prisma.shipping_only.count({
       where: {
-        //pidUser: pidUser,
-        status: 'product-shipped',
+        status: { in: getShippingOnlyStatusVariantsForFilter('product-shipped') },
       },
     });
 
     const productArrivedOrder: number = await prisma.shipping_only.count({
       where: {
-        //pidUser: pidUser,
-        status: 'product-arrived',
+        status: { in: getShippingOnlyStatusVariantsForFilter('product-arrived') },
+      },
+    });
+
+    const invoicedOrder: number = await prisma.shipping_only.count({
+      where: {
+        status: { in: getShippingOnlyStatusVariantsForFilter('invoiced') },
+      },
+    });
+
+    const paidOrder: number = await prisma.shipping_only.count({
+      where: {
+        status: { in: getShippingOnlyStatusVariantsForFilter('paid') },
       },
     });
 
     const productDeliveredOrder: number = await prisma.shipping_only.count({
       where: {
-        //pidUser: pidUser,
-        status: 'product-delivered',
+        status: { in: getShippingOnlyStatusVariantsForFilter('product-delivered') },
       },
     });
 
     const cancelledRequestOrder: number = await prisma.shipping_only.count({
       where: {
-        //pidUser: pidUser,
-        status: 'cancelled-request',
+        status: { in: getShippingOnlyStatusVariantsForFilter('request-cancelled') },
       },
     });
 
@@ -59,9 +60,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         requestReceivedOrder: requestReceivedOrder,
-        readyToShipOrder: readyToShipOrder,
         productShippedOrder: productShippedOrder,
         productArrivedOrder: productArrivedOrder,
+        invoicedOrder: invoicedOrder,
+        paidOrder: paidOrder,
         productDeliveredOrder: productDeliveredOrder,
         cancelledRequestOrder: cancelledRequestOrder,
       },

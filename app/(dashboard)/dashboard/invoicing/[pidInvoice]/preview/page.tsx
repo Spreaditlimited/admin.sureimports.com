@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { FileText, Calendar, User, CreditCard, Info } from 'lucide-react';
+import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 export default async function InvoicePreviewPage({
   params,
@@ -27,9 +28,10 @@ export default async function InvoicePreviewPage({
   if (!invoice) notFound();
 
   let corporateBusinessName: string | null = null;
-  if (invoice.linkedRequestId) {
+  const link = parseInvoiceLinkedRequestId(invoice.linkedRequestId);
+  if (link.type === 'corporate-gift') {
     const gift = await prisma.corporate_gift_request.findUnique({
-      where: { pidRequest: invoice.linkedRequestId },
+      where: { pidRequest: link.id },
       select: { businessName: true, contactPersonFullName: true, contactEmail: true },
     });
 
