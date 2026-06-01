@@ -10,6 +10,7 @@ import {
   writeAuditLog,
 } from '../../_lib/invoicing';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
+import { getUserBusinessName } from '@/lib/userBusinessName';
 
 function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
   const normalizedContact = String(contactName || '').trim();
@@ -86,6 +87,20 @@ export async function GET(
             invoice.customerName,
           ) || invoice.customerName,
           customerEmail: invoice.customerEmail || gift.contactEmail || null,
+        };
+      }
+    }
+
+    const userBusinessName = await getUserBusinessName(invoice.pidUser);
+    if (userBusinessName) {
+      const baseName =
+        String(enrichedInvoice.customerName || '').trim() ||
+        String(enrichedInvoice.customerEmail || '').trim() ||
+        'Customer';
+      if (!baseName.includes(`(${userBusinessName})`)) {
+        enrichedInvoice = {
+          ...enrichedInvoice,
+          customerName: `${baseName} (${userBusinessName})`,
         };
       }
     }

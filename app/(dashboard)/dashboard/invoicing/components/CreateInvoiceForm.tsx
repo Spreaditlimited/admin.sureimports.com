@@ -34,6 +34,7 @@ interface QuickUserForm {
   userFirstname: string;
   userLastname: string;
   userEmail: string;
+  businessName: string;
   phone: string;
   country: string;
   sendSetupLink: boolean;
@@ -79,6 +80,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
     userFirstname: '',
     userLastname: '',
     userEmail: '',
+    businessName: '',
     phone: '',
     country: 'Nigeria',
     sendSetupLink: true,
@@ -356,6 +358,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
                     <input value={quickUser.userFirstname} onChange={(e) => setQuickUser({ ...quickUser, userFirstname: e.target.value })} placeholder="First Name *" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
                     <input value={quickUser.userLastname} onChange={(e) => setQuickUser({ ...quickUser, userLastname: e.target.value })} placeholder="Last Name" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
                     <input value={quickUser.userEmail} onChange={(e) => setQuickUser({ ...quickUser, userEmail: e.target.value })} placeholder="Email *" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                    <input value={quickUser.businessName} onChange={(e) => setQuickUser({ ...quickUser, businessName: e.target.value })} placeholder="Business Name (Optional)" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
                     <input value={quickUser.phone} onChange={(e) => setQuickUser({ ...quickUser, phone: e.target.value })} placeholder="Phone" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
                     <input value={quickUser.country} onChange={(e) => setQuickUser({ ...quickUser, country: e.target.value })} placeholder="Country" className="px-3 py-2 text-sm border border-input rounded-md bg-background" />
                     <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">

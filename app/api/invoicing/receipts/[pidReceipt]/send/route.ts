@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { createOrGetInvoiceAccessToken, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { sendReceiptNotification } from '@/lib/notifications/invoicing';
+import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
 
 export async function POST(
   _request: NextRequest,
@@ -36,10 +37,15 @@ export async function POST(
     });
     const customerBaseUrl = getCustomerInvoiceBaseUrl();
     const receiptLink = `${customerBaseUrl}/receipt/${receipt.pidReceipt}?accessToken=${encodeURIComponent(token.accessToken)}`;
+    const businessName = await getUserBusinessName(receipt.invoice.pidUser);
+    const customerName = appendBusinessName(
+      receipt.invoice.customerName || 'Customer',
+      businessName,
+    ) || receipt.invoice.customerName || 'Customer';
 
     await sendReceiptNotification({
       toEmail: receipt.invoice.customerEmail,
-      customerName: receipt.invoice.customerName || 'Customer',
+      customerName,
       receiptNumber: receipt.receiptNumber,
       invoiceNumber: receipt.invoice.invoiceNumber,
       currency: receipt.invoice.currency,

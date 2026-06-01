@@ -8,6 +8,20 @@ function generatePidUser() {
   return `USR-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 }
 
+async function ensureUsersBusinessNameColumn() {
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS businessName VARCHAR(191) NULL`,
+  );
+}
+
+async function getUserBusinessName(pidUser: string) {
+  const rows = (await prisma.$queryRawUnsafe(
+    `SELECT businessName FROM users WHERE pidUser = ? LIMIT 1`,
+    pidUser,
+  )) as Array<{ businessName: string | null }>;
+  return rows[0]?.businessName || null;
+}
+
 async function sendPasswordSetupLink(params: { userEmail: string; pidUser: string }) {
   const resetCode = randomGenerator(6);
   await prisma.users.update({
@@ -40,7 +54,10 @@ export async function POST(request: NextRequest) {
     const userEmail = String(body?.userEmail || '').trim().toLowerCase();
     const phone = String(body?.phone || '').trim();
     const country = String(body?.country || '').trim();
+    const businessName = String(body?.businessName || '').trim();
     const sendSetupLink = body?.sendSetupLink !== false;
+
+    await ensureUsersBusinessNameColumn();
 
     if (!firstName) {
       return NextResponse.json({ statusx: 'ERROR', message: 'First name is required' }, { status: 400 });
@@ -54,6 +71,14 @@ export async function POST(request: NextRequest) {
 
     const existing = await prisma.users.findUnique({ where: { userEmail } });
     if (existing) {
+      if (businessName) {
+        await prisma.$executeRawUnsafe(
+          `UPDATE users SET businessName = ?, updatedAt = NOW(3) WHERE pidUser = ?`,
+          businessName,
+          existing.pidUser,
+        );
+      }
+
       let setupLinkSent = false;
       if (sendSetupLink) {
         try {
@@ -74,6 +99,7 @@ export async function POST(request: NextRequest) {
             userLastname: existing.userLastname,
             userEmail: existing.userEmail,
             userPhone: existing.userPhone,
+            businessName: businessName || (await getUserBusinessName(existing.pidUser)),
           },
           setupLinkSent,
         },
@@ -103,6 +129,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    if (businessName) {
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET businessName = ?, updatedAt = NOW(3) WHERE pidUser = ?`,
+        businessName,
+        created.pidUser,
+      );
+    }
+
+    const persistedBusinessName = businessName || (await getUserBusinessName(created.pidUser));
+
     let setupLinkSent = false;
     if (sendSetupLink) {
       try {
@@ -113,7 +149,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ statusx: 'SUCCESS', data: created, setupLinkSent }, { status: 201 });
+    return NextResponse.json(
+      {
+        statusx: 'SUCCESS',
+        data: {
+          ...created,
+          businessName: persistedBusinessName,
+        },
+        setupLinkSent,
+      },
+      { status: 201 },
+    );
   } catch (error: any) {
     return NextResponse.json(
       { statusx: 'ERROR', message: 'Failed to create user', error: error.message },

@@ -17,6 +17,7 @@ import {
   encodeShippingOnlyLinkedRequestId,
   parseInvoiceLinkedRequestId,
 } from '@/lib/invoiceLinkedService';
+import { getUserBusinessName, getUserBusinessNameMap } from '@/lib/userBusinessName';
 
 function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
   const normalizedContact = String(contactName || '').trim();
@@ -155,9 +156,20 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const userBusinessMap = await getUserBusinessNameMap(
+      enrichedItems.map((it: any) => String(it.pidUser || '')).filter(Boolean),
+    );
+    const finalItems = enrichedItems.map((it: any) => {
+      const businessName = userBusinessMap.get(String(it.pidUser || ''));
+      if (!businessName) return it;
+      const baseName = String(it.customerName || '').trim() || String(it.customerEmail || '').trim() || 'Customer';
+      const customerName = baseName.includes(`(${businessName})`) ? baseName : `${baseName} (${businessName})`;
+      return { ...it, customerName };
+    });
+
     return NextResponse.json({
       statusx: 'SUCCESS',
-      data: enrichedItems,
+      data: finalItems,
       pagination: {
         page,
         limit: take,
@@ -244,6 +256,7 @@ export async function POST(request: NextRequest) {
     const userFullName = `${existingUser.userFirstname || ''} ${existingUser.userLastname || ''}`.trim() || null;
     let customerName = userFullName;
     let customerEmail = existingUser.userEmail;
+    const userBusinessName = await getUserBusinessName(pidUser);
 
     const normalizedLinkedRequestId = linkedShippingOnlyId
       ? encodeShippingOnlyLinkedRequestId(String(linkedShippingOnlyId))
@@ -274,7 +287,9 @@ export async function POST(request: NextRequest) {
         pidInvoice,
         invoiceNumber,
         pidUser,
-        customerName,
+        customerName: userBusinessName
+          ? buildCustomerDisplayName(customerName, userBusinessName, customerName)
+          : customerName,
         customerEmail,
         customerPhone: existingUser.userPhone || existingUser.phone || null,
         currency,

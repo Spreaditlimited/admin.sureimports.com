@@ -4,6 +4,7 @@ import { canAdminAccessInvoiceCreatedBy, createOrGetInvoiceAccessToken, ensureIn
 import { sendInvoiceIssuedNotification } from '@/lib/notifications/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
+import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
 
 export async function POST(
   _request: NextRequest,
@@ -86,6 +87,11 @@ export async function POST(
     });
 
     if (existing.customerEmail) {
+      const businessName = await getUserBusinessName(existing.pidUser);
+      const customerName = appendBusinessName(
+        existing.customerName || existing.user.userFirstname || 'Customer',
+        businessName,
+      ) || existing.customerName || existing.user.userFirstname || 'Customer';
       const token = await createOrGetInvoiceAccessToken({
         pidInvoice,
         createdByPidUser: admin.pidUser,
@@ -94,7 +100,7 @@ export async function POST(
       const customerInvoiceLink = `${customerBaseUrl}/invoice/${token.accessToken}`;
       await sendInvoiceIssuedNotification({
         toEmail: existing.customerEmail,
-        customerName: existing.customerName || existing.user.userFirstname || 'Customer',
+        customerName,
         invoiceNumber: existing.invoiceNumber,
         currency: existing.currency,
         grandTotal: Number(existing.grandTotal || 0),

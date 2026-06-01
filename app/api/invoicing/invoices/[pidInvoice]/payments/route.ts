@@ -13,6 +13,7 @@ import {
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { sendReceiptNotification } from '@/lib/notifications/invoicing';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
+import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
 
 export async function POST(
   request: NextRequest,
@@ -167,6 +168,11 @@ export async function POST(
 
     const customerEmail = invoice.customerEmail;
     if (customerEmail) {
+      const businessName = await getUserBusinessName(invoice.pidUser);
+      const customerName = appendBusinessName(
+        invoice.customerName || 'Customer',
+        businessName,
+      ) || invoice.customerName || 'Customer';
       const token = await createOrGetInvoiceAccessToken({
         pidInvoice,
         createdByPidUser: admin.pidUser,
@@ -176,7 +182,7 @@ export async function POST(
 
       const sent = await sendReceiptNotification({
         toEmail: customerEmail,
-        customerName: invoice.customerName || 'Customer',
+        customerName,
         receiptNumber: result.receipt.receiptNumber,
         invoiceNumber: invoice.invoiceNumber,
         currency: invoice.currency,

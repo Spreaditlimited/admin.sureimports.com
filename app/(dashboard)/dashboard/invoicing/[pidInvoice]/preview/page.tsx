@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { FileText, Calendar, User, CreditCard, Info } from 'lucide-react';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
+import { getUserBusinessName } from '@/lib/userBusinessName';
 
 export default async function InvoicePreviewPage({
   params,
@@ -40,6 +41,17 @@ export default async function InvoicePreviewPage({
       const derivedNameBase = gift.contactPersonFullName || invoice.customerName || `${invoice.user.userFirstname || ''} ${invoice.user.userLastname || ''}`.trim() || 'Customer';
       invoice.customerName = gift.businessName ? `${derivedNameBase} (${gift.businessName})` : derivedNameBase;
       if (!invoice.customerEmail && gift.contactEmail) invoice.customerEmail = gift.contactEmail;
+    }
+  }
+
+  const userBusinessName = await getUserBusinessName(invoice.pidUser);
+  if (userBusinessName) {
+    const baseName =
+      String(invoice.customerName || '').trim() ||
+      `${invoice.user.userFirstname || ''} ${invoice.user.userLastname || ''}`.trim() ||
+      'Customer';
+    if (!baseName.includes(`(${userBusinessName})`)) {
+      invoice.customerName = `${baseName} (${userBusinessName})`;
     }
   }
 

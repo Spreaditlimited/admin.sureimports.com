@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { createOrGetInvoiceAccessToken, ensureInvoicingCoreTables, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
 import { sendInvoiceIssuedNotification } from '@/lib/notifications/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
+import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
 
 export async function POST(
   _request: NextRequest,
@@ -41,10 +42,15 @@ export async function POST(
     });
     const customerBaseUrl = getCustomerInvoiceBaseUrl();
     const customerInvoiceLink = `${customerBaseUrl}/invoice/${token.accessToken}`;
+    const businessName = await getUserBusinessName(invoice.pidUser);
+    const customerName = appendBusinessName(
+      invoice.customerName || invoice.user.userFirstname || 'Customer',
+      businessName,
+    ) || invoice.customerName || invoice.user.userFirstname || 'Customer';
 
     await sendInvoiceIssuedNotification({
       toEmail: invoice.customerEmail,
-      customerName: invoice.customerName || invoice.user.userFirstname || 'Customer',
+      customerName,
       invoiceNumber: invoice.invoiceNumber,
       currency: invoice.currency,
       grandTotal: Number(invoice.grandTotal || 0),
