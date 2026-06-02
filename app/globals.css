@@ -230,3 +230,7 @@
 .dark .admin-theme-surface select:focus {
   box-shadow: 0 0 0 3px hsla(var(--ring), 0.2);
 }
+
+.grecaptcha-badge {
+  visibility: hidden !important;
+}

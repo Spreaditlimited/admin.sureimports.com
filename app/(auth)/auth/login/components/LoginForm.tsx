@@ -68,11 +68,6 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
 
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <style jsx global>{`
-        .grecaptcha-badge {
-          visibility: hidden;
-        }
-      `}</style>
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
         <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
         <p className="mt-2 text-sm text-muted-foreground">
