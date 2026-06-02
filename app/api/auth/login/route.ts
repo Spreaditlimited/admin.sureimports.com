@@ -3,42 +3,59 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { generateToken } from "@/lib/jwt";
 
+function shouldBypassCaptcha(request: Request) {
+  if (process.env.DISABLE_CAPTCHA === "true") return true;
+  if (process.env.NODE_ENV === "development") return true;
+
+  const host = request.headers.get("host") || "";
+  return host.startsWith("localhost:") || host.startsWith("127.0.0.1:");
+}
+
 export async function POST(request: Request) {
   try {
     const { userEmail, userPassword, captchaToken } = await request.json();
 
-    if (!userEmail || !userPassword || !captchaToken) {
+    const bypassCaptcha = shouldBypassCaptcha(request);
+
+    if (!userEmail || !userPassword || (!captchaToken && !bypassCaptcha)) {
       return NextResponse.json(
         { message: "Email, password and captcha are required" },
         { status: 400 }
       );
     }
 
-    const captchaSecret = process.env.GOOGLE_CAPTCHA_SECRET_KEY;
-    if (!captchaSecret) {
-      return NextResponse.json(
-        { message: "Captcha secret key is not configured" },
-        { status: 500 }
-      );
-    }
+    if (!bypassCaptcha) {
+      const captchaSecret = process.env.GOOGLE_CAPTCHA_SECRET_KEY;
+      if (!captchaSecret) {
+        return NextResponse.json(
+          { message: "Captcha secret key is not configured" },
+          { status: 500 }
+        );
+      }
 
-    const captchaVerifyResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        secret: captchaSecret,
-        response: captchaToken,
-      }),
-    });
+      const captchaVerifyResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          secret: captchaSecret,
+          response: captchaToken,
+        }),
+      });
 
-    const captchaVerifyData = await captchaVerifyResponse.json();
-    if (!captchaVerifyData?.success) {
-      return NextResponse.json(
-        { message: "Captcha verification failed" },
-        { status: 400 }
-      );
+      const captchaVerifyData = await captchaVerifyResponse.json();
+      const minimumCaptchaScore = Number(process.env.GOOGLE_CAPTCHA_MIN_SCORE || 0.5);
+      if (
+        !captchaVerifyData?.success ||
+        captchaVerifyData?.action !== "login" ||
+        Number(captchaVerifyData?.score || 0) < minimumCaptchaScore
+      ) {
+        return NextResponse.json(
+          { message: "Captcha verification failed" },
+          { status: 400 }
+        );
+      }
     }
 
     const user = await prisma.admin.findUnique({ where: { userEmail } });

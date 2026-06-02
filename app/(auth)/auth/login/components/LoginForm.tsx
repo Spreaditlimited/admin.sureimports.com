@@ -7,8 +7,8 @@ import Script from "next/script"
 declare global {
   interface Window {
     grecaptcha?: {
-      getResponse: () => string
-      reset: () => void
+      ready: (callback: () => void) => void
+      execute: (siteKey: string, options: { action: string }) => Promise<string>
     }
   }
 }
@@ -24,28 +24,43 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    if (!siteKey) {
+    if (!siteKey && !isLocalhost) {
       setError("Captcha is not configured. Contact administrator.")
-      return
-    }
-
-    const captchaToken = window.grecaptcha?.getResponse?.() || ""
-    if (!captchaToken) {
-      setError("Please complete the captcha challenge.")
       return
     }
 
     try {
       setIsLoading(true)
+      const captchaToken = isLocalhost ? "" : await new Promise<string>((resolve, reject) => {
+        if (!window.grecaptcha) {
+          reject(new Error("Captcha failed to load. Please refresh and try again."))
+          return
+        }
+
+        window.grecaptcha.ready(() => {
+          window.grecaptcha
+            ?.execute(siteKey, { action: "login" })
+            .then(resolve)
+            .catch(() => reject(new Error("Captcha verification could not start.")))
+        })
+      })
+
+      if (!captchaToken && !isLocalhost) {
+        setError("Captcha verification failed. Please refresh and try again.")
+        return
+      }
+
       await login(userEmail, userPassword, captchaToken)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
-      window.grecaptcha?.reset?.()
     } finally {
       setIsLoading(false)
     }
@@ -63,7 +78,12 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-card py-8 px-4 shadow-soft border border-border sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <Script src="https://www.google.com/recaptcha/api.js" strategy="afterInteractive" />
+            {siteKey && !isLocalhost && (
+              <Script
+                src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`}
+                strategy="afterInteractive"
+              />
+            )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground">
                 Email address
@@ -135,10 +155,6 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
             </div>
 
             {error && <div className="text-sm text-red-500">{error}</div>}
-
-            <div>
-              <div className="g-recaptcha" data-sitekey={siteKey}></div>
-            </div>
 
             <div>
               <button
