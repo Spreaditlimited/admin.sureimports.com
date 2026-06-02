@@ -68,6 +68,11 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
 
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <style jsx global>{`
+        .grecaptcha-badge {
+          visibility: hidden;
+        }
+      `}</style>
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
         <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -155,6 +160,30 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
             </div>
 
             {error && <div className="text-sm text-red-500">{error}</div>}
+
+            {!isLocalhost && (
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                This site is protected by reCAPTCHA and the Google{" "}
+                <a
+                  href="https://policies.google.com/privacy"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Privacy Policy
+                </a>{" "}
+                and{" "}
+                <a
+                  href="https://policies.google.com/terms"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Terms of Service
+                </a>{" "}
+                apply.
+              </p>
+            )}
 
             <div>
               <button
