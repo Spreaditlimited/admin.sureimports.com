@@ -9,6 +9,24 @@ import { generateSlug } from '@/utils/slugGenerator';
 
 const prisma = new PrismaClient();
 
+function normalizeStoreProductImage(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const raw = value.trim();
+  if (!raw || raw === 'null' || raw === 'undefined') return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return raw.includes('/') ? raw : `admin-sureimports/store/${raw}`;
+}
+
+function buildCloudinaryUrl(publicIdOrUrl: string | null) {
+  if (!publicIdOrUrl) return null;
+  if (/^https?:\/\//i.test(publicIdOrUrl)) return publicIdOrUrl;
+
+  const base = process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL?.trim();
+  if (!base) return null;
+
+  return `${base.replace(/\/+$/, '')}/${publicIdOrUrl.replace(/^\/+/, '')}`;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -104,6 +122,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const normalizedProducts = products.map((product) => {
+      const productImage = normalizeStoreProductImage(product.productImage);
+      return {
+        ...product,
+        productImage,
+        productImageUrl: buildCloudinaryUrl(productImage),
+      };
+    });
+
     // Calculate total pages
     const totalPages = Math.ceil(totalCount / limit);
 
@@ -111,7 +138,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       statusx: 'SUCCESS',
-      data: products,
+      data: normalizedProducts,
       totalCount,
       totalPages,
       currentPage: page,

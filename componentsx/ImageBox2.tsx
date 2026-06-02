@@ -15,7 +15,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange, imagex }) => {
     if (/^https?:\/\//i.test(raw)) return raw;
     const base = process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL?.trim();
     if (!base) return '/assets/images/auth/user.png';
-    return `${base.replace(/\/+$/, '')}/${raw.replace(/^\/+/, '')}`;
+    const path = raw.includes('/') ? raw : `admin-sureimports/store/${raw}`;
+    return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
   };
 
   const [previewImage, setPreviewImage] = useState<string>(resolveInitialImage(imagex));

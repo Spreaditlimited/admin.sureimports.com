@@ -49,7 +49,8 @@ const resolveProductImageSrc = (value: unknown): string | null => {
   const base = process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL?.trim();
   if (!base) return null;
 
-  return `${base.replace(/\/+$/, '')}/${raw.replace(/^\/+/, '')}`;
+  const path = raw.includes('/') ? raw : `admin-sureimports/store/${raw}`;
+  return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
 };
 
 export const ProductDetailsDisplay: React.FC<ProductDetailsDisplayProps> = ({ product }) => {

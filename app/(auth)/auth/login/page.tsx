@@ -1,7 +1,8 @@
 import LoginForm from './components/LoginForm';
 
 const Login = () => {
-  return <LoginForm />;
+  const siteKey = process.env.GOOGLE_CAPTCHA_SITE_KEY || '';
+  return <LoginForm siteKey={siteKey} />;
 };
 
 export default Login;

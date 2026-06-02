@@ -2,8 +2,22 @@
 
 import { useState } from "react"
 import { useAuth } from "@/app/context/AuthContext"
+import Script from "next/script"
 
-export default function LoginForm() {
+declare global {
+  interface Window {
+    grecaptcha?: {
+      getResponse: () => string
+      reset: () => void
+    }
+  }
+}
+
+interface LoginFormProps {
+  siteKey: string
+}
+
+export default function LoginForm({ siteKey }: LoginFormProps) {
   const [userEmail, setUserEmail] = useState("")
   const [userPassword, setUserPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -14,11 +28,24 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+
+    if (!siteKey) {
+      setError("Captcha is not configured. Contact administrator.")
+      return
+    }
+
+    const captchaToken = window.grecaptcha?.getResponse?.() || ""
+    if (!captchaToken) {
+      setError("Please complete the captcha challenge.")
+      return
+    }
+
     try {
       setIsLoading(true)
-      await login(userEmail, userPassword)
+      await login(userEmail, userPassword, captchaToken)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
+      window.grecaptcha?.reset?.()
     } finally {
       setIsLoading(false)
     }
@@ -36,6 +63,7 @@ export default function LoginForm() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-card py-8 px-4 shadow-soft border border-border sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
+            <Script src="https://www.google.com/recaptcha/api.js" strategy="afterInteractive" />
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground">
                 Email address
@@ -107,6 +135,10 @@ export default function LoginForm() {
             </div>
 
             {error && <div className="text-sm text-red-500">{error}</div>}
+
+            <div>
+              <div className="g-recaptcha" data-sitekey={siteKey}></div>
+            </div>
 
             <div>
               <button

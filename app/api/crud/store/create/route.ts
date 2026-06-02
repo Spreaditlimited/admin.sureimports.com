@@ -76,75 +76,59 @@ export async function POST(request: Request) {
   const productSlug = generateSlug(productName);
 
 
-  //UPLOAD PRODUCT DETAILS
-  const product = await prisma.store.create({
-    data: { 
-            pidProduct: pidProduct, 
-            productName: productName, 
-            productSlug: productSlug, 
-            productCategory: productCategory,
-            productBrand: productBrand,
-            productPrice: parseFloat(productPrice),
-            productMOQ: parseFloat(productMOQ),
-            productDescription: productDescription,
-            productFeature: productFeature,
-            productSpecification: productSpecification,
-            productVisibility: isProductVisible === 'true' ? true : false,
-            productImage: newFileName,
-            productImageType: fileType,
-            productImageExt: fileExt,
+  try {
+    const buffer = await file.arrayBuffer();
+    const uploadResult = await uploadBufferToCloudinary(Buffer.from(buffer), {
+      folder: 'admin-sureimports/store',
+      publicId: newFileName,
+      useFilename: false,
+      uniqueFilename: false,
+      overwrite: true,
+    });
 
-            affiliatePayout: parseFloat(affiliatePayout),
-            superAffiliatePayout: parseFloat(superAffiliatePayout),
-            productCondition: productCondition,
-            warrantyPeriod: warrantyPeriod,
+    const product = await prisma.store.create({
+      data: {
+        pidProduct: pidProduct,
+        productName: productName,
+        productSlug: productSlug,
+        productCategory: productCategory,
+        productBrand: productBrand,
+        productPrice: parseFloat(productPrice),
+        productMOQ: parseFloat(productMOQ),
+        productDescription: productDescription,
+        productFeature: productFeature,
+        productSpecification: productSpecification,
+        productVisibility: isProductVisible === 'true' ? true : false,
+        productImage: uploadResult.publicId,
+        productImageType: fileType,
+        productImageExt: fileExt,
 
-            createdAt: new Date(),
-         }
-  })
+        affiliatePayout: parseFloat(affiliatePayout),
+        superAffiliatePayout: parseFloat(superAffiliatePayout),
+        productCondition: productCondition,
+        warrantyPeriod: warrantyPeriod,
 
+        createdAt: new Date(),
+      },
+    });
 
-      //CHECK IF PRODUCT DETAILS HAVE BEEN SUCCESSFULY UPLOADED THEN UPLOAD IMAGE
-      if(product && product.id)
-          {
+    if (product && product.id) {
+      return NextResponse.json(
+        { statusx:'SUCCESS', message: 'Product was successfuly added'},
+        { status: 200 },
+      );
+    }
 
-
-                ///////////// IMAGE UPLOAD TO R2 STARTS /////////////
-                try {
-                        //GET FILE PAYLOAD
-                        const buffer = await file.arrayBuffer();
-
-                        await uploadBufferToCloudinary(Buffer.from(buffer), {
-                          folder: 'admin-sureimports/store',
-                          publicId: newFileName,
-                          useFilename: false,
-                          uniqueFilename: false,
-                          overwrite: true,
-                        });
-
-                        //RETURN SUCCESS ON FILE UPLOAD
-                        return NextResponse.json(
-                          { statusx:'SUCCESS', message: 'Product was successfuly added'},
-                          { status: 200 },
-                        );
-
-
-                } catch (error) {
-                        //CATCH ANY ERRORS ON FAILED UPLOAD
-                        return NextResponse.json(
-                          { statusx:'IMAGE_UPLOAD_FAILED', message: 'Product Uploaded but failed image upload, please contact your admin for issue resolution. ERROR::'+error},
-                          { status: 401 },
-                        );
-                }
-              ///////////// IMAGE UPLOAD TO R2 STOPS /////////////
-
-          }else{
-                //GET RESPONSE MESSAGE FOR THE FORM FEEDBACK
-                return NextResponse.json(
-                  { statusx:'ACTION_FAILED', message: 'Failed saving record! Please contact the admin.'},
-                  { status: 401 },
-                );
-          }
+    return NextResponse.json(
+      { statusx:'ACTION_FAILED', message: 'Failed saving record! Please contact the admin.'},
+      { status: 401 },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { statusx:'IMAGE_UPLOAD_FAILED', message: 'Product image upload failed, please contact your admin for issue resolution. ERROR::'+error},
+      { status: 401 },
+    );
+  }
  
 
 

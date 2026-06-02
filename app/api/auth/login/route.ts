@@ -5,11 +5,38 @@ import { generateToken } from "@/lib/jwt";
 
 export async function POST(request: Request) {
   try {
-    const { userEmail, userPassword } = await request.json();
+    const { userEmail, userPassword, captchaToken } = await request.json();
 
-    if (!userEmail || !userPassword) {
+    if (!userEmail || !userPassword || !captchaToken) {
       return NextResponse.json(
-        { message: "Email and password are required" },
+        { message: "Email, password and captcha are required" },
+        { status: 400 }
+      );
+    }
+
+    const captchaSecret = process.env.GOOGLE_CAPTCHA_SECRET_KEY;
+    if (!captchaSecret) {
+      return NextResponse.json(
+        { message: "Captcha secret key is not configured" },
+        { status: 500 }
+      );
+    }
+
+    const captchaVerifyResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        secret: captchaSecret,
+        response: captchaToken,
+      }),
+    });
+
+    const captchaVerifyData = await captchaVerifyResponse.json();
+    if (!captchaVerifyData?.success) {
+      return NextResponse.json(
+        { message: "Captcha verification failed" },
         { status: 400 }
       );
     }

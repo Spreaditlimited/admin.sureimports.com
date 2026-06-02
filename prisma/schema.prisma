@@ -1093,11 +1093,29 @@ model invoices {
   auditLogs        invoice_audit_logs[]
   accessTokens     invoice_access_tokens[]
   paymentClaims    invoice_payment_claims[]
+  followUps        invoice_follow_ups[]
 
   @@index([pidUser])
   @@index([status])
   @@index([createdAt])
   @@index([dueAt])
+}
+
+model invoice_follow_ups {
+  id             Int      @id @default(autoincrement())
+  pidFollowUp    String   @unique()
+  pidInvoice     String
+  followUpNumber Int
+  subject        String
+  status         String   @default("SENT")
+  error          String?  @db.LongText
+  sentAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+  invoice        invoices @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+
+  @@index([pidInvoice])
+  @@index([sentAt])
+  @@index([status])
 }
 
 model invoice_access_tokens {

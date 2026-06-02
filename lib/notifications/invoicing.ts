@@ -29,6 +29,23 @@ type ReceiptSentInput = {
   receiptLink?: string | null;
 };
 
+type InvoiceFollowUpInput = {
+  toEmail: string;
+  customerName: string;
+  invoiceNumber: string;
+  currency: string;
+  balanceDue: number;
+  dueAt?: Date | null;
+  invoiceLink: string;
+  followUpNumber: number;
+};
+
+export function getInvoiceFollowUpSubject(invoiceNumber: string, followUpNumber: number) {
+  return followUpNumber === 1
+    ? `Payment Reminder - Invoice ${invoiceNumber}`
+    : `Payment Follow-up - Invoice ${invoiceNumber}`;
+}
+
 export async function sendInvoiceIssuedNotification(input: InvoiceIssuedInput) {
   const dueText = input.dueAt
     ? new Date(input.dueAt).toLocaleDateString('en-NG', { dateStyle: 'medium' })
@@ -52,6 +69,32 @@ Your invoice has been issued successfully. Please review the details below.`,
 </table>`,
     xButtonTitle: 'View Invoice',
     xButtonLink: input.invoiceLink || 'https://sureimports.com/dashboard',
+  });
+}
+
+export async function sendInvoiceFollowUpNotification(input: InvoiceFollowUpInput) {
+  const dueText = input.dueAt
+    ? new Date(input.dueAt).toLocaleDateString('en-NG', { dateStyle: 'medium' })
+    : 'Not specified';
+  const balanceText = `${input.currency} ${input.balanceDue.toLocaleString('en-NG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+  await xMail({
+    xEmail: input.toEmail,
+    xTitle: getInvoiceFollowUpSubject(input.invoiceNumber, input.followUpNumber),
+    xBodyTitle: `Payment reminder for invoice ${input.invoiceNumber}`,
+    xBody1: `Hello ${input.customerName},<br />
+This is a reminder that invoice ${input.invoiceNumber} still has an outstanding balance of <b>${balanceText}</b>.`,
+    xBody2: `<table style="width:100%;border-collapse:collapse;margin-top:4px;border:1px solid #e5e7eb;">
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Invoice Number</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${input.invoiceNumber}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Balance Due</b></td><td style="padding:8px;border:1px solid #e5e7eb;"><b>${balanceText}</b></td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Due Date</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${dueText}</td></tr>
+</table><br />
+Please use the button below to review the invoice and submit your payment details if you have already paid. If payment has already been confirmed, no further action is needed.`,
+    xButtonTitle: 'View Invoice',
+    xButtonLink: input.invoiceLink,
   });
 }
 

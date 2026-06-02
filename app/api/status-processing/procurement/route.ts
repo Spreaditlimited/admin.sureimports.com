@@ -7,6 +7,7 @@ import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/utils/slugGenerator';
 import xMail from '@/lib/email/xMail2';
+import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
 
 const prisma = new PrismaClient();
 
@@ -206,6 +207,20 @@ export async function POST(request: Request) {
         updatedAt: new Date(),
       },
     });
+
+    if (newStatus !== 'revert_to_approved') {
+      await Promise.allSettled([
+        sendApprovedWhatsAppStatusTemplate({
+          requestId: pidOrder,
+          serviceName: 'Buy from Chinese websites',
+          businessName: 'Buy from Chinese websites',
+          contactPersonFullName: user?.userFirstname || 'Customer',
+          contactEmail: user?.userEmail || '',
+          whatsappNumber: (user as any)?.userPhone || '',
+          status: newStatus,
+        }),
+      ]);
+    }
 
 
 

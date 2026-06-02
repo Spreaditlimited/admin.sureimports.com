@@ -8,6 +8,7 @@ import {
   isShippingOnlyStatus,
   normalizeShippingOnlyStatus,
 } from '@/lib/shippingOnlyStatus';
+import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
 
 const SHIPPING_ONLY_SERVICE_KEY = 'shipping_only';
 
@@ -141,19 +142,30 @@ export async function POST(request: Request) {
       },
     });
 
-    await xMail({
-      xEmail: user.userEmail,
-      xTitle: `Shipping Only Update: ${getShippingOnlyStatusLabel(newStatus)}`,
-      xBodyTitle: 'Your shipping request status has been updated',
-      xBody1:
-        `Hello ${user.userFirstname || 'Customer'},<br/>` +
-        `Your Shipping Only request with ID <b>${pidOrder}</b> is now <b>${getShippingOnlyStatusLabel(newStatus)}</b>.`,
-      xBody2: message
-        ? `Admin note:<br/>${message}`
-        : 'Log in to your dashboard to view full request details and progress.',
-      xButtonTitle: 'View Dashboard',
-      xButtonLink: 'https://www.sureimports.com/dashboard/shipping-only/request-received',
-    });
+    await Promise.allSettled([
+      xMail({
+        xEmail: user.userEmail,
+        xTitle: `Shipping Only Update: ${getShippingOnlyStatusLabel(newStatus)}`,
+        xBodyTitle: 'Your shipping request status has been updated',
+        xBody1:
+          `Hello ${user.userFirstname || 'Customer'},<br/>` +
+          `Your Shipping Only request with ID <b>${pidOrder}</b> is now <b>${getShippingOnlyStatusLabel(newStatus)}</b>.`,
+        xBody2: message
+          ? `Admin note:<br/>${message}`
+          : 'Log in to your dashboard to view full request details and progress.',
+        xButtonTitle: 'View Dashboard',
+        xButtonLink: 'https://www.sureimports.com/dashboard/shipping-only/request-received',
+      }),
+      sendApprovedWhatsAppStatusTemplate({
+        requestId: pidOrder,
+        serviceName: 'Shipping Only',
+        businessName: 'Shipping Only',
+        contactPersonFullName: user.userFirstname || 'Customer',
+        contactEmail: user.userEmail,
+        whatsappNumber: user.userPhone || '',
+        status: getShippingOnlyStatusLabel(newStatus),
+      }),
+    ]);
 
     return NextResponse.json(
       {

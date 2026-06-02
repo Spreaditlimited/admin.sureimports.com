@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import sendStoreSalesEmail from '@/lib/email/sendStoreSalesEmail';
+import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
 
 // Valid status transitions
 const VALID_STATUSES = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
@@ -81,14 +82,10 @@ export async function POST(request: NextRequest) {
     const firstItem = orderItems[0];
     const previousStatus = firstItem.status;
 
-    // Build update data - use ext2 for tracking number since ext1 is order group ID
+    // Build update data: keep store_sales.ext2 reserved for payment method.
     const updateData: any = {
       status: newStatus,
     };
-
-    if (trackingNumber) {
-      updateData.ext2 = trackingNumber; // Store tracking in ext2
-    }
 
     // Update ALL products in this order group
     let updatedCount = 0;
@@ -124,6 +121,25 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`✅ Order ${orderId} [${store.toUpperCase()}] - ${updatedCount} item(s) updated from ${previousStatus} to ${newStatus}`);
+
+    const paymentTxRef = firstItem.ext1 || null;
+    let trackingNumberEffective = trackingNumber || null;
+    if (paymentTxRef) {
+      if (trackingNumber) {
+        await prisma.payments.updateMany({
+          where: { txRef: paymentTxRef },
+          data: { paymentExt2: trackingNumber },
+        });
+      }
+      if (!trackingNumberEffective) {
+        const latestPayment = await prisma.payments.findFirst({
+          where: { txRef: paymentTxRef },
+          orderBy: { createdAt: 'desc' },
+          select: { paymentExt2: true },
+        });
+        trackingNumberEffective = latestPayment?.paymentExt2 || null;
+      }
+    }
 
     // Fetch user details for email notification
     // For faya store, strip "faya_" prefix from pidUser before lookup
@@ -223,20 +239,33 @@ export async function POST(request: NextRequest) {
           : (mainStoreShippingAddress || 'N/A');
         const deliveryOption = store === 'faya' ? (firstItem.deliveryOption || 'Standard Delivery') : 'Standard Delivery';
 
-        const emailSent = await sendStoreSalesEmail({
-          userEmail,
-          userName,
-          orderId,
-          products, // Array of products
-          totalQuantity: totalQuantity.toString(),
-          orderTotal: orderTotal.toFixed(2),
-          orderStatus: newStatus,
-          shippingAddress,
-          deliveryOption,
-          trackingNumber: trackingNumber || firstItem.ext2 || null,
-          trackingCompany: trackingCompany || null,
-          orderDate: firstItem.createdAt.toISOString(),
-        });
+        const [emailResult] = await Promise.allSettled([
+          sendStoreSalesEmail({
+            userEmail,
+            userName,
+            orderId,
+            products, // Array of products
+            totalQuantity: totalQuantity.toString(),
+            orderTotal: orderTotal.toFixed(2),
+            orderStatus: newStatus,
+            shippingAddress,
+            deliveryOption,
+            trackingNumber: trackingNumberEffective,
+            trackingCompany: trackingCompany || null,
+            orderDate: firstItem.createdAt.toISOString(),
+          }),
+          sendApprovedWhatsAppStatusTemplate({
+            requestId: orderId,
+            serviceName: store === 'faya' ? 'Faya Shop' : 'Shop',
+            businessName: store === 'faya' ? 'Faya Shop' : 'Shop',
+            contactPersonFullName: userName,
+            contactEmail: userEmail,
+            whatsappNumber: userDetails?.userPhone || '',
+            status: newStatus,
+          }),
+        ]);
+
+        const emailSent = emailResult.status === 'fulfilled' ? emailResult.value : false;
 
         if (emailSent) {
           console.log(`📧 Email notification sent to ${userEmail} for order ${orderId} (${orderItems.length} items) [${store.toUpperCase()}]`);
@@ -267,4 +296,3 @@ export async function POST(request: NextRequest) {
     await prisma.$disconnect();
   }
 }
-

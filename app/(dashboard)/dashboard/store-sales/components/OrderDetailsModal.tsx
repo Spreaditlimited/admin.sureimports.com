@@ -5,10 +5,10 @@ import { toast } from 'sonner';
 import {
   X, Package, Truck, CheckCircle2, Clock, CreditCard,
   MapPin, Phone, User, Calendar, Hash, DollarSign,
-  AlertTriangle, Loader2, ShoppingBag
+  AlertTriangle, Loader2, ShoppingBag, Fingerprint, Layers, RefreshCw
 } from 'lucide-react';
 
-// Interface for individual product items
+// [Interfaces preserved from your original codebase]
 interface ProductItem {
   pidStore: string;
   pidProduct: string;
@@ -18,7 +18,6 @@ interface ProductItem {
   total_price: string;
 }
 
-// Interface for grouped order (from API)
 interface GroupedOrder {
   orderId: string;
   pidUser: string;
@@ -45,17 +44,17 @@ interface OrderDetailsModalProps {
   onClose: () => void;
   order: GroupedOrder;
   onStatusUpdate: () => void;
-  store: 'main' | 'faya';
+  store: 'main';
 }
 
 const STATUS_OPTIONS = ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
-const STATUS_CONFIG: Record<string, { color: string; bgColor: string; icon: any }> = {
-  PAID: { color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/30', icon: CreditCard },
-  PROCESSING: { color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30', icon: Clock },
-  SHIPPED: { color: 'text-purple-600', bgColor: 'bg-purple-100 dark:bg-purple-900/30', icon: Truck },
-  DELIVERED: { color: 'text-emerald-600', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30', icon: Package },
-  COMPLETED: { color: 'text-teal-600', bgColor: 'bg-teal-100 dark:bg-teal-900/30', icon: CheckCircle2 },
+const STATUS_CONFIG: Record<string, { theme: string; icon: any }> = {
+  PAID: { theme: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20', icon: CreditCard },
+  PROCESSING: { theme: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: Clock },
+  SHIPPED: { theme: 'bg-purple-500/10 text-purple-600 border-purple-500/20', icon: Truck },
+  DELIVERED: { theme: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20', icon: Package },
+  COMPLETED: { theme: 'bg-teal-500/10 text-teal-600 border-teal-500/20', icon: CheckCircle2 },
 };
 
 export default function OrderDetailsModal({ isOpen, onClose, order, onStatusUpdate, store }: OrderDetailsModalProps) {
@@ -76,13 +75,13 @@ export default function OrderDetailsModal({ isOpen, onClose, order, onStatusUpda
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
     });
   };
 
   const handleUpdateStatus = async () => {
     if (newStatus === order.status && !trackingNumber && !trackingCompany) {
-      toast.info('No changes to update');
+      toast.info('No modifications detected.');
       return;
     }
 
@@ -92,7 +91,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order, onStatusUpda
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderId: order.orderId, // Use orderId (ext1) instead of pidStore
+          orderId: order.orderId,
           newStatus,
           trackingNumber: trackingNumber || null,
           trackingCompany: trackingCompany || null,
@@ -103,246 +102,288 @@ export default function OrderDetailsModal({ isOpen, onClose, order, onStatusUpda
       const data = await response.json();
 
       if (data.statusx === 'SUCCESS') {
-        toast.success(`Order status updated to ${newStatus}`);
+        toast.success(`Workflow transitioned to ${newStatus}`);
         setShowConfirmation(false);
         onStatusUpdate();
         onClose();
       } else {
-        toast.error(data.message || 'Failed to update status');
+        toast.error(data.message || 'Status synchronization failed');
       }
     } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update order status');
+      toast.error('Network error during synchronization');
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const currentConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.PAID;
+  const currentConfig = STATUS_CONFIG[order.status] || { theme: 'bg-muted text-muted-foreground border-border', icon: Package };
   const StatusIcon = currentConfig.icon;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-        {/* Backdrop */}
-        <div className="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80 transition-opacity" onClick={onClose} />
-
-        {/* Modal */}
-        <div className="relative inline-block w-full max-w-3xl p-6 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg ${currentConfig.bgColor}`}>
-                <StatusIcon className={`w-6 h-6 ${currentConfig.color}`} />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Order Details</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-mono" title={order.orderId}>
-                  {order.orderId.length > 30 ? `${order.orderId.slice(0, 30)}...` : order.orderId}
-                </p>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 sm:p-6 animate-in fade-in duration-200">
+      
+      {/* Main Specification Overlay */}
+      <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        
+        {/* 1. Header */}
+        <div className="px-6 py-4 border-b border-border bg-muted/20 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <div className={`p-2.5 rounded-lg border ${currentConfig.theme}`}>
+              <StatusIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                Order Specification
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-widest border ${currentConfig.theme}`}>
+                  {order.status}
+                </span>
+              </h2>
+              <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
+                <span className="flex items-center gap-1"><Fingerprint className="w-3 h-3" /> {order.orderId}</span>
                 {order.items.length > 1 && (
-                  <span className="inline-flex items-center gap-1 text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded mt-1">
-                    <ShoppingBag className="w-3 h-3" /> {order.items.length} items
+                  <span className="flex items-center gap-1 text-primary bg-primary/10 px-1.5 rounded">
+                    <Layers className="w-3 h-3" /> {order.items.length} Distinct Items
                   </span>
                 )}
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-              <X className="w-5 h-5 text-gray-500" />
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 2. Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-background">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* LEFT COLUMN */}
+            <div className="space-y-8">
+              
+              {/* Subscriber Spec */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                  <User className="w-3.5 h-3.5" /> Subscriber Origin
+                </h4>
+                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">Registered Name</span>
+                    <span className="font-bold text-foreground">{order.fullName || 'Unidentified'}</span>
+                  </div>
+                  {order.userEmail && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-muted-foreground">Email Identity</span>
+                      <span className="font-medium text-foreground">{order.userEmail}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-muted-foreground">Contact String</span>
+                    <span className="font-mono text-foreground">{order.phone || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs pt-3 border-t border-border">
+                    <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest">System UID</span>
+                    <span className="font-mono text-[10px] text-muted-foreground">{order.pidUser}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Manifest Matrix */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                  <Package className="w-3.5 h-3.5" /> Order Manifest
+                </h4>
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-muted/50 border-b border-border text-[9px] uppercase text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-2 font-bold tracking-wider">Item Designation</th>
+                        <th className="px-4 py-2 font-bold tracking-wider text-center">Qty</th>
+                        <th className="px-4 py-2 font-bold tracking-wider text-right">Sum</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {order.items.map((item, index) => (
+                        <tr key={index} className="hover:bg-muted/20">
+                          <td className="px-4 py-3 font-medium text-foreground leading-tight max-w-[200px] truncate" title={item.product_name}>
+                            {item.product_name}
+                            <div className="text-[9px] font-mono text-muted-foreground mt-0.5">{formatCurrency(item.unit_price)} / unit</div>
+                          </td>
+                          <td className="px-4 py-3 text-center font-mono font-bold text-foreground">
+                            {item.quantity}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono font-bold text-foreground">
+                            {formatCurrency(item.total_price)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-muted/10 border-t-2 border-border">
+                      <tr>
+                        <td className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Gross Total</td>
+                        <td className="px-4 py-3 text-center font-mono text-[10px] text-muted-foreground">{order.totalQuantity} items</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-primary text-sm">{formatCurrency(order.totalPrice)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="space-y-8">
+              
+              {/* Fulfillment Coordinates */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5" /> Fulfillment Coordinates
+                </h4>
+                <div className="bg-card border border-border rounded-xl p-4">
+                  {order.address ? (
+                    <p className="text-xs text-foreground leading-relaxed italic border-l-2 border-primary pl-3">
+                      {order.address}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">No physical coordinates provisioned in ledger.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Chronological Meta */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" /> Timestamp & Meta
+                </h4>
+                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-muted-foreground">Original Transaction</span>
+                    <span className="font-mono text-foreground font-bold">{formatDate(order.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-muted-foreground">Latest Ledger Sync</span>
+                    <span className="font-mono text-foreground font-bold">{formatDate(order.updatedAt)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] pt-3 border-t border-border">
+                    <span className="text-muted-foreground">Checkout Topology</span>
+                    <span className="font-bold uppercase tracking-wider text-foreground">{order.purchaseType || 'Standard Retail'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Read-Only Tracking Data (If Shipped) */}
+              {(order.trackingNumber || order.trackingCompany) && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Truck className="w-3.5 h-3.5" /> Active Carrier Meta
+                  </h4>
+                  <div className="bg-card border border-border rounded-xl p-4 flex justify-between items-center">
+                    <div>
+                      <p className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Carrier / Node</p>
+                      <p className="text-sm font-bold text-foreground mt-0.5">{order.trackingCompany || 'N/A'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground">Tracking URI</p>
+                      <p className="text-sm font-mono font-bold text-foreground mt-0.5">{order.trackingNumber || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Operational Transition Block (Footer) */}
+        <div className="p-6 border-t border-border bg-muted/10 shrink-0">
+          <div className="flex items-center gap-2 mb-4">
+             <RefreshCw className="w-3.5 h-3.5 text-primary" />
+             <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Initiate Workflow Transition</h4>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-4 space-y-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Target Status Node</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-xs font-bold uppercase tracking-widest text-foreground focus:ring-2 focus:ring-primary/20"
+              >
+                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <div className="md:col-span-4 space-y-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Tracking Key (If Applicable)</label>
+              <input
+                type="text"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="Airway / Waybill String"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono text-foreground focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="md:col-span-4 space-y-1.5">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Carrier Entity</label>
+              <input
+                type="text"
+                value={trackingCompany}
+                onChange={(e) => setTrackingCompany(e.target.value)}
+                placeholder="Logistics Provider (e.g. DHL)"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-border/50">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 text-[10px] font-bold text-foreground bg-card border border-border rounded-lg hover:bg-muted uppercase tracking-widest transition-colors"
+            >
+              Abort Sync
+            </button>
+            <button
+              onClick={() => setShowConfirmation(true)}
+              disabled={isUpdating}
+              className="px-6 py-2.5 text-[10px] font-bold text-primary-foreground bg-primary rounded-lg shadow-sm hover:bg-primary/90 uppercase tracking-widest transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {isUpdating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+              Commit State
             </button>
           </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Order Info */}
-            <div className="space-y-6">
-              {/* Customer Information */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                  <User className="w-4 h-4" /> Customer Information
-                  {store === 'main' && <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">From User Account</span>}
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <p className="flex justify-between"><span className="text-gray-500">Name:</span><span className="font-medium text-gray-900 dark:text-white">{order.fullName || 'N/A'}</span></p>
-                  {order.userEmail && (
-                    <p className="flex justify-between"><span className="text-gray-500">Email:</span><span className="font-medium text-gray-900 dark:text-white">{order.userEmail}</span></p>
-                  )}
-                  <p className="flex justify-between"><span className="text-gray-500">Phone:</span><span className="font-medium text-gray-900 dark:text-white">{order.phone || 'N/A'}</span></p>
-                  <p className="flex justify-between"><span className="text-gray-500">User ID:</span><span className="font-mono text-xs text-gray-600 dark:text-gray-400">{order.pidUser}</span></p>
-                </div>
-              </div>
-
-              {/* Order Items - Multi-product display */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                  <Package className="w-4 h-4" /> Order Items ({order.items.length})
-                </h4>
-                <div className="space-y-3">
-                  {order.items.map((item, index) => (
-                    <div key={item.pidStore} className={`text-sm ${index > 0 ? 'border-t border-gray-200 dark:border-gray-700 pt-3' : ''}`}>
-                      <p className="text-gray-900 dark:text-white font-medium mb-1">{item.product_name}</p>
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>Qty: {item.quantity}</span>
-                        <span>{formatCurrency(item.unit_price)} × {item.quantity}</span>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(item.total_price)}</span>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="flex justify-between border-t border-gray-300 dark:border-gray-600 pt-3 mt-3">
-                    <span className="text-gray-700 dark:text-gray-300 font-semibold">Order Total ({order.totalQuantity} items):</span>
-                    <span className="font-bold text-lg text-purple-600">{formatCurrency(order.totalPrice)}</span>
-                  </div>
-                </div>
-              </div>
+      {/* 4. Security Confirmation Layer */}
+      {showConfirmation && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/80 backdrop-blur-sm px-4 animate-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border p-8 rounded-xl shadow-2xl max-w-md w-full text-center space-y-6">
+            <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto ring-1 ring-amber-500/20">
+              <AlertTriangle className="w-8 h-8 text-amber-500" />
             </div>
-
-            {/* Right Column - Shipping & Status */}
-            <div className="space-y-6">
-              {/* Shipping Address */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" /> Shipping Address
-                  {store === 'main' && order.address && (
-                    <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">From User Account</span>
-                  )}
-                </h4>
-                {order.address ? (
-                  <>
-                    <p className="text-sm text-gray-900 dark:text-white leading-relaxed">{order.address}</p>
-                    {store === 'faya' && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2 text-sm">
-                        <p className="flex justify-between"><span className="text-gray-500">Delivery Option:</span><span className="font-medium">{order.deliveryOption || 'Standard'}</span></p>
-                        <p className="flex justify-between"><span className="text-gray-500">Location:</span><span className="font-medium">{order.deliveryLocation || 'N/A'}</span></p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                    No shipping address on file.
-                  </p>
-                )}
-              </div>
-
-              {/* Order Meta */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" /> Order Information
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <p className="flex justify-between"><span className="text-gray-500">Order Date:</span><span className="font-medium">{formatDate(order.createdAt)}</span></p>
-                  <p className="flex justify-between"><span className="text-gray-500">Last Updated:</span><span className="font-medium">{formatDate(order.updatedAt)}</span></p>
-                  <p className="flex justify-between"><span className="text-gray-500">Purchase Type:</span><span className="font-medium">{order.purchaseType || 'Single'}</span></p>
-                </div>
-              </div>
-
-              {/* Current Status */}
-              <div className={`rounded-lg p-4 ${currentConfig.bgColor}`}>
-                <div className="flex items-center gap-3">
-                  <StatusIcon className={`w-8 h-8 ${currentConfig.color}`} />
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Current Status</p>
-                    <p className={`text-lg font-bold ${currentConfig.color}`}>{order.status}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <h4 className="text-sm font-bold text-foreground uppercase tracking-widest">Confirm Workflow Shift</h4>
+              <p className="text-[11px] text-muted-foreground leading-relaxed px-2">
+                Transitioning this node from <span className="font-bold text-foreground">{order.status}</span> to <span className="font-bold text-primary">{newStatus}</span> will log the event and trigger automated subscriber notifications.
+              </p>
             </div>
-          </div>
-
-          {/* Status Update Section */}
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Update Order Status</h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              {/* Status Selection */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">New Status</label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500"
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Tracking Number (for SHIPPED) */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Tracking Number</label>
-                <input
-                  type="text"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  placeholder="Enter tracking number"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              {/* Tracking Company */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Carrier/Company</label>
-                <input
-                  type="text"
-                  value={trackingCompany}
-                  onChange={(e) => setTrackingCompany(e.target.value)}
-                  placeholder="e.g., DHL, FedEx"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-3">
+            <div className="flex gap-3 pt-2">
               <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setShowConfirmation(false)}
+                className="flex-1 px-4 py-2.5 text-[10px] font-bold text-foreground hover:bg-muted border border-border rounded-lg uppercase tracking-widest transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => setShowConfirmation(true)}
+                onClick={handleUpdateStatus}
                 disabled={isUpdating}
-                className="px-6 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg shadow-sm hover:bg-primary/90 uppercase tracking-widest transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                Update Status
+                {isUpdating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Execute Shift
               </button>
             </div>
           </div>
-
-          {/* Confirmation Modal */}
-          {showConfirmation && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <AlertTriangle className="w-6 h-6 text-amber-500" />
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Confirm Status Update</h4>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Are you sure you want to update the order status from <strong>{order.status}</strong> to <strong>{newStatus}</strong>?
-                  {newStatus !== order.status && ' An email notification will be sent to the customer.'}
-                </p>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowConfirmation(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleUpdateStatus}
-                    disabled={isUpdating}
-                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {isUpdating && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Confirm
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

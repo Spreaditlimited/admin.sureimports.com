@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/cleanup-saved-orders",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/invoice-follow-ups",
+      "schedule": "0 * * * *"
     }
   ]
 }

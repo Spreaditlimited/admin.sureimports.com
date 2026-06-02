@@ -1,4 +1,5 @@
 import xMail from '@/lib/email/xMail2';
+import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
 
 export const CORPORATE_GIFT_STATUSES = [
   'Pending',
@@ -38,42 +39,10 @@ type NotifyInput = {
 };
 
 async function sendWhatsAppTemplate(input: NotifyInput) {
-  const webhookUrl = process.env.N8N_WHATSAPP_WEBHOOK_URL;
-  const webhookToken = process.env.N8N_WHATSAPP_WEBHOOK_TOKEN;
-
-  if (!webhookUrl) {
-    console.warn('n8n WhatsApp webhook is not configured');
-    return;
-  }
-
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(webhookToken ? { Authorization: `Bearer ${webhookToken}` } : {}),
-    },
-    body: JSON.stringify({
-      channel: 'whatsapp',
-      useTemplate: true,
-      templateKey: 'corporate_gift_status_update',
-      requestId: input.requestId,
-      businessName: input.businessName,
-      contactPersonFullName: input.contactPersonFullName,
-      contactEmail: input.contactEmail,
-      whatsappNumber: input.whatsappNumber,
-      status: input.status,
-      handledByName: input.handledByName || '',
-      cancellationReason: input.cancellationReason || '',
-    }),
-    cache: 'no-store',
+  await sendApprovedWhatsAppStatusTemplate({
+    ...input,
+    serviceName: 'Corporate Gifts',
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `n8n WhatsApp webhook error (${response.status}): ${errorText}`,
-    );
-  }
 }
 
 export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {

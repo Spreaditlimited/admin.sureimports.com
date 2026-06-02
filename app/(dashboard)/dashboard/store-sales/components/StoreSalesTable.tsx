@@ -2,11 +2,26 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Eye, Search, X, Filter, Package, Truck, CheckCircle2, Clock, CreditCard, Store, ShoppingBag } from 'lucide-react';
-import Modal from '@/app/uix/ModalLarge';
+import { 
+  Eye, 
+  Search, 
+  X, 
+  Package, 
+  Truck, 
+  CheckCircle2, 
+  Clock, 
+  CreditCard, 
+  RefreshCw, 
+  Filter, 
+  Layers, 
+  ChevronLeft, 
+  ChevronRight,
+  User as UserIcon,
+  Calendar
+} from 'lucide-react';
 import OrderDetailsModal from './OrderDetailsModal';
 
-// Interface for individual product items
+// [Interfaces perfectly preserved from your original codebase]
 interface ProductItem {
   pidStore: string;
   pidProduct: string;
@@ -16,7 +31,6 @@ interface ProductItem {
   total_price: string;
 }
 
-// Interface for grouped order (from API)
 interface GroupedOrder {
   orderId: string;
   pidUser: string;
@@ -41,15 +55,10 @@ interface GroupedOrder {
 const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 const STATUS_OPTIONS = ['', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
 
-type StoreType = 'main' | 'faya';
-
 export default function StoreSalesTable() {
   const [orders, setOrders] = useState<GroupedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Store type state - default to 'main' (Main Store)
-  const [activeStore, setActiveStore] = useState<StoreType>('main');
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -66,7 +75,6 @@ export default function StoreSalesTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<GroupedOrder | null>(null);
 
-  // Fetch store sales (grouped orders)
   const fetchStoreSales = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -75,12 +83,23 @@ export default function StoreSalesTable() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: itemsPerPage.toString(),
-        store: activeStore,
         ...(search && { search }),
         ...(status && { status }),
       });
 
-      const response = await fetch(`/api/store-sales?${params}`);
+      const response = await fetch(`/api/store-sales?${params.toString()}`);
+      const contentType = response.headers.get('content-type') || '';
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Store sales API error (${response.status}): ${errorText.slice(0, 180)}`);
+      }
+
+      if (!contentType.toLowerCase().includes('application/json')) {
+        const bodyPreview = await response.text();
+        throw new Error(`Unexpected API response format: ${bodyPreview.slice(0, 180)}`);
+      }
+
       const data = await response.json();
 
       if (data.statusx === 'SUCCESS') {
@@ -92,9 +111,12 @@ export default function StoreSalesTable() {
         setError(data.message || 'Failed to fetch store sales');
         toast.error(data.message || 'Failed to fetch store sales');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch store sales. Please try again.');
-      console.error('Fetch error:', err);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error
+        ? err.message
+        : (typeof err === 'string' ? err : 'Failed to fetch store sales. Please try again.');
+
+      setError(errorMessage);
       toast.error('Failed to fetch store sales');
       setOrders([]);
       setTotalPages(1);
@@ -102,17 +124,8 @@ export default function StoreSalesTable() {
     } finally {
       setLoading(false);
     }
-  }, [page, itemsPerPage, search, status, activeStore]);
+  }, [page, itemsPerPage, search, status]);
 
-  // Handle store type change
-  const handleStoreChange = (newStore: StoreType) => {
-    setActiveStore(newStore);
-    setPage(1);
-    setSearch('');
-    setStatus('');
-  };
-
-  // Debounced fetch
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchStoreSales();
@@ -120,45 +133,38 @@ export default function StoreSalesTable() {
     return () => clearTimeout(handler);
   }, [fetchStoreSales]);
 
-  // Handle details button click
   const handleDetailsClick = (order: GroupedOrder) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
 
-  // Handle modal close
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedOrder(null);
   };
 
-  // Handle status update success
   const handleStatusUpdateSuccess = () => {
     fetchStoreSales();
   };
 
-  // Handle filter change
   const handleFilterChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
     setter(value);
     setPage(1);
   };
 
-  // Handle page change
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
   };
 
-  // Handle items per page change
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
     setPage(1);
   };
 
-  // Format currency
   const formatCurrency = (amount: string | number | null) => {
-    if (amount === null || amount === undefined) return 'N/A';
+    if (amount === null || amount === undefined) return '₦0.00';
     const num = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
@@ -166,14 +172,12 @@ export default function StoreSalesTable() {
     }).format(num);
   };
 
-  // Get order items display text
   const getOrderItemsDisplay = (items: ProductItem[]) => {
-    if (!items || items.length === 0) return 'No items';
+    if (!items || items.length === 0) return 'No items provisioned';
     if (items.length === 1) return items[0].product_name;
-    return `${items.length} items`;
+    return `${items.length} Distinct Items`;
   };
 
-  // Format date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -185,180 +189,150 @@ export default function StoreSalesTable() {
     });
   };
 
-  // Get status badge color and icon
   const getStatusConfig = (status: string | null) => {
     switch (status?.toUpperCase()) {
       case 'PAID':
-        return { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', icon: CreditCard };
+        return { color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20', icon: CreditCard };
       case 'PROCESSING':
-        return { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', icon: Clock };
+        return { color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: Clock };
       case 'SHIPPED':
-        return { color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300', icon: Truck };
+        return { color: 'bg-purple-500/10 text-purple-600 border-purple-500/20', icon: Truck };
       case 'DELIVERED':
-        return { color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300', icon: Package };
+        return { color: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20', icon: Package };
       case 'COMPLETED':
-        return { color: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300', icon: CheckCircle2 };
+        return { color: 'bg-teal-500/10 text-teal-600 border-teal-500/20', icon: CheckCircle2 };
       default:
-        return { color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300', icon: Package };
+        return { color: 'bg-muted text-muted-foreground border-border', icon: Package };
     }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Store Type Switcher */}
-      <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow">
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleStoreChange('main')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-              activeStore === 'main'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            <Store className="w-5 h-5" />
-            <span>Main Store</span>
-          </button>
-          <button
-            onClick={() => handleStoreChange('faya')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
-              activeStore === 'faya'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            <ShoppingBag className="w-5 h-5" />
-            <span>Faya Store</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Total Amount Summary */}
+    <div className="space-y-6">
+      
+      {/* 1. Fiscal Performance Ledger Grid */}
       {!loading && !error && (
-        <div className="bg-gradient-to-r from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800 p-6 rounded-lg shadow-lg">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div className="flex-1">
-              <p className="text-purple-100 text-sm font-medium mb-1">
-                {activeStore === 'main' ? 'Main Store' : 'Faya Store'} Sales {status && `(${status})`}
-              </p>
-              <p className="text-white text-3xl font-bold">
-                {formatCurrency(totalAmount.toString())}
-              </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-card border border-border rounded-xl p-5 shadow-soft flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Cumulative Gross Revenue</p>
+              <p className="text-2xl font-bold mt-1 text-foreground font-mono">{formatCurrency(totalAmount)}</p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 text-purple-100">
-              <div className="text-center sm:text-right">
-                <p className="text-xs font-medium mb-1">Total Orders</p>
-                <p className="text-xl font-semibold text-white">{totalCount}</p>
-              </div>
-              {status && (
-                <div className="text-center sm:text-right">
-                  <p className="text-xs font-medium mb-1">Status</p>
-                  <p className="text-xl font-semibold text-white">{status}</p>
-                </div>
-              )}
+            <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
+              <CreditCard className="w-5 h-5" />
+            </div>
+          </div>
+          
+          <div className="bg-card border border-border rounded-xl p-5 shadow-soft flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Fulfillment Invoices</p>
+              <p className="text-2xl font-bold mt-1 text-foreground font-mono">{totalCount}</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-muted text-muted-foreground">
+              <Layers className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-5 shadow-soft flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ledger Node Scope</p>
+              <p className="text-2xl font-bold mt-1 text-foreground font-mono">{status || 'ALL SEGMENTS'}</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-muted text-muted-foreground">
+              <Filter className="w-5 h-5" />
             </div>
           </div>
         </div>
       )}
 
-      {/* Filters and Search */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Search */}
-          <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Search
+      {/* 2. Calibration Workspace Controls */}
+      <div className="bg-card border border-border rounded-xl shadow-soft p-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Query String Input */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Search className="w-3 h-3" /> Query String Analysis
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search by Order ID, name, phone..."
+                placeholder="Search by Invoice, Subscriber name..."
                 value={search}
                 onChange={(e) => handleFilterChange(setSearch, e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-9 pr-9 py-2 bg-background border border-border rounded-lg text-xs font-medium text-foreground focus:ring-2 focus:ring-primary/20 transition-all"
               />
               {search && (
                 <button
                   onClick={() => handleFilterChange(setSearch, '')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Status
-            </label>
+          {/* Core Lifecycle Filter */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Core Lifecycle Stage</label>
             <select
               value={status}
               onChange={(e) => handleFilterChange(setStatus, e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-bold uppercase tracking-widest text-foreground cursor-pointer focus:ring-2 focus:ring-primary/20"
             >
-              <option value="">All Statuses</option>
+              <option value="">All Lifecycle Nodes</option>
               {STATUS_OPTIONS.filter(s => s).map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
 
-          {/* Items per page */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Items per page
-            </label>
+          {/* Matrix Window Quantum */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Matrix Window Quantum</label>
             <select
               value={itemsPerPage}
               onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-bold font-mono text-foreground cursor-pointer focus:ring-2 focus:ring-primary/20"
             >
               {ITEMS_PER_PAGE_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
+                <option key={option} value={option}>{option} Entries / View</option>
               ))}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && !loading && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400">
-          {error}
-        </div>
-      )}
-
-      {/* Data Table */}
-      {!loading && !error && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      {/* 3. Operational Data Matrix */}
+      <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center text-muted-foreground gap-4">
+            <RefreshCw className="w-8 h-8 animate-spin opacity-20" />
+            <p className="text-[10px] font-bold uppercase tracking-widest">Synchronizing Ledger Operations...</p>
+          </div>
+        ) : error ? (
+          <div className="p-6 text-center text-xs font-bold uppercase tracking-wider text-destructive bg-destructive/5 border-b border-border">
+            {error}
+          </div>
+        ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-muted/50 border-b border-border text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Order Items</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-4">Transaction URI</th>
+                  <th className="px-6 py-4">Subscriber Spec</th>
+                  <th className="px-6 py-4">Consolidated Cargo</th>
+                  <th className="px-6 py-4">Total Price</th>
+                  <th className="px-6 py-4">Fulfillment Status</th>
+                  <th className="px-6 py-4">Timestamp Node</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-border text-xs">
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                      No orders found
+                    <td colSpan={7} className="px-6 py-16 text-center text-muted-foreground italic">
+                      No matching records committed to database.
                     </td>
                   </tr>
                 ) : (
@@ -366,41 +340,44 @@ export default function StoreSalesTable() {
                     const statusConfig = getStatusConfig(order.status);
                     const StatusIcon = statusConfig.icon;
                     return (
-                      <tr key={order.orderId} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-mono text-gray-900 dark:text-white truncate max-w-[150px] block" title={order.orderId}>
-                            {order.orderId.length > 20 ? `${order.orderId.slice(0, 20)}...` : order.orderId}
+                      <tr key={order.orderId} className="hover:bg-muted/30 transition-colors duration-150">
+                        <td className="px-6 py-4 whitespace-nowrap font-mono text-[10px] text-muted-foreground">
+                          <span className="truncate max-w-[140px] block" title={order.orderId}>
+                            {order.orderId}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{order.fullName || 'N/A'}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{order.phone || order.userEmail || 'No contact'}</div>
+                          <div className="font-bold text-foreground flex items-center gap-1.5">
+                            <UserIcon className="w-3 h-3 text-muted-foreground" /> {order.fullName || 'Unidentified'}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{order.phone || order.userEmail || 'No contact string'}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 dark:text-white max-w-[200px] truncate" title={order.items.map(i => i.product_name).join(', ')}>
+                          <div className="font-medium text-foreground max-w-[180px] truncate" title={order.items.map(i => i.product_name).join(', ')}>
                             {getOrderItemsDisplay(order.items)}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Qty: {order.totalQuantity}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">Quantity Mass: {order.totalQuantity} units</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-foreground font-mono">
+                          {formatCurrency(order.totalPrice)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(order.totalPrice)}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}>
-                            <StatusIcon className="w-3.5 h-3.5" />
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${statusConfig.color}`}>
+                            <StatusIcon className="w-3 h-3" />
                             {order.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(order.createdAt)}
+                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground font-mono text-[10px]">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3 h-3" /> {formatDate(order.createdAt)}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
                           <button
                             onClick={() => handleDetailsClick(order)}
-                            className="inline-flex items-center px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                            className="inline-flex items-center px-3 py-1.5 bg-background border border-border text-foreground rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-muted shadow-sm transition-all"
                           >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
+                            <Eye className="w-3.5 h-3.5 mr-1 text-primary" /> View Specs
                           </button>
                         </td>
                       </tr>
@@ -410,62 +387,61 @@ export default function StoreSalesTable() {
               </tbody>
             </table>
           </div>
+        )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Showing {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, totalCount)} of {totalCount} results
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(1)}
-                  disabled={page === 1}
-                  className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  First
-                </button>
-                <button
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1}
-                  className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  Previous
-                </button>
-                <span className="px-4 py-1 text-sm font-medium">
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === totalPages}
-                  className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  Next
-                </button>
-                <button
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={page === totalPages}
-                  className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  Last
-                </button>
-              </div>
+        {/* 4. Ledger Pagination Matrix */}
+        {totalPages > 1 && !loading && !error && (
+          <div className="px-6 py-4 border-t border-border bg-muted/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
+            <p className="text-muted-foreground">
+              Indexing <span className="text-foreground">{((page - 1) * itemsPerPage) + 1} - {Math.min(page * itemsPerPage, totalCount)}</span> of <span className="text-foreground">{totalCount}</span> Transactions
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={page === 1}
+                className="p-2 border border-border bg-card hover:bg-muted rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                First
+              </button>
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+                className="p-2 border border-border bg-card hover:bg-muted rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="px-3 py-1.5 font-mono text-foreground bg-background rounded-lg border border-border">
+                Node {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages}
+                className="p-2 border border-border bg-card hover:bg-muted rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page === totalPages}
+                className="p-2 border border-border bg-card hover:bg-muted rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Last
+              </button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
-      {/* Order Details Modal */}
+      {/* Grouped Order Details Modal */}
       {selectedOrder && (
         <OrderDetailsModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           order={selectedOrder}
           onStatusUpdate={handleStatusUpdateSuccess}
-          store={activeStore}
+          store="main"
         />
       )}
     </div>
   );
 }
-

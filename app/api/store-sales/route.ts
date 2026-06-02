@@ -151,6 +151,7 @@ export async function GET(request: NextRequest) {
         userShippingAddress2: string | null;
       }
     >();
+    const paymentByTxRef = new Map<string, { paymentExt1: string | null; paymentExt2: string | null }>();
 
     if (store === 'main') {
       const pidUsers = Array.from(
@@ -188,6 +189,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const refs = Array.from(new Set(allSales.map((sale) => sale.ext1).filter(Boolean)));
+    if (refs.length > 0) {
+      const payments = await prisma.payments.findMany({
+        where: { txRef: { in: refs as string[] } },
+        select: { txRef: true, paymentExt1: true, paymentExt2: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      for (const payment of payments) {
+        if (!payment.txRef || paymentByTxRef.has(payment.txRef)) continue;
+        paymentByTxRef.set(payment.txRef, {
+          paymentExt1: payment.paymentExt1,
+          paymentExt2: payment.paymentExt2,
+        });
+      }
+    }
+
     // Group sales by order ID (ext1)
     const groupedSalesMap = groupSalesByOrderId(allSales);
 
@@ -216,10 +233,13 @@ export async function GET(request: NextRequest) {
         ? userByPid.get(firstItem.pidUser) || null
         : null;
 
-      // For main store: use userShippingAddress2 as primary, fallback to userShippingAddress
-      const mainStoreShippingAddress = userDetails
-        ? (userDetails.userShippingAddress2?.trim() || userDetails.userShippingAddress?.trim() || null)
-        : null;
+      const paymentMeta = firstItem.ext1 ? paymentByTxRef.get(firstItem.ext1) : null;
+
+      // For main store: use payment-time shipping snapshot first, then profile fallback.
+      const mainStoreShippingAddress = paymentMeta?.paymentExt1?.trim()
+        || userDetails?.userShippingAddress2?.trim()
+        || userDetails?.userShippingAddress?.trim()
+        || null;
 
       const groupedOrder: GroupedOrder = {
         orderId,
@@ -242,8 +262,8 @@ export async function GET(request: NextRequest) {
         userEmail: store === 'faya' ? null : userDetails?.userEmail || null,
         activeTab: store === 'faya' ? firstItem.activeTab : null,
         purchaseType: store === 'faya' ? firstItem.purchaseType : null,
-        // Tracking info (use ext2 since ext1 is now order group ID)
-        trackingNumber: firstItem.ext2 || null,
+        // Tracking info is stored on payment metadata to avoid clashing with payment method.
+        trackingNumber: paymentMeta?.paymentExt2 || null,
         trackingCompany: null, // No longer using ext2 for company
       };
 

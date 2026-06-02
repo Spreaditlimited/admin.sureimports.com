@@ -54,30 +54,26 @@ export async function POST(request: Request) {
           const productSlug = generateSlug(productName);
 
 
-  //UPDATE PROFILE RECORDS
-  const updatex = await prisma.store.update({
-    where: { pidProduct: pidProduct,} ,
-    data: {
-        pidProduct: pidProduct, 
-        productName: productName, 
-        productSlug: productSlug, 
-        productCategory: productCategory,
-        productBrand: productBrand,
-        productPrice: parseFloat(productPrice),
-        productMOQ: parseFloat(productMOQ),
-        productDescription: productDescription,
-        productFeature: productFeature,
-        productSpecification: productSpecification,
-        productVisibility: isProductVisible === 'true' ? true : false,
+  const updateData: any = {
+    pidProduct: pidProduct,
+    productName: productName,
+    productSlug: productSlug,
+    productCategory: productCategory,
+    productBrand: productBrand,
+    productPrice: parseFloat(productPrice),
+    productMOQ: parseFloat(productMOQ),
+    productDescription: productDescription,
+    productFeature: productFeature,
+    productSpecification: productSpecification,
+    productVisibility: isProductVisible === 'true' ? true : false,
 
-        affiliatePayout: parseFloat(affiliatePayout),
-        superAffiliatePayout: parseFloat(superAffiliatePayout),
-        productCondition: productCondition,
-        warrantyPeriod: warrantyPeriod,
+    affiliatePayout: parseFloat(affiliatePayout),
+    superAffiliatePayout: parseFloat(superAffiliatePayout),
+    productCondition: productCondition,
+    warrantyPeriod: warrantyPeriod,
 
-        updatedAt: new Date(),
-    },
-  });
+    updatedAt: new Date(),
+  };
 
   let imageStatus = 'YES';
 
@@ -94,6 +90,11 @@ export async function POST(request: Request) {
   }
 
   if (imageStatus == 'NO') {
+    await prisma.store.update({
+      where: { pidProduct: pidProduct,} ,
+      data: updateData,
+    });
+
     //RETURN SUCCESS CONTENT UPLOAD
     return NextResponse.json(
       { statusx:'SUCCESS', message: 'Product was successfuly updated'},
@@ -120,26 +121,27 @@ export async function POST(request: Request) {
             );
       }
 
-    //update image file in database
-    const updatex = await prisma.store.update({
-      where: { pidProduct: pidProduct, },
-      data: {
-        productImage: newFileName,
-        updatedAt: new Date(),
-      },
-    });
-
     ///////////// IMAGE UPLOAD TO R2 STARTS /////////////
     try {
       //GET FILE PAYLOAD
       const buffer = await file.arrayBuffer();
 
-      await uploadBufferToCloudinary(Buffer.from(buffer), {
+      const uploadResult = await uploadBufferToCloudinary(Buffer.from(buffer), {
         folder: 'admin-sureimports/store',
         publicId: newFileName,
         useFilename: false,
         uniqueFilename: false,
         overwrite: true,
+      });
+
+      await prisma.store.update({
+        where: { pidProduct: pidProduct, },
+        data: {
+          ...updateData,
+          productImage: uploadResult.publicId,
+          productImageType: fileType,
+          productImageExt: fileExt,
+        },
       });
 
       //RETURN SUCCESS ON FILE UPLOAD
