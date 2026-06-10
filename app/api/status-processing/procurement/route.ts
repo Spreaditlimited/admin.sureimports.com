@@ -23,6 +23,40 @@ export async function POST(request: Request) {
   const message = formData.get('message') as string;
   const pidMessage = formData.get('pidMessage') as string;
 
+  const allowedStatuses = new Set([
+    'message',
+    'tracking-number-update',
+    'revert_to_approved',
+    'on-hold',
+    'saved',
+    'approved',
+    'pending',
+    'pay-for-shipping',
+    'in-transit',
+    'ready-for-pickup',
+    'cancelled',
+    'completed',
+  ]);
+
+  if (!allowedStatuses.has(newStatus)) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Invalid procurement status update. Refresh and try again.' },
+      { status: 400 },
+    );
+  }
+
+  const validTransitions: Record<string, string[]> = {
+    pending: ['on-hold', 'approved'],
+    approved: ['on-hold', 'pay-for-shipping'],
+    'pay-for-shipping': ['message', 'revert_to_approved'],
+    'in-transit': ['on-hold', 'ready-for-pickup', 'tracking-number-update'],
+    'ready-for-pickup': ['on-hold', 'completed'],
+    'on-hold': ['cancelled', 'pending'],
+    'bank-pending-saved-orders': ['saved', 'pending'],
+    'bank-pending-shipping-orders': ['pay-for-shipping', 'in-transit'],
+    saved: ['message'],
+  };
+
   //INITIAL DETAILS
   const orderShippingCost = formData.get('orderShippingCost') as string;
   const orderTotalCost = formData.get('orderTotalCost') as string;
@@ -62,6 +96,50 @@ export async function POST(request: Request) {
       //userEmail: email,
     },
   });
+
+  const orderRecord = await prisma.orders.findFirst({
+    where: {
+      pidUser: pidUser,
+      pidOrder: pidOrder,
+    },
+    select: {
+      status: true,
+    },
+  });
+
+  if (!user || !orderRecord) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Order or customer account was not found.' },
+      { status: 404 },
+    );
+  }
+
+  const recordStatus = orderRecord.status || '';
+  if (currentStatus && currentStatus !== recordStatus) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Order status changed in another session. Refresh and try again.' },
+      { status: 409 },
+    );
+  }
+
+  if (!validTransitions[recordStatus]?.includes(newStatus)) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: `Invalid procurement transition from ${recordStatus || 'unknown'} to ${newStatus}.` },
+      { status: 400 },
+    );
+  }
+
+  if (recordStatus === 'approved' && newStatus === 'pay-for-shipping') {
+    const actualWeightValue = Number(actualWeight);
+    const actualDomesticShippingCostValue = Number(actualDomesticShippingCost);
+
+    if (!Number.isFinite(actualWeightValue) || actualWeightValue <= 0 || !Number.isFinite(actualDomesticShippingCostValue) || actualDomesticShippingCostValue <= 0) {
+      return NextResponse.json(
+        { statusx: 'ACTION_FAILED', message: 'Actual weight and domestic shipping cost are required to move this order to Pay for Shipping.' },
+        { status: 400 },
+      );
+    }
+  }
 
 
 

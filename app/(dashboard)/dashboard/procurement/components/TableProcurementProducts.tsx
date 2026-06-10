@@ -49,6 +49,13 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const navigateWithAlert = useNavigationWithAlert();
   const status = useSearchParams().get('status') || 'none';
   let newStatus:string = '';
+  const showActualShippingBreakdown = [
+    'pay-for-shipping',
+    'bank-pending-shipping-orders',
+    'in-transit',
+    'ready-for-pickup',
+    'completed',
+  ].includes(status);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [productALL, setProductALL] = useState<Product[]>([]);
@@ -183,16 +190,34 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const confirmPendingAction = () => {
     if (!pendingAction) return;
-    setActionType(pendingAction.value);
+    const action = pendingAction.value;
+    setActionType(action);
     setIsActionConfirmOpen(false);
-    formRef.current?.requestSubmit();
+
+    const form = formRef.current;
+    if (!form) return;
+
+    const submitter = document.createElement('button');
+    submitter.type = 'submit';
+    submitter.name = 'action';
+    submitter.value = action;
+    submitter.hidden = true;
+    form.appendChild(submitter);
+    form.requestSubmit(submitter);
+    submitter.remove();
   };
 
   const getActionConfirmText = () => {
     if (!pendingAction) return 'Are you sure you want to proceed with this order action?';
-    return pendingAction.value.includes('on-hold') || pendingAction.value.includes('saved') || pendingAction.value.includes('pay-for-shipping')
-      ? 'Are you sure you want to decline this order?'
-      : 'Are you sure you want to approve this order?';
+    if (pendingAction.value === 'on-hold') return 'Are you sure you want to decline this order and place it on hold?';
+    if (pendingAction.value === 'saved') return 'Are you sure you want to decline this payment and move the order back to Saved?';
+    if (pendingAction.value === 'pay-for-shipping' && status === 'bank-pending-shipping-orders') {
+      return 'Are you sure you want to decline this shipping payment and move the order back to Pay for Shipping?';
+    }
+    if (pendingAction.value === 'pay-for-shipping') {
+      return 'Are you sure you want to approve this order and move it to Pay for Shipping?';
+    }
+    return `Are you sure you want to ${pendingAction.label.toLowerCase()}?`;
   };
 
   if (loading) return <Loader />;
@@ -467,8 +492,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         </div>
       </div>
 
-      {/* Actual Shipping Cost Details (If Status: Pay For Shipping) */}
-      {(status == 'pay-for-shipping') && (
+      {/* Actual Shipping Cost Details */}
+      {showActualShippingBreakdown && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-card border border-border shadow-sm rounded-lg p-5">
             <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Actual Shipping Details</h3>
@@ -632,7 +657,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               </div>
             </div>
             <div className="flex justify-end">
-               <button type="submit" name="action" value="ready-for-pickup" onClick={() => setActionType('tracking-number-update')} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+               <button type="submit" name="action" value="tracking-number-update" onClick={() => setActionType('tracking-number-update')} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors">
                 Update Tracking Data
               </button>
             </div>
