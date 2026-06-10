@@ -67,12 +67,18 @@ const customerAccounts: MenuItem[] = [
     serviceKey: "customer_accounts",
     submenu: [
       { title: "Customers", path: "/dashboard/customer-accounts/customers" },
-      { title: "Transactions", path: "/dashboard/customer-accounts/transactions" },
+      { title: "Wallet Transactions", path: "/dashboard/customer-accounts/transactions" },
     ],
   },
 ]
 
 const customerPayouts: MenuItem[] = [
+  {
+    title: "Refunds",
+    icon: Wallet,
+    path: "/dashboard/refunds",
+    serviceKey: "payout_requests",
+  },
   {
     title: "Payout Requests",
     icon: Wallet,

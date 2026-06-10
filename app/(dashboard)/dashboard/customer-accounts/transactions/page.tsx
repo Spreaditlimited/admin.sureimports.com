@@ -9,10 +9,10 @@ export default async function DashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-1 px-1">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Customer Transactions
+          Wallet Transactions
         </h1>
         <p className="text-sm text-muted-foreground">
-          Monitor and audit all financial movements across customer accounts.
+          Monitor dedicated account funding and wallet credit transactions.
         </p>
       </div>
 

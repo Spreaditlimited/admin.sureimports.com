@@ -53,7 +53,7 @@ export default function CustomerTransactionsTable() {
       {/* 1. Header Stats (Matching Customers Page style) */}
       <div className="flex items-center justify-between px-1">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          {transactions.length} Customer Transactions
+          {transactions.length} Wallet Transactions
         </h2>
       </div>
 
