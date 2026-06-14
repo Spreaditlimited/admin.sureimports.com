@@ -3,72 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 import randomGenerator from '@/lib/helpers/randomGenerator';
 import sendWalletDebitEmail from '@/lib/email/sendWalletDebitEmail';
+import { ensureWallet, recordWalletDebit, syncLegacyWalletDebits } from '@/lib/walletLedger';
 
 const CUSTOMER_ACCOUNTS_SERVICE_KEY = 'customer_accounts';
 
 function toAmount(value: unknown) {
   const amount = Number(value);
   return Number.isFinite(amount) ? amount : 0;
-}
-
-async function fetchPaystackWalletCredits(email: string) {
-  const customerResponse = await fetch(`https://api.paystack.co/customer/${encodeURIComponent(email)}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${process.env.NEXT_SECRET_PAYSTACK_SECRET_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    cache: 'no-store',
-  });
-  const customerData = await customerResponse.json();
-  const customerId = customerData?.data?.id;
-  if (!customerResponse.ok || !customerId) return 0;
-
-  const transactionResponse = await fetch(
-    `https://api.paystack.co/transaction?customer=${customerId}&perPage=1000`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_SECRET_PAYSTACK_SECRET_KEY}`,
-      },
-      cache: 'no-store',
-    }
-  );
-  const transactionData = await transactionResponse.json();
-  const transactions = Array.isArray(transactionData?.data) ? transactionData.data : [];
-
-  return transactions.reduce((sum: number, transaction: { channel?: string; status?: string; amount?: number }) => {
-    if (
-      String(transaction.channel || '').toLowerCase() === 'dedicated_nuban' &&
-      String(transaction.status || '').toLowerCase() === 'success'
-    ) {
-      return sum + toAmount(transaction.amount) / 100;
-    }
-    return sum;
-  }, 0);
-}
-
-async function calculateWalletBalance(pidUser: string, email: string) {
-  const paystackCredits = await fetchPaystackWalletCredits(email);
-  const debits = await prisma.debits.findMany({
-    where: {
-      OR: [{ pidUser }, { email }],
-    },
-    select: {
-      amount: true,
-      paymentStatus: true,
-    },
-  });
-
-  return debits.reduce((balance, row) => {
-    if (String(row.paymentStatus || '').toUpperCase() === 'REFUND_CREDIT') {
-      return balance + row.amount;
-    }
-    if (String(row.paymentStatus || '').toUpperCase() === 'DEBITED') {
-      return balance - row.amount;
-    }
-    return balance;
-  }, paystackCredits);
 }
 
 export async function POST(request: Request) {
@@ -134,7 +75,9 @@ export async function POST(request: Request) {
     const payerName =
       `${user.userFirstname || ''} ${user.userLastname || ''}`.trim() ||
       'Customer';
-    const walletBalanceBeforeDebit = await calculateWalletBalance(user.pidUser, email);
+    await syncLegacyWalletDebits(prisma, user);
+    const wallet = await ensureWallet(prisma, user);
+    const walletBalanceBeforeDebit = wallet.balance;
     if (walletBalanceBeforeDebit < amount) {
       return NextResponse.json(
         {
@@ -170,6 +113,14 @@ export async function POST(request: Request) {
         createdAt: now,
         updatedAt: now,
       },
+    });
+
+    await recordWalletDebit(prisma, user, {
+      amount,
+      reference: `DEBIT:${pidDebit}`,
+      description: reason,
+      currency: 'NGN',
+      date: now,
     });
 
     const walletBalanceAfterDebit = walletBalanceBeforeDebit - amount;

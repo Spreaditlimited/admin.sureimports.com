@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import Loading from '@/components/layouts/loading';
 import TransactionsTable from './TransactionsTable';
@@ -35,6 +35,7 @@ type CustomerBalance = {
 
 export default function ProductsTable() {
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [customerBalances, setCustomerBalances] = useState<CustomerBalance[]>([]);
@@ -49,6 +50,9 @@ export default function ProductsTable() {
   const [debitReason, setDebitReason] = useState('');
   const [debitReference, setDebitReference] = useState('');
   const [debiting, setDebiting] = useState(false);
+  const [syncingPaystack, setSyncingPaystack] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const hasLoadedWalletData = useRef(false);
 
   const formatCurrency = (amount: number, currency = 'NGN') =>
     new Intl.NumberFormat('en-NG', {
@@ -58,9 +62,16 @@ export default function ProductsTable() {
     }).format(amount);
 
   const fetchWalletData = useCallback(async () => {
+    const isInitialLoad = !hasLoadedWalletData.current;
     try {
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+      setError(null);
       const params = new URLSearchParams({
-        ...(search && { search }),
+        ...(debouncedSearch && { search: debouncedSearch }),
       });
       const response = await fetch(`/api/wallets/transactions?${params}`);
       const data = await response.json();
@@ -77,17 +88,25 @@ export default function ProductsTable() {
       setAggregateNegativeBalances(data.aggregateNegativeBalances || 0);
       setAggregateCredits(data.aggregateCredits || 0);
       setAggregateDebits(data.aggregateDebits || 0);
+      hasLoadedWalletData.current = true;
     } catch {
       setError('Failed to fetch wallet transaction data');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 450);
+
+    return () => clearTimeout(handler);
   }, [search]);
 
   useEffect(() => {
-    setLoading(true);
-    const handler = setTimeout(fetchWalletData, 300);
-    return () => clearTimeout(handler);
+    fetchWalletData();
   }, [fetchWalletData]);
 
   const submitDebit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -121,6 +140,31 @@ export default function ProductsTable() {
       toast.error('Failed to debit wallet');
     } finally {
       setDebiting(false);
+    }
+  };
+
+  const syncPaystackCredits = async () => {
+    setSyncingPaystack(true);
+
+    try {
+      const response = await fetch('/api/wallets/sync-paystack', {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.statusx !== 'SUCCESS') {
+        toast.error(data.message || 'Failed to sync Paystack wallet credits');
+        return;
+      }
+
+      toast.success(
+        `Wallet funding synced: ${data.ingested || 0} credits ingested from ${data.scanned || 0} Paystack transactions.`
+      );
+      await fetchWalletData();
+    } catch {
+      toast.error('Failed to sync Paystack wallet credits');
+    } finally {
+      setSyncingPaystack(false);
     }
   };
 
@@ -167,7 +211,17 @@ export default function ProductsTable() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="rounded-lg border border-border bg-card p-4 shadow-sm xl:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Search Wallet Ledger</label>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Search Wallet Ledger</label>
+            <button
+              type="button"
+              onClick={syncPaystackCredits}
+              disabled={syncingPaystack}
+              className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {syncingPaystack ? 'Syncing Paystack...' : 'Sync Paystack Funding'}
+            </button>
+          </div>
           <input
             type="text"
             value={search}
@@ -175,6 +229,11 @@ export default function ProductsTable() {
             placeholder="Search by customer, email, reference, reason..."
             className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring"
           />
+          {refreshing && (
+            <p className="mt-2 text-xs font-medium text-muted-foreground">
+              Searching wallet records...
+            </p>
+          )}
         </div>
 
         <form onSubmit={submitDebit} className="rounded-lg border border-border bg-card p-4 shadow-sm">
