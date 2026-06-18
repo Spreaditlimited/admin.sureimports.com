@@ -84,7 +84,7 @@ export async function POST(request: Request) {
           pidUser: pidAdminUser,
           serviceKey,
           canView: true,
-          canEdit: false,
+          canEdit: true,
           createdAt: now,
           updatedAt: now,
         })),

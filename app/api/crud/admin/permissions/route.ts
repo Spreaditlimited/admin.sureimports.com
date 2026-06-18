@@ -20,6 +20,10 @@ const SERVICE_KEYS = new Set([
   'blog_management',
 ]);
 
+function isPrismaMissingTableError(error: unknown) {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2021';
+}
+
 export async function GET(request: NextRequest) {
   try {
     const access = await requireAdminServiceAccess(ADMIN_SERVICE_KEY, 'view');
@@ -40,8 +44,8 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ statusx: 'SUCCESS', permissions }, { status: 200 });
-  } catch (error: any) {
-    const isMissingTable = error?.code === 'P2021';
+  } catch (error: unknown) {
+    const isMissingTable = isPrismaMissingTableError(error);
     return NextResponse.json(
       {
         statusx: 'FAILED',
@@ -104,7 +108,7 @@ export async function POST(request: Request) {
             pidUser,
             serviceKey,
             canView: true,
-            canEdit: false,
+            canEdit: true,
             createdAt: now,
             updatedAt: now,
           })),
@@ -116,8 +120,8 @@ export async function POST(request: Request) {
       { statusx: 'SUCCESS', message: 'Permissions updated successfully' },
       { status: 200 }
     );
-  } catch (error: any) {
-    const isMissingTable = error?.code === 'P2021';
+  } catch (error: unknown) {
+    const isMissingTable = isPrismaMissingTableError(error);
     return NextResponse.json(
       {
         statusx: 'FAILED',

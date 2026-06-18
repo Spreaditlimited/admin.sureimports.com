@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import AnimateHeight from 'react-animate-height';
-import Loader from '@/app/uix/Loader';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -13,10 +12,7 @@ import {
 import { 
   ChevronDown, 
   Package, 
-  Hash, 
-  User as UserIcon, 
   MessageSquare, 
-  AlertCircle, 
   CheckCircle2, 
   Truck, 
   ShieldCheck, 
@@ -52,14 +48,6 @@ interface Order {
     createdAt: string;
 }
 
-interface ApiResponse {
-    responsex: {
-        status: string;
-        message: string;
-    };
-    successx: boolean;
-}
-
 const OrdersBoxShippingOnly = () => {
     const [active, setActive] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -81,7 +69,7 @@ const OrdersBoxShippingOnly = () => {
             const res = await fetch(`/api/get-data/shipping-only-many?status=${status}`);
             const data = await res.json();
             setOrderALL(data);
-        } catch (error) {
+        } catch {
             toast.error('Failed to sync logistics ledger');
         } finally {
             setLoading(false);
@@ -146,16 +134,21 @@ const OrdersBoxShippingOnly = () => {
                 method: 'POST',
                 body: formData,
             });
-            const data: ApiResponse = await res.json();
+            const data = await res.json();
 
-            if (data.responsex.status === 'SUCCESS') {
+            if (!res.ok) {
+                toast.error(data?.message || data?.responsex?.message || 'You do not have permission to update this entry.');
+                return;
+            }
+
+            if (data?.responsex?.status === 'SUCCESS') {
                 toast.success('Freight state updated');
                 fetchDataOrder();
                 setMessage('');
             } else {
-                toast.error(data.responsex.message);
+                toast.error(data?.responsex?.message || data?.message || 'Unable to update freight state.');
             }
-        } catch (error) {
+        } catch {
             toast.error('Communication error with server');
         } finally {
             setPendingAction('');
@@ -260,7 +253,7 @@ const OrdersBoxShippingOnly = () => {
                                 <div className="space-y-4">
                                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2"><MessageSquare className="w-3.5 h-3.5" /> Agent Briefing</h4>
                                     <div className="p-3 rounded-lg bg-card border border-border text-[11px] leading-relaxed text-muted-foreground italic h-[110px] overflow-y-auto custom-scrollbar">
-                                        "{order.description || 'No additional instructions provided by the user.'}"
+                                        &quot;{order.description || 'No additional instructions provided by the user.'}&quot;
                                     </div>
                                 </div>
                             </div>

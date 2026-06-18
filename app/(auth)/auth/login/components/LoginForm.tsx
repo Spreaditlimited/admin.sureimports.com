@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/app/context/AuthContext"
 import Script from "next/script"
 
@@ -23,10 +23,12 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isLocalhost, setIsLocalhost] = useState(false)
   const { login } = useAuth()
-  const isLocalhost =
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+
+  useEffect(() => {
+    setIsLocalhost(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
