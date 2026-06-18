@@ -119,6 +119,7 @@ const systemSettings: MenuItem[] = [
     submenu: [
       { title: "Manage Admins", path: "/dashboard/admin/view" },
       { title: "Add Admin", path: "/dashboard/admin/add" },
+      { title: "Admin WhatsApp", path: "/dashboard/admin/whatsapp" },
     ],
   },
   {

@@ -163,13 +163,13 @@ export async function GET(request: NextRequest) {
     }
 
     //Shipping rate per KG
-    let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
+    const shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
 
     //Domestic Shipping Cost within China
-    let domesticShippingCost = 5; //value in USD
+    const domesticShippingCost = 5; //value in USD
 
     //International Shipping Cost
-    let internationalShippingCost =
+    const internationalShippingCost =
       totalWeight * parseFloat(shippingPlanRate as any);
 
     //Estimated Total Weight of Order
@@ -178,11 +178,11 @@ export async function GET(request: NextRequest) {
 
       
     //Service Charge
-    let serviceChargeValue =
+    const serviceChargeValue =
       totalPrice * (parseFloat(exRate?.service_charge as any) / 100);
 
     //vat value
-    let vatValue = serviceChargeValue * (parseFloat(exRate?.vat as any) / 100);
+    const vatValue = serviceChargeValue * (parseFloat(exRate?.vat as any) / 100);
 
     //Grand Total Cost
     let grandTotalCost = parseFloat(
@@ -197,11 +197,11 @@ export async function GET(request: NextRequest) {
     let exNairaToYuan = exRate?.exNairaToYuan ?? 205;
 
     //ACTUAL WEIGHT & DOMESTIC SHIPPING COST
-    let actualWeight = orderRecord?.orderWeight;
-    let actualDomesticShippingCost = parseFloat(orderRecord?.shippingCost1 as any ?? 0) / parseFloat(exYuanToDollar as any ?? 0);
-    let actualInternationalShippingCost = parseFloat(actualWeight as any ?? 0) * parseFloat(shippingPlanRate as any ?? 0);
-    let actualTotalShippingCost = actualDomesticShippingCost + actualInternationalShippingCost;
-    let costDifference = actualTotalShippingCost - estimatedTotalShippingCost;
+    const actualWeight = orderRecord?.orderWeight;
+    const actualDomesticShippingCost = parseFloat(orderRecord?.shippingCost1 as any ?? 0) / parseFloat(exYuanToDollar as any ?? 0);
+    const actualInternationalShippingCost = parseFloat(actualWeight as any ?? 0) * parseFloat(shippingPlanRate as any ?? 0);
+    const actualTotalShippingCost = actualDomesticShippingCost + actualInternationalShippingCost;
+    const costDifference = actualTotalShippingCost - estimatedTotalShippingCost;
 
     console.log('costDifference', costDifference);
     console.log('actualTotalShippingCost', actualTotalShippingCost);

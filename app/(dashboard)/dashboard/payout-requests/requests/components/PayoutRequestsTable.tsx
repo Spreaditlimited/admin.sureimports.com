@@ -125,7 +125,11 @@ export default function PayoutRequestsTable() {
 
   const handleSelectPayout = (pidPayout: string, isChecked: boolean) => {
     const newSelected = new Set(selectedPayouts);
-    isChecked ? newSelected.add(pidPayout) : newSelected.delete(pidPayout);
+    if (isChecked) {
+      newSelected.add(pidPayout);
+    } else {
+      newSelected.delete(pidPayout);
+    }
     setSelectedPayouts(newSelected);
     setSelectAll(false);
   };

@@ -160,8 +160,8 @@ const ComponentsAccordionsBasic = () => {
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
           event.preventDefault();
 
-          let pidMessage = 'MSG' + new Date().getTime().toString();
-          let currentStatus = status;
+          const pidMessage = 'MSG' + new Date().getTime().toString();
+          const currentStatus = status;
 
           const formData = new FormData(event.currentTarget);
           formData.append('pidOrder', pidOrder);
@@ -234,7 +234,7 @@ const ComponentsAccordionsBasic = () => {
                         (datax: any, index: number) => {
                         return (
                         
-                            <div className="mb-5">
+                            <div className="mb-5" key={datax.pidOrder || index}>
                             <div className="space-y-2 font-semibold">
                                 <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
 
@@ -390,4 +390,3 @@ export default ComponentsAccordionsBasic;
 function navigateWithAlert(arg0: string, arg1: string, arg2: string) {
   throw new Error('Function not implemented.');
 }
-

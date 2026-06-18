@@ -18,7 +18,7 @@ const RadButtonSpecial: React.FC<Props> = ({
   id,
   classx,
 }) => {
-  let classprops =
+  const classprops =
     'bg-gray-800 hover:bg-gray-700 text-white font-semibold py-1.5 px-4 transition-colors bg-gray-50 border active:bg-gray-200 font-medium border-gray-200 text-gray-900 rounded-lg hover:bg-gray-100 disabled:opacity-50 ';
   return (
     <div>

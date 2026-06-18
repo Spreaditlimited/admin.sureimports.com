@@ -92,7 +92,7 @@ const ComponentsAccordionsBasic = () => {
     // VARIABLES 
     const status = useSearchParams().get('status') || 'none'; // Get the current 'status' value
     const [orderALL, setOrderALL] = useState<Order[]>([]);
-    const [message, setMessage] = useState<String>('');
+    const [message, setMessage] = useState<string>('');
 
 
     //GET RECORDS FROM DATABASE

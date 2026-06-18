@@ -78,8 +78,7 @@ export async function POST(request: Request) {
     const xEmail = user?.userEmail as string;
     const xTitle = `Order is Declined`;
     const xBodyTitle = `Order has been Declined`;
-    const xBody1 = `Dear ` + user?.userFirstname; + `,` +
-      `<br />Your Order with ID:`+pidOrder+` has been declined, and is currently placed On-hold.`;
+    const xBody1 = `Dear ${user?.userFirstname},<br />Your Order with ID:${pidOrder} has been declined, and is currently placed On-hold.`;
     const xBody2 = `You are to contact the admin for closure, a refund will also been generated for you to request withdrawal if order process cannot continue. <br /> You may check your dashboard status for progress.<br /> Thank you.`;
     const xButtonTitle = '';
     const xButtonLink = '';
@@ -114,7 +113,7 @@ export async function POST(request: Request) {
             const xEmail = user?.userEmail as string;
             const xTitle = `Order is Approved`;
             const xBodyTitle = `Order has been Approved`;
-            const xBody1 = 'Dear ' + user?.userFirstname; + ', <br />Your Order with ID:`+pidOrder+` has been approved, and is currently being processed.';
+            const xBody1 = `Dear ${user?.userFirstname}, <br />Your Order with ID:${pidOrder} has been approved, and is currently being processed.`;
             const xBody2 = `You will be notified of the next processing stage of your order. <br /> You may check your dashboard status for progress.<br /> Thank you.`;
             const xButtonTitle = '';
             const xButtonLink = '';
@@ -148,8 +147,7 @@ export async function POST(request: Request) {
         const xEmail = user?.userEmail as string;
         const xTitle = `Pay for Shipping`;
         const xBodyTitle = `Pay for Order Shippment`;
-        const xBody1 = `Dear ` + user?.userFirstname; + `,` +
-          `<br />Your Order with ID:`+pidOrder+` has been moved to the next stage, and you are requested to pay for shipping.`;
+        const xBody1 = `Dear ${user?.userFirstname},<br />Your Order with ID:${pidOrder} has been moved to the next stage, and you are requested to pay for shipping.`;
         const xBody2 = `You can log into your dashboard to make payment. <br /> You may also check your dashboard status for progress.<br /> Thank you.`;
         const xButtonTitle = '';
         const xButtonLink = '';
@@ -183,8 +181,7 @@ export async function POST(request: Request) {
         const xEmail = user?.userEmail as string;
         const xTitle = `Order In-Transit`;
         const xBodyTitle = `Order now In-Transit`;
-        const xBody1 = `Dear ` + user?.userFirstname; + `,` +
-          `<br />Your Order with ID:`+pidOrder+` has been moved to the next stage, and is currently in-transit to your destination.`;
+        const xBody1 = `Dear ${user?.userFirstname},<br />Your Order with ID:${pidOrder} has been moved to the next stage, and is currently in-transit to your destination.`;
         const xBody2 = `You will be notified of the next processing stage of your order. <br /> You may also check your dashboard status for progress.<br /> Thank you.`;
         const xButtonTitle = '';
         const xButtonLink = '';
@@ -218,8 +215,7 @@ export async function POST(request: Request) {
                 const xEmail = user?.userEmail as string;
                 const xTitle = `Order is Ready for PickUp`;
                 const xBodyTitle = `Order is now Ready for PickUp`;
-                const xBody1 = `Dear ` + user?.userFirstname; + `,` +
-                  `<br />Your Order with ID:`+pidOrder+` has been moved to the next stage, and is currently Ready for PickUp at your destination.`;
+                const xBody1 = `Dear ${user?.userFirstname},<br />Your Order with ID:${pidOrder} has been moved to the next stage, and is currently Ready for PickUp at your destination.`;
                 const xBody2 = `You will be notified of the next processing stage of your order. <br /> You may also check your dashboard status for progress.<br /> Thank you.`;
                 const xButtonTitle = '';
                 const xButtonLink = '';
@@ -254,8 +250,7 @@ export async function POST(request: Request) {
                 const xEmail = user?.userEmail as string;
                 const xTitle = `Order process is Completed!`;
                 const xBodyTitle = `Order process has not been Completed`;
-                const xBody1 = `Dear ` + user?.userFirstname; + `,` +
-                  `<br />Your Order with ID:`+pidOrder+` has been moved to the next stage, and is order process is now completed.`;
+                const xBody1 = `Dear ${user?.userFirstname},<br />Your Order with ID:${pidOrder} has been moved to the next stage, and is order process is now completed.`;
                 const xBody2 = `You will be notified of the next processing stage of your order. <br /> You may also check your dashboard status for progress.<br /> Thank you.`;
                 const xButtonTitle = '';
                 const xButtonLink = '';

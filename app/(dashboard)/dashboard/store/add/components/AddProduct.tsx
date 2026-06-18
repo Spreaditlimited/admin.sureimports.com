@@ -26,7 +26,7 @@ const Page = () => {
     const [file, setFile] = useState<File | null>(null);
 
     // Form State
-    let productID = 'STORE' + new Date().getTime().toString();
+    const productID = 'STORE' + new Date().getTime().toString();
     const [pidProduct, setPidProduct] = useState(productID);
     const [productName, setProductName] = useState('');
     const [productCategory, setProductCategory] = useState('');

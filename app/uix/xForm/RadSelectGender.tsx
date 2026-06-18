@@ -33,7 +33,7 @@ const RadText: React.FC<Props> = ({
   onChange,
   onSelect,
 }) => {
-  let classprops =
+  const classprops =
     'flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset sm:max-w-md ';
   return (
     <>

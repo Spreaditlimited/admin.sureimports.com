@@ -108,7 +108,6 @@ const ComponentsAccordionsBasic = () => {
     useEffect(() => {
         setLoading(true);
         fetchDataOrder();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status]); 
 
     // LOADER & EMPTY STATES

@@ -177,7 +177,6 @@ const ComponentsAccordionsBasic = () => {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   // LOADER

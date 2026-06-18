@@ -22,12 +22,12 @@ export default async function xMail({
   xButtonTitle,
   xButtonLink,
 }: Props) {
-  let zTitle: string = xTitle;
-  let zBodyTitle: any = xBodyTitle;
-  let zBody1: any = xBody1;
-  let zBody2: any = xBody2;
-  let zButtonTitle: any = xButtonTitle;
-  let zButtonLink: any = xButtonLink;
+  const zTitle: string = xTitle;
+  const zBodyTitle: any = xBodyTitle;
+  const zBody1: any = xBody1;
+  const zBody2: any = xBody2;
+  const zButtonTitle: any = xButtonTitle;
+  const zButtonLink: any = xButtonLink;
 
   const mail = mailTemplate({
     zTitle,

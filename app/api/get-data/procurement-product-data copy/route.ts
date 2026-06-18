@@ -133,31 +133,31 @@ export async function GET(request: NextRequest) {
     }
 
     //Shipping Plan Name
-    let shippingPlanName = orderRecord?.shippingPlan; //value in USD
+    const shippingPlanName = orderRecord?.shippingPlan; //value in USD
 
     //Shipping rate per KG
-    let shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
+    const shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
 
     //Domestic Shipping Cost within China
-    let domesticShippingCost = 10; //value in USD
+    const domesticShippingCost = 10; //value in USD
 
     //International Shipping Cost
-    let internationalShippingCost =
+    const internationalShippingCost =
       totalWeight * parseFloat(shippingRate.shippingPlanRate);
 
     //Estimated Total Weight of Order
-    let estimatedTotalShippingCost =
+    const estimatedTotalShippingCost =
       internationalShippingCost + domesticShippingCost;
 
     //Service Charge
-    let serviceChargeValue =
+    const serviceChargeValue =
       totalPrice * (parseFloat(exRate?.service_charge as any) / 100);
 
     //vat value
-    let vatValue = serviceChargeValue * (parseFloat(exRate?.vat as any) / 100);
+    const vatValue = serviceChargeValue * (parseFloat(exRate?.vat as any) / 100);
 
     //Grand Total Cost
-    let grandTotalCost = parseFloat(
+    const grandTotalCost = parseFloat(
       totalPrice + estimatedTotalShippingCost + serviceChargeValue + vatValue,
     );
 

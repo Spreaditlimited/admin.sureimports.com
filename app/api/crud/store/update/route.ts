@@ -102,12 +102,12 @@ export async function POST(request: Request) {
     );
   } else {
       //FILE DETAILS (NAME, SIZE, TYPE)
-      let originalFileName = file.name;
-      let fileSize = file.size;
-      let fileType = file.type;
-      let productCode: string = randomGenerator(20);
-      let fileExt = getFileExt(originalFileName);
-      let newFileName = 'IMG' + productCode;
+      const originalFileName = file.name;
+      const fileSize = file.size;
+      const fileType = file.type;
+      const productCode: string = randomGenerator(20);
+      const fileExt = getFileExt(originalFileName);
+      const newFileName = 'IMG' + productCode;
 
       //CHECK FILE VALIDITY
       const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG', 'webp', 'WEBP', 'svg', 'SVG']; //enter only permitted extensions

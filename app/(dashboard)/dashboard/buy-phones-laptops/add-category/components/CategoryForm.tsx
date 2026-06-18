@@ -76,7 +76,7 @@ const Page = () => {
 
 
     //SET FORM DATA
-    let categoryID = 'CAT' + new Date().getTime().toString();
+    const categoryID = 'CAT' + new Date().getTime().toString();
     const [pidUser, setPidUser] = useState(user?.pidUser as string);
     const [pidCategory, setPidCategory] = useState(categoryID);
     const [categoryName, setCategoryName] = useState('');

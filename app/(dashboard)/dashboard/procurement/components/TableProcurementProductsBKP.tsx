@@ -55,7 +55,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   //status
   const status = useSearchParams().get('status') || 'none';
-  let newStatus:string = '';
+  const newStatus:string = '';
 
 
   //important variables
@@ -237,8 +237,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
           event.preventDefault();
 
-          let pidMessage = 'MSG' + new Date().getTime().toString();
-          let currentStatus = status;
+          const pidMessage = 'MSG' + new Date().getTime().toString();
+          const currentStatus = status;
  
           const formData = new FormData(event.currentTarget);
           formData.append('pidOrder', pidOrder);

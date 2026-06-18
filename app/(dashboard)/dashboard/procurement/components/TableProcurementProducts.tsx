@@ -48,7 +48,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const navigateWithAlert = useNavigationWithAlert();
   const status = useSearchParams().get('status') || 'none';
-  let newStatus:string = '';
+  const newStatus:string = '';
   const showActualShippingBreakdown = [
     'pay-for-shipping',
     'bank-pending-shipping-orders',
@@ -250,8 +250,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
       }
     }
 
-    let pidMessage = 'MSG' + new Date().getTime().toString();
-    let currentStatus = status;
+    const pidMessage = 'MSG' + new Date().getTime().toString();
+    const currentStatus = status;
 
     const formData = new FormData(event.currentTarget);
     formData.append('pidOrder', pidOrder);
