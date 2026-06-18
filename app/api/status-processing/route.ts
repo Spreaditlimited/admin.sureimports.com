@@ -9,8 +9,47 @@ import {
   normalizeShippingOnlyStatus,
 } from '@/lib/shippingOnlyStatus';
 import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
+import { encodeShippingOnlyLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 const SHIPPING_ONLY_SERVICE_KEY = 'shipping_only';
+
+function normalizeDestinationName(value: unknown) {
+  return String(value || '').trim().toLowerCase().replace(/[_-]+/g, ' ');
+}
+
+async function isShippingOnlyInternationalDestination(destination: unknown) {
+  const rawDestination = String(destination || '').trim();
+  if (!rawDestination) return true;
+
+  const country = await prisma.country.findFirst({
+    where: {
+      OR: [
+        { pidCountry: rawDestination },
+        { countrySlug: rawDestination },
+        { countryName: rawDestination },
+      ],
+    },
+    select: { countryName: true, countrySlug: true },
+  });
+
+  const resolvedDestination = normalizeDestinationName(
+    country?.countryName || country?.countrySlug || rawDestination,
+  );
+  return resolvedDestination !== 'nigeria';
+}
+
+async function getLinkedShippingOnlyInvoice(pidShippingOnly: string) {
+  return prisma.invoices.findFirst({
+    where: { linkedRequestId: encodeShippingOnlyLinkedRequestId(pidShippingOnly) },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      pidInvoice: true,
+      invoiceNumber: true,
+      status: true,
+      balanceDue: true,
+    },
+  });
+}
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -92,7 +131,12 @@ export async function POST(request: Request) {
         : newStatusFromClient === 'request-cancelled'
           ? 'decline'
           : 'approve';
-    const expectedNextStatus = getShippingOnlyNextStatus(currentStatusFromRecord, resolvedAction);
+    const isInternational = await isShippingOnlyInternationalDestination(shippingRequest.shippingTo);
+    const expectedNextStatus = getShippingOnlyNextStatus(
+      currentStatusFromRecord,
+      resolvedAction,
+      isInternational,
+    );
 
     if (!expectedNextStatus) {
       return NextResponse.json(
@@ -116,6 +160,45 @@ export async function POST(request: Request) {
         },
         { status: 400 },
       );
+    }
+
+    if (resolvedAction === 'approve' && isInternational && expectedNextStatus === 'invoiced') {
+      return NextResponse.json(
+        {
+          responsex: {
+            status: 'ACTION_FAILED',
+            message: 'Non-Nigeria shipping-only requests must be moved to Invoiced by issuing a linked invoice.',
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    if (resolvedAction === 'approve' && isInternational && expectedNextStatus === 'paid') {
+      return NextResponse.json(
+        {
+          responsex: {
+            status: 'ACTION_FAILED',
+            message: 'Non-Nigeria shipping-only requests must be moved to Paid by recording payment on the linked invoice.',
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    if (resolvedAction === 'approve' && isInternational && expectedNextStatus === 'product-shipped') {
+      const linkedInvoice = await getLinkedShippingOnlyInvoice(pidOrder);
+      if (!linkedInvoice || linkedInvoice.status !== 'PAID' || Number(linkedInvoice.balanceDue || 0) > 0) {
+        return NextResponse.json(
+          {
+            responsex: {
+              status: 'ACTION_FAILED',
+              message: 'Non-Nigeria shipping-only requests can only be shipped after the linked invoice is fully paid.',
+            },
+          },
+          { status: 400 },
+        );
+      }
     }
 
     const newStatus = expectedNextStatus;

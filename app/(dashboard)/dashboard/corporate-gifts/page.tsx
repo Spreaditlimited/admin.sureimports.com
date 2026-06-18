@@ -32,6 +32,25 @@ export default async function CorporateGiftsAdminPage() {
     take: 100,
   });
 
+  const requestIds = entries.map((entry) => entry.pidRequest);
+  const linkedInvoices = requestIds.length
+    ? await prisma.invoices.findMany({
+        where: { linkedRequestId: { in: requestIds } },
+        select: {
+          pidInvoice: true,
+          linkedRequestId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+    : [];
+  const invoiceByRequestId = new Map<string, (typeof linkedInvoices)[number]>();
+  linkedInvoices.forEach((invoice) => {
+    if (invoice.linkedRequestId && !invoiceByRequestId.has(invoice.linkedRequestId)) {
+      invoiceByRequestId.set(invoice.linkedRequestId, invoice);
+    }
+  });
+
   return (
     <div className="space-y-6 pb-10">
       
@@ -74,6 +93,11 @@ export default async function CorporateGiftsAdminPage() {
             const nextStatus = getNextCorporateGiftStatus(entryStatus);
             const canCancel =
               entryStatus !== 'Delivered' && entryStatus !== 'Cancelled';
+            const linkedInvoice = invoiceByRequestId.get(entry.pidRequest);
+            const invoiceHref = linkedInvoice
+              ? `/dashboard/invoicing/${linkedInvoice.pidInvoice}`
+              : `/dashboard/invoicing/create?linkedRequestId=${entry.pidRequest}`;
+            const invoiceLabel = linkedInvoice ? 'Manage Invoice' : 'Create Invoice';
               
             return (
               <div
@@ -273,10 +297,10 @@ export default async function CorporateGiftsAdminPage() {
 
                       <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-3 lg:gap-3">
                       <Link
-                        href={`/dashboard/invoicing/create?linkedRequestId=${entry.pidRequest}`}
+                        href={invoiceHref}
                         className="w-full text-center rounded-md bg-primary px-3 py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
                       >
-                        Create Invoice
+                        {invoiceLabel}
                       </Link>
                       
                       <form action={assignCorporateGiftRequestAction} className="w-full">
@@ -291,7 +315,11 @@ export default async function CorporateGiftsAdminPage() {
 
                       <form action={updateCorporateGiftRequestAction} className="w-full">
                         <input type="hidden" name="pidRequest" value={entry.pidRequest} />
-                        {nextStatus ? (
+                        {nextStatus === 'Invoiced' ? (
+                          <span className="flex min-h-[38px] w-full items-center justify-center rounded-md border border-border bg-muted/50 px-3 py-2 text-center text-xs font-medium text-muted-foreground">
+                            Awaiting invoice
+                          </span>
+                        ) : nextStatus ? (
                           <>
                             <input type="hidden" name="status" value={nextStatus} />
                             <button

@@ -65,6 +65,10 @@ export async function updateCorporateGiftRequestAction(formData: FormData) {
 
   const isCancellation = status === 'Cancelled';
 
+  if (status === 'Invoiced') {
+    throw new Error('Corporate gift requests can only move to Invoiced when a linked invoice is issued.');
+  }
+
   if (!isCancellation) {
     const expectedNextStatus = getNextCorporateGiftStatus(existing.status);
     if (!expectedNextStatus || status !== expectedNextStatus) {

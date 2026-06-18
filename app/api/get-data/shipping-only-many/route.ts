@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import  {prisma} from '@/lib/prisma'; // Assuming you have Prisma setup
 import { getShippingOnlyStatusVariantsForFilter } from '@/lib/shippingOnlyStatus';
+import { encodeShippingOnlyLinkedRequestId } from '@/lib/invoiceLinkedService';
 
 export async function GET(request: NextRequest) {
 
@@ -37,8 +38,9 @@ export async function GET(request: NextRequest) {
   const shippingPlanValues = Array.from(
     new Set(orderALL.map((row) => String(row.shippingPlan || '').trim()).filter(Boolean)),
   );
+  const linkedRequestIds = orderALL.map((row) => encodeShippingOnlyLinkedRequestId(row.pidShippingOnly));
 
-  const [countriesByPid, countriesBySlug, countriesByName, plansByPid, plansBySlug, plansByName] =
+  const [countriesByPid, countriesBySlug, countriesByName, plansByPid, plansBySlug, plansByName, linkedInvoices] =
     await Promise.all([
       prisma.country.findMany({
         where: { pidCountry: { in: shippingToValues } },
@@ -63,6 +65,18 @@ export async function GET(request: NextRequest) {
       prisma.shippingplan.findMany({
         where: { shippingPlanName: { in: shippingPlanValues } },
         select: { shippingPlanName: true },
+      }),
+      prisma.invoices.findMany({
+        where: { linkedRequestId: { in: linkedRequestIds } },
+        select: {
+          pidInvoice: true,
+          invoiceNumber: true,
+          linkedRequestId: true,
+          status: true,
+          balanceDue: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
       }),
     ]);
 
@@ -94,10 +108,18 @@ export async function GET(request: NextRequest) {
     }
   });
 
+  const invoiceMap = new Map<string, (typeof linkedInvoices)[number]>();
+  linkedInvoices.forEach((invoice) => {
+    if (invoice.linkedRequestId && !invoiceMap.has(invoice.linkedRequestId)) {
+      invoiceMap.set(invoice.linkedRequestId, invoice);
+    }
+  });
+
   const result = orderALL.map((row) => ({
     ...row,
     shippingToName: row.shippingTo ? countryMap.get(row.shippingTo) || row.shippingTo : row.shippingTo,
     shippingPlanName: row.shippingPlan ? planMap.get(row.shippingPlan) || row.shippingPlan : row.shippingPlan,
+    invoice: invoiceMap.get(encodeShippingOnlyLinkedRequestId(row.pidShippingOnly)) || null,
   }));
 
   return NextResponse.json(result);

@@ -24,7 +24,8 @@ import {
   Calendar,
   XCircle,
   Clock,
-  RefreshCw
+  RefreshCw,
+  TriangleAlert
 } from 'lucide-react';
 
 interface Order {
@@ -46,6 +47,12 @@ interface Order {
     description: string;
     status: string;
     createdAt: string;
+    invoice?: {
+        pidInvoice: string;
+        invoiceNumber: string;
+        status: string;
+        balanceDue: string;
+    } | null;
 }
 
 const OrdersBoxShippingOnly = () => {
@@ -54,6 +61,8 @@ const OrdersBoxShippingOnly = () => {
     const [orderALL, setOrderALL] = useState<Order[]>([]);
     const [message, setMessage] = useState<string>('');
     const [pendingAction, setPendingAction] = useState<'approve' | 'decline' | ''>('');
+    const [issuingInvoiceId, setIssuingInvoiceId] = useState<string>('');
+    const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
     
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -99,20 +108,53 @@ const OrdersBoxShippingOnly = () => {
         return formatReadable(String(value));
     };
 
-    const getNextStatusForAction = (currentStatus: string, action: string) => {
-        if (action !== 'approve' && action !== 'decline') return '';
-        return getShippingOnlyNextStatus(currentStatus, action) || '';
+    const isNigeriaDestination = (value: string | null | undefined) => {
+        return String(value || '').trim().toLowerCase().replace(/[_-]+/g, ' ') === 'nigeria';
     };
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        const action = pendingAction;
-        const formData = new FormData(event.currentTarget);
+    const getNextStatusForAction = (currentStatus: string, action: string, isInternational = false) => {
+        if (action !== 'approve' && action !== 'decline') return '';
+        return getShippingOnlyNextStatus(currentStatus, action, isInternational) || '';
+    };
 
-        const pidUser = String(formData.get('pidUser') || '');
-        const pidOrder = String(formData.get('pidOrder') || '');
-        const orderCurrentStatus = String(formData.get('currentStatus') || '');
-        const nextStatus = getNextStatusForAction(orderCurrentStatus, action);
+    const getActionLabelForNextStatus = (nextStatus: string) => {
+        const labels: Record<string, string> = {
+            'request-received': 'Reopen Request',
+            'product-shipped': 'Ship',
+            'product-arrived': 'Mark Arrived',
+            invoiced: 'Mark Invoiced',
+            paid: 'Mark Paid',
+            'product-delivered': 'Mark Completed',
+            'request-cancelled': 'Cancel Request',
+        };
+        return labels[nextStatus] || 'Update Status';
+    };
+
+    const hasProductShipped = (currentStatus: string, isInternational: boolean) => {
+        if (isInternational) {
+            return ['product-shipped', 'product-arrived', 'product-delivered'].includes(currentStatus);
+        }
+        return ['product-shipped', 'product-arrived', 'invoiced', 'paid', 'product-delivered'].includes(currentStatus);
+    };
+
+    const processStatusChange = async ({
+        pidUser,
+        pidOrder,
+        currentStatus,
+        isInternational,
+        action,
+        note,
+    }: {
+        pidUser: string;
+        pidOrder: string;
+        currentStatus: string;
+        isInternational: boolean;
+        action: 'approve' | 'decline';
+        note: string;
+    }) => {
+        const formData = new FormData();
+        const orderCurrentStatus = currentStatus;
+        const nextStatus = getNextStatusForAction(orderCurrentStatus, action, isInternational);
 
         if (!pidUser || !pidOrder || (action !== 'approve' && action !== 'decline')) {
             toast.warning('Invalid status transition requested.');
@@ -126,7 +168,7 @@ const OrdersBoxShippingOnly = () => {
             formData.append('newStatus', nextStatus);
         }
         formData.append('pidMessage', `MSG${Date.now()}`);
-        formData.append('message', message);
+        formData.append('message', note);
 
         try {
             toast.info('Synchronizing logistics state...');
@@ -145,6 +187,7 @@ const OrdersBoxShippingOnly = () => {
                 toast.success('Freight state updated');
                 fetchDataOrder();
                 setMessage('');
+                setCancelTarget(null);
             } else {
                 toast.error(data?.responsex?.message || data?.message || 'Unable to update freight state.');
             }
@@ -152,6 +195,41 @@ const OrdersBoxShippingOnly = () => {
             toast.error('Communication error with server');
         } finally {
             setPendingAction('');
+        }
+    };
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const action = pendingAction;
+        const formData = new FormData(event.currentTarget);
+
+        await processStatusChange({
+            pidUser: String(formData.get('pidUser') || ''),
+            pidOrder: String(formData.get('pidOrder') || ''),
+            currentStatus: String(formData.get('currentStatus') || ''),
+            isInternational: String(formData.get('isInternational') || '') === 'true',
+            action: action as 'approve' | 'decline',
+            note: message,
+        });
+    };
+
+    const handleIssueInvoice = async (pidInvoice: string) => {
+        try {
+            setIssuingInvoiceId(pidInvoice);
+            const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/issue`, {
+                method: 'POST',
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                toast.error(data?.message || data?.statusx || 'Failed to issue invoice.');
+                return;
+            }
+            toast.success('Invoice issued');
+            await fetchDataOrder();
+        } catch {
+            toast.error('Failed to issue invoice.');
+        } finally {
+            setIssuingInvoiceId('');
         }
     };
 
@@ -179,7 +257,29 @@ const OrdersBoxShippingOnly = () => {
                 </div>
             </div>
 
-            {orderALL.map((order, index) => (
+            {orderALL.map((order, index) => {
+                const destinationName = order.shippingToName || order.shippingTo;
+                const isInternational = !isNigeriaDestination(destinationName);
+                const currentStatus = normalizeShippingOnlyStatus(order.status);
+                const nextApproveStatus = getNextStatusForAction(order.status, 'approve', isInternational);
+                const approveActionLabel = getActionLabelForNextStatus(nextApproveStatus);
+                const invoiceHref = order.invoice
+                    ? `/dashboard/invoicing/${order.invoice.pidInvoice}`
+                    : `/dashboard/invoicing/create?linkedShippingOnlyId=${order.pidShippingOnly}`;
+                const invoiceStatus = String(order.invoice?.status || '').toUpperCase();
+                const requiresInvoicePrimaryAction =
+                    currentStatus === 'invoiced' ||
+                    (isInternational && currentStatus === 'request-received') ||
+                    (!isInternational && currentStatus === 'product-arrived');
+                const invoicePrimaryLabel = !order.invoice
+                    ? 'Create Invoice'
+                    : invoiceStatus === 'DRAFT'
+                        ? 'Issue Invoice'
+                        : 'Manage Invoice';
+                const isCompleted = currentStatus === 'product-delivered';
+                const canCancel = currentStatus !== 'request-cancelled' && !hasProductShipped(currentStatus, isInternational);
+
+                return (
                 <div key={order.pidShippingOnly} className="bg-card border border-border rounded-xl shadow-soft overflow-hidden transition-all duration-300">
                     {/* Header Row */}
                     <button
@@ -196,7 +296,7 @@ const OrdersBoxShippingOnly = () => {
                                 </div>
                                 <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
                                     <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> WhatsApp Number: {order.whatsappNumber}</span>
-                                    <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Shipping To: {formatReadable(order.shippingToName || order.shippingTo)}</span>
+                                    <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Shipping To: {formatReadable(destinationName)}</span>
                                 </div>
                             </div>
                         </div>
@@ -264,10 +364,6 @@ const OrdersBoxShippingOnly = () => {
                                     <div className="lg:col-span-8 space-y-4">
                                         <div className="flex items-center justify-between">
                                             <label className="text-[10px] font-bold uppercase tracking-widest text-foreground flex items-center gap-2"><MessageSquare className="w-3.5 h-3.5 text-primary" /> Communicaton Bridge</label>
-                                            <div className="flex items-center gap-2">
-                                                <input type="checkbox" id={`confirm-${order.id}`} className="peer rounded border-border text-primary focus:ring-primary/20" required />
-                                                <label htmlFor={`confirm-${order.id}`} className="text-[10px] font-bold text-foreground/90 uppercase peer-checked:text-primary transition-colors">Confirm Workflow Jump</label>
-                                            </div>
                                         </div>
                                         <textarea
                                             value={message}
@@ -278,48 +374,133 @@ const OrdersBoxShippingOnly = () => {
                                         <input type="hidden" name="pidUser" value={order.pidUser} />
                                         <input type="hidden" name="pidOrder" value={order.pidShippingOnly} />
                                         <input type="hidden" name="currentStatus" value={order.status} />
+                                        <input type="hidden" name="isInternational" value={String(isInternational)} />
                                     </div>
 
                                     <div className="lg:col-span-4 space-y-3">
-                                        {normalizeShippingOnlyStatus(order.status) === 'product-arrived' && (
+                                        {isCompleted ? (
+                                            <div className="w-full flex items-center justify-center py-2">
+                                                <div className="-rotate-2 rounded-md border-2 border-emerald-500/70 bg-emerald-500/10 px-6 py-3 text-center shadow-sm">
+                                                    <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+                                                        Completed
+                                                    </div>
+                                                    <div className="mt-1 h-px bg-emerald-500/40" />
+                                                    <div className="mt-1 text-[9px] font-bold uppercase tracking-widest text-emerald-700/80">
+                                                        Workflow Closed
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : requiresInvoicePrimaryAction ? (
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    router.push(
-                                                        `/dashboard/invoicing/create?linkedShippingOnlyId=${order.pidShippingOnly}`,
-                                                    )
-                                                }
-                                                className="w-full flex items-center justify-center gap-2 py-3 bg-background border border-border text-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                                                disabled={Boolean(order.invoice && invoiceStatus === 'DRAFT' && issuingInvoiceId === order.invoice.pidInvoice)}
+                                                onClick={() => {
+                                                    if (!order.invoice || invoiceStatus !== 'DRAFT') {
+                                                        router.push(invoiceHref);
+                                                        return;
+                                                    }
+                                                    handleIssueInvoice(order.invoice.pidInvoice);
+                                                }}
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
-                                                Create Invoice
+                                                {order.invoice && invoiceStatus === 'DRAFT' && issuingInvoiceId === order.invoice.pidInvoice ? (
+                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                )}
+                                                {invoicePrimaryLabel}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="submit"
+                                                name="action"
+                                                value="approve"
+                                                onClick={() => setPendingAction('approve')}
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all"
+                                            >
+                                                <CheckCircle2 className="w-4 h-4" /> {approveActionLabel}
                                             </button>
                                         )}
-                                        <button 
-                                            type="submit" 
-                                            name="action" 
-                                            value="approve" 
-                                            onClick={() => setPendingAction('approve')}
-                                            className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all"
-                                        >
-                                            <CheckCircle2 className="w-4 h-4" /> Approve Entry
-                                        </button>
-                                        <button 
-                                            type="submit" 
-                                            name="action" 
-                                            value="decline" 
-                                            onClick={() => setPendingAction('decline')}
-                                            className="w-full flex items-center justify-center gap-2 py-3 bg-background border border-border text-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
-                                        >
-                                            <XCircle className="w-4 h-4 text-destructive" /> Hold / Decline
-                                        </button>
-                                        <p className="text-[9px] text-center text-muted-foreground uppercase font-bold tracking-tighter">Next Logistics Node: <span className="text-primary">{getShippingOnlyStatusLabel(getNextStatusForAction(order.status, 'approve'))}</span></p>
+                                        {canCancel && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setCancelTarget(order)}
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-background border border-border text-foreground rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-muted transition-all"
+                                            >
+                                                <XCircle className="w-4 h-4 text-destructive" /> Cancel Request
+                                            </button>
+                                        )}
+                                        {!isCompleted && (
+                                            <p className="text-[9px] text-center text-muted-foreground uppercase font-bold tracking-tighter">Next Logistics Node: <span className="text-primary">{getShippingOnlyStatusLabel(nextApproveStatus)}</span></p>
+                                        )}
                                     </div>
                                 </div>
                             </form>
                         </div>
                     </AnimateHeight>
                 </div>
-            ))}
+                );
+            })}
+            {cancelTarget ? (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={`cancel-shipping-title-${cancelTarget.pidShippingOnly}`}
+                >
+                    <div className="mx-4 w-full max-w-md overflow-hidden rounded-xl bg-card border border-border shadow-soft animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6">
+                            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 border border-destructive/20">
+                                <TriangleAlert className="h-6 w-6 text-destructive" />
+                            </div>
+
+                            <h3
+                                id={`cancel-shipping-title-${cancelTarget.pidShippingOnly}`}
+                                className="mb-2 text-center text-xl font-bold text-foreground tracking-tight"
+                            >
+                                Cancel Shipping Request
+                            </h3>
+                            <p className="mb-4 text-center text-sm text-muted-foreground">
+                                This will move the request to Request Cancelled and notify the customer.
+                            </p>
+
+                            <div className="mb-6 rounded-md border border-border bg-muted/30 p-4 text-sm text-foreground shadow-inner">
+                                <p className="font-semibold">{cancelTarget.shippingName}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">ID: {cancelTarget.pidShippingOnly}</p>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setCancelTarget(null)}
+                                    className="flex-1 rounded-md bg-muted px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+                                >
+                                    Keep Request
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const destinationName = cancelTarget.shippingToName || cancelTarget.shippingTo;
+                                        processStatusChange({
+                                            pidUser: cancelTarget.pidUser,
+                                            pidOrder: cancelTarget.pidShippingOnly,
+                                            currentStatus: cancelTarget.status,
+                                            isInternational: !isNigeriaDestination(destinationName),
+                                            action: 'decline',
+                                            note:
+                                                message ||
+                                                `Your Shipping Only request (${cancelTarget.pidShippingOnly}) has been cancelled.`,
+                                        });
+                                    }}
+                                    className="flex-1 rounded-md bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 shadow-sm focus:outline-none focus:ring-2 focus:ring-destructive"
+                                >
+                                    Cancel Request
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 };

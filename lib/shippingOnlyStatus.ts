@@ -34,12 +34,22 @@ const LEGACY_TO_CANONICAL: Record<string, ShippingOnlyStatus> = {
   'request cancelled': 'request-cancelled',
 };
 
-const APPROVE_TRANSITIONS: Record<ShippingOnlyStatus, ShippingOnlyStatus> = {
+const NIGERIA_APPROVE_TRANSITIONS: Record<ShippingOnlyStatus, ShippingOnlyStatus> = {
   'request-received': 'product-shipped',
   'product-shipped': 'product-arrived',
   'product-arrived': 'invoiced',
   invoiced: 'paid',
   paid: 'product-delivered',
+  'product-delivered': 'product-delivered',
+  'request-cancelled': 'request-received',
+};
+
+const INTERNATIONAL_APPROVE_TRANSITIONS: Record<ShippingOnlyStatus, ShippingOnlyStatus> = {
+  'request-received': 'invoiced',
+  invoiced: 'paid',
+  paid: 'product-shipped',
+  'product-shipped': 'product-arrived',
+  'product-arrived': 'product-delivered',
   'product-delivered': 'product-delivered',
   'request-cancelled': 'request-received',
 };
@@ -58,12 +68,13 @@ export function isShippingOnlyStatus(value: unknown): value is ShippingOnlyStatu
 export function getShippingOnlyNextStatus(
   currentStatus: unknown,
   action: 'approve' | 'decline',
+  isInternational = false,
 ): ShippingOnlyStatus | null {
   if (action === 'decline') return 'request-cancelled';
 
   const normalizedCurrent = normalizeShippingOnlyStatus(currentStatus);
   if (!isShippingOnlyStatus(normalizedCurrent)) return null;
-  return APPROVE_TRANSITIONS[normalizedCurrent];
+  return (isInternational ? INTERNATIONAL_APPROVE_TRANSITIONS : NIGERIA_APPROVE_TRANSITIONS)[normalizedCurrent];
 }
 
 export function getShippingOnlyStatusVariantsForFilter(status: unknown): string[] {
