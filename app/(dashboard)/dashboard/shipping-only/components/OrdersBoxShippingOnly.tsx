@@ -9,6 +9,7 @@ import {
     getShippingOnlyStatusLabel,
     normalizeShippingOnlyStatus,
 } from '@/lib/shippingOnlyStatus';
+import { formatShippingPlanDisplay } from '@/lib/formatShippingPlan';
 import { 
   ChevronDown, 
   Package, 
@@ -87,6 +88,12 @@ const OrdersBoxShippingOnly = () => {
 
     useEffect(() => {
         fetchDataOrder();
+    }, [fetchDataOrder]);
+
+    useEffect(() => {
+        const refresh = () => fetchDataOrder();
+        window.addEventListener('shipping-only-request-created', refresh);
+        return () => window.removeEventListener('shipping-only-request-created', refresh);
     }, [fetchDataOrder]);
 
     const formatReadable = (value: string | null | undefined) => {
@@ -321,7 +328,7 @@ const OrdersBoxShippingOnly = () => {
                                         {[
                                             { label: 'Gross Weight', val: order.grossWeight, icon: Scale },
                                             { label: 'Tracking Number', val: order.trackingNumber || 'N/A', icon: Fingerprint },
-                                            { label: 'Shipping Plan', val: formatReadable(order.shippingPlanName || order.shippingPlan), icon: Clock },
+                                            { label: 'Shipping Plan', val: formatShippingPlanDisplay(order.shippingPlanName || order.shippingPlan), icon: Clock },
                                             { label: 'Expected Shipments', val: order.expectedShipments || 'Standard', icon: Calendar },
                                         ].map((item, i) => (
                                             <div key={i} className="flex items-center justify-between text-xs">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatShippingPlanDisplay } from '@/lib/formatShippingPlan';
 
 interface ShippingPlan {
   id: number;
@@ -37,7 +38,7 @@ const CountryTable: React.FC<CountryTableProps> = ({ countries }) => {
               <ul>  
                 {country.shippingPlans.map((plan) => (
                   <li key={plan.id}>
-                    {plan.shippingPlanName} - ${plan.shippingPlanRate}
+                    {formatShippingPlanDisplay(plan.shippingPlanName)} - ${plan.shippingPlanRate}
                   </li>
                 ))}
               </ul>

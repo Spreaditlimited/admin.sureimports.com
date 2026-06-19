@@ -16,6 +16,7 @@ import {
   Check,
   X
 } from "lucide-react"
+import { formatShippingPlanDisplay } from "@/lib/formatShippingPlan"
 
 type ShippingPlan = {
   id: number
@@ -141,7 +142,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                             className="w-full rounded border border-input bg-background px-2 py-1 text-xs font-semibold"
                                           />
                                         ) : (
-                                          plan.shippingPlanName?.replace(/_/g, ' ')
+                                          formatShippingPlanDisplay(plan.shippingPlanName)
                                         )}
                                       </td>
                                       <td className="px-4 py-3 text-right font-mono font-bold text-foreground">

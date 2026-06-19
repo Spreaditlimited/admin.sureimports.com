@@ -1,6 +1,7 @@
 // app/api/orders/total/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; // Assuming you have Prisma setup in `lib/prisma.ts`
+import { formatShippingPlanDisplay } from '@/lib/formatShippingPlan';
 
 function replaceNullWithZero<T>(value: T | null): T | number {
   return value === null ? 0 : value;
@@ -152,15 +153,7 @@ export async function GET(request: NextRequest) {
     
 
     //Shipping Plan Name
-    let shippingPlanName = shippingPlanNamex?.shippingPlanName; //value in USD
-
-    //Capitalize the first letters of the shipping plan name
-    if (shippingPlanName) {
-      shippingPlanName = shippingPlanName
-        .split('_')
-        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    }
+    const shippingPlanName = formatShippingPlanDisplay(shippingPlanNamex?.shippingPlanName);
 
     //Shipping rate per KG
     const shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
