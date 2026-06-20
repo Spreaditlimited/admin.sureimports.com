@@ -41,9 +41,9 @@ export function CountryTable({ countries }: { countries: Country[] }) {
   const [savingEdit, setSavingEdit] = useState(false)
 
   const formatCurrency = (amount: number | null) => {
-    return new Intl.NumberFormat('en-NG', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'NGN',
+      currency: 'USD',
     }).format(amount || 0);
   }
 
