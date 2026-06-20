@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
       } as any,
       select: {
         shippingPlanRate: true,
+        shippingPlanUnit: true,
       },
     });
 
@@ -86,6 +87,7 @@ export async function GET(request: NextRequest) {
       select: {
         shippingPlanRate: true,
         shippingPlanName: true,
+        shippingPlanUnit: true,
       },
     });
 
@@ -155,8 +157,9 @@ export async function GET(request: NextRequest) {
     //Shipping Plan Name
     const shippingPlanName = formatShippingPlanDisplay(shippingPlanNamex?.shippingPlanName);
 
-    //Shipping rate per KG
+    //Shipping rate unit defaults to KG to preserve existing plans.
     const shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
+    const shippingPlanUnit = shippingRate.shippingPlanUnit === 'CBM' ? 'CBM' : 'KG';
 
     //Domestic Shipping Cost within China
     const domesticShippingCost = 5; //value in USD
@@ -297,6 +300,7 @@ console.log('JESUS CHRIST IS GREAT!!!');
       //SHIPPING PLAN NAME & RATE
       shippingPlanName: shippingPlanName,
       shippingPlanRate: shippingPlanRate,
+      shippingPlanUnit: shippingPlanUnit,
 
       //DOMESTIC SHIPPING COST
       domesticShippingCost: domesticShippingCost,

@@ -6,8 +6,8 @@ import { CountryDataFetcher } from "../dataFetcher/CountryDataFetcher"
 import { CountryTable } from "../components/CountryTable"
 
 export const metadata: Metadata = {
-    title: 'Printin Admin Dashboard',
-    description: 'Printin'
+    title: 'Shipping Plans | Admin Dashboard',
+    description: 'Manage shipping plan rates and units.'
 };
 
 const Page = async () => {

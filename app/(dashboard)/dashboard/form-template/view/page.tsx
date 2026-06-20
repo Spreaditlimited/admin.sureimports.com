@@ -9,7 +9,7 @@ import Table2 from '../components/TableLayout2';
 import Table3 from '../_components/TableLayout3';
 
 export const metadata: Metadata = {
-    title: 'Page Title',
+    title: 'Form Templates | Admin Dashboard',
 };
 
 // Define the type for table data

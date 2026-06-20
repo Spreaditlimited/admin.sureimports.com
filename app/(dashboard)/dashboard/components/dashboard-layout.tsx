@@ -3,7 +3,8 @@ import { useAuth } from "@/lib/AuthContext"
 import { useState, useEffect, useRef, type KeyboardEvent, type ReactNode } from "react"
 import { Sidebar } from "./sidebar"
 import { Search, Sun, Moon, ChevronDown } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { getDashboardBrowserTitle } from "@/lib/dashboardPageTitles"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -20,6 +21,8 @@ interface GlobalSearchResult {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout, checkAuth } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isDark, setIsDark] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -32,6 +35,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Ref to detect clicks outside the user menu
   const dropdownRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    document.title = getDashboardBrowserTitle(pathname, searchParams.get("status"))
+  }, [pathname, searchParams])
 
   // Handle Initial Theme Load
   useEffect(() => {

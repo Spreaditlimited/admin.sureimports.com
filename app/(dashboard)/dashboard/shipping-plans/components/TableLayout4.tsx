@@ -6,6 +6,7 @@ interface ShippingPlan {
   pidShippingPlan: string;
   shippingPlanName: string;
   shippingPlanRate: number;
+  shippingPlanUnit?: string | null;
 }
 
 interface Country {
@@ -38,7 +39,7 @@ const CountryTable: React.FC<CountryTableProps> = ({ countries }) => {
               <ul>  
                 {country.shippingPlans.map((plan) => (
                   <li key={plan.id}>
-                    {formatShippingPlanDisplay(plan.shippingPlanName)} - ${plan.shippingPlanRate}
+                    {formatShippingPlanDisplay(plan.shippingPlanName)} - ${plan.shippingPlanRate} / {plan.shippingPlanUnit || 'KG'}
                   </li>
                 ))}
               </ul>

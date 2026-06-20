@@ -98,6 +98,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const [shippingPlanName, setShippingPlanName] = useState<string>('...');
   const [shippingPlanRate, setShippingPlanRate] = useState<number>(0);
+  const [shippingPlanUnit, setShippingPlanUnit] = useState<string>('KG');
   const [domesticShippingCost, setDomesticShippingCost] = useState<number>(0);
   const [internationalShippingCost, setInternationalShippingCost] = useState<number>(0);
   const [estimatedTotalShippingCost, setEstimatedTotalShippingCost] = useState<number>(0);
@@ -158,6 +159,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
         setShippingPlanName(data.shippingPlanName);
         setShippingPlanRate(replaceNullWithZero(data.shippingPlanRate));
+        setShippingPlanUnit(data.shippingPlanUnit === 'CBM' ? 'CBM' : 'KG');
         setDomesticShippingCost(replaceNullWithZero(data.domesticShippingCost));
         setInternationalShippingCost(replaceNullWithZero(data.internationalShippingCost));
         setEstimatedTotalShippingCost(replaceNullWithZero(data.estimatedTotalShippingCost));
@@ -318,7 +320,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               <th className="px-4 py-3">Product Name</th>
               <th className="px-4 py-3 text-center">Unit Price ({currencyType})</th>
               <th className="px-4 py-3 text-center">Quantity</th>
-              <th className="px-4 py-3 text-center">Weight (Kg)</th>
+              <th className="px-4 py-3 text-center">Weight ({shippingPlanUnit})</th>
               <th className="px-4 py-3 text-center">Total Price ({currencyType})</th>
             </tr>
           </thead>
@@ -417,11 +419,11 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Shipping Rate:</span>
-              <span className="font-medium text-foreground">${shippingPlanRate}/Kg</span>
+              <span className="font-medium text-foreground">${shippingPlanRate}/{shippingPlanUnit}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Estimated Total Weight:</span>
-              <span className="font-medium text-foreground">{((productsTotalWeight as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Kg</span>
+              <span className="text-muted-foreground">Estimated Total {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'}:</span>
+              <span className="font-medium text-foreground">{((productsTotalWeight as number) / 1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} {shippingPlanUnit}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Destination:</span>
@@ -499,12 +501,12 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Actual Shipping Details</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Actual Weight:</span>
-                <span className="font-medium text-foreground">{((actualWeightValue as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Kg</span>
+                <span className="text-muted-foreground">Actual {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'}:</span>
+                <span className="font-medium text-foreground">{((actualWeightValue as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} {shippingPlanUnit}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Plan Rate:</span>
-                <span className="font-medium text-foreground">${((shippingPlanRate as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} / Kg</span>
+                <span className="font-medium text-foreground">${((shippingPlanRate as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} / {shippingPlanUnit}</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-border mt-3">
                 <span className="text-muted-foreground">Actual Domestic (China):</span>
@@ -599,7 +601,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         {status == 'approved' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
             <div>
-              <label htmlFor="actualWeight" className="block text-sm font-medium text-foreground mb-1">Actual Weight (Kg)</label>
+              <label htmlFor="actualWeight" className="block text-sm font-medium text-foreground mb-1">Actual {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'} ({shippingPlanUnit})</label>
               <input
                 name="actualWeight"
                 type="number"

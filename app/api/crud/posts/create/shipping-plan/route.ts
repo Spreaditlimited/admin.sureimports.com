@@ -18,6 +18,8 @@ export async function POST(request: Request) {
         const country = formData.get('country') as string;
         const shippingPlan = formData.get('shippingPlan') as string;
         const shippingRate = formData.get('shippingRate') as string;
+        const shippingPlanUnitRaw = String(formData.get('shippingPlanUnit') || 'KG').trim().toUpperCase();
+        const shippingPlanUnit = shippingPlanUnitRaw === 'CBM' ? 'CBM' : 'KG';
 
         console.log(3+5);
 
@@ -64,6 +66,7 @@ export async function POST(request: Request) {
                                               shippingPlanSlug:shippingPlan,
                                               shippingPlanName:shippingPlan,
                                               shippingPlanRate: parseFloat(shippingRate),
+                                              shippingPlanUnit,
                                               updatedAt: new Date(),
                                               createdAt: new Date(),
                                           }
@@ -101,6 +104,7 @@ export async function POST(request: Request) {
             shippingPlanSlug:shippingPlan,
             shippingPlanName:shippingPlan,
             shippingPlanRate: parseFloat(shippingRate),
+            shippingPlanUnit,
             updatedAt: new Date(),
             createdAt: new Date(),
          }

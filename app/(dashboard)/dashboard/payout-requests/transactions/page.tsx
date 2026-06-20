@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-    title: 'Pay Supplier | Admin Dashboard',
+    title: 'Payout History | Admin Dashboard',
     description: 'Monitor and manage supplier payment transactions'
 };
 

@@ -10,6 +10,7 @@ import {
   Trash2, 
   Hash, 
   Banknote,
+  Ruler,
   PackageOpen,
   MapPin,
   Pencil,
@@ -23,6 +24,7 @@ type ShippingPlan = {
   pidShippingPlan: string
   shippingPlanName: string | null
   shippingPlanRate: number | null
+  shippingPlanUnit: string | null
 }
 
 type Country = {
@@ -38,6 +40,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
   const [editingPlanPid, setEditingPlanPid] = useState<string | null>(null)
   const [editingPlanName, setEditingPlanName] = useState("")
   const [editingPlanRate, setEditingPlanRate] = useState("")
+  const [editingPlanUnit, setEditingPlanUnit] = useState<"KG" | "CBM">("KG")
   const [savingEdit, setSavingEdit] = useState(false)
 
   const formatCurrency = (amount: number | null) => {
@@ -115,13 +118,14 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                   <th className="px-4 py-3"><div className="flex items-center gap-2"><Hash className="w-3 h-3" /> Plan Identifier</div></th>
                                   <th className="px-4 py-3"><div className="flex items-center gap-2"><Truck className="w-3 h-3" /> Delivery Mode</div></th>
                                   <th className="px-4 py-3 text-right"><div className="flex items-center justify-end gap-2"><Banknote className="w-3 h-3" /> Surcharge / Rate</div></th>
+                                  <th className="px-4 py-3 text-right"><div className="flex items-center justify-end gap-2"><Ruler className="w-3 h-3" /> Unit</div></th>
                                   <th className="px-4 py-3 text-right">Mgmt</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border">
                                 {country.shippingPlans.length === 0 ? (
                                   <tr>
-                                    <td colSpan={4} className="px-4 py-8 text-center">
+                                    <td colSpan={5} className="px-4 py-8 text-center">
                                       <div className="flex flex-col items-center gap-2">
                                         <PackageOpen className="w-8 h-8 text-muted-foreground/20" />
                                         <p className="text-xs text-muted-foreground font-medium">No logistics routes provisioned for this destination.</p>
@@ -159,6 +163,20 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                           formatCurrency(plan.shippingPlanRate)
                                         )}
                                       </td>
+                                      <td className="px-4 py-3 text-right font-mono font-bold text-foreground">
+                                        {editingPlanPid === plan.pidShippingPlan ? (
+                                          <select
+                                            value={editingPlanUnit}
+                                            onChange={(e) => setEditingPlanUnit(e.target.value as "KG" | "CBM")}
+                                            className="w-24 rounded border border-input bg-background px-2 py-1 text-right text-xs font-semibold"
+                                          >
+                                            <option value="KG">KG</option>
+                                            <option value="CBM">CBM</option>
+                                          </select>
+                                        ) : (
+                                          plan.shippingPlanUnit || "KG"
+                                        )}
+                                      </td>
                                       <td className="px-4 py-3 text-right">
                                         <div className="flex justify-end gap-1">
                                           {editingPlanPid === plan.pidShippingPlan ? (
@@ -178,6 +196,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                                   }
                                                   setSavingEdit(true)
                                                   try {
+                                                    const shippingPlanUnit = editingPlanUnit
                                                     const res = await fetch("/api/crud/shipping-plan/update", {
                                                       method: "POST",
                                                       headers: { "Content-Type": "application/json" },
@@ -185,6 +204,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                                         pidShippingPlan: plan.pidShippingPlan,
                                                         shippingPlanName,
                                                         shippingPlanRate,
+                                                        shippingPlanUnit,
                                                       }),
                                                     })
                                                     const data = await res.json()
@@ -197,7 +217,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                                         ...c,
                                                         shippingPlans: c.shippingPlans.map((p) =>
                                                           p.pidShippingPlan === plan.pidShippingPlan
-                                                            ? { ...p, shippingPlanName, shippingPlanRate }
+                                                            ? { ...p, shippingPlanName, shippingPlanRate, shippingPlanUnit }
                                                             : p
                                                         ),
                                                       }))
@@ -231,6 +251,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                                   setEditingPlanPid(plan.pidShippingPlan)
                                                   setEditingPlanName(plan.shippingPlanName || "")
                                                   setEditingPlanRate(String(plan.shippingPlanRate ?? 0))
+                                                  setEditingPlanUnit(plan.shippingPlanUnit === "CBM" ? "CBM" : "KG")
                                                 }}
                                                 className="p-1.5 text-primary/70 hover:text-primary hover:bg-primary/5 rounded transition-all"
                                                 title="Edit plan"

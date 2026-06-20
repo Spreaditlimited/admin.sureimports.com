@@ -10,7 +10,8 @@ import {
   Truck, 
   PlusCircle, 
   RefreshCw,
-  Info
+  Info,
+  Ruler
 } from 'lucide-react';
 import { countryArray } from '@/lib/countries';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
@@ -31,6 +32,11 @@ const shippingPlanArray = [
   { label: 'Sea Shipping', value: 'SEA_SHIPPING' },
 ] as const;
 
+const shippingRateUnitArray = [
+  { label: 'Per KG', value: 'KG' },
+  { label: 'Per CBM', value: 'CBM' },
+] as const;
+
 const ViewShippingPlan = () => {
     const navigateWithAlert = useNavigationWithAlert();
     const [isLoading, setIsLoading] = useState(false);
@@ -39,10 +45,11 @@ const ViewShippingPlan = () => {
     const [country, setCountry] = useState('');
     const [shippingPlan, setShippingPlan] = useState('');
     const [shippingRate, setShippingRate] = useState('');
+    const [shippingPlanUnit, setShippingPlanUnit] = useState<'KG' | 'CBM'>('KG');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!country || !shippingPlan || !shippingRate) {
+        if (!country || !shippingPlan || !shippingRate || !shippingPlanUnit) {
             return toast.error("Please complete all fields");
         }
 
@@ -55,6 +62,7 @@ const ViewShippingPlan = () => {
         formData.append('country', country);
         formData.append('shippingPlan', shippingPlan);
         formData.append('shippingRate', shippingRate);
+        formData.append('shippingPlanUnit', shippingPlanUnit);
 
         try {
             const res = await fetch('/api/crud/posts/create/shipping-plan', {
@@ -90,7 +98,7 @@ const ViewShippingPlan = () => {
                 </div>
 
                 <div className="p-6">
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
                         
                         {/* Destination Country */}
                         <div className="space-y-1.5">
@@ -141,6 +149,23 @@ const ViewShippingPlan = () => {
                                 required 
                                 className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground font-bold font-mono focus:ring-2 focus:ring-ring transition-all"
                             />
+                        </div>
+
+                        {/* Rate Unit */}
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                <Ruler className="w-3 h-3" /> Rate Unit
+                            </label>
+                            <select
+                                value={shippingPlanUnit}
+                                onChange={(e) => setShippingPlanUnit(e.target.value as 'KG' | 'CBM')}
+                                required
+                                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring transition-all font-medium"
+                            >
+                                {shippingRateUnitArray.map((unit) => (
+                                    <option key={unit.value} value={unit.value}>{unit.label}</option>
+                                ))}
+                            </select>
                         </div>
 
                         {/* Submit Action */}

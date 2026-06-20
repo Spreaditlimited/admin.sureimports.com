@@ -8,6 +8,7 @@ export interface ShippingPlan {
     pidShippingPlan: string;
     shippingPlanName: string | null;
     shippingPlanRate: number | null;
+    shippingPlanUnit: string | null;
 }
 
 export interface CountryWithPlans {

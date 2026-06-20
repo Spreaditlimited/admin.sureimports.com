@@ -827,6 +827,7 @@ model shippingplan {
   shippingPlanSlug String?
   shippingPlanName String?
   shippingPlanRate Float?
+  shippingPlanUnit String?   @default("KG")
   ext1             String?
   ext2             String?
   status           String?

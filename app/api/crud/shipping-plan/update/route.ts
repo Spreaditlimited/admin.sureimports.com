@@ -14,6 +14,8 @@ export async function POST(request: Request) {
     const shippingPlanName = String(body?.shippingPlanName || '').trim();
     const shippingPlanRateRaw = body?.shippingPlanRate;
     const shippingPlanRate = Number(shippingPlanRateRaw);
+    const shippingPlanUnitRaw = String(body?.shippingPlanUnit || 'KG').trim().toUpperCase();
+    const shippingPlanUnit = shippingPlanUnitRaw === 'CBM' ? 'CBM' : 'KG';
 
     if (!pidShippingPlan) {
       return NextResponse.json({ statusx: 'INVALID_INPUT', message: 'pidShippingPlan is required' }, { status: 400 });
@@ -33,12 +35,14 @@ export async function POST(request: Request) {
         shippingPlanName,
         shippingPlanSlug: shippingPlanName,
         shippingPlanRate,
+        shippingPlanUnit,
         updatedAt: new Date(),
       },
       select: {
         pidShippingPlan: true,
         shippingPlanName: true,
         shippingPlanRate: true,
+        shippingPlanUnit: true,
       },
     });
 
