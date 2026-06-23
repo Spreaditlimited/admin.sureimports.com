@@ -1,7 +1,6 @@
 import PaySupplier from './components/PaySupplier';
 import { Metadata } from 'next';
 import React from 'react';
-import { DashboardLayout } from '../components/dashboard-layout';
 
 export const metadata: Metadata = {
     title: 'Pay Supplier | Admin Dashboard',
@@ -10,9 +9,19 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-      <>
-          <h1 className="text-2xl font-bold mb-6">Pay Supplier</h1>
+      <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col gap-1 px-1">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                  Pay Supplier
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                  Manage supplier payment requests, review customer uploads, and process RMB supplier payments.
+              </p>
+          </div>
+
+          {/* Page Content */}
           <PaySupplier />
-      </>
+      </div>
   )
 }

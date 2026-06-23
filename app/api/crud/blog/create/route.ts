@@ -5,6 +5,7 @@ import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/app/utils/slugGenerator';
 import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
+import { BLOG_IMAGE_FOLDER } from '@/lib/blogImage';
 
 const prisma = new PrismaClient();
 
@@ -40,13 +41,11 @@ export async function POST(request: Request) {
     // Get file from form
     const file = formData.get('file') as File | null;
     let newFileName = '';
-    let fileType = '';
 
     // Handle image upload if file is provided
     if (file) {
       const imageCode: string = randomGenerator(20);
       const originalFileName = file.name;
-      fileType = file.type;
       const fileExt = getFileExt(originalFileName);
 
       // Check file validity
@@ -66,7 +65,31 @@ export async function POST(request: Request) {
         );
       }
 
-      newFileName = `BLOG_${imageCode}`;
+      const publicId = `BLOG_${imageCode}`;
+
+      try {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const uploadedImage = await uploadBufferToCloudinary(buffer, {
+          folder: BLOG_IMAGE_FOLDER,
+          publicId,
+          useFilename: false,
+          uniqueFilename: false,
+          overwrite: true,
+        });
+
+        newFileName = uploadedImage.publicId;
+      } catch (error) {
+        return NextResponse.json(
+          {
+            responsex: {
+              message: `Image upload failed. ERROR: ${error}`,
+              status: 'IMAGE_UPLOAD_FAILED',
+            },
+            successx: false,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     // Generate slug
@@ -93,45 +116,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Upload image to Cloudinary if file exists
-    if (file && blog && blog.id) {
-      try {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        await uploadBufferToCloudinary(buffer, {
-          folder: 'admin-sureimports/blog',
-          publicId: newFileName,
-          useFilename: false,
-          uniqueFilename: false,
-          overwrite: true,
-        });
-
-        return NextResponse.json(
-          {
-            responsex: {
-              message: 'Blog post was successfully published',
-              status: 'SUCCESS',
-            },
-            successx: true,
-            data: blog,
-          },
-          { status: 200 }
-        );
-      } catch (error) {
-        return NextResponse.json(
-          {
-            responsex: {
-              message: `Blog created but image upload failed. ERROR: ${error}`,
-              status: 'IMAGE_UPLOAD_FAILED',
-            },
-            successx: false,
-            data: blog,
-          },
-          { status: 500 }
-        );
-      }
-    }
-
-    // Return success if no image
     return NextResponse.json(
       {
         responsex: {

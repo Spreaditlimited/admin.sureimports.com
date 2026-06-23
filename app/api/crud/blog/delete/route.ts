@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { destroyCloudinaryAsset } from '@/lib/cloudinary/destroy';
+import { normalizeBlogImagePublicId } from '@/lib/blogImage';
 
 const prisma = new PrismaClient();
 
@@ -43,7 +44,7 @@ export async function DELETE(request: Request) {
     // Delete image from Cloudinary if exists
     if (existingBlog.blogImage) {
       try {
-        await destroyCloudinaryAsset(existingBlog.blogImage);
+        await destroyCloudinaryAsset(normalizeBlogImagePublicId(existingBlog.blogImage));
       } catch (error) {
         console.error('Error deleting image from Cloudinary:', error);
       }

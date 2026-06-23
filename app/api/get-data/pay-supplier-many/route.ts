@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
             serviceCharge: true,
             status: true,
             createdAt: true,
+            updatedAt: true,
           },
         });
 

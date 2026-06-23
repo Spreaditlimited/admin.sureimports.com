@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   HandCoins,
+  Landmark,
   Ship,
   ChartCandlestick,
   Store,
@@ -42,6 +43,7 @@ const features: MenuItem[] = [
   { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending", serviceKey: "procurement" },
   { title: "Shipping Only", icon: Ship, path: "/dashboard/shipping-only?status=request-received", serviceKey: "shipping_only" },
   { title: "Corporate Gifts", icon: Package, path: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
+  { title: "Pay Supplier", icon: Landmark, path: "/dashboard/pay-supplier?status=saved", serviceKey: "pay_supplier" },
   { title: "Pay Small Small", icon: HandCoins, path: "/dashboard/pay-small-small?status=SAVED", serviceKey: "pay_small_small" },
 ]
 

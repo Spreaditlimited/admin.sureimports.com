@@ -11,7 +11,7 @@ type Row = {
   paymentMethod: string;
   reference: string;
   serviceName: string;
-  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'OTHER';
+  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'OTHER';
   links: Array<{ label: string; href: string }>;
   customer: {
     pidUser: string;

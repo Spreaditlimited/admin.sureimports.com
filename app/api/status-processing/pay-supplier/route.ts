@@ -1,219 +1,247 @@
-// app/api/upload/route.ts
-import { PrismaClient } from '@prisma/client';
-import { random } from 'lodash';
-import getFileExt from '@/app/utils/fileExt';
-import fileFilter from '@/utils/fileFilter';
-import randomGenerator from '@/lib/helpers/randomGenerator';
 import { NextResponse } from 'next/server';
-import { generateSlug } from '@/utils/slugGenerator';
+import { prisma } from '@/lib/prisma';
 import xMail from '@/lib/email/xMail2';
+import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
 
-const prisma = new PrismaClient();
+const PAY_SUPPLIER_SERVICE_NAME = 'Pay Supplier';
 
+function getCustomerName(user: any) {
+  return [user?.userFirstname, user?.userLastname].filter(Boolean).join(' ').trim() || user?.userFirstname || 'Customer';
+}
 
-export async function POST(request: Request) {
+function getEmailContent(newStatus: string, pidOrder: string, firstName: string, message: string) {
+  const adminMessage = `<br /><br /> <b>::::: Admin Message :::::</b><br />${message ? message : 'No message available.'}`;
 
-  return NextResponse.json(
-    { statusx: 'SUCCESS_MESSAGE', message: 'Message has been successfuly sent!' },
-    { status: 200 },
-  );
-  
-  //GET FORM DATA
-  const formData = await request.formData();
-  const pidUser = formData.get('pidUser') as string;
-  const pidOrder = formData.get('pidOrder') as string;
-  const currentStatus = formData.get('currentStatus') as string;
-  const newStatus = formData.get('newStatus') as string;
-  const message = formData.get('message') as string;
-  const pidMessage = formData.get('pidMessage') as string;
-
-
-
-
-  //CHECK IF USER PID AND CID EXISTS
-  const user = await prisma.users.findUnique({
-    where: {
-      pidUser: pidUser,
-      //userEmail: email,
-    },
-  });
-
-
-
-  //SEND ONLY MESSAGE NOTIFICATION
-  if(newStatus == 'message'){
-    const messagex = await prisma.messages.create({
-      data: {
-              pidMessage: pidMessage,
-              pidOrder: pidOrder,
-              pidFrom: 'hello@sureimports.com',
-              pidTo: user?.userEmail,
-              fullName: user?.userFirstname,
-              messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
-              messageContent: message,
-              messageStatus:    'unread',
-              createdAt:       new Date(),
-              updatedAt:       new Date(),
-            },
-          });
- 
-  
-    // .................... SPECIAL ADMIN MESSAGE STAGE MAIL ....................//
-      const xEmail = user?.userEmail as string;
-      const xTitle = `SureImports`;
-      const xBodyTitle = `Special Admin Message`;
-      const xBody1 = `Hello ` + user?.userFirstname + `,` +
-  `<p>Find the admin message below for your order with ID :<b>`+pidOrder+`</b>. This is a special Admin Message.</p>
-  <p>You may contact the admin fo further clarification.</p>
-  <p>You may also Log into your SureImports account, go to the dashboard to view the specific order.</p>` +
-  `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
-      const xBody2 = ``;
-      const xButtonTitle = '';
-      const xButtonLink = '';
-      await xMail({
-        xEmail,
-        xTitle,
-        xBodyTitle,
-        xBody1,
-        xBody2,
-        xButtonTitle,
-        xButtonLink,
-      });
-      //success update
-      return NextResponse.json(
-        { statusx: 'SUCCESS_MESSAGE', message: 'Message has been successfuly sent!' },
-        { status: 200 },
-      );
+  if (newStatus === 'paid-supplier') {
+    return {
+      statusx: 'SUCCESS',
+      responseMessage: 'Request has been successfully marked paid.',
+      xTitle: 'Supplier has been paid',
+      xBodyTitle: 'Supplier has been paid',
+      xBody1:
+        `Hello ${firstName},` +
+        `<p>Your Pay Supplier request with ID: <b>${pidOrder}</b> has been successfully paid to your supplier.</p>` +
+        `<p>Thank you for doing business with Sure Imports Pay Supplier.</p>` +
+        `<p>Log into your Sure Imports account to view this request.</p>` +
+        adminMessage,
+    };
   }
 
+  if (newStatus === 'request-cancelled') {
+    return {
+      statusx: 'CANCELLED',
+      responseMessage: 'Request has been successfully cancelled.',
+      xTitle: 'Request Cancelled',
+      xBodyTitle: 'Pay Supplier Request has been cancelled',
+      xBody1:
+        `Hello ${firstName},` +
+        `<p>Your Pay Supplier request with ID: <b>${pidOrder}</b> has been cancelled.</p>` +
+        `<p>You may contact the Sure Imports Processing Team for further clarity on this cancellation.</p>` +
+        `<p>Log into your Sure Imports account, go to <b>Pay Supplier Services</b> to view this request.</p>` +
+        adminMessage,
+    };
+  }
 
-  //SEND GENERAL MESSAGE
-  const messagex = await prisma.messages.create({
+  return null;
+}
+
+function createPid(prefix: string) {
+  return `${prefix}${Date.now()}${Math.floor(Math.random() * 100000)}`;
+}
+
+function toAmount(value: unknown) {
+  const amount = Number(String(value ?? '').replace(/,/g, ''));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+async function sendAdminMessageEmail({
+  user,
+  pidOrder,
+  newStatus,
+  message,
+}: {
+  user: any;
+  pidOrder: string;
+  newStatus: string;
+  message: string;
+}) {
+  await xMail({
+    xEmail: user?.userEmail || '',
+    xTitle: 'Sure Imports',
+    xBodyTitle: 'Special Admin Message',
+    xBody1:
+      `Hello ${user?.userFirstname || 'Customer'},` +
+      `<p>Find the admin message below for your Pay Supplier request with ID: <b>${pidOrder}</b>.</p>` +
+      `<p>You may contact the admin for further clarification.</p>` +
+      `<p>You may also log into your Sure Imports account and go to Pay Supplier Services to view this request.</p>` +
+      `<br /><br /> <b>::::: Admin Message :::::</b><br />${message ? message : 'No message available.'}`,
+    xBody2: '',
+    xButtonTitle: '',
+    xButtonLink: '',
+  });
+}
+
+export async function POST(request: Request) {
+  const formData = await request.formData();
+  const pidUser = String(formData.get('pidUser') || '').trim();
+  const pidOrder = String(formData.get('pidOrder') || '').trim();
+  const newStatus = String(formData.get('newStatus') || '').trim();
+  const message = String(formData.get('message') || '').trim();
+  const pidMessage = String(formData.get('pidMessage') || `MSG${Date.now()}`).trim();
+
+  if (!pidUser || !pidOrder || !newStatus) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Missing Pay Supplier request details.' },
+      { status: 400 },
+    );
+  }
+
+  const user = await prisma.users.findUnique({
+    where: { pidUser },
+  });
+
+  if (!user) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Customer account was not found.' },
+      { status: 404 },
+    );
+  }
+
+  const paySupplierRequest = await prisma.pay_supplier.findUnique({
+    where: { pidPaySupplier: pidOrder },
+  });
+
+  if (!paySupplierRequest || paySupplierRequest.pidUser !== pidUser) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Pay Supplier request was not found.' },
+      { status: 404 },
+    );
+  }
+
+  if (newStatus === 'message') {
+    await prisma.messages.create({
+      data: {
+        pidMessage,
+        pidOrder,
+        pidFrom: 'hello@sureimports.com',
+        pidTo: user.userEmail,
+        fullName: user.userFirstname,
+        messageTitle: 'Admin Message: PAY SUPPLIER',
+        messageContent: message,
+        messageStatus: 'unread',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+    await sendAdminMessageEmail({ user, pidOrder, newStatus, message });
+
+    return NextResponse.json(
+      { statusx: 'SUCCESS_MESSAGE', message: 'Message has been successfully sent.' },
+      { status: 200 },
+    );
+  }
+
+  if (!['paid-supplier', 'request-cancelled'].includes(newStatus)) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Unsupported Pay Supplier status transition.' },
+      { status: 400 },
+    );
+  }
+
+  await prisma.messages.create({
     data: {
-      pidMessage: pidMessage,
-      pidOrder: pidOrder,
-      pidFrom: 'admin@sureimports.com',
-      pidTo: user?.userEmail,
-      fullName: user?.userFirstname,
-      messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
+      pidMessage,
+      pidOrder,
+      pidFrom: 'hello@sureimports.com',
+      pidTo: user.userEmail,
+      fullName: user.userFirstname,
+      messageTitle: `Pay Supplier Status: ${newStatus.toUpperCase()}`,
       messageContent: message,
-      messageStatus:    'unread',
-      createdAt:       new Date(),
-      updatedAt:       new Date(),
+      messageStatus: 'unread',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 
-
-
-
-    //UPDATE SERVICE STATUS 
-    const updatex = await prisma.pay_supplier.update({
-      where: {  
-                pidUser: pidUser, 
-                pidPaySupplier: pidOrder 
-             },
+  await prisma.$transaction(async (tx) => {
+    await tx.pay_supplier.update({
+      where: { pidPaySupplier: pidOrder },
       data: {
         status: newStatus,
         updatedAt: new Date(),
       },
     });
 
+    if (newStatus === 'paid-supplier') {
+      const existingPayment = await tx.payments.findFirst({
+        where: {
+          serviceID: pidOrder,
+          serviceName: PAY_SUPPLIER_SERVICE_NAME,
+          paymentStatus: 'PAID',
+        },
+        select: { id: true },
+      });
 
-
-
-              
-                
- //*************************************** MESSAGING BLOCK STARTS ***************************************//
-    if(updatex) {
-
-
-    // .................... PAID SUPPLIER STAGE MAIL ....................//
-    if(newStatus == "paid-supplier"){
-
-        //SEND EMAIL TO USER
-        const xEmail = user?.userEmail as string;
-        const xTitle = `Supplier has been paid`;
-        const xBodyTitle = `Supplier has been paid`;
-        const xBody1 = `Hello ` + user?.userFirstname + `,` +
-        `<p>Your Pay Supplier order with ID :<b>`+pidOrder+`</b>  has been successfuly made to your Supplier.</p>
-        <p>Thank you for doing buisness with SureImports Pay Supplier.</p>
-        <p>Log into your SureImports account, to view this order.</p>` +
-        `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
-        const xBody2 = ``;
-        const xButtonTitle = '';
-        const xButtonLink = '';
-        await xMail({
-          xEmail,
-          xTitle,
-          xBodyTitle,
-          xBody1,
-          xBody2,
-          xButtonTitle,
-          xButtonLink,
+      if (!existingPayment) {
+        const paidAt = new Date();
+        const amount = toAmount(paySupplierRequest.amountToPayInNaira || paySupplierRequest.amount_to_pay);
+        await tx.payments.create({
+          data: {
+            pidPayment: createPid('PMT'),
+            pidUser,
+            payerName: getCustomerName(user),
+            payerEmail: user.userEmail || null,
+            txID: `PAY-SUPPLIER-${pidOrder}`,
+            txRef: pidOrder,
+            paymentStatus: 'PAID',
+            paymentType: 'PAY_SUPPLIER_MARK_PAID',
+            currency: 'NGN',
+            amount,
+            serviceID: pidOrder,
+            serviceName: PAY_SUPPLIER_SERVICE_NAME,
+            serviceDescription: `Pay Supplier request marked paid for ${paySupplierRequest.supplierName || 'supplier'}`,
+            txDateProcesser: paidAt.toISOString(),
+            txDateServer: paidAt.toISOString(),
+            xStatus: 'active',
+          },
         });
-          //success update
-          return NextResponse.json(
-            { statusx: 'SUCCESS', message: 'Order has been successfully moved to Paid Supplier stage.' },
-            { status: 200 },
-          );
-        }else{
-          //success update
-          return NextResponse.json(
-            { statusx: 'ACTION_FAILED', message: 'Action Failed! You may need to try again, or contact the Admin.' },
-            { status: 401 },
-          );
-        }
+      }
+    }
+  });
 
+  const emailContent = getEmailContent(newStatus, pidOrder, user.userFirstname || 'Customer', message);
+  if (!emailContent) {
+    return NextResponse.json(
+      { statusx: 'ACTION_FAILED', message: 'Unable to build Pay Supplier notification.' },
+      { status: 500 },
+    );
+  }
 
+  await Promise.allSettled([
+    xMail({
+      xEmail: user.userEmail || '',
+      xTitle: emailContent.xTitle,
+      xBodyTitle: emailContent.xBodyTitle,
+      xBody1: emailContent.xBody1,
+      xBody2: '',
+      xButtonTitle: '',
+      xButtonLink: '',
+    }),
+    sendApprovedWhatsAppStatusTemplate({
+      requestId: pidOrder,
+      serviceName: PAY_SUPPLIER_SERVICE_NAME,
+      businessName: PAY_SUPPLIER_SERVICE_NAME,
+      contactPersonFullName: getCustomerName(user),
+      contactEmail: user.userEmail || '',
+      whatsappNumber: user.userPhone || '',
+      status: newStatus,
+      cancellationReason: newStatus === 'request-cancelled' ? message : '',
+    }),
+  ]);
 
-
-
-
-        // .................... REQUEST CANCELLED STAGE MAIL ....................//
-        if(newStatus == "request-cancelled"){
-
-          //SEND EMAIL TO USER
-        const xEmail = user?.userEmail as string;
-        const xTitle = `Request Cancelled`;
-        const xBodyTitle = `Pay Supplier Request has been cancelled`;
-        const xBody1 = `Hello ` + user?.userFirstname + `,` +
-        `<p>Your Pay Supplier order with ID :<b>`+pidOrder+`</b> has been cancelled.</p>
-        <p>You may contact the SureImports Processing Team for further clarity on this cancellation.</p>
-        <p>Log into your SureImports account, go to <b>Pay Supplier Services</b> to view this order.</p>` +
-        `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
-        const xBody2 = ``;
-        const xButtonTitle = '';
-        const xButtonLink = '';
-        await xMail({
-          xEmail,
-          xTitle,
-          xBodyTitle,
-          xBody1,
-          xBody2,
-          xButtonTitle,
-          xButtonLink,
-        });
-          //success update
-          return NextResponse.json(
-            { statusx: 'CANCELLED', message: 'Order has been successfully cancelled.' },
-            { status: 200 },
-          );
-        }else{
-          //success update
-          return NextResponse.json(
-            { statusx: 'ACTION_FAILED', message: 'Action Failed! You may need to try again, or contact the Admin.' },
-            { status: 401 },
-          );
-        }
-
-
-
-
-
-
-
-
-
-  //END
-}
+  return NextResponse.json(
+    { statusx: emailContent.statusx, message: emailContent.responseMessage },
+    { status: 200 },
+  );
 }

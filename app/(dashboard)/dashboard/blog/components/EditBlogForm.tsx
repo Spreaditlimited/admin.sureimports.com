@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import ImageBox from '@/componentsx/ImageBox';
 import dynamic from 'next/dynamic';
+import { getBlogImageUrl } from '@/lib/blogImage';
 
 const BlogEditor = dynamic(() => import('@/components/blog-editor/BlogEditor'), {
   ssr: false,
@@ -205,9 +206,7 @@ const EditBlogForm = () => {
   };
 
   const getImageUrl = (imageName: string | null) => {
-    if (!imageName) return '/assets/images/default-blog.jpg';
-    if (imageName.startsWith('http')) return imageName;
-    return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
+    return getBlogImageUrl(imageName, '/assets/images/default-blog.jpg') || '/assets/images/default-blog.jpg';
   };
 
   if (loadingBlog) {

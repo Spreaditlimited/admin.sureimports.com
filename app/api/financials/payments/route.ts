@@ -13,7 +13,7 @@ type FinancialPaymentRow = {
   paymentMethod: string;
   reference: string;
   serviceName: string;
-  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'OTHER';
+  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'OTHER';
   links: Array<{ label: string; href: string }>;
   customer: {
     pidUser: string;
@@ -122,6 +122,12 @@ export async function GET(request: NextRequest) {
           select: { pidOrder: true },
         })
       : [];
+    const legacyPaySupplierRequests = legacyServiceIds.length
+      ? await prisma.pay_supplier.findMany({
+          where: { pidPaySupplier: { in: legacyServiceIds } },
+          select: { pidPaySupplier: true, status: true, supplierName: true },
+        })
+      : [];
     const legacyUsers = legacyUserIds.length
       ? await prisma.users.findMany({
           where: { pidUser: { in: legacyUserIds } },
@@ -137,6 +143,7 @@ export async function GET(request: NextRequest) {
     const usersByPid = new Map(legacyUsers.map((u) => [u.pidUser, u]));
     const invoiceByPid = new Map(legacyInvoices.map((inv) => [inv.pidInvoice, inv]));
     const orderIdSet = new Set(legacyOrders.map((o) => o.pidOrder));
+    const paySupplierByPid = new Map(legacyPaySupplierRequests.map((request) => [request.pidPaySupplier, request]));
 
     const legacyRows: FinancialPaymentRow[] = legacyPayments.map((row) => {
       const status = LEGACY_COMPLETED.has((row.paymentStatus || '').trim()) ? 'COMPLETED' : 'PENDING';
@@ -170,6 +177,11 @@ export async function GET(request: NextRequest) {
       } else if (row.serviceID && orderIdSet.has(row.serviceID)) {
         serviceType = 'ORDER';
         links.push({ label: 'Order', href: `/dashboard/procurement?pidOrder=${row.serviceID}` });
+      } else if (row.serviceID && paySupplierByPid.has(row.serviceID)) {
+        const request = paySupplierByPid.get(row.serviceID);
+        serviceType = 'PAY_SUPPLIER';
+        serviceName = `Pay Supplier - ${request?.supplierName || row.serviceID}`;
+        links.push({ label: 'Pay Supplier Request', href: `/dashboard/pay-supplier?status=${request?.status || 'paid-supplier'}` });
       }
 
       return {

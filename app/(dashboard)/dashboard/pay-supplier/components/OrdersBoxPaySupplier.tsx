@@ -3,29 +3,75 @@
 
 import React, { useEffect, useState } from 'react';
 import AnimateHeight from 'react-animate-height';
-import TableProcurementProducts from '../../../../../componentsx/dashboard/TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { BookDown, CornerRightDown, Icon } from 'lucide-react';
+import { CornerRightDown, Layers, Package } from 'lucide-react';
 import { getTimeDifference } from '@/lib/getTimeDifference';
+import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 
+function buildPaySupplierAssetUrl(value?: string | null) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
 
-interface Product {
-    id: number;
-    pidProduct: string;
-    pidOrder: string;
-    pidUser: string;
-    productName: string;
-    productLink: string;
-    productCategory: string;
-    productPrice: string;
-    productWeight: string;
-    productQuantity: string;
-    productInfo: string;
-    productStatus: string;
-  }
-  
+    const base = process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL?.replace(/\/$/, '');
+    if (!base) return '';
+
+    if (raw.includes('/')) return `${base}/${raw}`;
+    return `${base}/sureimports/pay-supplier/${raw}`;
+}
+
+function isPdfAsset(value: string) {
+    return /\.pdf($|\?)/i.test(value);
+}
+
+function AttachmentCard({
+    label,
+    value,
+}: {
+    label: string;
+    value?: string | null;
+}) {
+    const url = buildPaySupplierAssetUrl(value);
+    if (!url) return null;
+
+    return (
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-lg border border-border bg-background p-3 transition hover:bg-muted/50"
+        >
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {label}
+            </p>
+            {isPdfAsset(url) ? (
+                <div className="mt-3 flex h-28 items-center justify-center rounded-lg border border-dashed border-border bg-card text-sm font-semibold text-primary">
+                    View PDF
+                </div>
+            ) : (
+                <img
+                    src={url}
+                    alt={label}
+                    className="mt-3 h-28 w-full rounded-lg object-cover"
+                />
+            )}
+        </a>
+    );
+}
+
+const DetailItem = ({ label, value }: { label: string; value: string }) => (
+    <div className="flex flex-col">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+            {label}
+        </span>
+        <span className="text-sm font-semibold text-foreground break-words">
+            {value}
+        </span>
+    </div>
+);
+
 
 interface Order {
     id: number;
@@ -43,66 +89,31 @@ interface Order {
     serviceCharge: string;
     status: string;
     createdAt: string;
+    updatedAt: string | null;
   }
 
+function formatPaySupplierTime(value?: string | null) {
+    return value ? getTimeDifference(value) : 'Time unavailable';
+}
 
+function formatStatusLabel(value: string) {
+    const labels: Record<string, string> = {
+        saved: 'Saved Requests',
+        'pending-payment': 'Bank Pending',
+        'paid-supplier': 'Paid Supplier',
+        'request-cancelled': 'Request Cancelled',
+    };
+    return labels[value] || value.replace(/-/g, ' ');
+}
 
-  interface User {
-    id: any;
-    pidUser: string;
-    userFirstname: string;
-    userLastname: string;
-    userEmail: string;
-    userPassword: string;
-    userSession: string;
-    cidStatus: string;
-    loginStatus: string;
-    loginKey: string;
-    loginStamp: string;
-    gender: string;
-    dob: string;
-    email: string;
-    phone: string;
-    address: string;
-    country: string;
-    bank_name: string;
-    bank_account_number: string;
-    bank_account_name: string;
-    ref_id: string;
-    userPhone: string;
-    userCid: string;
-    userShippingAddress: string;
-    userShippingAddress2: string;
-    userCountry: string;
-    userState: string;
-    userAffiliateCode: string;
-    userAffiliateRef: string;
-    userStatus: string;
-    userImage: string;
-  }
-
-
-
-//USER DATA
-interface User {
-    pidUser: string;
-    email: string;
-    name: string;
-  }
-  
-  //API RESPONSE
-  interface ApiResponse {
-    responsex: any;
-    successx: boolean;
-    userx: User;
-  }
 
 
 const ComponentsAccordionsBasic = () => {
+    const navigateWithAlert = useNavigationWithAlert();
 
 
     // VARIABLES
-    const [active, setActive] = useState<string>('1');
+    const [active, setActive] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
     const togglePara = (value: string) => {
         setActive((oldValue) => {
@@ -117,8 +128,6 @@ const ComponentsAccordionsBasic = () => {
     const [orderALL, setOrderALL] = useState<Order[]>([]);
     const [message, setMessage] = useState<any>('');
     const [actionType, setActionType] = useState<string>('');
-    const [pidUser, setPidUser] = useState<any>('');
-    const [pidOrder, setPidOrder] = useState<any>('');
     
 
 
@@ -127,7 +136,6 @@ const ComponentsAccordionsBasic = () => {
     async function fetchDataOrder() {
         try {
            // Pull Records from database
-           //const res = await fetch(`/api/get-data/order-all?pidOrder=${pidOrder}&pidUser=${pidUser}`);
            const res = await fetch(`/api/get-data/pay-supplier-many?status=${status}`);
            const data = await res.json();
            setOrderALL(data);
@@ -159,24 +167,27 @@ const ComponentsAccordionsBasic = () => {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
           event.preventDefault();
+          const nativeSubmitEvent = event.nativeEvent as SubmitEvent;
+          const submitter = nativeSubmitEvent.submitter as HTMLButtonElement | null;
+          const nextAction = submitter?.value || actionType;
 
           const pidMessage = 'MSG' + new Date().getTime().toString();
           const currentStatus = status;
 
           const formData = new FormData(event.currentTarget);
-          formData.append('pidOrder', pidOrder);
-          formData.append('pidUser', pidUser);
-          formData.append('currentStatus', currentStatus);
-          formData.append('newStatus', actionType);
-          formData.append('message', message);
-          formData.append('pidMessage', pidMessage);
-          formData.append('status', status);
+          const submittedPidOrder = String(formData.get('pidOrder') || '');
+          const submittedPidUser = String(formData.get('pidUser') || '');
+          formData.set('currentStatus', currentStatus);
+          formData.set('newStatus', nextAction);
+          formData.set('message', message);
+          formData.set('pidMessage', pidMessage);
+          formData.set('status', status);
     // 
           //MAKE REQUEST ATTEMPT
           try {
-            toast.info('Processing . . .'+pidOrder+pidUser);
+            toast.info('Processing . . .' + submittedPidOrder + submittedPidUser);
             //MAKE REQUEST
-            const res = await fetch('/api/stage-processing/pay-supplier', {
+            const res = await fetch('/api/status-processing/pay-supplier', {
               method: 'POST',
               body: formData,
             });
@@ -184,7 +195,7 @@ const ComponentsAccordionsBasic = () => {
             // GET & PROCESS RESPONSE FROM API
             const data:any = await res.json();
       
-            if (data.statusx == 'SUCCESS'){navigateWithAlert('/pay-supplier?status=paid-supplier', 'success', 'Payment details was successfully confirmed and order moved for processing.');}
+            if (data.statusx == 'SUCCESS'){navigateWithAlert('/dashboard/pay-supplier?status=paid-supplier', 'success', 'Payment details was successfully confirmed and marked paid.');}
             // if (data.responsex.status == 'SUCCESS') {
             //   toast.success(data.responsex.message);
             // }
@@ -194,7 +205,7 @@ const ComponentsAccordionsBasic = () => {
             if (data.statusx  == 'SUCCESS_MESSAGE') {
               toast.success(data.message);
             }
-            if (data.statusx  == 'CANCELLED'){navigateWithAlert('/pay-supplier?status=request-cancelled', 'success', 'Pay Supplier Order has been successfully cancelled.');}
+            if (data.statusx  == 'CANCELLED'){navigateWithAlert('/dashboard/pay-supplier?status=request-cancelled', 'success', 'Pay Supplier Order has been successfully cancelled.');}
           } catch (error: any) {
               console.log(error.message);
           } finally {
@@ -213,10 +224,11 @@ const ComponentsAccordionsBasic = () => {
    if (loading) {return <Loader />;} //show loader
    if (orderALL.length === 0) {
     return (
-      <div className="m-7 flex border-spacing-1 items-center justify-center p-7 font-bold">
-        <div className="rounded border-2 border-dotted border-gray-500 p-4">
-          <p className="text-center text-gray-500">No {status} orders available</p>
-        </div>
+      <div className="py-24 text-center border-2 border-dashed border-border rounded-xl bg-muted/5 mx-2">
+        <Package className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground italic">
+          No {formatStatusLabel(status)} records found
+        </p>
       </div>
     ); 
   }
@@ -226,79 +238,125 @@ const ComponentsAccordionsBasic = () => {
 
     return (
 
-                <>
-                <div className='text-xl p-3'>{status.toUpperCase() ?? 'No '} orders</div>
+                <div className="space-y-4">
+                <div className="flex items-center gap-3 px-1 mb-6">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <Layers className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h2 className="text-sm font-bold text-foreground uppercase tracking-widest">
+                            Supplier Queue: {formatStatusLabel(status)}
+                        </h2>
+                        <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
+                            Current Volume: {orderALL.length} Entries
+                        </p>
+                    </div>
+                </div>
                     
                 {
                     orderALL.map(
                         (datax: any, index: number) => {
+                        const itemKey = `${index + 1}`;
+                        const isActive = active === itemKey;
                         return (
                         
-                            <div className="mb-5" key={datax.pidOrder || index}>
-                            <div className="space-y-2 font-semibold">
-                                <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
+                            <div
+                                className="bg-card border border-border shadow-soft rounded-lg overflow-hidden transition-all duration-200"
+                                key={datax.pidPaySupplier || index}
+                            >
 
-                                    <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
-                                        <b className='text-xl'>#{index + 1} : {datax.supplierName}</b>&nbsp; | &nbsp; ORDER ID: {datax.pidOrder} &nbsp; | &nbsp; Updated: {getTimeDifference(datax.updatedAt)}&nbsp; | &nbsp; <small>Created: {getTimeDifference(datax.createdAt)}</small>
-                                        
-                                        &nbsp; &nbsp;
+                                    <button
+                                        type="button"
+                                        className={`w-full flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset ${
+                                            isActive ? 'bg-muted/30' : 'hover:bg-muted/50'
+                                        }`}
+                                        onClick={() => togglePara(itemKey)}
+                                    >
+                                        <div className="flex flex-col gap-1 mb-3 sm:mb-0">
+                                            <span className={`text-base font-bold ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                                                #{index + 1} : {datax.supplierName}
+                                            </span>
+                                            <span className="text-sm text-muted-foreground font-medium">
+                                                Request ID: {datax.pidPaySupplier || 'N/A'}
+                                            </span>
+                                        </div>
 
-                                        <div className={`ltr:ml-auto rtl:mr-auto ${active === `${index+1}` ? 'rotate-180' : ''}`}>
-                                         <CornerRightDown />
-                                        </div>   
-
-                                        <br /><hr />
-                                                                                                                    
+                                        <div className="flex items-center justify-between sm:justify-end gap-6">
+                                            <div className="flex flex-col sm:items-end text-xs text-muted-foreground">
+                                                <span>Updated: {formatPaySupplierTime(datax.updatedAt || datax.createdAt)}</span>
+                                                <span>Created: {formatPaySupplierTime(datax.createdAt)}</span>
+                                            </div>
+                                            <div className={`text-muted-foreground transition-transform duration-300 ${isActive ? 'rotate-180 text-primary' : ''}`}>
+                                                <CornerRightDown className="w-5 h-5" />
+                                            </div>
+                                        </div>
                                     </button>
                                     <div>
-                                        <AnimateHeight duration={300} height={active === `${index+1}` ? 'auto' : 0}>
-                                            <div className="space-y-2 border-t border-[#d3d3d3] p-4 text-[16px] text-white-dark dark:border-[#1b2e4b]">
-                                                {/* <TableProcurementProducts pidOrder={datax.pidOrder} orderName={datax.orderName} shippingAddress={datax.shippingAddress}  /> */}
-                                                <b>Service ID:</b> {datax.pidPaySupplier}
-                                                <hr />
-                                                <b>Supplier Name:</b> {datax.supplierName}
-                                                <hr />
-                                                <b>Supplier Number:</b> {datax.supplierPhone}
-                                                <hr />
-                                                <b>Supplier Email:</b> {datax.supplierEmail}
-                                                <hr />
-                                                <b>Supplier Bank Details:</b> {datax.supplierBankAccountDetails}
-                                                <hr />
-                                                <b>Amount to pay in Yuan:</b> ¥{((datax.amountToPayInYuan as number) / 1)
+                                        <AnimateHeight duration={300} height={isActive ? 'auto' : 0}>
+                                            <div className="border-t border-border p-4 sm:p-6 bg-background/50 space-y-6">
+                                            <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
+                                                <h4 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">
+                                                    Supplier Details
+                                                </h4>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-y-6 gap-x-4 text-sm">
+                                                <DetailItem label="Request ID" value={datax.pidPaySupplier || 'N/A'} />
+                                                <DetailItem label="Supplier Name" value={datax.supplierName || 'N/A'} />
+                                                <DetailItem label="Supplier Number" value={datax.supplierPhone || 'N/A'} />
+                                                <DetailItem label="Supplier Email" value={datax.supplierEmail || 'N/A'} />
+                                                <div className="sm:col-span-2 xl:col-span-4">
+                                                    <DetailItem label="Supplier Bank Details" value={datax.supplierBankAccountDetails || 'N/A'} />
+                                                </div>
+                                                </div>
+                                                <div className="grid gap-3 pt-5 mt-5 border-t border-border md:grid-cols-3">
+                                                    <AttachmentCard
+                                                        label="AliPay Account"
+                                                        value={datax.aliPayAccountQRCodeImage}
+                                                    />
+                                                    <AttachmentCard
+                                                        label="WeChat Account"
+                                                        value={datax.weChatAccountQRCodeImage}
+                                                    />
+                                                    <AttachmentCard
+                                                        label="Proforma Invoice"
+                                                        value={datax.proformaInvoiceImage}
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-5 mt-5 border-t border-border">
+                                                <DetailItem label="Amount to pay in Yuan" value={`¥${((datax.amountToPayInYuan as number) / 1)
                                                       .toFixed(2)
                                                       .toString()
-                                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string}
-                                                <hr />
-                                                <b>Amount to pay in Naira:</b> ₦{((datax.amountToPayInNaira as number) / 1)
+                                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string}`} />
+                                                <DetailItem label="Amount to pay in Naira" value={`₦${((datax.amountToPayInNaira as number) / 1)
                                                       .toFixed(2)
                                                       .toString()
-                                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string}
-                                                <hr />
+                                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',') as string}`} />
+                                                </div>
+                                            </div>
                                             </div>
 
 
 
 
 
-                                            <form onSubmit={handleSubmit}>
+                                            <form onSubmit={handleSubmit} className="bg-card border border-border rounded-lg shadow-sm">
 
 
-                                                  <input type='hidden' id='pidUser' name='pidUser' onChange={(e) => setPidUser(e.target.value)} defaultValue={datax.pidUser} />
-                                                  <input type='hidden' id='pidOrder' name='pidOrder' onChange={(e) => setPidOrder(e.target.value)} defaultValue={datax.pidUser} />
+                                                  <input type='hidden' id='pidUser' name='pidUser' defaultValue={datax.pidUser} />
+                                                  <input type='hidden' id='pidOrder' name='pidOrder' defaultValue={datax.pidPaySupplier} />
 
 
                                                     {/* Confirm Action */}
-                                                    <div className="space-y-4 p-5">
-                                                        <p className="text-red-600 font-medium text-sm dark:text-red-400">Confirm your action</p>
-                                                        <div className="flex items-center space-x-2">
+                                                    <div className="space-y-3 p-5">
+                                                        <p className="text-sm font-bold text-foreground">Confirm Action</p>
+                                                        <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-md border border-border">
                                                             <input
                                                             key={index + 999999}
                                                             type="checkbox"
                                                             id={"confirm"+index}
-                                                            className="rounded border-gray-300 dark:border-gray-600 focus:ring-indigo-500"
+                                                            className="h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                                                             required
                                                             />
-                                                            <label htmlFor="confirm" className="text-sm text-gray-700 dark:text-gray-300">
+                                                            <label htmlFor={"confirm"+index} className="text-sm font-medium text-foreground cursor-pointer">
                                                             Check this box to confirm your action
                                                             </label>
                                                         </div>
@@ -307,15 +365,15 @@ const ComponentsAccordionsBasic = () => {
 
 
                                                     {/* Message to Buyer */}
-                                                    <div className=' p-5'>
+                                                    <div className='p-5 pt-0'>
                                                         <textarea
-                                                            className="form-textarea w-full p-3 border rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
                                                             rows={3}
                                                             placeholder="Send Message to Buyer"
                                                             //value={message}
                                                             onChange={(e) => setMessage(e.target.value)}
                                                         ></textarea>
-                                                    </div><br />
+                                                    </div>
 
 
 
@@ -323,13 +381,13 @@ const ComponentsAccordionsBasic = () => {
 {(status == 'saved') && (
           <>
         {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-3 p-5"> 
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-5 pt-0"> 
             
             <div className="w-full md:w-1/1">
-                <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
+                <button type="submit" name="action" value="message" onClick={() => setActionType('message')} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
                   Send Message
                 </button>
-                <small>Send message to Customer</small>
+                <small className="mt-2 block text-xs text-muted-foreground">Send message to Customer</small>
             </div>
 
         </div>
@@ -347,20 +405,20 @@ const ComponentsAccordionsBasic = () => {
 {(status == 'pending-payment') && (
           <>
         {/* Action Buttons */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-3 p-5">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-5 pt-0">
             
             <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="request-cancelled" onClick={() => setActionType('request-cancelled')} className="w-full btn btn-dark mt-4 bg-gray-700 dark:bg-gray-600 text-white py-3 rounded-md text-sm shadow hover:bg-gray-800 dark:hover:bg-gray-700">
-                  CANCEL (Cancel this request)
+                <button type="submit" name="action" value="request-cancelled" onClick={() => setActionType('request-cancelled')} className="w-full rounded-md bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 shadow-sm">
+                  Cancel Request
                 </button>
-                <small>Decline Order if there are issues</small>
+                <small className="mt-2 block text-xs text-muted-foreground">Cancel this request if there are issues</small>
             </div>
             
             <div className="w-full md:w-1/2">
-                <button type="submit" name="action" value="paid-supplier" onClick={() => setActionType('paid-supplier')} className="btn btn-secondary mt-4 w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-md text-sm shadow hover:bg-indigo-700 dark:hover:bg-indigo-600">
-                  APPROVE (Move to Paid Supplier)
+                <button type="submit" name="action" value="paid-supplier" onClick={() => setActionType('paid-supplier')} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm">
+                  Mark Paid
                 </button>
-                <small>Approve this Order for further processing</small>
+                <small className="mt-2 block text-xs text-muted-foreground">Mark this supplier payment as paid</small>
             </div>
         </div>
         </>
@@ -374,19 +432,14 @@ const ComponentsAccordionsBasic = () => {
 
                                         </AnimateHeight>
                                     </div>
-                                </div> 
-                                </div>
                                 </div>
                    
                         )
                     })
                 }
 
-</>
+                </div>
     );    
 };
 
 export default ComponentsAccordionsBasic;
-function navigateWithAlert(arg0: string, arg1: string, arg2: string) {
-  throw new Error('Function not implemented.');
-}

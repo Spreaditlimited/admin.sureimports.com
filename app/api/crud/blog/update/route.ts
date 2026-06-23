@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { generateSlug } from '@/app/utils/slugGenerator';
 import { destroyCloudinaryAsset } from '@/lib/cloudinary/destroy';
 import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
+import { BLOG_IMAGE_FOLDER, normalizeBlogImagePublicId } from '@/lib/blogImage';
 
 const prisma = new PrismaClient();
 
@@ -58,12 +59,10 @@ export async function PUT(request: Request) {
     // Handle image upload if new file is provided
     const file = formData.get('file') as File | null;
     let newFileName = existingBlog.blogImage || '';
-    let fileType = '';
 
     if (file) {
       const imageCode: string = randomGenerator(20);
       const originalFileName = file.name;
-      fileType = file.type;
       const fileExt = getFileExt(originalFileName);
 
       const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG', 'webp', 'gif'];
@@ -82,15 +81,30 @@ export async function PUT(request: Request) {
         );
       }
 
-      newFileName = `BLOG_${imageCode}`;
+      const publicId = `BLOG_${imageCode}`;
 
-      // Delete old image from Cloudinary if exists
-      if (existingBlog.blogImage) {
-        try {
-          await destroyCloudinaryAsset(existingBlog.blogImage);
-        } catch (error) {
-          console.error('Error deleting old image:', error);
-        }
+      try {
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const uploadedImage = await uploadBufferToCloudinary(buffer, {
+          folder: BLOG_IMAGE_FOLDER,
+          publicId,
+          useFilename: false,
+          uniqueFilename: false,
+          overwrite: true,
+        });
+
+        newFileName = uploadedImage.publicId;
+      } catch (error) {
+        return NextResponse.json(
+          {
+            responsex: {
+              message: `Image upload failed. ERROR: ${error}`,
+              status: 'IMAGE_UPLOAD_FAILED',
+            },
+            successx: false,
+          },
+          { status: 500 }
+        );
       }
     }
 
@@ -118,29 +132,14 @@ export async function PUT(request: Request) {
       },
     });
 
-    // Upload new image to Cloudinary if file exists
-    if (file) {
+    if (file && existingBlog.blogImage) {
       try {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        await uploadBufferToCloudinary(buffer, {
-          folder: 'admin-sureimports/blog',
-          publicId: newFileName,
-          useFilename: false,
-          uniqueFilename: false,
-          overwrite: true,
-        });
+        const oldPublicId = normalizeBlogImagePublicId(existingBlog.blogImage);
+        if (oldPublicId && oldPublicId !== newFileName) {
+          await destroyCloudinaryAsset(oldPublicId);
+        }
       } catch (error) {
-        return NextResponse.json(
-          {
-            responsex: {
-              message: `Blog updated but image upload failed. ERROR: ${error}`,
-              status: 'IMAGE_UPLOAD_FAILED',
-            },
-            successx: false,
-            data: updatedBlog,
-          },
-          { status: 500 }
-        );
+        console.error('Error deleting old image:', error);
       }
     }
 

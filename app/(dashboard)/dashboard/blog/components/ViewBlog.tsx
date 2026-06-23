@@ -32,6 +32,7 @@ import {
   Fingerprint,
   Globe
 } from 'lucide-react';
+import { getBlogImageUrl } from '@/lib/blogImage';
 
 interface Blog {
   id: number;
@@ -128,9 +129,7 @@ const ViewBlog = () => {
   };
 
   const getImageUrl = (imageName: string | null) => {
-    if (!imageName) return null;
-    if (imageName.startsWith('http')) return imageName;
-    return `${process.env.NEXT_PUBLIC_CLOUDINARY_BASE_URL}/${imageName}`;
+    return getBlogImageUrl(imageName);
   };
 
   const stripHtml = (html: string | null) => {

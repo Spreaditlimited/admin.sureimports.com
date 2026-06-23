@@ -68,6 +68,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange }) => {
       
       <input
         type="file"
+        accept="image/*"
         ref={fileInputRef}
         onChange={handleImageChange}
         style={{ display: 'none' }}
