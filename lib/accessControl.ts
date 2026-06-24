@@ -45,6 +45,12 @@ export function isSuperAdminStatus(status?: string | null) {
   return status === "superadmin" || status === "L1";
 }
 
+export const SUPER_ADMIN_ONLY_ROUTE_PREFIXES = ["/dashboard/marketing"] as const;
+
+export function isSuperAdminOnlyPath(pathname: string) {
+  return SUPER_ADMIN_ONLY_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export function hasServiceAccess(
   serviceKey: ServiceKey,
   userStatus?: string | null,

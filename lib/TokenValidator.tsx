@@ -8,6 +8,8 @@ import {
   getFirstAllowedDashboardRoute,
   getRequiredServiceForPath,
   hasServiceAccess,
+  isSuperAdminOnlyPath,
+  isSuperAdminStatus,
 } from "@/lib/accessControl"
 
 export function TokenValidator({ children }: { children: React.ReactNode }) {
@@ -29,6 +31,12 @@ export function TokenValidator({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading || !user) return
     if (!pathname.startsWith("/dashboard")) return
+
+    if (isSuperAdminOnlyPath(pathname) && !isSuperAdminStatus(user.userStatus)) {
+      const fallback = getFirstAllowedDashboardRoute(user.userStatus, user.serviceKeys || [])
+      router.push(fallback || "/auth/login")
+      return
+    }
 
     const requiredService = getRequiredServiceForPath(pathname)
     if (!requiredService) return

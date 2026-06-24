@@ -9,7 +9,6 @@ import {
   ShoppingCart,
   Package,
   UserCog,
-  FileText,
   LogOut,
   Menu,
   X,
@@ -19,9 +18,10 @@ import {
   ChartCandlestick,
   Store,
   Wallet,
+  BarChart3,
 } from "lucide-react"
 import type React from "react"
-import { hasServiceAccess, type ServiceKey } from "@/lib/accessControl"
+import { hasServiceAccess, isSuperAdminStatus, type ServiceKey } from "@/lib/accessControl"
 
 interface SidebarProps {
   isOpen: boolean
@@ -110,6 +110,21 @@ const financials: MenuItem[] = [
   },
 ]
 
+const marketing: MenuItem[] = [
+  {
+    title: "Marketing",
+    icon: BarChart3,
+    path: "/dashboard/marketing",
+    submenu: [
+      { title: "Lead Analytics", path: "/dashboard/marketing" },
+      { title: "Blog Posts", path: "/dashboard/blog/view" },
+      { title: "Create Blog Post", path: "/dashboard/blog/create" },
+      { title: "Blog Categories", path: "/dashboard/blog/categories" },
+      { title: "Blog Publishers", path: "/dashboard/blog/publishers" },
+    ],
+  },
+]
+
 const systemSettings: MenuItem[] = [
   { title: "Profile", icon: UserCog, path: "/dashboard/profile" },
   { title: "Settings", icon: UserCog, path: "/dashboard/settings" },
@@ -149,16 +164,6 @@ const systemSettings: MenuItem[] = [
     path: "/dashboard/invoicing/bank-accounts",
     serviceKey: "invoicing",
   },
-  {
-    title: "Blog Management",
-    icon: FileText,
-    path: "/blog",
-    serviceKey: "blog_management",
-    submenu: [
-      { title: "View All Posts", path: "/dashboard/blog/view" },
-      { title: "Create New Post", path: "/dashboard/blog/create" },
-    ],
-  },
 ]
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
@@ -169,6 +174,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const serviceKeys = user?.serviceKeys || []
+  const isSuperAdmin = isSuperAdminStatus(user?.userStatus)
   const canAccess = (serviceKey?: ServiceKey) => {
     if (!serviceKey) return true
     return hasServiceAccess(serviceKey, user?.userStatus, serviceKeys)
@@ -178,6 +184,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const visibleCustomerPayouts = customerPayouts.filter((item) => canAccess(item.serviceKey))
   const visibleFinancials = financials.filter((item) => canAccess(item.serviceKey))
   const visibleStore = store.filter((item) => canAccess(item.serviceKey))
+  const visibleMarketing = isSuperAdmin ? marketing : []
   const visibleSystemSettings = systemSettings.filter((item) => canAccess(item.serviceKey))
 
   // Handle responsive behavior
@@ -381,6 +388,15 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               <CategoryHeader title="Store" />
               <div className="space-y-0.5">
                 {visibleStore.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+              </div>
+            </>
+          )}
+
+          {visibleMarketing.length > 0 && (
+            <>
+              <CategoryHeader title="Marketing" />
+              <div className="space-y-0.5">
+                {visibleMarketing.map((item) => <MenuItemComponent key={item.path} item={item} />)}
               </div>
             </>
           )}

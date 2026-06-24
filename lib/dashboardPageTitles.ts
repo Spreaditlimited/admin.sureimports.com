@@ -27,6 +27,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/invoicing/payment-claims": "Payment Claims",
   "/dashboard/invoicing/receipts": "Receipts",
   "/dashboard/invoicing/settings": "Invoicing Settings",
+  "/dashboard/marketing": "Marketing",
   "/dashboard/pay-small-small": "Pay Small Small",
   "/dashboard/pay-supplier": "Pay Supplier",
   "/dashboard/payout-requests/requests": "Payout Requests",

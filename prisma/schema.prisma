@@ -103,6 +103,36 @@ model faqs {
   updatedAt   DateTime?
 }
 
+model marketing_leads {
+  id          Int       @id @default(autoincrement())
+  pidLead     String    @unique()
+  firstName   String?   @db.VarChar(100)
+  email       String    @db.VarChar(255)
+  segmentId   String?   @db.VarChar(100)
+  source      String?   @db.VarChar(100)
+  pageType    String?   @db.VarChar(50)
+  pageUrl     String?   @db.Text
+  pathname    String?   @db.VarChar(500)
+  referrer    String?   @db.Text
+  utmSource   String?   @db.VarChar(255)
+  utmMedium   String?   @db.VarChar(255)
+  utmCampaign String?   @db.VarChar(255)
+  utmContent  String?   @db.VarChar(255)
+  utmTerm     String?   @db.VarChar(255)
+  fbclid      String?   @db.Text
+  fbp         String?   @db.VarChar(255)
+  fbc         String?   @db.VarChar(255)
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime?
+
+  @@index([email])
+  @@index([createdAt])
+  @@index([pageType])
+  @@index([pathname])
+  @@index([utmSource])
+  @@index([utmCampaign])
+}
+
 model admin {
   id                Int       @id @default(autoincrement())
   pidUser           String    @unique()
