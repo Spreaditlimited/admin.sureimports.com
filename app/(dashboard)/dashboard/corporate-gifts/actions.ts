@@ -9,6 +9,7 @@ import {
   getNextCorporateGiftStatus,
   notifyCustomerCorporateGiftStatus,
   type CorporateGiftStatus,
+  type CorporateGiftNotificationResult,
 } from '@/lib/notifications/corporateGifts';
 
 const STATUS_SET = new Set<string>(CORPORATE_GIFT_STATUSES);
@@ -31,13 +32,35 @@ async function getCurrentAdmin() {
   });
 }
 
+export type CorporateGiftActionResult = {
+  ok: boolean;
+  message: string;
+  notification?: CorporateGiftNotificationResult;
+};
+
+function formatNotificationMessage(notification: CorporateGiftNotificationResult | null) {
+  if (!notification) return '';
+  const sentChannels = notification.channels
+    .filter((channel) => channel.sent)
+    .map((channel) => channel.channel)
+    .join(' and ');
+
+  if (sentChannels) {
+    return ` Customer notification sent by ${sentChannels}.`;
+  }
+
+  return ' Customer notification could not be sent.';
+}
+
 async function ensureCancellationReasonColumn() {
   await prisma.$executeRawUnsafe(
     `ALTER TABLE corporate_gift_request ADD COLUMN IF NOT EXISTS cancellationReason LONGTEXT NULL`,
   );
 }
 
-export async function updateCorporateGiftRequestAction(formData: FormData) {
+export async function updateCorporateGiftRequestAction(
+  formData: FormData,
+): Promise<CorporateGiftActionResult> {
   const pidRequest = String(formData.get('pidRequest') || '');
   const status = String(formData.get('status') || '');
   const cancellationReason = String(formData.get('cancellationReason') || '').trim();
@@ -98,8 +121,9 @@ export async function updateCorporateGiftRequestAction(formData: FormData) {
     );
   }
 
+  let notification: CorporateGiftNotificationResult | null = null;
   if (existing.status !== status) {
-    await notifyCustomerCorporateGiftStatus({
+    notification = await notifyCustomerCorporateGiftStatus({
       requestId: updated.pidRequest,
       businessName: updated.businessName,
       contactPersonFullName: updated.contactPersonFullName,
@@ -112,6 +136,15 @@ export async function updateCorporateGiftRequestAction(formData: FormData) {
   }
 
   revalidatePath('/dashboard/corporate-gifts');
+  return {
+    ok: true,
+    message: `Corporate gift request updated to ${status}.${formatNotificationMessage(notification)}`,
+    notification: notification || undefined,
+  };
+}
+
+export async function updateCorporateGiftRequestFormAction(formData: FormData) {
+  await updateCorporateGiftRequestAction(formData);
 }
 
 export async function assignCorporateGiftRequestAction(formData: FormData) {

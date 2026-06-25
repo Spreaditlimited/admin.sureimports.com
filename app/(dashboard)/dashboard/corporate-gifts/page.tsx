@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import {
   Briefcase,
   Calendar,
@@ -10,12 +11,14 @@ import {
   FileText,
   Layers,
   Clock,
+  Ban,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getNextCorporateGiftStatus } from '@/lib/notifications/corporateGifts';
 import {
   assignCorporateGiftRequestAction,
   updateCorporateGiftRequestAction,
+  updateCorporateGiftRequestFormAction,
 } from './actions';
 import Link from 'next/link';
 import CancelProjectCard from './components/CancelProjectCard';
@@ -33,6 +36,16 @@ export default async function CorporateGiftsAdminPage() {
   });
 
   const requestIds = entries.map((entry) => entry.pidRequest);
+  const cancellationReasonRows = requestIds.length
+    ? await prisma.$queryRaw<Array<{ pidRequest: string; cancellationReason: string | null }>>`
+        SELECT pidRequest, cancellationReason
+        FROM corporate_gift_request
+        WHERE pidRequest IN (${Prisma.join(requestIds)})
+      `
+    : [];
+  const cancellationReasonByRequestId = new Map(
+    cancellationReasonRows.map((row) => [row.pidRequest, row.cancellationReason]),
+  );
   const linkedInvoices = requestIds.length
     ? await prisma.invoices.findMany({
         where: { linkedRequestId: { in: requestIds } },
@@ -87,8 +100,9 @@ export default async function CorporateGiftsAdminPage() {
             const entryView = entry as typeof entry & {
               status?: string;
               handledByName?: string | null;
-              cancellationReason?: string | null;
             };
+            const cancellationReason =
+              cancellationReasonByRequestId.get(entry.pidRequest) || null;
             const entryStatus = entryView.status || 'Pending';
             const nextStatus = getNextCorporateGiftStatus(entryStatus);
             const canCancel =
@@ -102,8 +116,25 @@ export default async function CorporateGiftsAdminPage() {
             return (
               <div
                 key={entry.id}
-                className="bg-card border border-border shadow-soft rounded-lg overflow-hidden transition-all duration-200"
+                className={`bg-card shadow-soft rounded-lg overflow-hidden transition-all duration-200 ${
+                  entryStatus === 'Cancelled'
+                    ? 'border-2 border-red-600'
+                    : 'border border-border'
+                }`}
               >
+                {entryStatus === 'Cancelled' && (
+                  <div className="border-b border-red-700 bg-red-700 px-5 py-3 text-white sm:px-6">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Ban className="h-5 w-5" />
+                      <span className="text-sm font-black uppercase tracking-[0.24em]">
+                        Cancelled
+                      </span>
+                      <span className="rounded bg-white px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-red-700">
+                        {entry.pidRequest}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="p-5 sm:p-6">
                   
                   {/* Card Header: Title & Quick Contact */}
@@ -289,9 +320,14 @@ export default async function CorporateGiftsAdminPage() {
                         </span>
                       </div>
                       {entryStatus === 'Cancelled' && (
-                        <p className="text-xs font-medium text-destructive">
-                          Reason: {entryView.cancellationReason || 'Not provided'}
-                        </p>
+                        <div className="mt-2 rounded-md border-2 border-red-300 bg-red-50 p-3 text-red-950 dark:border-red-700 dark:bg-red-950/40 dark:text-red-100">
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-700 dark:text-red-300">
+                            Cancellation Reason
+                          </p>
+                          <p className="mt-1 whitespace-pre-wrap text-sm font-semibold leading-relaxed">
+                            {cancellationReason || 'Not provided'}
+                          </p>
+                        </div>
                       )}
                     </div>
 
@@ -313,7 +349,7 @@ export default async function CorporateGiftsAdminPage() {
                         </button>
                       </form>
 
-                      <form action={updateCorporateGiftRequestAction} className="w-full">
+                      <form action={updateCorporateGiftRequestFormAction} className="w-full">
                         <input type="hidden" name="pidRequest" value={entry.pidRequest} />
                         {nextStatus === 'Invoiced' ? (
                           <span className="flex min-h-[38px] w-full items-center justify-center rounded-md border border-border bg-muted/50 px-3 py-2 text-center text-xs font-medium text-muted-foreground">

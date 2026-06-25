@@ -38,6 +38,17 @@ type NotifyInput = {
   cancellationReason?: string | null;
 };
 
+export type NotificationChannelResult = {
+  channel: 'email' | 'whatsapp';
+  sent: boolean;
+  error?: string;
+};
+
+export type CorporateGiftNotificationResult = {
+  sent: boolean;
+  channels: NotificationChannelResult[];
+};
+
 async function sendWhatsAppTemplate(input: NotifyInput) {
   await sendApprovedWhatsAppStatusTemplate({
     ...input,
@@ -59,7 +70,7 @@ export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {
       ? `Hello ${input.contactPersonFullName || 'Customer'},<br />Your corporate gift sourcing request has been cancelled.`
       : `Hello ${input.contactPersonFullName || 'Customer'},<br />We have an update on your corporate gift sourcing request.`;
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     xMail({
       xEmail: input.contactEmail,
       xTitle: `Corporate Gift Request Update - ${input.requestId} (${input.status})`,
@@ -68,7 +79,24 @@ export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {
       xBody2: `${bodyTable}<br />Thank you for choosing Sure Imports.`,
       xButtonTitle: 'Contact Us',
       xButtonLink: 'https://sureimports.com/contact',
+      throwOnError: true,
     }),
     sendWhatsAppTemplate(input),
   ]);
+
+  const channels: NotificationChannelResult[] = results.map((result, index) => ({
+    channel: index === 0 ? 'email' : 'whatsapp',
+    sent: result.status === 'fulfilled',
+    error:
+      result.status === 'rejected'
+        ? result.reason instanceof Error
+          ? result.reason.message
+          : String(result.reason)
+        : undefined,
+  }));
+
+  return {
+    sent: channels.some((channel) => channel.sent),
+    channels,
+  };
 }

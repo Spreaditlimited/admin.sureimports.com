@@ -705,11 +705,11 @@ function MoreOrders({ products }: MoreOrdersProps) {
         </div>
 
         {/* important notice */}
-        <div>
-          <div className="text-sm font-semibold text-red-400">
+        <div className="rounded-md border border-red-300 bg-red-50 p-4 text-red-950 shadow-sm dark:border-red-700 dark:bg-red-950/40 dark:text-red-100">
+          <div className="text-sm font-bold text-red-800 dark:text-red-200">
             Important Notice:
           </div>
-          <div className="text-sm font-normal text-red-400">
+          <div className="mt-1 text-sm font-medium leading-relaxed text-red-950 dark:text-red-100">
             If this cost is higher than the actual cost which will be determined
             later at the China office, we will refund you. If the actual cost is
             higher than this estimated cost, you will be required to make a

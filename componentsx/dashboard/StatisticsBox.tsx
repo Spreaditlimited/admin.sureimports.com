@@ -12,7 +12,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, description, bgColor,
   return (
     <div
       className={`flex flex-col justify-between p-4 rounded-lg shadow-md cursor-pointer 
-      ${bgColor} dark:bg-opacity-90 transition-transform transform hover:scale-105 hover:shadow-lg`}
+      ${bgColor} text-slate-900 dark:text-white dark:bg-opacity-90 transition-transform transform hover:scale-105 hover:shadow-lg`}
       onClick={onClick} // Handle clicks
     >
       <div className="text-lg font-semibold">{title}</div>

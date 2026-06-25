@@ -264,7 +264,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   return (
     <div className="bg-gray-600 dark:bg-gray-900 min-h-screen p-0 flex flex-col items-center divide-gray-800">
-      <div className="max-w-5xl w-full bg-yellow dark:bg-red-900 rounded-lg shadow-md p-6 space-y-6">
+      <div className="max-w-5xl w-full rounded-lg border border-border bg-card text-card-foreground shadow-md p-6 space-y-6">
         
 
         {/* Header Section */}

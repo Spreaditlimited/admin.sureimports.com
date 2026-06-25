@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, TriangleAlert } from 'lucide-react';
+import { toast } from 'sonner';
+import type { CorporateGiftActionResult } from '../actions';
 
 interface CancelProjectCardProps {
   pidRequest: string;
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<CorporateGiftActionResult>;
 }
 
 export default function CancelProjectCard({
@@ -15,6 +17,7 @@ export default function CancelProjectCard({
   const [isReasonModalOpen, setIsReasonModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const trimmedReason = useMemo(() => reason.trim(), [reason]);
   const canContinue = trimmedReason.length > 0;
@@ -144,7 +147,38 @@ export default function CancelProjectCard({
                 "{trimmedReason}"
               </div>
 
-              <form action={action} className="flex gap-3">
+              <form
+                className="flex gap-3"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  setIsSubmitting(true);
+
+                  try {
+                    const result = await action(formData);
+                    if (result.ok) {
+                      const notificationSent = result.notification?.sent;
+                      if (notificationSent) {
+                        toast.success(result.message);
+                      } else {
+                        toast.warning(result.message);
+                      }
+                      setIsConfirmModalOpen(false);
+                      setReason('');
+                    } else {
+                      toast.error(result.message);
+                    }
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : 'Unable to cancel this project.',
+                    );
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+              >
                 <input type="hidden" name="pidRequest" value={pidRequest} />
                 <input type="hidden" name="status" value="Cancelled" />
                 <input
@@ -165,9 +199,10 @@ export default function CancelProjectCard({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-md bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 shadow-sm focus:outline-none focus:ring-2 focus:ring-destructive"
+                  disabled={isSubmitting}
+                  className="flex-1 rounded-md bg-destructive px-4 py-2.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 shadow-sm focus:outline-none focus:ring-2 focus:ring-destructive disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Cancel Project
+                  {isSubmitting ? 'Cancelling...' : 'Cancel Project'}
                 </button>
                 
               </form>

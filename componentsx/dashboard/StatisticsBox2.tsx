@@ -18,10 +18,10 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, value, description, bg
   return (
     <div
       className={`flex flex-col justify-between p-4 rounded-lg shadow-md cursor-pointer 
-      ${bgColor} dark:bg-opacity-90 transition-transform transform hover:scale-105 hover:shadow-lg`}
+      ${bgColor} text-slate-900 dark:text-white dark:bg-opacity-90 transition-transform transform hover:scale-105 hover:shadow-lg`}
       onClick={onClick} // Handle clicks
     >
-      <div className="flex text-base font-semibold text-red-700">{icon} &nbsp; {title}</div>
+      <div className="flex text-base font-semibold">{icon} &nbsp; {title}</div>
       {/* <div className="text-4xl font-bold">{value}</div>
       <div className="text-sm">{description}</div> */}
     </div>

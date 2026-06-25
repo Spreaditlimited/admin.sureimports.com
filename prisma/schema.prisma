@@ -1063,6 +1063,7 @@ model corporate_gift_request {
   logoFileUrl                   String?
   logoFileName                  String?
   status                        String   @default("Pending")
+  cancellationReason            String?  @db.LongText
   handledByPidUser              String?
   handledByEmail                String?
   handledByName                 String?
