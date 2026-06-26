@@ -8,7 +8,6 @@ import {
   Plus,
   Search,
   Filter,
-  Eye,
   EyeOff,
   Edit3,
   Trash2,
@@ -28,9 +27,9 @@ import {
   TrendingUp,
   Star,
   Layers,
-  ArrowRight,
   Fingerprint,
-  Globe
+  Globe,
+  Send
 } from 'lucide-react';
 import { getBlogImageUrl } from '@/lib/blogImage';
 
@@ -57,7 +56,35 @@ interface PaginationData {
   totalPages: number;
 }
 
+interface BlogStats {
+  totalArticles: number;
+  publishedArticles: number;
+  scheduledArticles: number;
+  draftArticles: number;
+}
+
 type ViewMode = 'grid' | 'list';
+
+function getArticleStatus(blog: Blog) {
+  if (!blog.blogPublished) {
+    return {
+      label: 'Draft',
+      className: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+    };
+  }
+
+  if (blog.createdAt && new Date(blog.createdAt).getTime() > Date.now()) {
+    return {
+      label: 'Scheduled',
+      className: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    };
+  }
+
+  return {
+    label: 'Published',
+    className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  };
+}
 
 const ViewBlog = () => {
   const router = useRouter();
@@ -73,6 +100,12 @@ const ViewBlog = () => {
     page: 1,
     limit: 12,
     totalPages: 0,
+  });
+  const [stats, setStats] = useState<BlogStats>({
+    totalArticles: 0,
+    publishedArticles: 0,
+    scheduledArticles: 0,
+    draftArticles: 0,
   });
 
   const fetchBlogs = useCallback(async (page = 1, search = searchTerm, status = statusFilter) => {
@@ -92,6 +125,7 @@ const ViewBlog = () => {
       if (data.success) {
         setBlogs(data.data);
         setPagination(data.pagination);
+        if (data.stats) setStats(data.stats);
       } else {
         toast.error('Archive synchronization failed');
       }
@@ -126,6 +160,10 @@ const ViewBlog = () => {
   const copySlug = (slug: string) => {
     navigator.clipboard.writeText(`/blog/${slug}`);
     toast.success('URI copied to clipboard');
+  };
+
+  const getAdminPreviewUrl = (pidBlog: string) => {
+    return `/dashboard/blog/preview?pidBlog=${encodeURIComponent(pidBlog)}`;
   };
 
   const getImageUrl = (imageName: string | null) => {
@@ -184,10 +222,10 @@ const ViewBlog = () => {
       {/* 2. Statistical Pulse */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Manuscripts', val: pagination.total, icon: FileText, color: 'text-primary' },
-          { label: 'Live Content', val: blogs.filter(b => b.blogPublished).length, icon: Globe, color: 'text-emerald-500' },
-          { label: 'Manuscript Drafts', val: blogs.filter(b => !b.blogPublished).length, icon: EyeOff, color: 'text-amber-500' },
-          { label: 'Recent Activity', val: blogs.length, icon: Clock, color: 'text-blue-500' }
+          { label: 'Total Articles', val: stats.totalArticles, icon: FileText, color: 'text-primary' },
+          { label: 'Published Articles', val: stats.publishedArticles, icon: Globe, color: 'text-emerald-500' },
+          { label: 'Scheduled Articles', val: stats.scheduledArticles, icon: Calendar, color: 'text-blue-500' },
+          { label: 'Draft Articles', val: stats.draftArticles, icon: EyeOff, color: 'text-amber-500' }
         ].map((stat, i) => (
           <div key={i} className="bg-card border border-border rounded-xl p-5 shadow-soft">
             <div className="flex items-center justify-between">
@@ -225,7 +263,8 @@ const ViewBlog = () => {
               className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-xs font-bold uppercase tracking-widest text-foreground appearance-none cursor-pointer"
             >
               <option value="">Status: ALL</option>
-              <option value="published">Status: LIVE</option>
+              <option value="published">Status: PUBLISHED</option>
+              <option value="scheduled">Status: SCHEDULED</option>
               <option value="draft">Status: DRAFT</option>
             </select>
           </div>
@@ -251,6 +290,10 @@ const ViewBlog = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogs.map((blog) => (
             <div key={blog.pidBlog} className="group bg-card border border-border rounded-xl overflow-hidden shadow-soft hover:border-primary/40 transition-all duration-300 flex flex-col">
+              {(() => {
+                const status = getArticleStatus(blog);
+                return (
+              <>
               <div className="relative h-44 bg-muted overflow-hidden">
                 {getImageUrl(blog.blogImage) ? (
                   <img src={getImageUrl(blog.blogImage)!} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -258,8 +301,8 @@ const ViewBlog = () => {
                   <div className="w-full h-full flex items-center justify-center opacity-10"><ImageIcon className="w-12 h-12" /></div>
                 )}
                 <div className="absolute top-3 inset-x-3 flex items-center justify-between">
-                   <span className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border backdrop-blur-md ${blog.blogPublished ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'}`}>
-                      {blog.blogPublished ? 'Live' : 'Draft'}
+                   <span className={`px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border backdrop-blur-md ${status.className}`}>
+                      {status.label}
                    </span>
                    {blog.blogFeatured && <Star className="w-4 h-4 fill-amber-500 text-amber-500 drop-shadow-sm" />}
                 </div>
@@ -284,11 +327,21 @@ const ViewBlog = () => {
                       <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {getRelativeTime(blog.createdAt)}</div>
                    </div>
                    <div className="flex items-center gap-1">
+                      <Link
+                          href={getAdminPreviewUrl(blog.pidBlog)}
+                          className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-md transition-colors"
+                          title="Preview manuscript"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                      </Link>
                       <button onClick={() => router.push(`/dashboard/blog/edit?pidBlog=${blog.pidBlog}`)} className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
                       <button onClick={() => setDeleteConfirm(blog.pidBlog)} className="p-2 hover:bg-destructive/10 text-destructive rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
                    </div>
                 </div>
               </div>
+              </>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -306,6 +359,10 @@ const ViewBlog = () => {
               <tbody className="divide-y divide-border">
                  {blogs.map((blog) => (
                     <tr key={blog.pidBlog} className="hover:bg-muted/30 transition-colors">
+                       {(() => {
+                         const status = getArticleStatus(blog);
+                         return (
+                       <>
                        <td className="px-6 py-4 max-w-md">
                           <div className="flex items-center gap-4">
                              <div className="w-12 h-12 rounded-lg bg-muted flex-shrink-0 overflow-hidden border border-border">
@@ -320,8 +377,8 @@ const ViewBlog = () => {
                           </div>
                        </td>
                        <td className="px-6 py-4 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter border ${blog.blogPublished ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'}`}>
-                             {blog.blogPublished ? 'Live' : 'Draft'}
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter border ${status.className}`}>
+                             {status.label}
                           </span>
                        </td>
                        <td className="px-6 py-4 font-mono text-[10px] text-muted-foreground">
@@ -329,10 +386,20 @@ const ViewBlog = () => {
                        </td>
                        <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-1">
+                             <Link
+                                 href={getAdminPreviewUrl(blog.pidBlog)}
+                                 className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-md transition-colors"
+                                 title="Preview manuscript"
+                               >
+                                 <ExternalLink className="w-4 h-4" />
+                             </Link>
                              <button onClick={() => router.push(`/dashboard/blog/edit?pidBlog=${blog.pidBlog}`)} className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
                              <button onClick={() => setDeleteConfirm(blog.pidBlog)} className="p-2 hover:bg-destructive/10 text-destructive rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
                           </div>
                        </td>
+                       </>
+                         );
+                       })()}
                     </tr>
                  ))}
               </tbody>

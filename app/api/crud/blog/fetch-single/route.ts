@@ -20,7 +20,25 @@ export async function GET(request: Request) {
     if (pidBlog) where.pidBlog = pidBlog;
     if (slug) where.blogSlug = slug;
 
-    const blog = await prisma.blog.findFirst({ where });
+    const blog = await prisma.blog.findFirst({
+      where,
+      include: {
+        category: {
+          select: {
+            categoryName: true,
+            categorySlug: true,
+          },
+        },
+        publisher: {
+          select: {
+            publisherName: true,
+            publisherRole: true,
+            publisherBio: true,
+            publisherImage: true,
+          },
+        },
+      },
+    });
 
     if (!blog) {
       return NextResponse.json(

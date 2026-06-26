@@ -56,6 +56,9 @@ interface ApiResponse { responsex: any; successx: boolean; data?: any; }
 interface SeoData { metaTitle: string; metaDescription: string; focusKeyword: string; keywords: string[]; canonicalUrl: string; ogTitle: string; ogDescription: string; twitterTitle: string; twitterDescription: string; noIndex: boolean; noFollow: boolean; }
 
 const defaultSeoData: SeoData = { metaTitle: '', metaDescription: '', focusKeyword: '', keywords: [], canonicalUrl: '', ogTitle: '', ogDescription: '', twitterTitle: '', twitterDescription: '', noIndex: false, noFollow: false };
+const publicSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, '') ||
+  'https://www.sureimports.com';
 
 const EditBlogForm = () => {
   const router = useRouter();
@@ -91,6 +94,7 @@ const EditBlogForm = () => {
 
   const [seoData, setSeoData] = useState<SeoData>(defaultSeoData);
   const [keywordInput, setKeywordInput] = useState('');
+  const [selectedImagePreview, setSelectedImagePreview] = useState('');
 
   useEffect(() => {
     const fetchAuxData = async () => {
@@ -139,6 +143,18 @@ const EditBlogForm = () => {
       }
     } finally { setLoadingBlog(false); }
   };
+
+  useEffect(() => {
+    if (!file) {
+      setSelectedImagePreview('');
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedImagePreview(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
 
   const handleImageChange = (file: File) => setFile(file);
   const handleEditorChange = useCallback((content: string) => setBlogContent(content), []);
@@ -209,6 +225,11 @@ const EditBlogForm = () => {
     return getBlogImageUrl(imageName, '/assets/images/default-blog.jpg') || '/assets/images/default-blog.jpg';
   };
 
+  const previewImageUrl = selectedImagePreview || getImageUrl(existingImage);
+  const publicPreviewUrl = blogSlug
+    ? `${publicSiteUrl}/blog/${blogSlug}`
+    : '';
+
   if (loadingBlog) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 animate-pulse">
@@ -244,8 +265,8 @@ const EditBlogForm = () => {
             {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             Preview
           </button>
-          {blogSlug && (
-            <a href={`/blog/${blogSlug}`} target="_blank" className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted text-primary transition-all">
+          {publicPreviewUrl && (
+            <a href={publicPreviewUrl} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-lg border border-border bg-card hover:bg-muted text-primary transition-all">
               <ExternalLink className="w-4 h-4" />
             </a>
           )}
@@ -291,11 +312,23 @@ const EditBlogForm = () => {
           </div>
 
           {showPreview && blogContent && (
-            <div className="bg-card border border-border rounded-xl p-8 animate-in slide-in-from-top-4">
+            <div className="bg-card border border-border rounded-xl overflow-hidden animate-in slide-in-from-top-4">
+              {previewImageUrl && (
+                <img
+                  src={previewImageUrl}
+                  alt=""
+                  className="h-64 w-full object-cover"
+                />
+              )}
+              <div className="p-8">
               <div className="flex items-center gap-2 mb-8 text-primary font-bold uppercase tracking-widest text-[10px]">
                  <MousePointer2 className="w-4 h-4" /> Public View Projection
               </div>
+              <h1 className="mb-6 text-3xl font-bold tracking-tight text-foreground">
+                {blogTitle}
+              </h1>
               <article className="prose prose-sm md:prose-base max-w-none dark:prose-invert font-serif" dangerouslySetInnerHTML={{ __html: blogContent }} />
+              </div>
             </div>
           )}
         </div>
