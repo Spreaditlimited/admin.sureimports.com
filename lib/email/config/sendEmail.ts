@@ -1,8 +1,24 @@
 // sendEmail.ts
 import transporter from '@/lib/email/config/nodemailerConfig';
+import mailTemplate from '@/lib/email/temp/mailTemplate2';
 
 const { SMTP_EMAIL } = process.env;
+const STANDARD_EMAIL_TEMPLATE_MARKER = 'sureimports-standard-email-template';
 
+function ensureStandardTemplate(subject: string, html: string) {
+  if (html?.includes(STANDARD_EMAIL_TEMPLATE_MARKER)) {
+    return html;
+  }
+
+  return mailTemplate({
+    zTitle: subject,
+    zBodyTitle: subject,
+    zBody1: html || '',
+    zBody2: '',
+    zButtonTitle: '',
+    zButtonLink: '',
+  }) as string;
+}
 
 
 const sendEmail = async (to: string, subject: string, html: string) => {
@@ -18,7 +34,7 @@ const sendEmail = async (to: string, subject: string, html: string) => {
       from: `"Sure Imports" <${SMTP_EMAIL}>`,
       to,
       subject,
-      html,
+      html: ensureStandardTemplate(subject, html),
     });
 
     console.log('✅ Email sent successfully');

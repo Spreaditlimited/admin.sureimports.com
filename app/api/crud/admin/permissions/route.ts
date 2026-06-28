@@ -18,6 +18,7 @@ const SERVICE_KEYS = new Set([
   'shipping_plans',
   'exchange_rates',
   'blog_management',
+  'supplier_intelligence',
 ]);
 
 function isPrismaMissingTableError(error: unknown) {

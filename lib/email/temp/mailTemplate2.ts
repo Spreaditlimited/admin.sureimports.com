@@ -32,6 +32,7 @@ export const mailTemplate: React.FC<Props> = ({
   <title>${zTitle || 'Sure Imports Notification'}</title>
 </head>
 <body style="margin:0;padding:0;background:#f3f6fb;font-family:Calibri,Arial,sans-serif;color:#111827;">
+  <!-- sureimports-standard-email-template -->
   <table cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f3f6fb;padding:24px 10px;">
     <tr>
       <td align="center">
@@ -66,7 +67,11 @@ export const mailTemplate: React.FC<Props> = ({
           ${hasButton ? `
           <tr>
             <td style="padding:0 28px 24px 28px;">
-              <a href="${zButtonLink}" style="display:inline-block;background:#165ef0;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">${zButtonTitle}</a>
+              <a href="${zButtonLink}" style="display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">${zButtonTitle}</a>
+              <div style="margin-top:12px;color:#64748b;font-size:12px;line-height:1.6;">
+                If the button does not work, copy and paste this link into your browser:<br/>
+                <a href="${zButtonLink}" style="color:#1558b0;text-decoration:none;word-break:break-all;">${zButtonLink}</a>
+              </div>
             </td>
           </tr>
           ` : ''}

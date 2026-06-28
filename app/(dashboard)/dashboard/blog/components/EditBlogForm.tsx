@@ -37,6 +37,7 @@ import {
 import ImageBox from '@/componentsx/ImageBox';
 import dynamic from 'next/dynamic';
 import { getBlogImageUrl } from '@/lib/blogImage';
+import BlogLeadMagnetPanel from './lead-magnets/BlogLeadMagnetPanel';
 
 const BlogEditor = dynamic(() => import('@/components/blog-editor/BlogEditor'), {
   ssr: false,
@@ -67,6 +68,7 @@ const EditBlogForm = () => {
 
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [loadingBlog, setLoadingBlog] = useState(true);
   const [existingImage, setExistingImage] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -219,6 +221,37 @@ const EditBlogForm = () => {
     const res = await fetch(`/api/crud/blog/delete?pidBlog=${pidBlog}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.responsex.status === 'SUCCESS') { toast.success('Manuscript Purged'); router.push('/dashboard/blog/view'); }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!pidBlog) return;
+
+    setIsGeneratingImage(true);
+    const toastId = toast.loading('Generating blog image...');
+
+    try {
+      const res = await fetch('/api/marketing/blog-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pidBlog }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Image generation failed.');
+      }
+
+      setFile(null);
+      setExistingImage(data.data.blogImage || '');
+      setBlogData((prev) =>
+        prev ? { ...prev, blogImage: data.data.blogImage || '', updatedAt: data.data.updatedAt || prev.updatedAt } : prev,
+      );
+      toast.success('Blog image generated and saved.', { id: toastId });
+    } catch (error: any) {
+      toast.error(error?.message || 'Image generation failed.', { id: toastId });
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   const getImageUrl = (imageName: string | null) => {
@@ -380,6 +413,19 @@ const EditBlogForm = () => {
                 </div>
               )}
               <ImageBox onImageChange={handleImageChange} />
+              <button
+                type="button"
+                onClick={handleGenerateImage}
+                disabled={isGeneratingImage}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-primary transition-all hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isGeneratingImage ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ImageIcon className="h-3.5 w-3.5" />
+                )}
+                {isGeneratingImage ? 'Generating image...' : 'Generate blog image'}
+              </button>
               <p className="mt-4 text-[9px] text-muted-foreground italic leading-relaxed">Recommended Aspect: <span className="font-bold text-foreground">1200 × 630px</span>. Replacing the current signature image will sync across all distribution channels.</p>
             </div>
           </div>
@@ -491,6 +537,8 @@ const EditBlogForm = () => {
             )}
           </div>
         </div>
+
+        {pidBlog && <BlogLeadMagnetPanel pidBlog={pidBlog} />}
 
       </form>
     </div>

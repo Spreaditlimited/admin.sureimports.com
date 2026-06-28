@@ -19,6 +19,7 @@ import {
   Store,
   Wallet,
   BarChart3,
+  ShieldCheck,
 } from "lucide-react"
 import type React from "react"
 import { hasServiceAccess, isSuperAdminStatus, type ServiceKey } from "@/lib/accessControl"
@@ -43,6 +44,7 @@ const features: MenuItem[] = [
   { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending", serviceKey: "procurement" },
   { title: "Shipping Only", icon: Ship, path: "/dashboard/shipping-only?status=request-received", serviceKey: "shipping_only" },
   { title: "Corporate Gifts", icon: Package, path: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
+  { title: "Supplier Intel", icon: ShieldCheck, path: "/dashboard/intelligence/reviews", serviceKey: "supplier_intelligence" },
   { title: "Pay Supplier", icon: Landmark, path: "/dashboard/pay-supplier?status=saved", serviceKey: "pay_supplier" },
   { title: "Pay Small Small", icon: HandCoins, path: "/dashboard/pay-small-small?status=SAVED", serviceKey: "pay_small_small" },
 ]
@@ -117,6 +119,7 @@ const marketing: MenuItem[] = [
     path: "/dashboard/marketing",
     submenu: [
       { title: "Lead Analytics", path: "/dashboard/marketing" },
+      { title: "SEO Opportunities", path: "/dashboard/marketing/seo" },
       { title: "Blog Posts", path: "/dashboard/blog/view" },
       { title: "Create Blog Post", path: "/dashboard/blog/create" },
       { title: "Blog Categories", path: "/dashboard/blog/categories" },
