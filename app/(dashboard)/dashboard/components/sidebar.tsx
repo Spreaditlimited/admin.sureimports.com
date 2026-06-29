@@ -19,6 +19,7 @@ import {
   Store,
   Wallet,
   BarChart3,
+  CalendarClock,
   ShieldCheck,
 } from "lucide-react"
 import type React from "react"
@@ -44,7 +45,20 @@ const features: MenuItem[] = [
   { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending", serviceKey: "procurement" },
   { title: "Shipping Only", icon: Ship, path: "/dashboard/shipping-only?status=request-received", serviceKey: "shipping_only" },
   { title: "Corporate Gifts", icon: Package, path: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
-  { title: "Supplier Intel", icon: ShieldCheck, path: "/dashboard/intelligence/reviews", serviceKey: "supplier_intelligence" },
+  {
+    title: "Supplier Intel",
+    icon: ShieldCheck,
+    path: "/dashboard/intelligence/reviews",
+    serviceKey: "supplier_intelligence",
+    submenu: [
+      { title: "Categories", path: "/dashboard/intelligence/categories" },
+      { title: "Review Requests", path: "/dashboard/intelligence/reviews" },
+      { title: "Research Agent", path: "/dashboard/intelligence/research" },
+      { title: "Addresses", path: "/dashboard/intelligence/addresses" },
+      { title: "Pricing", path: "/dashboard/intelligence/settings" },
+    ],
+  },
+  { title: "Consultations", icon: CalendarClock, path: "/dashboard/consultations", serviceKey: "consultations" },
   { title: "Pay Supplier", icon: Landmark, path: "/dashboard/pay-supplier?status=saved", serviceKey: "pay_supplier" },
   { title: "Pay Small Small", icon: HandCoins, path: "/dashboard/pay-small-small?status=SAVED", serviceKey: "pay_small_small" },
 ]

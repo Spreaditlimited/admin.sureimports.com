@@ -1,6 +1,9 @@
 import { db } from "@/lib/db"; // Assuming your shared prisma instance is here
 import ServiceChargeForm from "./components/ServiceChargeForm";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   /**
    * Fetch the global configuration record.

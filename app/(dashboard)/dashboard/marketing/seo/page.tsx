@@ -348,7 +348,7 @@ export default async function SeoOpportunitiesPage({
       )}
 
       {draftError && (
-        <div className="mx-1 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-700">
+        <div className="mx-1 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-700 dark:text-red-300">
           {draftError}
         </div>
       )}

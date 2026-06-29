@@ -99,7 +99,7 @@ const CustomersTransactionTable: React.FC<{ transactions: WalletTransaction[] }>
 
               <td className="px-6 py-4">
                 <div className="flex flex-col gap-1">
-                  <span className={`text-xs font-black uppercase tracking-wider ${transaction.direction === 'credit' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <span className={`text-xs font-black uppercase tracking-wider ${transaction.direction === 'credit' ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}>
                     {transaction.direction}
                   </span>
                   <span className="max-w-[220px] truncate text-[11px] text-muted-foreground">
@@ -111,7 +111,7 @@ const CustomersTransactionTable: React.FC<{ transactions: WalletTransaction[] }>
               {/* Amount & Fees */}
               <td className="px-6 py-4">
                 <div className="flex flex-col">
-                  <span className={`font-bold ${transaction.direction === 'credit' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <span className={`font-bold ${transaction.direction === 'credit' ? 'text-emerald-600 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-300'}`}>
                     {transaction.direction === 'credit' ? '+' : '-'}
                     {formatCurrency(transaction.amount, transaction.currency)}
                   </span>

@@ -38,6 +38,8 @@ const SERVICE_OPTIONS = [
   { key: 'shipping_plans', label: 'Shipping Plans' },
   { key: 'exchange_rates', label: 'Exchanges & Rates' },
   { key: 'blog_management', label: 'Blog Management' },
+  { key: 'supplier_intelligence', label: 'Supplier Intelligence' },
+  { key: 'consultations', label: 'Consultations' },
 ] as const;
 
 interface AdminProps {

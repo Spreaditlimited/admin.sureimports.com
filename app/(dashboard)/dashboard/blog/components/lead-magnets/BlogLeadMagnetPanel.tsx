@@ -123,7 +123,7 @@ export default function BlogLeadMagnetPanel({ pidBlog }: { pidBlog: string }) {
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-xs font-medium text-red-700">
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-xs font-medium text-red-700 dark:text-red-300">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>

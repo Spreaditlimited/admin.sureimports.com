@@ -151,7 +151,7 @@ export default function AdminWhatsAppForm() {
                   <button
                     type="button"
                     onClick={() => removeContact(index)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
                     aria-label="Remove WhatsApp contact"
                   >
                     <Trash2 className="h-4 w-4" />

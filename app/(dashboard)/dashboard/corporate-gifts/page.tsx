@@ -12,6 +12,7 @@ import {
   Layers,
   Clock,
   Ban,
+  ChevronDown,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getNextCorporateGiftStatus } from '@/lib/notifications/corporateGifts';
@@ -122,6 +123,7 @@ export default async function CorporateGiftsAdminPage() {
                     : 'border border-border'
                 }`}
               >
+                <details className="group">
                 {entryStatus === 'Cancelled' && (
                   <div className="border-b border-red-700 bg-red-700 px-5 py-3 text-white sm:px-6">
                     <div className="flex flex-wrap items-center gap-2">
@@ -135,7 +137,51 @@ export default async function CorporateGiftsAdminPage() {
                     </div>
                   </div>
                 )}
-                <div className="p-5 sm:p-6">
+                <summary className="flex cursor-pointer list-none flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/40 marker:hidden sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-muted/50">
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate text-base font-bold text-foreground">
+                          {entry.businessName}
+                        </h2>
+                        <Badge
+                          variant="outline"
+                          className="border-border bg-background text-foreground text-xs"
+                        >
+                          {entryStatus}
+                        </Badge>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          {entry.productOrItemNeeded}
+                        </span>
+                        <span>•</span>
+                        <span>{entry.quantityNeeded} units</span>
+                        <span>•</span>
+                        <span>{entry.expectedDeliveryDate}</span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <span className="font-mono">ID: {entry.pidRequest}</span>
+                        <span>Handler: {entryView.handledByName || 'Unassigned'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 lg:justify-end">
+                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      <span className="group-open:hidden">Open</span>
+                      <span className="hidden group-open:inline">Close</span>
+                    </span>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-transform group-open:rotate-180">
+                      <ChevronDown className="h-4 w-4" />
+                    </span>
+                  </div>
+                </summary>
+
+                <div className="border-t border-border p-5 sm:p-6">
                   
                   {/* Card Header: Title & Quick Contact */}
                   <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -387,6 +433,7 @@ export default async function CorporateGiftsAdminPage() {
                   )}
 
                 </div>
+                </details>
               </div>
             );
           })}

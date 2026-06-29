@@ -204,7 +204,7 @@ export default function ProductsTable() {
         </div>
         <div className="rounded-lg border border-border bg-card p-5 shadow-soft">
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Debits</span>
-          <p className="mt-1 text-2xl font-bold text-rose-600">{formatCurrency(aggregateDebits)}</p>
+          <p className="mt-1 text-2xl font-bold text-rose-600 dark:text-rose-300">{formatCurrency(aggregateDebits)}</p>
           <p className="text-xs text-muted-foreground">Payouts and admin wallet debits</p>
         </div>
       </div>
@@ -300,7 +300,7 @@ export default function ProductsTable() {
                 <span className="font-bold text-foreground">{formatCurrency(customer.balance, customer.currency)}</span>
               </div>
               {customer.rawBalance < 0 && (
-                <div className="mt-1 text-[10px] text-rose-600">
+                <div className="mt-1 text-[10px] text-rose-600 dark:text-rose-300">
                   Net ledger {formatCurrency(customer.rawBalance, customer.currency)}
                 </div>
               )}

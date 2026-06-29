@@ -96,7 +96,7 @@ function ctaLabel(value?: string | null) {
 
 function statusClass(status: string) {
   if (status === "applied") return "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
-  if (status === "rejected") return "border-red-500/20 bg-red-500/10 text-red-700"
+  if (status === "rejected") return "border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300"
   return "border-amber-500/20 bg-amber-500/10 text-amber-700"
 }
 
@@ -224,7 +224,7 @@ export default async function SeoChangeReviewPage({
                   <input type="hidden" name="pidChange" value={change.pidChange} />
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-700 hover:bg-red-500/15"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-700 hover:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/20"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                     Reject
@@ -252,12 +252,12 @@ export default async function SeoChangeReviewPage({
         </div>
       )}
       {resolvedSearchParams.rejected && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-700">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-700 dark:text-red-300">
           SEO draft was rejected.
         </div>
       )}
       {resolvedSearchParams.error && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-700">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-700 dark:text-red-300">
           {resolvedSearchParams.error}
         </div>
       )}

@@ -15,6 +15,7 @@ export const ALL_SERVICE_KEYS = [
   "exchange_rates",
   "blog_management",
   "supplier_intelligence",
+  "consultations",
 ] as const;
 
 export type ServiceKey = (typeof ALL_SERVICE_KEYS)[number];
@@ -23,6 +24,7 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/invoicing/payment-claims", serviceKey: "invoicing" },
   { prefix: "/dashboard/invoicing/receipts", serviceKey: "invoicing" },
   { prefix: "/dashboard/intelligence", serviceKey: "supplier_intelligence" },
+  { prefix: "/dashboard/consultations", serviceKey: "consultations" },
   { prefix: "/dashboard/procurement", serviceKey: "procurement" },
   { prefix: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
   { prefix: "/dashboard/pay-supplier", serviceKey: "pay_supplier" },
@@ -91,6 +93,7 @@ const SERVICE_DEFAULT_ROUTE_MAP: Record<ServiceKey, string> = {
   exchange_rates: "/dashboard/exchange-rates",
   blog_management: "/dashboard/blog/view",
   supplier_intelligence: "/dashboard/intelligence/reviews",
+  consultations: "/dashboard/consultations",
 };
 
 export function getFirstAllowedDashboardRoute(

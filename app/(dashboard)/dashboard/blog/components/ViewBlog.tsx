@@ -95,6 +95,7 @@ const ViewBlog = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [generatingImagePid, setGeneratingImagePid] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationData>({
     total: 0,
     page: 1,
@@ -160,6 +161,43 @@ const ViewBlog = () => {
   const copySlug = (slug: string) => {
     navigator.clipboard.writeText(`/blog/${slug}`);
     toast.success('URI copied to clipboard');
+  };
+
+  const generateBlogImage = async (blog: Blog) => {
+    setGeneratingImagePid(blog.pidBlog);
+    const toastId = toast.loading(`Generating image for "${blog.blogTitle}"...`);
+
+    try {
+      const response = await fetch('/api/marketing/blog-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pidBlog: blog.pidBlog }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Image generation failed.');
+      }
+
+      setBlogs((current) =>
+        current.map((item) =>
+          item.pidBlog === blog.pidBlog
+            ? {
+                ...item,
+                blogImage: data.data?.blogImage || item.blogImage,
+                updatedAt: data.data?.updatedAt
+                  ? new Date(data.data.updatedAt)
+                  : item.updatedAt,
+              }
+            : item,
+        ),
+      );
+      toast.success('Blog image generated and saved.', { id: toastId });
+    } catch (error: any) {
+      toast.error(error?.message || 'Image generation failed.', { id: toastId });
+    } finally {
+      setGeneratingImagePid(null);
+    }
   };
 
   const getAdminPreviewUrl = (pidBlog: string) => {
@@ -327,6 +365,19 @@ const ViewBlog = () => {
                       <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {getRelativeTime(blog.createdAt)}</div>
                    </div>
                    <div className="flex items-center gap-1">
+                      <button
+                          type="button"
+                          onClick={() => generateBlogImage(blog)}
+                          disabled={generatingImagePid === blog.pidBlog}
+                          className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                          title="Generate blog image"
+                        >
+                          {generatingImagePid === blog.pidBlog ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <ImageIcon className="w-4 h-4" />
+                          )}
+                      </button>
                       <Link
                           href={getAdminPreviewUrl(blog.pidBlog)}
                           className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-md transition-colors"
@@ -386,6 +437,19 @@ const ViewBlog = () => {
                        </td>
                        <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-1">
+                             <button
+                                 type="button"
+                                 onClick={() => generateBlogImage(blog)}
+                                 disabled={generatingImagePid === blog.pidBlog}
+                                 className="p-2 hover:bg-primary/10 text-primary rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                 title="Generate blog image"
+                               >
+                                 {generatingImagePid === blog.pidBlog ? (
+                                   <RefreshCw className="w-4 h-4 animate-spin" />
+                                 ) : (
+                                   <ImageIcon className="w-4 h-4" />
+                                 )}
+                             </button>
                              <Link
                                  href={getAdminPreviewUrl(blog.pidBlog)}
                                  className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-md transition-colors"

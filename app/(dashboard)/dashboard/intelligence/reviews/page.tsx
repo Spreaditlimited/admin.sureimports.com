@@ -6,6 +6,7 @@ import {
   FileText,
   Mail,
   MessageSquareText,
+  Paperclip,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -30,6 +31,7 @@ type ReviewRequest = {
   targetQuantity: string | null;
   budgetRange: string | null;
   decisionNeeded: string | null;
+  attachmentsJson: string | null;
   status: string;
   adminResponse: string | null;
   adminRecommendations: string | null;
@@ -54,6 +56,31 @@ function formatDate(date: Date | null) {
   }).format(date);
 }
 
+type ReviewAttachment = {
+  name?: string;
+  url?: string;
+  type?: string;
+  size?: number;
+};
+
+function parseAttachments(value: string | null): ReviewAttachment[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item) => item && typeof item.url === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function formatFileSize(size?: number) {
+  if (!size) return '';
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)}KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)}MB`;
+}
+
 export default async function IntelligenceReviewRequestsAdminPage() {
   const requests = await prisma.$queryRaw<ReviewRequest[]>`
     SELECT
@@ -71,6 +98,7 @@ export default async function IntelligenceReviewRequestsAdminPage() {
       targetQuantity,
       budgetRange,
       decisionNeeded,
+      attachmentsJson,
       status,
       adminResponse,
       adminRecommendations,
@@ -140,10 +168,19 @@ export default async function IntelligenceReviewRequestsAdminPage() {
       ) : (
         <div className="space-y-6">
           {requests.map((request) => (
-            <article
-              key={request.pidRequest}
-              className="overflow-hidden rounded-lg border border-border bg-card shadow-soft"
-            >
+            <ReviewRequestCard key={request.pidRequest} request={request} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReviewRequestCard({ request }: { request: ReviewRequest }) {
+  const attachments = parseAttachments(request.attachmentsJson);
+
+  return (
+    <article className="overflow-hidden rounded-lg border border-border bg-card shadow-soft">
               <div className="border-b border-border p-5 sm:p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
@@ -202,6 +239,33 @@ export default async function IntelligenceReviewRequestsAdminPage() {
                   <Block label="Decision needed" value={request.decisionNeeded} important />
                   <Block label="Product details" value={request.productDetails} />
                   <Block label="Quote/payment details" value={request.quoteDetails} />
+
+                  {attachments.length > 0 ? (
+                    <div className="rounded-lg border border-border bg-background p-4">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <Paperclip className="h-3.5 w-3.5" />
+                        Supporting files
+                      </p>
+                      <div className="mt-3 grid gap-2">
+                        {attachments.map((file) => (
+                          <a
+                            key={file.url}
+                            href={file.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+                          >
+                            <span className="min-w-0 truncate">
+                              {file.name || 'Attachment'}
+                            </span>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {formatFileSize(file.size)}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
                   {request.adminResponse ? (
                     <div className="rounded-lg border border-emerald-500/30 bg-emerald-50 p-4 dark:border-emerald-400/30 dark:bg-emerald-950/40">
@@ -301,10 +365,6 @@ export default async function IntelligenceReviewRequestsAdminPage() {
                 </form>
               </div>
             </article>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 

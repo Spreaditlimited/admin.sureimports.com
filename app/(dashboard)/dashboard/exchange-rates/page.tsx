@@ -1,6 +1,9 @@
 import { db } from "@/lib/db"; // Assuming your prisma instance is exported here
 import ExchangeRatesForm from "./components/ExchageRatesForm";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   // Fetch the global exchange rate configuration (ID: 1)
   // Using 'db' utility for consistency with your other server components

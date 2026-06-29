@@ -20,6 +20,7 @@ const SERVICE_KEYS = new Set([
   'exchange_rates',
   'blog_management',
   'supplier_intelligence',
+  'consultations',
 ]);
 
 export async function POST(request: Request) {
