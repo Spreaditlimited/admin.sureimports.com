@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/prisma';
+import {
+  canonicalCategoryKey,
+  categoriesAreCloselyRelated,
+  normalizeCategoryTokens,
+} from '@/lib/intelligence/categoryNormalization';
 import { requireAdmin, unauthorized } from '../../invoicing/_lib/invoicing';
 
 type ResearchSupplierDraft = {
@@ -38,11 +43,30 @@ type ResearchJob = {
   requestNotes: string | null;
   draftJson: string | null;
   errorMessage: string | null;
+  sourceSearchRequestId: string | null;
+  requestedByPidUser: string | null;
+  requestedByEmail: string | null;
   createdByPidUser: string | null;
   approvedByPidUser: string | null;
   approvedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+type IntelligenceSearchRequest = {
+  pidSearch: string;
+  pidUser: string;
+  email: string;
+  query: string;
+  targetSupplierCount: number;
+  notes: string | null;
+  status: string;
+  creditCost: number;
+  creditReserved: boolean;
+  relatedPidJob: string | null;
+  adminNotes: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 function clean(value: unknown, max = 4000) {
@@ -81,6 +105,9 @@ async function ensureResearchJobsTable() {
       requestNotes LONGTEXT NULL,
       draftJson LONGTEXT NULL,
       errorMessage LONGTEXT NULL,
+      sourceSearchRequestId VARCHAR(80) NULL,
+      requestedByPidUser VARCHAR(80) NULL,
+      requestedByEmail VARCHAR(255) NULL,
       createdByPidUser VARCHAR(191) NULL,
       approvedByPidUser VARCHAR(191) NULL,
       approvedAt DATETIME(3) NULL,
@@ -89,6 +116,79 @@ async function ensureResearchJobsTable() {
       UNIQUE KEY intelligence_research_jobs_pidJob_key (pidJob),
       KEY intelligence_research_jobs_status_idx (status),
       KEY intelligence_research_jobs_nicheName_idx (nicheName),
+      PRIMARY KEY (id)
+    ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  `);
+
+  for (const statement of [
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN sourceSearchRequestId VARCHAR(80) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByPidUser VARCHAR(80) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByEmail VARCHAR(255) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD KEY intelligence_research_jobs_search_request_idx (sourceSearchRequestId)',
+  ]) {
+    try {
+      await prisma.$executeRawUnsafe(statement);
+    } catch {
+      // Existing databases may already have these columns/indexes.
+    }
+  }
+}
+
+async function ensureSearchRequestsTable() {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS intelligence_search_requests (
+      id INT NOT NULL AUTO_INCREMENT,
+      pidSearch VARCHAR(80) NOT NULL,
+      pidUser VARCHAR(80) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      query VARCHAR(220) NOT NULL,
+      targetSupplierCount INT NOT NULL DEFAULT 3,
+      notes LONGTEXT NULL,
+      status VARCHAR(40) NOT NULL DEFAULT 'awaiting_admin',
+      creditCost INT NOT NULL DEFAULT 1,
+      creditReserved TINYINT(1) NOT NULL DEFAULT 1,
+      relatedPidJob VARCHAR(80) NULL,
+      adminNotes LONGTEXT NULL,
+      createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      updatedAt DATETIME(3) NULL,
+      UNIQUE KEY intelligence_search_requests_pid_key (pidSearch),
+      KEY intelligence_search_requests_user_idx (pidUser),
+      KEY intelligence_search_requests_status_idx (status),
+      KEY intelligence_search_requests_job_idx (relatedPidJob),
+      PRIMARY KEY (id)
+    ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  `);
+}
+
+async function ensureCreditTablesForRefunds() {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS intelligence_credit_accounts (
+      id INT NOT NULL AUTO_INCREMENT,
+      pidAccount VARCHAR(80) NOT NULL,
+      pidUser VARCHAR(80) NOT NULL,
+      balance INT NOT NULL DEFAULT 0,
+      lifetimeGranted INT NOT NULL DEFAULT 0,
+      lifetimeUsed INT NOT NULL DEFAULT 0,
+      createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      updatedAt DATETIME(3) NULL,
+      UNIQUE KEY intelligence_credit_accounts_pid_key (pidAccount),
+      UNIQUE KEY intelligence_credit_accounts_user_key (pidUser),
+      PRIMARY KEY (id)
+    ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS intelligence_credit_transactions (
+      id INT NOT NULL AUTO_INCREMENT,
+      pidTransaction VARCHAR(80) NOT NULL,
+      pidUser VARCHAR(80) NOT NULL,
+      amount INT NOT NULL,
+      reason VARCHAR(120) NOT NULL,
+      reference VARCHAR(160) NULL,
+      createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      UNIQUE KEY intelligence_credit_transactions_pid_key (pidTransaction),
+      KEY intelligence_credit_transactions_user_idx (pidUser),
+      KEY intelligence_credit_transactions_reference_idx (reference),
       PRIMARY KEY (id)
     ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `);
@@ -205,7 +305,9 @@ function normalizeList(value: unknown, maxItems = 12) {
 }
 
 function categoryLooksRelevant(categoryName: string, supplier: ResearchSupplierDraft) {
-  const categoryTokens = slugify(categoryName).split('-').filter((token) => token.length > 2);
+  const categoryTokens = normalizeCategoryTokens(categoryName).filter(
+    (token) => token.length > 2,
+  );
   if (categoryTokens.length === 0) return false;
 
   const supplierText = [
@@ -216,29 +318,38 @@ function categoryLooksRelevant(categoryName: string, supplier: ResearchSupplierD
     .join(' ')
     .toLowerCase();
 
-  return categoryTokens.some((token) => supplierText.includes(token));
+  const supplierTokens = new Set(normalizeCategoryTokens(supplierText));
+  return categoryTokens.some((token) => supplierTokens.has(token));
 }
 
 async function upsertNiche(name: string, summary?: string | null) {
   const nicheName = clean(name, 180);
   const slug = slugify(nicheName);
   if (!nicheName || !slug) return null;
+  const canonicalKey = canonicalCategoryKey(nicheName);
 
-  const existing = await prisma.$queryRaw<Array<{ pidNiche: string }>>`
-    SELECT pidNiche FROM intelligence_niches WHERE slug = ${slug} LIMIT 1
+  const existing = await prisma.$queryRaw<Array<{ pidNiche: string; name: string; slug: string }>>`
+    SELECT pidNiche, name, slug FROM intelligence_niches
   `;
+  const exactMatch = existing.find((niche) => niche.slug === slug);
+  const relatedMatch =
+    exactMatch ||
+    existing.find(
+      (niche) =>
+        canonicalCategoryKey(niche.name) === canonicalKey ||
+        categoriesAreCloselyRelated(niche.name, nicheName),
+    );
 
-  if (existing[0]) {
+  if (relatedMatch) {
     await prisma.$executeRaw`
       UPDATE intelligence_niches
       SET
-        name = ${nicheName},
         summary = COALESCE(${clean(summary, 2000) || null}, summary),
         status = 'published',
         updatedAt = ${new Date()}
-      WHERE pidNiche = ${existing[0].pidNiche}
+      WHERE pidNiche = ${relatedMatch.pidNiche}
     `;
-    return existing[0].pidNiche;
+    return relatedMatch.pidNiche;
   }
 
   const pidNiche = randomId('INTNICHE');
@@ -596,6 +707,9 @@ async function listJobs() {
       requestNotes,
       draftJson,
       errorMessage,
+      sourceSearchRequestId,
+      requestedByPidUser,
+      requestedByEmail,
       createdByPidUser,
       approvedByPidUser,
       approvedAt,
@@ -607,13 +721,129 @@ async function listJobs() {
   `;
 }
 
+async function listSearchRequests() {
+  await ensureSearchRequestsTable();
+  return prisma.$queryRaw<IntelligenceSearchRequest[]>`
+    SELECT
+      pidSearch,
+      pidUser,
+      email,
+      query,
+      targetSupplierCount,
+      notes,
+      status,
+      creditCost,
+      creditReserved,
+      relatedPidJob,
+      adminNotes,
+      createdAt,
+      updatedAt
+    FROM intelligence_search_requests
+    ORDER BY createdAt DESC
+    LIMIT 100
+  `;
+}
+
+async function updateLinkedSearchRequest(
+  pidJob: string,
+  status: string,
+  adminNotes?: string | null,
+) {
+  await ensureSearchRequestsTable();
+  await prisma.$executeRaw`
+    UPDATE intelligence_search_requests
+    SET
+      status = ${status},
+      adminNotes = ${adminNotes || null},
+      updatedAt = ${new Date()}
+    WHERE relatedPidJob = ${pidJob}
+  `;
+}
+
+async function refundLinkedSearchCredit(pidJob: string, reason: string) {
+  await ensureSearchRequestsTable();
+  await ensureCreditTablesForRefunds();
+
+  const requests = await prisma.$queryRaw<IntelligenceSearchRequest[]>`
+    SELECT
+      pidSearch,
+      pidUser,
+      email,
+      query,
+      targetSupplierCount,
+      notes,
+      status,
+      creditCost,
+      creditReserved,
+      relatedPidJob,
+      adminNotes,
+      createdAt,
+      updatedAt
+    FROM intelligence_search_requests
+    WHERE relatedPidJob = ${pidJob}
+      AND creditReserved = 1
+    LIMIT 1
+  `;
+  const request = requests[0];
+  if (!request) return;
+
+  const existingRefund = await prisma.$queryRaw<Array<{ total: bigint }>>`
+    SELECT COUNT(*) AS total
+    FROM intelligence_credit_transactions
+    WHERE pidUser = ${request.pidUser}
+      AND reference = ${request.pidSearch}
+      AND reason = 'search_request_refunded'
+  `;
+  if (Number(existingRefund[0]?.total || 0) > 0) return;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`
+      UPDATE intelligence_credit_accounts
+      SET
+        balance = balance + ${request.creditCost},
+        updatedAt = ${new Date()}
+      WHERE pidUser = ${request.pidUser}
+    `;
+
+    await tx.$executeRaw`
+      INSERT INTO intelligence_credit_transactions (
+        pidTransaction,
+        pidUser,
+        amount,
+        reason,
+        reference,
+        createdAt
+      ) VALUES (
+        ${randomId('INTCTX')},
+        ${request.pidUser},
+        ${request.creditCost},
+        'search_request_refunded',
+        ${request.pidSearch},
+        ${new Date()}
+      )
+    `;
+
+    await tx.$executeRaw`
+      UPDATE intelligence_search_requests
+      SET
+        creditReserved = 0,
+        adminNotes = ${reason},
+        updatedAt = ${new Date()}
+      WHERE pidSearch = ${request.pidSearch}
+    `;
+  });
+}
+
 export async function GET() {
   try {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
 
-    const jobs = await listJobs();
-    return NextResponse.json({ success: true, data: jobs });
+    const [jobs, searchRequests] = await Promise.all([
+      listJobs(),
+      listSearchRequests(),
+    ]);
+    return NextResponse.json({ success: true, data: jobs, searchRequests });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to fetch research jobs.' },
@@ -627,11 +857,60 @@ export async function POST(request: NextRequest) {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
     await ensureResearchJobsTable();
+    await ensureSearchRequestsTable();
 
     const body = await request.json().catch(() => ({}));
-    const nicheName = clean(body.nicheName, 180);
-    const requestNotes = clean(body.requestNotes, 4000);
-    const targetSupplierCount = normalizeTargetSupplierCount(body.targetSupplierCount);
+    const sourceSearchRequestId = clean(body.sourceSearchRequestId, 80);
+    let nicheName = clean(body.nicheName, 180);
+    let requestNotes = clean(body.requestNotes, 4000);
+    let targetSupplierCount = normalizeTargetSupplierCount(body.targetSupplierCount);
+    let requestedByPidUser: string | null = null;
+    let requestedByEmail: string | null = null;
+
+    if (sourceSearchRequestId) {
+      const requests = await prisma.$queryRaw<IntelligenceSearchRequest[]>`
+        SELECT
+          pidSearch,
+          pidUser,
+          email,
+          query,
+          targetSupplierCount,
+          notes,
+          status,
+          creditCost,
+          creditReserved,
+          relatedPidJob,
+          adminNotes,
+          createdAt,
+          updatedAt
+        FROM intelligence_search_requests
+        WHERE pidSearch = ${sourceSearchRequestId}
+        LIMIT 1
+      `;
+      const searchRequest = requests[0];
+
+      if (!searchRequest) {
+        return NextResponse.json(
+          { success: false, error: 'Search request was not found.' },
+          { status: 404 },
+        );
+      }
+
+      if (searchRequest.relatedPidJob) {
+        return NextResponse.json(
+          { success: false, error: 'This search request already has a research job.' },
+          { status: 400 },
+        );
+      }
+
+      nicheName = clean(searchRequest.query, 180);
+      requestNotes = clean(searchRequest.notes, 4000);
+      targetSupplierCount = normalizeTargetSupplierCount(
+        searchRequest.targetSupplierCount,
+      );
+      requestedByPidUser = searchRequest.pidUser;
+      requestedByEmail = searchRequest.email;
+    }
 
     if (!nicheName) {
       return NextResponse.json(
@@ -649,6 +928,9 @@ export async function POST(request: NextRequest) {
         targetSupplierCount,
         status,
         requestNotes,
+        sourceSearchRequestId,
+        requestedByPidUser,
+        requestedByEmail,
         createdByPidUser
       ) VALUES (
         ${pidJob},
@@ -656,9 +938,23 @@ export async function POST(request: NextRequest) {
         ${targetSupplierCount},
         'running',
         ${requestNotes || null},
+        ${sourceSearchRequestId || null},
+        ${requestedByPidUser},
+        ${requestedByEmail},
         ${admin.pidUser}
       )
     `;
+
+    if (sourceSearchRequestId) {
+      await prisma.$executeRaw`
+        UPDATE intelligence_search_requests
+        SET
+          status = 'running',
+          relatedPidJob = ${pidJob},
+          updatedAt = ${new Date()}
+        WHERE pidSearch = ${sourceSearchRequestId}
+      `;
+    }
 
     try {
       const draft = await runSupplierResearch({
@@ -676,6 +972,10 @@ export async function POST(request: NextRequest) {
           updatedAt = ${new Date()}
         WHERE pidJob = ${pidJob}
       `;
+
+      if (sourceSearchRequestId) {
+        await updateLinkedSearchRequest(pidJob, 'awaiting_approval');
+      }
     } catch (error: any) {
       await prisma.$executeRaw`
         UPDATE intelligence_research_jobs
@@ -685,11 +985,25 @@ export async function POST(request: NextRequest) {
           updatedAt = ${new Date()}
         WHERE pidJob = ${pidJob}
       `;
+      if (sourceSearchRequestId) {
+        await updateLinkedSearchRequest(
+          pidJob,
+          'failed',
+          error?.message || 'Research failed.',
+        );
+        await refundLinkedSearchCredit(
+          pidJob,
+          error?.message || 'Research failed and the credit was returned.',
+        );
+      }
       throw error;
     }
 
-    const jobs = await listJobs();
-    return NextResponse.json({ success: true, data: jobs });
+    const [jobs, searchRequests] = await Promise.all([
+      listJobs(),
+      listSearchRequests(),
+    ]);
+    return NextResponse.json({ success: true, data: jobs, searchRequests });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to run research.' },
@@ -764,7 +1078,20 @@ export async function PATCH(request: NextRequest) {
           updatedAt = ${new Date()}
         WHERE pidJob = ${pidJob}
       `;
-      return NextResponse.json({ success: true, data: await listJobs() });
+      await updateLinkedSearchRequest(
+        pidJob,
+        'rejected',
+        'Admin rejected this search request. Your credit has been returned.',
+      );
+      await refundLinkedSearchCredit(
+        pidJob,
+        'Admin rejected this search request. Your credit has been returned.',
+      );
+      const [jobs, searchRequests] = await Promise.all([
+        listJobs(),
+        listSearchRequests(),
+      ]);
+      return NextResponse.json({ success: true, data: jobs, searchRequests });
     }
 
     if (!draft) {
@@ -844,7 +1171,27 @@ export async function PATCH(request: NextRequest) {
       WHERE pidJob = ${pidJob}
     `;
 
-    return NextResponse.json({ success: true, data: await listJobs() });
+    if (nextStatus === 'approved' || nextStatus === 'partially_approved') {
+      await updateLinkedSearchRequest(pidJob, 'approved');
+    } else if (nextStatus === 'rejected') {
+      await updateLinkedSearchRequest(
+        pidJob,
+        'rejected',
+        'Admin rejected all supplier candidates. Your credit has been returned.',
+      );
+      await refundLinkedSearchCredit(
+        pidJob,
+        'Admin rejected all supplier candidates. Your credit has been returned.',
+      );
+    } else {
+      await updateLinkedSearchRequest(pidJob, 'awaiting_approval');
+    }
+
+    const [jobs, searchRequests] = await Promise.all([
+      listJobs(),
+      listSearchRequests(),
+    ]);
+    return NextResponse.json({ success: true, data: jobs, searchRequests });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to update research job.' },

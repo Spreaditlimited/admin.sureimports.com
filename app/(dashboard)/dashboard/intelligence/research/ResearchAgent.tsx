@@ -50,9 +50,27 @@ type ResearchJob = {
   requestNotes: string | null;
   draftJson: string | null;
   errorMessage: string | null;
+  sourceSearchRequestId?: string | null;
+  requestedByEmail?: string | null;
   createdAt: string;
   updatedAt: string;
   approvedAt: string | null;
+};
+
+type SearchRequest = {
+  pidSearch: string;
+  pidUser: string;
+  email: string;
+  query: string;
+  targetSupplierCount: number;
+  notes: string | null;
+  status: string;
+  creditCost: number;
+  creditReserved: boolean;
+  relatedPidJob: string | null;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string | null;
 };
 
 function parseDraft(value: string | null): DraftJson | null {
@@ -113,11 +131,13 @@ function progressMessage(actionKey: string | null, pidJob: string) {
 
 export default function IntelligenceResearchAgent() {
   const [jobs, setJobs] = useState<ResearchJob[]>([]);
+  const [searchRequests, setSearchRequests] = useState<SearchRequest[]>([]);
   const [nicheName, setNicheName] = useState('');
   const [targetSupplierCount, setTargetSupplierCount] = useState(3);
   const [requestNotes, setRequestNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [runningSearchRequest, setRunningSearchRequest] = useState<string | null>(null);
   const [updatingJob, setUpdatingJob] = useState<string | null>(null);
   const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
 
@@ -137,6 +157,7 @@ export default function IntelligenceResearchAgent() {
         throw new Error(data?.error || 'Failed to load research jobs.');
       }
       setJobs(data.data || []);
+      setSearchRequests(data.searchRequests || []);
     } catch (error: any) {
       toast.error(error?.message || 'Failed to load research jobs.');
     } finally {
@@ -171,6 +192,7 @@ export default function IntelligenceResearchAgent() {
         throw new Error(data?.error || 'Research failed.');
       }
       setJobs(data.data || []);
+      setSearchRequests(data.searchRequests || []);
       setNicheName('');
       setRequestNotes('');
       toast.success('Research draft created. Review before approval.', { id: toastId });
@@ -179,6 +201,32 @@ export default function IntelligenceResearchAgent() {
       await loadJobs();
     } finally {
       setRunning(false);
+    }
+  };
+
+  const runSearchRequestResearch = async (sourceSearchRequestId: string) => {
+    setRunningSearchRequest(sourceSearchRequestId);
+    const toastId = toast.loading('Research agent is working on the user search request...');
+    try {
+      const response = await fetch('/api/intelligence/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceSearchRequestId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Research failed.');
+      }
+      setJobs(data.data || []);
+      setSearchRequests(data.searchRequests || []);
+      toast.success('User search draft created. Review before approval.', {
+        id: toastId,
+      });
+    } catch (error: any) {
+      toast.error(error?.message || 'Research failed.', { id: toastId });
+      await loadJobs();
+    } finally {
+      setRunningSearchRequest(null);
     }
   };
 
@@ -204,6 +252,7 @@ export default function IntelligenceResearchAgent() {
         throw new Error(data?.error || 'Update failed.');
       }
       setJobs(data.data || []);
+      setSearchRequests(data.searchRequests || []);
       toast.success(
         action === 'approve'
           ? 'Research approved and published.'
@@ -305,6 +354,44 @@ export default function IntelligenceResearchAgent() {
 
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">
+              User Search Requests
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Freemium and Pro search-credit requests. Generate a draft, then
+              approve suppliers before publishing.
+            </p>
+          </div>
+          <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+            {searchRequests.filter((request) => request.status === 'awaiting_admin').length} pending
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            Loading user search requests...
+          </div>
+        ) : searchRequests.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            No user search requests yet.
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {searchRequests.map((request) => (
+              <SearchRequestCard
+                key={request.pidSearch}
+                request={request}
+                running={runningSearchRequest === request.pidSearch}
+                onGenerate={() => runSearchRequestResearch(request.pidSearch)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between px-1">
           <h2 className="text-lg font-bold text-foreground">Research Jobs</h2>
           <button
             type="button"
@@ -354,6 +441,102 @@ export default function IntelligenceResearchAgent() {
         )}
       </section>
     </div>
+  );
+}
+
+function SearchRequestCard({
+  request,
+  running,
+  onGenerate,
+}: {
+  request: SearchRequest;
+  running: boolean;
+  onGenerate: () => void;
+}) {
+  const canGenerate = request.status === 'awaiting_admin' && !request.relatedPidJob;
+
+  return (
+    <article className="rounded-xl border border-border bg-card p-5 shadow-soft">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${statusClass(
+                request.status,
+              )}`}
+            >
+              {request.status.replace(/_/g, ' ')}
+            </span>
+            <span className="font-mono text-[10px] font-bold text-muted-foreground">
+              {request.pidSearch}
+            </span>
+          </div>
+          <h3 className="mt-3 text-base font-bold text-foreground">
+            {request.query}
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span>{request.targetSupplierCount} suppliers</span>
+            <span>{request.creditCost} credit used</span>
+            <span>{request.email}</span>
+          </div>
+          {request.notes ? (
+            <p className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              {request.notes}
+            </p>
+          ) : null}
+          {request.adminNotes ? (
+            <p className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:text-amber-300">
+              {request.adminNotes}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+          {request.relatedPidJob ? (
+            <span className="rounded-md border border-border px-3 py-2 text-center text-xs font-bold text-muted-foreground">
+              Job: {request.relatedPidJob}
+            </span>
+          ) : null}
+          {canGenerate ? (
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={running}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {running ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Bot className="h-3.5 w-3.5" />
+              )}
+              {running ? 'Generating...' : 'Generate draft'}
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {running ? (
+        <div className="mt-4 overflow-hidden rounded-md border border-primary/20 bg-primary/10">
+          <div className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-primary">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <span>Researching suppliers and preparing an admin review draft...</span>
+          </div>
+          <div className="h-1 overflow-hidden bg-primary/10">
+            <div className="h-full w-1/3 animate-[research-progress_1.1s_ease-in-out_infinite] rounded-full bg-primary" />
+          </div>
+          <style jsx>{`
+            @keyframes research-progress {
+              0% {
+                transform: translateX(-120%);
+              }
+              100% {
+                transform: translateX(320%);
+              }
+            }
+          `}</style>
+        </div>
+      ) : null}
+    </article>
   );
 }
 

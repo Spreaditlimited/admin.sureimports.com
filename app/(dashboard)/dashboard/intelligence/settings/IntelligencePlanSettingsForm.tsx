@@ -9,6 +9,8 @@ type PlanSetting = {
   name: string;
   priceNaira: number;
   paystackPlanCode: string | null;
+  monthlySearchCredits: number;
+  extraCreditPriceNaira: number;
 };
 
 const emptyPlans: PlanSetting[] = [
@@ -17,12 +19,16 @@ const emptyPlans: PlanSetting[] = [
     name: 'Starter Database',
     priceNaira: 10000,
     paystackPlanCode: '',
+    monthlySearchCredits: 0,
+    extraCreditPriceNaira: 5000,
   },
   {
     planKey: 'pro',
     name: 'Pro Review Support',
     priceNaira: 25000,
     paystackPlanCode: '',
+    monthlySearchCredits: 3,
+    extraCreditPriceNaira: 5000,
   },
 ];
 
@@ -52,6 +58,8 @@ export default function IntelligencePlanSettingsForm() {
               name: plan.name || '',
               priceNaira: Number(plan.priceNaira || 0),
               paystackPlanCode: plan.paystackPlanCode || '',
+              monthlySearchCredits: Number(plan.monthlySearchCredits || 0),
+              extraCreditPriceNaira: Number(plan.extraCreditPriceNaira || 0),
             })),
           );
         }
@@ -78,7 +86,12 @@ export default function IntelligencePlanSettingsForm() {
         plan.planKey === planKey
           ? {
               ...plan,
-              [field]: field === 'priceNaira' ? Number(value || 0) : value,
+              [field]:
+                field === 'priceNaira' ||
+                field === 'monthlySearchCredits' ||
+                field === 'extraCreditPriceNaira'
+                  ? Number(value || 0)
+                  : value,
             }
           : plan,
       ),
@@ -139,6 +152,48 @@ export default function IntelligencePlanSettingsForm() {
                   className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                 />
               </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Monthly Search Credits
+                  </span>
+                  <input
+                    value={plan.monthlySearchCredits}
+                    type="number"
+                    min={0}
+                    step={1}
+                    disabled={loading}
+                    onChange={(event) =>
+                      updatePlan(plan.planKey, 'monthlySearchCredits', event.target.value)
+                    }
+                    className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                  />
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    Credits automatically granted when this plan renews.
+                  </p>
+                </label>
+
+                <label className="block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Extra Credit Price (Naira)
+                  </span>
+                  <input
+                    value={plan.extraCreditPriceNaira}
+                    type="number"
+                    min={0}
+                    step={500}
+                    disabled={loading}
+                    onChange={(event) =>
+                      updatePlan(plan.planKey, 'extraCreditPriceNaira', event.target.value)
+                    }
+                    className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                  />
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    Used when we add paid top-up credits.
+                  </p>
+                </label>
+              </div>
 
               <label className="block">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">

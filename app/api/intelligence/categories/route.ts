@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import seededSuppliers from '@/docs/products/china-supplier-directory-v1/SUPPLIERS.json';
 import { prisma } from '@/lib/prisma';
+import {
+  canonicalCategoryKey,
+  categoriesAreCloselyRelated,
+  normalizeCategoryTokens,
+} from '@/lib/intelligence/categoryNormalization';
 import { requireAdmin, unauthorized } from '../../invoicing/_lib/invoicing';
 
 type SeededSupplier = (typeof seededSuppliers)[number];
@@ -41,10 +46,23 @@ function parseProducts(value: string | null) {
 }
 
 function categoryLooksRelevant(categoryName: string, supplierText: string) {
-  const tokens = slugify(categoryName).split('-').filter((token) => token.length > 2);
+  const tokens = normalizeCategoryTokens(categoryName).filter(
+    (token) => token.length > 2,
+  );
   if (tokens.length === 0) return false;
-  const haystack = supplierText.toLowerCase();
-  return tokens.some((token) => haystack.includes(token));
+  const supplierTokens = new Set(normalizeCategoryTokens(supplierText));
+  return tokens.some((token) => supplierTokens.has(token));
+}
+
+function findCategoryKey(categories: Map<string, any>, name: string, fallbackKey: string) {
+  const canonicalKey = canonicalCategoryKey(name);
+  const related = Array.from(categories.entries()).find(
+    ([, category]) =>
+      canonicalCategoryKey(category.name) === canonicalKey ||
+      categoriesAreCloselyRelated(category.name, name),
+  );
+
+  return related?.[0] || fallbackKey;
 }
 
 function productsFromFit(productFit: string | null | undefined) {
@@ -62,7 +80,7 @@ function addSeededCategories(categories: Map<string, any>) {
     }
 
     const slug = slugify(supplier.niche);
-    const pidNiche = `SEEDED-${slug}`;
+    const pidNiche = findCategoryKey(categories, supplier.niche, `SEEDED-${slug}`);
 
     if (!categories.has(pidNiche)) {
       categories.set(pidNiche, {
@@ -169,7 +187,7 @@ export async function GET() {
     addSeededCategories(categories);
 
     for (const row of rows) {
-      const categoryKey = row.pidNiche;
+      const categoryKey = findCategoryKey(categories, row.name, row.pidNiche);
       const existingSeededKey = `SEEDED-${row.slug}`;
       const mapKey = categories.has(existingSeededKey) ? existingSeededKey : categoryKey;
 

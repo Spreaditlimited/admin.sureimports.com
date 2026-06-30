@@ -12,6 +12,8 @@ type PlanSetting = {
   name: string;
   priceNaira: number;
   paystackPlanCode: string | null;
+  monthlySearchCredits: number;
+  extraCreditPriceNaira: number;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +26,8 @@ const defaultPlans: Record<PlanKey, Omit<PlanSetting, 'id' | 'createdAt' | 'upda
     name: 'Starter Database',
     priceNaira: 10000,
     paystackPlanCode: process.env.PAYSTACK_INTELLIGENCE_STARTER_PLAN_CODE || null,
+    monthlySearchCredits: 0,
+    extraCreditPriceNaira: 5000,
     status: 'ACTIVE',
   },
   pro: {
@@ -32,6 +36,8 @@ const defaultPlans: Record<PlanKey, Omit<PlanSetting, 'id' | 'createdAt' | 'upda
     name: 'Pro Review Support',
     priceNaira: 25000,
     paystackPlanCode: process.env.PAYSTACK_INTELLIGENCE_PRO_PLAN_CODE || null,
+    monthlySearchCredits: 3,
+    extraCreditPriceNaira: 5000,
     status: 'ACTIVE',
   },
 };
@@ -55,6 +61,8 @@ async function ensurePlanSettingsTable() {
       name VARCHAR(120) NOT NULL,
       priceNaira INT NOT NULL,
       paystackPlanCode VARCHAR(160) NULL,
+      monthlySearchCredits INT NOT NULL DEFAULT 0,
+      extraCreditPriceNaira INT NOT NULL DEFAULT 5000,
       status VARCHAR(40) NOT NULL DEFAULT 'ACTIVE',
       createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
@@ -64,6 +72,17 @@ async function ensurePlanSettingsTable() {
       PRIMARY KEY (id)
     ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `);
+
+  for (const statement of [
+    'ALTER TABLE intelligence_plan_settings ADD COLUMN monthlySearchCredits INT NOT NULL DEFAULT 0',
+    'ALTER TABLE intelligence_plan_settings ADD COLUMN extraCreditPriceNaira INT NOT NULL DEFAULT 5000',
+  ]) {
+    try {
+      await prisma.$executeRawUnsafe(statement);
+    } catch {
+      // Existing databases may already have these columns.
+    }
+  }
 }
 
 async function seedDefaultPlans() {
@@ -75,6 +94,8 @@ async function seedDefaultPlans() {
         name,
         priceNaira,
         paystackPlanCode,
+        monthlySearchCredits,
+        extraCreditPriceNaira,
         status
       ) VALUES (
         ${plan.pidSetting},
@@ -82,9 +103,13 @@ async function seedDefaultPlans() {
         ${plan.name},
         ${plan.priceNaira},
         ${plan.paystackPlanCode},
+        ${plan.monthlySearchCredits},
+        ${plan.extraCreditPriceNaira},
         'ACTIVE'
       )
       ON DUPLICATE KEY UPDATE
+        monthlySearchCredits = COALESCE(monthlySearchCredits, ${plan.monthlySearchCredits}),
+        extraCreditPriceNaira = COALESCE(extraCreditPriceNaira, ${plan.extraCreditPriceNaira}),
         status = 'ACTIVE'
     `;
   }
@@ -102,6 +127,14 @@ async function getPlanSettings() {
       name,
       priceNaira,
       paystackPlanCode,
+      CASE
+        WHEN planKey = 'pro' AND monthlySearchCredits = 0 THEN 3
+        ELSE monthlySearchCredits
+      END AS monthlySearchCredits,
+      CASE
+        WHEN extraCreditPriceNaira = 0 THEN 5000
+        ELSE extraCreditPriceNaira
+      END AS extraCreditPriceNaira,
       status,
       createdAt,
       updatedAt
@@ -147,6 +180,11 @@ export async function PATCH(request: NextRequest) {
       const name = clean(item.name, 120);
       const priceNaira = normalizePrice(item.priceNaira);
       const paystackPlanCode = clean(item.paystackPlanCode, 160) || null;
+      const monthlySearchCredits = Math.max(
+        0,
+        Math.round(Number(item.monthlySearchCredits || 0)),
+      );
+      const extraCreditPriceNaira = normalizePrice(item.extraCreditPriceNaira);
 
       if (!name || priceNaira < 1000) {
         return NextResponse.json(
@@ -164,6 +202,8 @@ export async function PATCH(request: NextRequest) {
           name = ${name},
           priceNaira = ${priceNaira},
           paystackPlanCode = ${paystackPlanCode},
+          monthlySearchCredits = ${monthlySearchCredits},
+          extraCreditPriceNaira = ${extraCreditPriceNaira},
           status = 'ACTIVE',
           updatedAt = ${new Date()}
         WHERE planKey = ${planKey}
