@@ -40,6 +40,49 @@ interface SeoDraft {
 
 const RULES_VERSION = "2026-06-27"
 
+const sureImportsInternalLinkCatalog = [
+  {
+    label: "Supplier Intelligence",
+    url: "/supplier-intelligence",
+    useWhen:
+      "Readers need supplier leads, product category research, supplier checks, quote review, invoice review, or help reducing supplier risk before payment. Prioritize this link in most China sourcing and importing articles where it fits naturally.",
+  },
+  {
+    label: "Corporate Sourcing",
+    url: "/corporate-gifts",
+    useWhen:
+      "Readers need Sure Imports to find suppliers, compare manufacturers, handle bulk sourcing, custom production, product comparison, or quote/cost review.",
+  },
+  {
+    label: "Buy From Chinese Websites",
+    url: "/buy-from-chinese-websites",
+    useWhen:
+      "Readers already have product links from 1688, Taobao, Tmall or another Chinese website and need Sure Imports to buy on their behalf.",
+  },
+  {
+    label: "LineScout",
+    url: "https://linescout.sureimports.com/",
+    useWhen:
+      "Readers are sourcing machines, equipment, production lines, industrial tools, or technical machinery from China.",
+  },
+  {
+    label: "Ship With Us",
+    url: "/ship-with-us",
+    useWhen:
+      "Readers already have goods or a supplier and mainly need China-to-Nigeria shipping, warehouse receiving, consolidation, or freight support.",
+  },
+  {
+    label: "Import Hub",
+    url: "/import-from-china-to-nigeria",
+    useWhen:
+      "Readers need a broad learning path for importing from China to Nigeria, calculators, guides, tools and next steps.",
+  },
+]
+
+const approvedSureImportsUrls = new Set(
+  sureImportsInternalLinkCatalog.map((item) => item.url),
+)
+
 function stripHtml(value: string | null | undefined) {
   return String(value || "")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -106,7 +149,7 @@ const seoDraftSchema = {
         type: "object",
         properties: {
           label: { type: "string" },
-          url: { type: "string" },
+                url: { type: "string" },
           reason: { type: "string" },
         },
         required: ["label", "url", "reason"],
@@ -159,8 +202,16 @@ Strict rules:
 - Keep the current article's intent and audience: Nigerian buyers/importers sourcing from China.
 - The draft must be useful even if an editor only applies the metadata and FAQ suggestions.
 - The CTA must match the searcher's intent and the recommended CTA.
-- CTA routing: buy_from_chinese_websites is only for readers who already have Chinese website product links to submit; corporate_sourcing is for supplier search, manufacturer research, product comparison, custom/bulk sourcing and clearer quote/cost review; linescout is for machines/equipment; ship_with_us is for shipping-only; phone_sourcing and laptop_sourcing are for those device categories.
+- Internal links must come from the approved Sure Imports link catalog below. Do not invent URLs from service names.
+- The URL value must exactly match one of the catalog URLs. For example, Import Hub must use /import-from-china-to-nigeria, not /import-hub.
+- Prioritize Supplier Intelligence whenever the article discusses finding suppliers, checking suppliers, choosing product categories, requesting quotes, avoiding scams, supplier contact, MOQ, invoices, or payment risk.
+- CTA routing: supplier_intelligence is for supplier leads, supplier checks, quote review, invoice review and category research; buy_from_chinese_websites is only for readers who already have Chinese website product links to submit; corporate_sourcing is for done-for-you supplier search, manufacturer research, product comparison, custom/bulk sourcing and clearer quote/cost review; linescout is for machines/equipment; ship_with_us is for shipping-only.
 - Never mark this as ready for automatic publishing when the change would alter factual claims.
+
+Approved Sure Imports internal link catalog:
+${sureImportsInternalLinkCatalog
+  .map((item, index) => `${index + 1}. ${item.label}: ${item.url} - ${item.useWhen}`)
+  .join("\n")}
 
 Return only valid JSON with this exact shape:
 {
@@ -169,7 +220,7 @@ Return only valid JSON with this exact shape:
   "metaDescription": "string, 120 to 160 characters",
   "focusKeyword": "string",
   "faq": [{"question": "string", "answer": "string"}],
-  "internalLinks": [{"label": "string", "url": "string beginning with /", "reason": "string"}],
+  "internalLinks": [{"label": "string", "url": "exact URL from approved catalog", "reason": "string"}],
   "contentBrief": ["short editorial instruction"],
   "ctaIntent": "string",
   "riskNotes": ["string"],
@@ -228,7 +279,9 @@ function validateDraft(draft: SeoDraft) {
 
   if (Array.isArray(draft.internalLinks)) {
     draft.internalLinks.forEach((link, index) => {
-      if (!link.url || !link.url.startsWith("/")) errors.push(`Internal link ${index + 1} must use a relative URL.`)
+      if (!link.url || !approvedSureImportsUrls.has(link.url)) {
+        errors.push(`Internal link ${index + 1} must use an approved catalog URL.`)
+      }
     })
   }
 

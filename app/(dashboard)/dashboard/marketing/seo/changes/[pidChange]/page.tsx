@@ -5,7 +5,6 @@ import { notFound, redirect } from "next/navigation"
 import {
   ArrowLeft,
   ArrowUpRight,
-  CheckCircle2,
   FileText,
   Link2,
   ListChecks,
@@ -22,6 +21,7 @@ import {
   getSeoChangeReview,
   rejectSeoChange,
 } from "@/lib/seo/changeReview"
+import ApplyDraftButton from "../../components/ApplyDraftButton"
 
 async function requireSuperAdminPageAccess() {
   const cookieStore = await cookies()
@@ -233,13 +233,7 @@ export default async function SeoChangeReviewPage({
               )}
               <form action={applyMetadataAction}>
                 <input type="hidden" name="pidChange" value={change.pidChange} />
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/15"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {change.status === "applied" ? "Reapply Draft" : "Apply Draft"}
-                </button>
+                <ApplyDraftButton label={change.status === "applied" ? "Reapply Draft" : "Apply Draft"} />
               </form>
             </>
           )}
@@ -248,7 +242,7 @@ export default async function SeoChangeReviewPage({
 
       {resolvedSearchParams.applied && (
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-xs font-medium text-emerald-700">
-          SEO metadata and FAQ section were applied to the blog post.
+          SEO metadata, content brief recommendations and FAQ section were applied to the blog post.
         </div>
       )}
       {resolvedSearchParams.rejected && (
