@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import xMail from '@/lib/email/xMail2';
 import { prisma } from '@/lib/prisma';
 import {
   canonicalCategoryKey,
@@ -68,6 +69,14 @@ type IntelligenceSearchRequest = {
   createdAt: Date;
   updatedAt: Date | null;
 };
+
+function dashboardUrl(path: string) {
+  const baseUrl =
+    process.env.SUREIMPORTS_SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://www.sureimports.com';
+  return `${baseUrl.replace(/\/$/, '')}${path}`;
+}
 
 function clean(value: unknown, max = 4000) {
   return String(value || '').trim().slice(0, max);
@@ -151,6 +160,7 @@ async function ensureSearchRequestsTable() {
       adminNotes LONGTEXT NULL,
       progressStage VARCHAR(180) NULL,
       progressPercent INT NOT NULL DEFAULT 0,
+      resultSlug VARCHAR(180) NULL,
       createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       updatedAt DATETIME(3) NULL,
       UNIQUE KEY intelligence_search_requests_pid_key (pidSearch),
@@ -164,6 +174,7 @@ async function ensureSearchRequestsTable() {
   for (const statement of [
     'ALTER TABLE intelligence_search_requests ADD COLUMN progressStage VARCHAR(180) NULL',
     'ALTER TABLE intelligence_search_requests ADD COLUMN progressPercent INT NOT NULL DEFAULT 0',
+    'ALTER TABLE intelligence_search_requests ADD COLUMN resultSlug VARCHAR(180) NULL',
   ]) {
     try {
       await prisma.$executeRawUnsafe(statement);
@@ -412,6 +423,13 @@ async function linkSupplierToNiche(
   `;
 }
 
+async function getNicheSlugByPid(pidNiche: string) {
+  const rows = await prisma.$queryRaw<Array<{ slug: string }>>`
+    SELECT slug FROM intelligence_niches WHERE pidNiche = ${pidNiche} LIMIT 1
+  `;
+  return rows[0]?.slug || null;
+}
+
 function summarizeDraftStatus(draft: ResearchDraft) {
   const suppliers = draft.suppliers || [];
   const statuses = suppliers.map((supplier) => supplier.reviewStatus || 'pending');
@@ -420,10 +438,10 @@ function summarizeDraftStatus(draft: ResearchDraft) {
   const pendingCount = statuses.filter((status) => status === 'pending').length;
 
   if (suppliers.length === 0) return 'rejected';
+  if (pendingCount > 0) return 'awaiting_approval';
   if (approvedCount === suppliers.length) return 'approved';
   if (rejectedCount === suppliers.length) return 'rejected';
   if (approvedCount > 0 || rejectedCount > 0) return 'partially_approved';
-  if (pendingCount > 0) return 'awaiting_approval';
   return 'awaiting_approval';
 }
 
@@ -729,7 +747,14 @@ async function listJobs() {
       createdAt,
       updatedAt
     FROM intelligence_research_jobs
-    ORDER BY createdAt DESC
+    ORDER BY
+      CASE
+        WHEN status = 'awaiting_approval' AND sourceSearchRequestId IS NOT NULL THEN 1
+        WHEN status = 'awaiting_approval' THEN 2
+        WHEN sourceSearchRequestId IS NOT NULL THEN 3
+        ELSE 4
+      END,
+      createdAt DESC
     LIMIT 50
   `;
 }
@@ -761,16 +786,105 @@ async function updateLinkedSearchRequest(
   pidJob: string,
   status: string,
   adminNotes?: string | null,
+  decisionSummary?: {
+    approvedCount: number;
+    rejectedCount: number;
+    totalCount: number;
+  },
+  resultSlug?: string | null,
 ) {
   await ensureSearchRequestsTable();
+  const requests = await prisma.$queryRaw<IntelligenceSearchRequest[]>`
+    SELECT
+      pidSearch,
+      pidUser,
+      email,
+      query,
+      targetSupplierCount,
+      notes,
+      status,
+      creditCost,
+      creditReserved,
+      relatedPidJob,
+      adminNotes,
+      createdAt,
+      updatedAt
+    FROM intelligence_search_requests
+    WHERE relatedPidJob = ${pidJob}
+  `;
+
   await prisma.$executeRaw`
     UPDATE intelligence_search_requests
     SET
       status = ${status},
       adminNotes = ${adminNotes || null},
+      resultSlug = COALESCE(${resultSlug || null}, resultSlug),
+      progressStage = ${
+        status === 'approved'
+          ? 'Sure Imports specialist check completed. Your result is ready.'
+          : status === 'rejected'
+            ? 'Sure Imports specialist check completed. This result was declined.'
+            : null
+      },
+      progressPercent = ${status === 'approved' || status === 'rejected' ? 100 : 100},
       updatedAt = ${new Date()}
     WHERE relatedPidJob = ${pidJob}
   `;
+
+  for (const request of requests) {
+    if (request.status !== status) {
+      await notifySearchRequestDecision(request, status, adminNotes, decisionSummary);
+    }
+  }
+}
+
+async function notifySearchRequestDecision(
+  request: IntelligenceSearchRequest,
+  status: string,
+  adminNotes?: string | null,
+  decisionSummary?: {
+    approvedCount: number;
+    rejectedCount: number;
+    totalCount: number;
+  },
+) {
+  if (!request.email) return;
+
+  if (status === 'approved') {
+    const hasRejected =
+      decisionSummary && decisionSummary.rejectedCount > 0;
+    const summaryText = decisionSummary
+      ? hasRejected
+        ? `Our team approved <b>${decisionSummary.approvedCount}</b> supplier candidate(s) and removed <b>${decisionSummary.rejectedCount}</b> that did not pass review.`
+        : `Our team approved all <b>${decisionSummary.approvedCount}</b> supplier candidate(s) from the search.`
+      : 'Our team has approved supplier candidates from the search.';
+
+    await xMail({
+      xEmail: request.email,
+      xTitle: `Supplier search approved - ${request.query}`,
+      xBodyTitle: 'Your Supplier Intelligence result is ready',
+      xBody1: `Hello,<br />Sure Imports has completed specialist review for your supplier search: <b>${request.query}</b>.`,
+      xBody2:
+        `${summaryText}<br /><br />Log in to your dashboard to view the approved supplier intelligence result and buyer notes before contacting or paying any supplier.`,
+      xButtonTitle: 'View Result',
+      xButtonLink: dashboardUrl('/dashboard/intelligence'),
+    });
+    return;
+  }
+
+  if (status === 'rejected') {
+    await xMail({
+      xEmail: request.email,
+      xTitle: `Supplier search declined - ${request.query}`,
+      xBodyTitle: 'Your supplier search was not approved',
+      xBody1: `Hello,<br />Sure Imports has completed specialist review for your supplier search: <b>${request.query}</b>.`,
+      xBody2:
+        adminNotes ||
+        'The supplier candidates did not pass our review. Your search credit has been returned to your account.',
+      xButtonTitle: 'Search Again',
+      xButtonLink: dashboardUrl('/dashboard/intelligence'),
+    });
+  }
 }
 
 async function refundLinkedSearchCredit(pidJob: string, reason: string) {
@@ -1123,6 +1237,7 @@ export async function PATCH(request: NextRequest) {
         { status: 400 },
       );
     }
+    const resultSlug = await getNicheSlugByPid(pidNiche);
 
     const publishedNiches = await prisma.$queryRaw<Array<{ pidNiche: string; name: string }>>`
       SELECT pidNiche, name FROM intelligence_niches WHERE status = 'published'
@@ -1172,6 +1287,16 @@ export async function PATCH(request: NextRequest) {
     }
 
     const nextStatus = summarizeDraftStatus(draft);
+    const decisionCounts = (() => {
+      const statuses = (draft.suppliers || []).map(
+        (supplier) => supplier.reviewStatus || 'pending',
+      );
+      return {
+        totalCount: statuses.length,
+        approvedCount: statuses.filter((status) => status === 'approved').length,
+        rejectedCount: statuses.filter((status) => status === 'rejected').length,
+      };
+    })();
 
     await prisma.$executeRaw`
       UPDATE intelligence_research_jobs
@@ -1185,7 +1310,15 @@ export async function PATCH(request: NextRequest) {
     `;
 
     if (nextStatus === 'approved' || nextStatus === 'partially_approved') {
-      await updateLinkedSearchRequest(pidJob, 'approved');
+      await updateLinkedSearchRequest(
+        pidJob,
+        'approved',
+        nextStatus === 'partially_approved'
+          ? `${decisionCounts.approvedCount} supplier candidate(s) approved. ${decisionCounts.rejectedCount} candidate(s) did not pass Sure Imports specialist review.`
+          : `${decisionCounts.approvedCount} supplier candidate(s) approved by Sure Imports specialists.`,
+        decisionCounts,
+        resultSlug,
+      );
     } else if (nextStatus === 'rejected') {
       await updateLinkedSearchRequest(
         pidJob,

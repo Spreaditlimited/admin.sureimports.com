@@ -156,8 +156,18 @@ export default function IntelligenceResearchAgent() {
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Failed to load research jobs.');
       }
-      setJobs(data.data || []);
+      const nextJobs = data.data || [];
+      setJobs(nextJobs);
       setSearchRequests(data.searchRequests || []);
+      setExpandedJobs((current) => {
+        const next = { ...current };
+        for (const job of nextJobs as ResearchJob[]) {
+          if (job.status === 'awaiting_approval' && job.sourceSearchRequestId) {
+            next[job.pidJob] = true;
+          }
+        }
+        return next;
+      });
     } catch (error: any) {
       toast.error(error?.message || 'Failed to load research jobs.');
     } finally {
@@ -383,8 +393,22 @@ export default function IntelligenceResearchAgent() {
               <SearchRequestCard
                 key={request.pidSearch}
                 request={request}
+                relatedJob={jobs.find((job) => job.pidJob === request.relatedPidJob)}
                 running={runningSearchRequest === request.pidSearch}
                 onGenerate={() => runSearchRequestResearch(request.pidSearch)}
+                onReviewJob={
+                  request.relatedPidJob
+                    ? () => {
+                        setExpandedJobs((current) => ({
+                          ...current,
+                          [request.relatedPidJob as string]: true,
+                        }));
+                        document
+                          .getElementById(`research-job-${request.relatedPidJob}`)
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -447,14 +471,19 @@ export default function IntelligenceResearchAgent() {
 
 function SearchRequestCard({
   request,
+  relatedJob,
   running,
   onGenerate,
+  onReviewJob,
 }: {
   request: SearchRequest;
+  relatedJob?: ResearchJob;
   running: boolean;
   onGenerate: () => void;
+  onReviewJob?: () => void;
 }) {
   const canGenerate = request.status === 'awaiting_admin' && !request.relatedPidJob;
+  const relatedCounts = relatedJob ? supplierCounts(relatedJob) : null;
 
   return (
     <article className="rounded-xl border border-border bg-card p-5 shadow-soft">
@@ -498,6 +527,16 @@ function SearchRequestCard({
               Job: {request.relatedPidJob}
             </span>
           ) : null}
+          {relatedJob?.draftJson ? (
+            <button
+              type="button"
+              onClick={onReviewJob}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition hover:bg-primary/90"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Review suppliers
+            </button>
+          ) : null}
           {canGenerate ? (
             <button
               type="button"
@@ -537,6 +576,29 @@ function SearchRequestCard({
           `}</style>
         </div>
       ) : null}
+
+      {relatedJob?.draftJson && relatedCounts ? (
+        <div className="mt-4 rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                Supplier draft ready for admin review
+              </p>
+              <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                {relatedCounts.total} suppliers fetched • {relatedCounts.pending} pending • {relatedCounts.approved} approved • {relatedCounts.rejected} rejected
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onReviewJob}
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-blue-500/20 bg-background px-3 py-2 text-xs font-bold text-foreground transition hover:bg-muted"
+            >
+              Open approval list
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -570,7 +632,7 @@ function ResearchJobCard({
   const canReview = ['awaiting_approval', 'partially_approved'].includes(job.status);
 
   return (
-    <article className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+    <article id={`research-job-${job.pidJob}`} className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-soft">
       <button
         type="button"
         onClick={onToggle}
