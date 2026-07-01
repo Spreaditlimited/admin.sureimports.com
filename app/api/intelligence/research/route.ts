@@ -149,6 +149,8 @@ async function ensureSearchRequestsTable() {
       creditReserved TINYINT(1) NOT NULL DEFAULT 1,
       relatedPidJob VARCHAR(80) NULL,
       adminNotes LONGTEXT NULL,
+      progressStage VARCHAR(180) NULL,
+      progressPercent INT NOT NULL DEFAULT 0,
       createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       updatedAt DATETIME(3) NULL,
       UNIQUE KEY intelligence_search_requests_pid_key (pidSearch),
@@ -158,6 +160,17 @@ async function ensureSearchRequestsTable() {
       PRIMARY KEY (id)
     ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `);
+
+  for (const statement of [
+    'ALTER TABLE intelligence_search_requests ADD COLUMN progressStage VARCHAR(180) NULL',
+    'ALTER TABLE intelligence_search_requests ADD COLUMN progressPercent INT NOT NULL DEFAULT 0',
+  ]) {
+    try {
+      await prisma.$executeRawUnsafe(statement);
+    } catch {
+      // Existing databases may already have these columns.
+    }
+  }
 }
 
 async function ensureCreditTablesForRefunds() {

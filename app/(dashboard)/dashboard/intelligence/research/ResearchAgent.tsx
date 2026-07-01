@@ -284,8 +284,9 @@ export default function IntelligenceResearchAgent() {
               Request supplier research
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              The agent creates a research draft only. Customers will not see
-              new suppliers until an admin approves the job.
+              The agent creates a research draft for specialist review. Customers
+              may see a blurred preview while Sure Imports checks the result,
+              but full supplier details are only released after admin approval.
             </p>
           </div>
           <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm font-bold text-foreground">
