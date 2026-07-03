@@ -106,6 +106,8 @@ function addSeededCategories(categories: Map<string, any>) {
         productFit: supplier.productFit,
         productsMade: productsFromFit(supplier.productFit),
         officialWebsite: supplier.officialWebsite,
+        whatsapp: supplier.whatsapp,
+        whatsappUrl: supplier.whatsapp ? `https://wa.me/${String(supplier.whatsapp).replace(/[^\d]/g, '')}` : '',
         countryRegion: supplier.countryRegion,
         linkSource: 'seeded_research',
       });
@@ -157,6 +159,7 @@ export async function GET() {
         productFit: string | null;
         productsMade: string | null;
         officialWebsite: string | null;
+        whatsapp: string | null;
         countryRegion: string | null;
         linkSource: string | null;
       }>
@@ -171,6 +174,7 @@ export async function GET() {
         s.productFit,
         s.productsMade,
         s.officialWebsite,
+        s.whatsapp,
         s.countryRegion,
         sc.source AS linkSource
       FROM intelligence_niches n
@@ -217,6 +221,8 @@ export async function GET() {
           productFit: row.productFit,
           productsMade: parseProducts(row.productsMade),
           officialWebsite: row.officialWebsite,
+          whatsapp: row.whatsapp,
+          whatsappUrl: row.whatsapp ? `https://wa.me/${String(row.whatsapp).replace(/[^\d]/g, '')}` : '',
           countryRegion: row.countryRegion,
           linkSource: row.linkSource,
         });

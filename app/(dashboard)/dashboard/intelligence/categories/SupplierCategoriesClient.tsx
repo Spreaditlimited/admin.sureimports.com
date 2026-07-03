@@ -18,6 +18,8 @@ type Supplier = {
   productFit: string | null;
   productsMade: string[];
   officialWebsite: string | null;
+  whatsapp: string | null;
+  whatsappUrl?: string | null;
   countryRegion: string | null;
   linkSource: string | null;
 };
@@ -146,6 +148,18 @@ export default function SupplierCategoriesClient() {
   );
 }
 
+function getWhatsAppHref(value?: string | null) {
+  const digits = String(value || '').replace(/[^\d]/g, '');
+  return digits ? `https://wa.me/${digits}` : '';
+}
+
+function whatsappHref(value?: string | null, url?: string | null) {
+  if (url?.startsWith('https://wa.me/') || url?.startsWith('https://api.whatsapp.com/')) {
+    return url;
+  }
+  return getWhatsAppHref(value);
+}
+
 function CategoryCard({
   category,
   expanded,
@@ -243,6 +257,17 @@ function CategoryCard({
                           className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-bold text-foreground hover:bg-muted"
                         >
                           Website
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      ) : null}
+                      {supplier.whatsapp ? (
+                        <a
+                          href={whatsappHref(supplier.whatsapp, supplier.whatsappUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300"
+                        >
+                          WhatsApp
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       ) : null}

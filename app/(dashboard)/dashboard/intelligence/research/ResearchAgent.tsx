@@ -28,8 +28,12 @@ type SupplierDraft = {
   email?: string;
   phone?: string;
   whatsapp?: string;
+  whatsappUrl?: string;
   address?: string;
   countryRegion?: string;
+  supplierType?: string;
+  manufacturerEvidence?: string;
+  chinaRegistryCheck?: string;
   sourceType?: string;
   verifiedFrom?: string;
   buyerNotes?: string;
@@ -101,6 +105,18 @@ function effectiveSupplierStatus(jobStatus: string, supplier: SupplierDraft) {
   if (jobStatus === 'approved') return 'approved';
   if (jobStatus === 'rejected') return 'rejected';
   return 'pending';
+}
+
+function getWhatsAppHref(value?: string | null) {
+  const digits = String(value || '').replace(/[^\d]/g, '');
+  return digits ? `https://wa.me/${digits}` : '';
+}
+
+function whatsappHref(value?: string | null, url?: string | null) {
+  if (url?.startsWith('https://wa.me/') || url?.startsWith('https://api.whatsapp.com/')) {
+    return url;
+  }
+  return getWhatsAppHref(value);
 }
 
 function supplierCounts(job: ResearchJob) {
@@ -868,9 +884,17 @@ function ResearchJobCard({
                 <Info label="Region" value={supplier.countryRegion} />
                 <Info label="Email" value={supplier.email} />
                 <Info label="Phone" value={supplier.phone} />
+                <InfoLink
+                  label="WhatsApp"
+                  value={supplier.whatsapp}
+                  href={whatsappHref(supplier.whatsapp, supplier.whatsappUrl)}
+                />
+                <Info label="Supplier type" value={supplier.supplierType} />
               </div>
 
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <Block label="Manufacturer evidence" value={supplier.manufacturerEvidence} />
+                <Block label="China registry check" value={supplier.chinaRegistryCheck} />
                 <Block label="Verification summary" value={supplier.verifiedFrom} />
                 <Block label="Buyer notes" value={supplier.buyerNotes} />
               </div>
@@ -899,6 +923,37 @@ function Info({ label, value }: { label: string; value?: string | null }) {
         {label}
       </p>
       <p className="mt-1 break-words text-sm font-medium text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function InfoLink({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value?: string | null;
+  href?: string | null;
+}) {
+  if (!value) return null;
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-1 inline-flex break-words text-sm font-bold text-primary hover:underline"
+        >
+          {value}
+        </a>
+      ) : (
+        <p className="mt-1 break-words text-sm font-medium text-foreground">{value}</p>
+      )}
     </div>
   );
 }
