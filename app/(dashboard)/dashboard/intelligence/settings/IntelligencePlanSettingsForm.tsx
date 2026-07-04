@@ -19,7 +19,7 @@ const emptyPlans: PlanSetting[] = [
     name: 'Starter Database',
     priceNaira: 10000,
     paystackPlanCode: '',
-    monthlySearchCredits: 0,
+    monthlySearchCredits: 1,
     extraCreditPriceNaira: 5000,
   },
   {

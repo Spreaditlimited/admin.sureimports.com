@@ -172,6 +172,7 @@ async function ensureSearchRequestsTable() {
       progressStage VARCHAR(180) NULL,
       progressPercent INT NOT NULL DEFAULT 0,
       resultSlug VARCHAR(180) NULL,
+      creditSource VARCHAR(40) NULL,
       createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       updatedAt DATETIME(3) NULL,
       UNIQUE KEY intelligence_search_requests_pid_key (pidSearch),
@@ -186,6 +187,7 @@ async function ensureSearchRequestsTable() {
     'ALTER TABLE intelligence_search_requests ADD COLUMN progressStage VARCHAR(180) NULL',
     'ALTER TABLE intelligence_search_requests ADD COLUMN progressPercent INT NOT NULL DEFAULT 0',
     'ALTER TABLE intelligence_search_requests ADD COLUMN resultSlug VARCHAR(180) NULL',
+    'ALTER TABLE intelligence_search_requests ADD COLUMN creditSource VARCHAR(40) NULL',
   ]) {
     try {
       await prisma.$executeRawUnsafe(statement);

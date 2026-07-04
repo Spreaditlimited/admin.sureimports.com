@@ -26,7 +26,7 @@ const defaultPlans: Record<PlanKey, Omit<PlanSetting, 'id' | 'createdAt' | 'upda
     name: 'Starter Database',
     priceNaira: 10000,
     paystackPlanCode: process.env.PAYSTACK_INTELLIGENCE_STARTER_PLAN_CODE || null,
-    monthlySearchCredits: 0,
+    monthlySearchCredits: 1,
     extraCreditPriceNaira: 5000,
     status: 'ACTIVE',
   },
@@ -128,6 +128,7 @@ async function getPlanSettings() {
       priceNaira,
       paystackPlanCode,
       CASE
+        WHEN planKey = 'starter' AND monthlySearchCredits = 0 THEN 1
         WHEN planKey = 'pro' AND monthlySearchCredits = 0 THEN 3
         ELSE monthlySearchCredits
       END AS monthlySearchCredits,
