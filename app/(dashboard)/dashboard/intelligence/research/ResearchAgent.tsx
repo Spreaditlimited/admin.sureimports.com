@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Bot,
+  CalendarClock,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -110,6 +111,17 @@ function effectiveSupplierStatus(jobStatus: string, supplier: SupplierDraft) {
 function getWhatsAppHref(value?: string | null) {
   const digits = String(value || '').replace(/[^\d]/g, '');
   return digits ? `https://wa.me/${digits}` : '';
+}
+
+function formatSearchTimestamp(value?: string | null) {
+  if (!value) return 'Unknown time';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown time';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
 }
 
 function whatsappHref(value?: string | null, url?: string | null) {
@@ -524,6 +536,10 @@ function SearchRequestCard({
             <span>{request.targetSupplierCount} suppliers</span>
             <span>{request.creditCost} credit used</span>
             <span>{request.email}</span>
+            <span className="inline-flex items-center gap-1">
+              <CalendarClock className="h-3 w-3" />
+              {formatSearchTimestamp(request.createdAt)}
+            </span>
           </div>
           {request.notes ? (
             <p className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
