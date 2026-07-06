@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
 import xMail from '@/lib/email/xMail2';
 import { prisma } from '@/lib/prisma';
 import {
@@ -61,6 +62,11 @@ type ResearchJob = {
   createdByPidUser: string | null;
   approvedByPidUser: string | null;
   approvedAt: Date | null;
+  imageUrl: string | null;
+  imagePublicId: string | null;
+  imageOriginalName: string | null;
+  imageMimeType: string | null;
+  imageUploadedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -106,6 +112,42 @@ function normalizeTargetSupplierCount(value: unknown) {
   return Math.min(10, Math.max(3, Math.round(count)));
 }
 
+function normalizeImageFilename(value: string) {
+  return clean(value, 255).replace(/[^\w.\- ]+/g, '').trim();
+}
+
+async function uploadResearchImage(file: File, pidJob: string) {
+  if (!file || file.size <= 0) return null;
+
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const allowed = ['png', 'jpg', 'jpeg', 'webp'];
+  if (!allowed.includes(ext)) {
+    throw new Error(`Invalid image type .${ext}. Use png, jpg, jpeg, or webp.`);
+  }
+
+  const maxBytes = 8 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    throw new Error('Image must be 8MB or smaller.');
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const uploaded = await uploadBufferToCloudinary(buffer, {
+    folder: 'admin-sureimports/intelligence-research',
+    publicId: `${pidJob}_PRODUCT_IMAGE`,
+    useFilename: false,
+    uniqueFilename: false,
+    overwrite: true,
+    tags: ['supplier-intelligence', 'research-image', pidJob],
+  });
+
+  return {
+    imageUrl: uploaded.url,
+    imagePublicId: uploaded.publicId,
+    imageOriginalName: normalizeImageFilename(file.name),
+    imageMimeType: clean(file.type, 80) || `image/${ext}`,
+  };
+}
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -131,6 +173,11 @@ async function ensureResearchJobsTable() {
       createdByPidUser VARCHAR(191) NULL,
       approvedByPidUser VARCHAR(191) NULL,
       approvedAt DATETIME(3) NULL,
+      imageUrl VARCHAR(800) NULL,
+      imagePublicId VARCHAR(180) NULL,
+      imageOriginalName VARCHAR(255) NULL,
+      imageMimeType VARCHAR(80) NULL,
+      imageUploadedAt DATETIME(3) NULL,
       createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
       UNIQUE KEY intelligence_research_jobs_pidJob_key (pidJob),
@@ -144,6 +191,11 @@ async function ensureResearchJobsTable() {
     'ALTER TABLE intelligence_research_jobs ADD COLUMN sourceSearchRequestId VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByPidUser VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByEmail VARCHAR(255) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN imageUrl VARCHAR(800) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN imagePublicId VARCHAR(180) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN imageOriginalName VARCHAR(255) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN imageMimeType VARCHAR(80) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN imageUploadedAt DATETIME(3) NULL',
     'ALTER TABLE intelligence_research_jobs ADD KEY intelligence_research_jobs_search_request_idx (sourceSearchRequestId)',
   ]) {
     try {
@@ -618,6 +670,7 @@ async function runSupplierResearch(input: {
   nicheName: string;
   targetSupplierCount: number;
   requestNotes: string;
+  imageUrl?: string | null;
 }) {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) {
@@ -627,6 +680,9 @@ async function runSupplierResearch(input: {
   const prompt = [
     'You are a supplier research analyst for Sure Imports, a China sourcing and shipping company serving Nigerian importers.',
     `Research the niche: ${input.nicheName}.`,
+    input.imageUrl
+      ? 'An image is attached. Use it only to understand the exact product being searched for, then apply the same supplier research rules below without changing them.'
+      : '',
     `Return ${input.targetSupplierCount} solid supplier candidates.`,
     input.requestNotes ? `Admin notes: ${input.requestNotes}` : '',
     ...SUPPLIER_RESEARCH_RULES,
@@ -649,7 +705,17 @@ async function runSupplierResearch(input: {
         process.env.OPENAI_MODEL ||
         'gpt-5.5',
       tools: [{ type: 'web_search_preview' }],
-      input: prompt,
+      input: input.imageUrl
+        ? [
+            {
+              role: 'user',
+              content: [
+                { type: 'input_text', text: prompt },
+                { type: 'input_image', image_url: input.imageUrl },
+              ],
+            },
+          ]
+        : prompt,
     }),
   });
 
@@ -707,6 +773,11 @@ async function listJobs() {
       createdByPidUser,
       approvedByPidUser,
       approvedAt,
+      imageUrl,
+      imagePublicId,
+      imageOriginalName,
+      imageMimeType,
+      imageUploadedAt,
       createdAt,
       updatedAt
     FROM intelligence_research_jobs
@@ -949,11 +1020,23 @@ export async function POST(request: NextRequest) {
     await ensureResearchJobsTable();
     await ensureSearchRequestsTable();
 
-    const body = await request.json().catch(() => ({}));
-    const sourceSearchRequestId = clean(body.sourceSearchRequestId, 80);
-    let nicheName = clean(body.nicheName, 180);
-    let requestNotes = clean(body.requestNotes, 4000);
-    let targetSupplierCount = normalizeTargetSupplierCount(body.targetSupplierCount);
+    const isMultipart = request.headers
+      .get('content-type')
+      ?.toLowerCase()
+      .includes('multipart/form-data');
+    const formData = isMultipart ? await request.formData() : null;
+    const body = formData ? {} : await request.json().catch(() => ({}));
+    const sourceSearchRequestId = clean(
+      formData?.get('sourceSearchRequestId') ?? body.sourceSearchRequestId,
+      80,
+    );
+    const formImage = formData?.get('image');
+    const imageFile = formImage instanceof File && formImage.size > 0 ? formImage : null;
+    let nicheName = clean(formData?.get('nicheName') ?? body.nicheName, 180);
+    let requestNotes = clean(formData?.get('requestNotes') ?? body.requestNotes, 4000);
+    let targetSupplierCount = normalizeTargetSupplierCount(
+      formData?.get('targetSupplierCount') ?? body.targetSupplierCount,
+    );
     let requestedByPidUser: string | null = null;
     let requestedByEmail: string | null = null;
 
@@ -1003,13 +1086,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (!nicheName) {
-      return NextResponse.json(
-        { success: false, error: 'Niche name is required.' },
-        { status: 400 },
-      );
+      if (!imageFile) {
+        return NextResponse.json(
+          { success: false, error: 'Niche name or product image is required.' },
+          { status: 400 },
+        );
+      }
+      nicheName = 'Product shown in uploaded image';
     }
 
     const pidJob = randomId('INTRES');
+    const uploadedImage = imageFile
+      ? await uploadResearchImage(imageFile, pidJob)
+      : null;
 
     await prisma.$executeRaw`
       INSERT INTO intelligence_research_jobs (
@@ -1021,7 +1110,12 @@ export async function POST(request: NextRequest) {
         sourceSearchRequestId,
         requestedByPidUser,
         requestedByEmail,
-        createdByPidUser
+        createdByPidUser,
+        imageUrl,
+        imagePublicId,
+        imageOriginalName,
+        imageMimeType,
+        imageUploadedAt
       ) VALUES (
         ${pidJob},
         ${nicheName},
@@ -1031,7 +1125,12 @@ export async function POST(request: NextRequest) {
         ${sourceSearchRequestId || null},
         ${requestedByPidUser},
         ${requestedByEmail},
-        ${admin.pidUser}
+        ${admin.pidUser},
+        ${uploadedImage?.imageUrl || null},
+        ${uploadedImage?.imagePublicId || null},
+        ${uploadedImage?.imageOriginalName || null},
+        ${uploadedImage?.imageMimeType || null},
+        ${uploadedImage ? new Date() : null}
       )
     `;
 
@@ -1051,6 +1150,7 @@ export async function POST(request: NextRequest) {
         nicheName,
         targetSupplierCount,
         requestNotes,
+        imageUrl: uploadedImage?.imageUrl || null,
       });
 
       await prisma.$executeRaw`

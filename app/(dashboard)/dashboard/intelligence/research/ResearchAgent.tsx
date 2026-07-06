@@ -9,10 +9,14 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
+  ImageIcon,
   Loader2,
   RotateCcw,
+  Search,
   Send,
   ShieldCheck,
+  Upload,
+  X,
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -60,6 +64,11 @@ type ResearchJob = {
   createdAt: string;
   updatedAt: string;
   approvedAt: string | null;
+  imageUrl: string | null;
+  imagePublicId: string | null;
+  imageOriginalName: string | null;
+  imageMimeType: string | null;
+  imageUploadedAt: string | null;
 };
 
 type SearchRequest = {
@@ -145,6 +154,49 @@ function supplierCounts(job: ResearchJob) {
   };
 }
 
+function researchJobSearchText(job: ResearchJob) {
+  const draft = parseDraft(job.draftJson);
+  const supplierText = (draft?.suppliers || [])
+    .map((supplier) =>
+      [
+        supplier.supplierName,
+        supplier.productFit,
+        supplier.officialWebsite,
+        supplier.email,
+        supplier.phone,
+        supplier.whatsapp,
+        supplier.countryRegion,
+        supplier.sourceType,
+        supplier.verifiedFrom,
+        supplier.buyerNotes,
+        supplier.verificationStatus,
+        ...(supplier.productsMade || []),
+        ...(supplier.suggestedCategories || []),
+      ]
+        .filter(Boolean)
+        .join(' '),
+    )
+    .join(' ');
+
+  return [
+    job.pidJob,
+    job.nicheName,
+    job.status,
+    job.requestNotes,
+    job.errorMessage,
+    job.sourceSearchRequestId,
+    job.requestedByEmail,
+    job.imageOriginalName,
+    job.imagePublicId,
+    draft?.nicheName,
+    draft?.summary,
+    supplierText,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
 function progressMessage(actionKey: string | null, pidJob: string) {
   if (!actionKey?.startsWith(`${pidJob}:`)) return '';
   const [, action] = actionKey.split(':');
@@ -163,6 +215,9 @@ export default function IntelligenceResearchAgent() {
   const [nicheName, setNicheName] = useState('');
   const [targetSupplierCount, setTargetSupplierCount] = useState(3);
   const [requestNotes, setRequestNotes] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [researchJobSearch, setResearchJobSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [runningSearchRequest, setRunningSearchRequest] = useState<string | null>(null);
@@ -173,6 +228,16 @@ export default function IntelligenceResearchAgent() {
     () => jobs.filter((job) => job.status === 'awaiting_approval').length,
     [jobs],
   );
+  const filteredJobs = useMemo(() => {
+    const query = researchJobSearch.trim().toLowerCase();
+    if (!query) return jobs;
+
+    const terms = query.split(/\s+/).filter(Boolean);
+    return jobs.filter((job) => {
+      const haystack = researchJobSearchText(job);
+      return terms.every((term) => haystack.includes(term));
+    });
+  }, [jobs, researchJobSearch]);
 
   const loadJobs = async () => {
     setLoading(true);
@@ -207,23 +272,37 @@ export default function IntelligenceResearchAgent() {
     loadJobs();
   }, []);
 
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreviewUrl('');
+      return;
+    }
+
+    const url = URL.createObjectURL(imageFile);
+    setImagePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
+
   const runResearch = async () => {
-    if (!nicheName.trim()) {
-      toast.error('Enter a niche name first.');
+    if (!nicheName.trim() && !imageFile) {
+      toast.error('Enter a niche name or upload a product image first.');
       return;
     }
 
     setRunning(true);
     const toastId = toast.loading('Research agent is checking supplier candidates...');
     try {
+      const formData = new FormData();
+      formData.append('nicheName', nicheName);
+      formData.append('targetSupplierCount', String(targetSupplierCount));
+      formData.append('requestNotes', requestNotes);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
       const response = await fetch('/api/intelligence/research', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nicheName,
-          targetSupplierCount,
-          requestNotes,
-        }),
+        body: formData,
       });
       const data = await response.json();
       if (!response.ok || !data?.success) {
@@ -233,6 +312,7 @@ export default function IntelligenceResearchAgent() {
       setSearchRequests(data.searchRequests || []);
       setNicheName('');
       setRequestNotes('');
+      setImageFile(null);
       toast.success('Research draft created. Review before approval.', { id: toastId });
     } catch (error: any) {
       toast.error(error?.message || 'Research failed.', { id: toastId });
@@ -365,6 +445,61 @@ export default function IntelligenceResearchAgent() {
           </label>
         </div>
 
+        <div className="mt-4 grid gap-4 lg:grid-cols-[220px_1fr]">
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Product image
+            </span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0] || null;
+                setImageFile(file);
+                event.target.value = '';
+              }}
+            />
+            <span className="mt-2 flex h-36 cursor-pointer items-center justify-center rounded-md border border-dashed border-input bg-background text-sm font-bold text-muted-foreground transition hover:bg-muted">
+              {imagePreviewUrl ? (
+                <img
+                  src={imagePreviewUrl}
+                  alt="Selected product"
+                  className="h-full w-full rounded-md object-cover"
+                />
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload image
+                </span>
+              )}
+            </span>
+          </label>
+          <div className="flex min-h-36 flex-col justify-between rounded-md border border-border bg-muted/30 p-4">
+            <div className="flex items-start gap-3">
+              <ImageIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  {imageFile?.name || 'No image attached'}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  PNG, JPG or WEBP. Maximum 8MB.
+                </p>
+              </div>
+            </div>
+            {imageFile ? (
+              <button
+                type="button"
+                onClick={() => setImageFile(null)}
+                className="mt-4 inline-flex w-fit items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs font-bold text-foreground transition hover:bg-muted"
+              >
+                <X className="h-3.5 w-3.5" />
+                Remove image
+              </button>
+            ) : null}
+          </div>
+        </div>
+
         <label className="mt-4 block">
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Research notes
@@ -444,15 +579,44 @@ export default function IntelligenceResearchAgent() {
       </section>
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-lg font-bold text-foreground">Research Jobs</h2>
-          <button
-            type="button"
-            onClick={loadJobs}
-            className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-          >
-            Refresh
-          </button>
+        <div className="flex flex-col gap-3 px-1 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Research Jobs</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {researchJobSearch.trim()
+                ? `${filteredJobs.length} of ${jobs.length} jobs match`
+                : `${jobs.length} jobs loaded`}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label className="relative block w-full sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={researchJobSearch}
+                onChange={(event) => setResearchJobSearch(event.target.value)}
+                placeholder="Search jobs, suppliers, status..."
+                className="w-full rounded-md border border-input bg-background py-2.5 pl-9 pr-9 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring"
+              />
+              {researchJobSearch ? (
+                <button
+                  type="button"
+                  onClick={() => setResearchJobSearch('')}
+                  className="absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  aria-label="Clear research job search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </label>
+            <button
+              type="button"
+              onClick={loadJobs}
+              className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -463,9 +627,13 @@ export default function IntelligenceResearchAgent() {
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
             No supplier research jobs yet.
           </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
+            No research jobs match this search.
+          </div>
         ) : (
           <div className="space-y-5">
-            {jobs.map((job) => (
+            {filteredJobs.map((job) => (
               <ResearchJobCard
                 key={job.pidJob}
                 job={job}
@@ -691,6 +859,7 @@ function ResearchJobCard({
               <span>{counts.approved} approved</span>
               <span>{counts.rejected} rejected</span>
               <span>{counts.pending} pending</span>
+              {job.imageUrl ? <span>image attached</span> : null}
             </div>
           </div>
         </div>
@@ -699,11 +868,35 @@ function ResearchJobCard({
       {expanded ? (
         <div className="border-t border-border p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
+            <div className="min-w-0">
               {draft?.summary ? (
                 <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
                   {draft.summary}
                 </p>
+              ) : null}
+              {job.imageUrl ? (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <a
+                    href={job.imageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block h-28 w-28 overflow-hidden rounded-lg border border-border bg-muted"
+                  >
+                    <img
+                      src={job.imageUrl}
+                      alt={job.imageOriginalName || 'Research product'}
+                      className="h-full w-full object-cover"
+                    />
+                  </a>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Product image
+                    </p>
+                    <p className="mt-1 truncate text-sm font-bold text-foreground">
+                      {job.imageOriginalName || job.imagePublicId || 'Uploaded image'}
+                    </p>
+                  </div>
+                </div>
               ) : null}
             </div>
 

@@ -136,7 +136,6 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
       </span>
     );
   };
-
   if (loading) return (
     <div className="flex flex-col items-center justify-center p-20 bg-card border border-border rounded-xl">
         <RefreshCw className="w-8 h-8 text-muted-foreground/40 animate-spin mb-4" />
@@ -148,6 +147,10 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
     <div className="p-10 text-center bg-destructive/5 border border-destructive/20 rounded-xl text-destructive font-bold">
       {error || 'The requested invoice could not be found.'}
     </div>
+  );
+
+  const canEditInvoice = ['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'OVERDUE'].includes(
+    String(data.status || '').toUpperCase(),
   );
 
   return (
@@ -202,7 +205,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
                 href={`/dashboard/invoicing/${pidInvoice}/edit`}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
               >
-                <Pencil className="w-3.5 h-3.5" /> Edit Draft
+                <Pencil className="w-3.5 h-3.5" /> Edit Invoice
               </Link>
               <button 
                   disabled={issuing} 
@@ -213,13 +216,23 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
               </button>
             </>
           ) : (
-            <button
+            <>
+              {canEditInvoice ? (
+                <Link
+                  href={`/dashboard/invoicing/${pidInvoice}/edit`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Edit Invoice
+                </Link>
+              ) : null}
+              <button
                 disabled={sendingInvoice}
                 onClick={dispatchInvoice}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
-            >
-              <Send className="w-3.5 h-3.5" /> {sendingInvoice ? 'Sending...' : 'Dispatch Email'}
-            </button>
+              >
+                <Send className="w-3.5 h-3.5" /> {sendingInvoice ? 'Sending...' : 'Dispatch Email'}
+              </button>
+            </>
           )}
         </div>
       </div>

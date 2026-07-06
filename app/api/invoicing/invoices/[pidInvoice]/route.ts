@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import {
   canAdminAccessInvoiceCreatedBy,
   canTransitionStatus,
+  derivePaymentStatus,
   requireAdmin,
   syncOverdueInvoices,
   toMoneyInput,
@@ -20,6 +21,21 @@ function buildCustomerDisplayName(contactName?: string | null, businessName?: st
   if (!baseName && !normalizedBusiness) return null;
   if (baseName && normalizedBusiness) return `${baseName} (${normalizedBusiness})`;
   return baseName || normalizedBusiness;
+}
+
+function canEditInvoiceFinancials(status: string) {
+  return ['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'OVERDUE'].includes(
+    String(status || '').toUpperCase(),
+  );
+}
+
+function deriveEditedInvoiceStatus(existingStatus: string, amountPaid: number, grandTotal: number) {
+  if (String(existingStatus || '').toUpperCase() === 'DRAFT') return 'DRAFT';
+  const paymentStatus = derivePaymentStatus(amountPaid, grandTotal);
+  if (paymentStatus === 'ISSUED' && String(existingStatus || '').toUpperCase() === 'OVERDUE') {
+    return 'OVERDUE';
+  }
+  return paymentStatus;
 }
 
 export async function GET(
@@ -154,9 +170,9 @@ export async function PATCH(
     }
 
     if (Array.isArray(body.items)) {
-      if (existing.status !== 'DRAFT') {
+      if (!canEditInvoiceFinancials(existing.status)) {
         return NextResponse.json(
-          { statusx: 'ERROR', message: 'Line items can only be edited while invoice is DRAFT' },
+          { statusx: 'ERROR', message: `Line items cannot be edited while invoice is ${existing.status}` },
           { status: 400 },
         );
       }
@@ -198,6 +214,12 @@ export async function PATCH(
 
       const currentAmountPaid = Number(existing.amountPaid || 0);
       data.balanceDue = toMoneyInput(Math.max(grandTotalNum - currentAmountPaid, 0));
+      data.status = deriveEditedInvoiceStatus(
+        existing.status,
+        currentAmountPaid,
+        grandTotalNum,
+      );
+      data.paidAt = data.status === 'PAID' ? existing.paidAt || new Date() : null;
 
       await prisma.$transaction([
         prisma.invoice_items.deleteMany({ where: { pidInvoice } }),
@@ -208,9 +230,19 @@ export async function PATCH(
       await writeAuditLog({
         pidInvoice,
         pidUser: admin.pidUser,
-        action: 'INVOICE_UPDATED_ITEMS',
+        action:
+          existing.status === 'DRAFT'
+            ? 'INVOICE_UPDATED_ITEMS'
+            : 'ISSUED_INVOICE_UPDATED_ITEMS',
         oldStatus: existing.status,
-        newStatus: body.status || existing.status,
+        newStatus: data.status,
+        metadata: JSON.stringify({
+          previousGrandTotal: String(existing.grandTotal),
+          newGrandTotal: toMoneyInput(grandTotalNum),
+          previousBalanceDue: String(existing.balanceDue),
+          newBalanceDue: data.balanceDue,
+          amountPaid: toMoneyInput(currentAmountPaid),
+        }),
       });
 
       const updated = await prisma.invoices.findUnique({ where: { pidInvoice }, include: { items: true } });
