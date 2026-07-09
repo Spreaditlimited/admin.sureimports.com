@@ -533,19 +533,19 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           </div>
 
           <div className="bg-card border border-border shadow-sm rounded-lg p-5">
-            <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Balance / Refund Calculation</h3>
+            <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Shipping Balance / Refund</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Actual Total Cost:</span>
+                <span className="text-muted-foreground">Actual Shipping Total:</span>
                 <span className="font-medium text-foreground">${(((actualTotalShippingCost as number)/1 )).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Initial Estimated Cost:</span>
+                <span className="text-muted-foreground">Shipping Already Paid:</span>
                 <span className="font-medium text-foreground">${((estimatedTotalShippingCost as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USD</span>
               </div>
               
               <div className="flex justify-between items-center pt-3 border-t border-border mt-3">
-                { (actualTotalShippingCost - estimatedTotalShippingCost) > 0 && <span className="font-bold text-destructive">Amount to Pay:</span> }
+                { (actualTotalShippingCost - estimatedTotalShippingCost) > 0 && <span className="font-bold text-destructive">Outstanding Shipping Balance:</span> }
                 { (actualTotalShippingCost - estimatedTotalShippingCost) < 0 && <span className="font-bold text-emerald-600">Refund Balance:</span> }
                 { (actualTotalShippingCost - estimatedTotalShippingCost) == 0 && <span className="font-bold text-muted-foreground">No Payment Required</span> }
                 

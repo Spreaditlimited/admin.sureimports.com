@@ -192,23 +192,6 @@ export async function GET(request: NextRequest) {
     let exYuanToDollar = exRate?.exYuanToDollar ?? 7.5;
     let exNairaToYuan = exRate?.exNairaToYuan ?? 205;
 
-    //ACTUAL WEIGHT & DOMESTIC SHIPPING COST
-    const actualWeight = orderRecord?.orderWeight;
-    const actualDomesticShippingCost = parseFloat(orderRecord?.shippingCost1 as any ?? 0) / parseFloat(exYuanToDollar as any ?? 0);
-    const actualInternationalShippingCost = parseFloat(actualWeight as any ?? 0) * parseFloat(shippingPlanRate as any ?? 0);
-    const actualTotalShippingCost = actualDomesticShippingCost + actualInternationalShippingCost;
-    const costDifference = actualTotalShippingCost - estimatedTotalShippingCost;
-
-    console.log('costDifference', costDifference);
-    console.log('actualTotalShippingCost', actualTotalShippingCost);
-    console.log('actualInternationalShippingCost', actualInternationalShippingCost);
-    console.log('estimatedTotalShippingCost', estimatedTotalShippingCost);
-
-console.log('JESUS CHRIST IS GREAT!!!');
-
-// console.log('ACTUAL WEIGHT:', actualWeight);
-// console.log('ACTUAL DOMESTIC SHIPPING COST:', actualDomesticShippingCost);
-
     //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
     const order = await prisma.orders.findUnique({
       where: { pidOrder: pidOrder as string | undefined },
@@ -228,9 +211,8 @@ console.log('JESUS CHRIST IS GREAT!!!');
 
     
        
-    if (orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold' || orderRecord?.status == 'bank-pending-saved-orders' || orderRecord?.status == 'bank-pending-shipping-orders') {
-      //user the above dynamic values from
-    }else{
+    const useLatestEstimate = orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold';
+    if (!useLatestEstimate) {
         grandTotalCost = order?.orderTotalCost as any;
         estimatedTotalShippingCost = order?.orderShippingCost as any;
         //totalWeight = order?.orderWeight as any;
@@ -240,6 +222,13 @@ console.log('JESUS CHRIST IS GREAT!!!');
         exYuanToDollar = order?.exchangeRate2 as any;
         exNairaToYuan = order?.exchangeRate3 as any;
     }
+
+    //ACTUAL WEIGHT & DOMESTIC SHIPPING COST
+    const actualWeight = orderRecord?.orderWeight;
+    const actualDomesticShippingCost = parseFloat(orderRecord?.shippingCost1 as any ?? 0) / parseFloat(exYuanToDollar as any ?? 0);
+    const actualInternationalShippingCost = parseFloat(actualWeight as any ?? 0) * parseFloat(shippingPlanRate as any ?? 0);
+    const actualTotalShippingCost = actualDomesticShippingCost + actualInternationalShippingCost;
+    const costDifference = actualTotalShippingCost - parseFloat(estimatedTotalShippingCost as any ?? 0);
     
     
     
