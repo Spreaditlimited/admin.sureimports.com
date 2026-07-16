@@ -50,6 +50,11 @@ export default function ProductsTable() {
   const [debitReason, setDebitReason] = useState('');
   const [debitReference, setDebitReference] = useState('');
   const [debiting, setDebiting] = useState(false);
+  const [creditPidUser, setCreditPidUser] = useState('');
+  const [creditAmount, setCreditAmount] = useState('');
+  const [creditReason, setCreditReason] = useState('');
+  const [creditReference, setCreditReference] = useState('');
+  const [crediting, setCrediting] = useState(false);
   const [syncingPaystack, setSyncingPaystack] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const hasLoadedWalletData = useRef(false);
@@ -143,6 +148,40 @@ export default function ProductsTable() {
     }
   };
 
+  const submitCredit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCrediting(true);
+
+    try {
+      const response = await fetch('/api/wallets/credit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pidUser: creditPidUser,
+          amount: Number(creditAmount),
+          reason: creditReason,
+          reference: creditReference,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.statusx !== 'SUCCESS') {
+        toast.error(data.message || 'Failed to credit wallet');
+        return;
+      }
+
+      toast.success(data.message || 'Wallet credit recorded');
+      setCreditAmount('');
+      setCreditReason('');
+      setCreditReference('');
+      await fetchWalletData();
+    } catch {
+      toast.error('Failed to credit wallet');
+    } finally {
+      setCrediting(false);
+    }
+  };
+
   const syncPaystackCredits = async () => {
     setSyncingPaystack(true);
 
@@ -209,7 +248,7 @@ export default function ProductsTable() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         <div className="rounded-lg border border-border bg-card p-4 shadow-sm xl:col-span-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Search Wallet Ledger</label>
@@ -235,6 +274,57 @@ export default function ProductsTable() {
             </p>
           )}
         </div>
+
+        <form onSubmit={submitCredit} className="rounded-lg border border-border bg-card p-4 shadow-sm">
+          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">Manual Wallet Credit</div>
+          <div className="space-y-3">
+            <select
+              value={creditPidUser}
+              onChange={(event) => setCreditPidUser(event.target.value)}
+              required
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            >
+              <option value="">Select customer wallet</option>
+              {customerBalances.map((customer) => (
+                <option key={customer.pidUser || customer.email} value={customer.pidUser || ''}>
+                  {customer.customerName} - {formatCurrency(customer.balance, customer.currency)}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              value={creditAmount}
+              onChange={(event) => setCreditAmount(event.target.value)}
+              placeholder="Amount"
+              required
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            />
+            <input
+              type="text"
+              value={creditReference}
+              onChange={(event) => setCreditReference(event.target.value)}
+              placeholder="Reference (optional)"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            />
+            <textarea
+              value={creditReason}
+              onChange={(event) => setCreditReason(event.target.value)}
+              placeholder="Clear reason shown to customer"
+              required
+              rows={3}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            />
+            <button
+              type="submit"
+              disabled={crediting}
+              className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {crediting ? 'Crediting...' : 'Credit Wallet'}
+            </button>
+          </div>
+        </form>
 
         <form onSubmit={submitDebit} className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">Manual Wallet Debit</div>

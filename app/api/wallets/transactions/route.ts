@@ -76,7 +76,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const search = (searchParams.get('search') || '').trim().toLowerCase();
 
-    await syncExistingDebitRows();
+    if (searchParams.get('syncLegacy') === '1') {
+      await syncExistingDebitRows();
+    }
 
     const wallets = await prisma.wallet.findMany({
       include: {
