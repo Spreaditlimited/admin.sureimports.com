@@ -22,6 +22,15 @@ interface Customer {
   userFirstname: string | null;
   userLastname: string | null;
   userEmail: string;
+  userPhone?: string | null;
+  phone?: string | null;
+  businessName?: string | null;
+  address?: string | null;
+  userShippingAddress?: string | null;
+  userShippingAddress2?: string | null;
+  userState?: string | null;
+  userCountry?: string | null;
+  country?: string | null;
 }
 
 interface ItemRow {
@@ -54,6 +63,12 @@ interface InvoiceEditPayload {
   };
   headerSnapshot?: string | null;
   footerSnapshot?: string | null;
+  customerBusinessName?: string | null;
+  customerContactName?: string | null;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  customerAddress?: string | null;
+  customerNotes?: string | null;
   notes?: string | null;
   dueAt?: string | null;
   discountTotal?: string | number | null;
@@ -89,6 +104,12 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
 
   const [headerSnapshot, setHeaderSnapshot] = useState('');
   const [footerSnapshot, setFooterSnapshot] = useState('');
+  const [customerBusinessName, setCustomerBusinessName] = useState('');
+  const [customerContactName, setCustomerContactName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [customerNotes, setCustomerNotes] = useState('');
   const [notes, setNotes] = useState('');
   const [dueAt, setDueAt] = useState('');
   const [discountTotal, setDiscountTotal] = useState(0);
@@ -138,6 +159,12 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
       setCustomerSearch(customer.userEmail || '');
       setHeaderSnapshot(invoice.headerSnapshot || '');
       setFooterSnapshot(invoice.footerSnapshot || '');
+      setCustomerBusinessName(invoice.customerBusinessName || '');
+      setCustomerContactName(invoice.customerContactName || `${customer.userFirstname || ''} ${customer.userLastname || ''}`.trim());
+      setCustomerEmail(invoice.customerEmail || customer.userEmail);
+      setCustomerPhone(invoice.customerPhone || '');
+      setCustomerAddress(invoice.customerAddress || '');
+      setCustomerNotes(invoice.customerNotes || '');
       setNotes(invoice.notes || '');
       setInvoiceStatus(invoice.status || '');
       setDueAt(invoice.dueAt ? new Date(invoice.dueAt).toISOString().slice(0, 10) : '');
@@ -168,6 +195,11 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
       const gift = data.data.request;
       const matched = (data.data.matchedUsers || []) as Customer[];
       if (matched.length > 0) setSelectedCustomer(matched[0]);
+      setCustomerBusinessName(gift.businessName || '');
+      setCustomerContactName(gift.contactPersonFullName || '');
+      setCustomerEmail(gift.contactEmail || matched[0]?.userEmail || '');
+      setCustomerPhone(gift.contactPhone || matched[0]?.userPhone || '');
+      setCustomerAddress(gift.finalDeliveryLocationNigeria || '');
       
       setCustomerSearch(gift.contactEmail || gift.businessName || '');
       setNotes((prev) => {
@@ -189,7 +221,15 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
 
       const shippingOnly = data.data.request;
       const matched = (data.data.matchedUsers || []) as Customer[];
-      if (matched.length > 0) setSelectedCustomer(matched[0]);
+      if (matched.length > 0) {
+        const customer = matched[0];
+        setSelectedCustomer(customer);
+        setCustomerBusinessName(customer.businessName || '');
+        setCustomerContactName(`${customer.userFirstname || ''} ${customer.userLastname || ''}`.trim());
+        setCustomerEmail(customer.userEmail || '');
+        setCustomerPhone(customer.userPhone || customer.phone || '');
+        setCustomerAddress(shippingOnly.shippingTo || customer.address || customer.userShippingAddress || '');
+      }
 
       setCustomerSearch(shippingOnly.shippingName || shippingOnly.pidShippingOnly || '');
       setNotes((prev) => {
@@ -214,6 +254,22 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
     setCustomers(data?.data || []);
   };
 
+  const selectCustomer = (customer: Customer) => {
+    const contactName = `${customer.userFirstname || ''} ${customer.userLastname || ''}`.trim();
+    const address = [
+      customer.address || customer.userShippingAddress,
+      customer.userShippingAddress2,
+      customer.userState,
+      customer.userCountry || customer.country,
+    ].filter(Boolean).join(', ');
+    setSelectedCustomer(customer);
+    setCustomerBusinessName(customer.businessName || '');
+    setCustomerContactName(contactName);
+    setCustomerEmail(customer.userEmail || '');
+    setCustomerPhone(customer.userPhone || customer.phone || '');
+    setCustomerAddress(address);
+  };
+
   const createQuickUser = async () => {
     if (!quickUser.userFirstname.trim()) return toast.error('First name is required');
     if (!quickUser.userEmail.trim()) return toast.error('Email is required');
@@ -229,7 +285,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
       if (!res.ok) throw new Error(json?.message || 'Failed to create user');
 
       const created = json.data as Customer;
-      setSelectedCustomer(created);
+      selectCustomer(created);
       setCustomers((prev) => [created, ...prev]);
       setShowQuickAddUser(false);
       toast.success('User created and selected.');
@@ -252,6 +308,8 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
 
   const saveInvoice = async (issueNow: boolean) => {
     if (!selectedCustomer) return toast.error('Please select a customer');
+    if (!customerBusinessName.trim() && !customerContactName.trim()) return toast.error('Enter a customer or contact name');
+    if (!customerEmail.trim()) return toast.error('Enter the customer email address');
     if (!items.length || items.some((i) => !i.description || i.quantity <= 0)) return toast.error('Incomplete line items');
 
     setSaving(true);
@@ -265,6 +323,12 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
             dueAt: dueAt || null,
             headerSnapshot,
             footerSnapshot,
+            customerBusinessName,
+            customerContactName,
+            customerEmail,
+            customerPhone,
+            customerAddress,
+            customerNotes,
             notes,
             discountTotal,
             taxTotal,
@@ -276,6 +340,12 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
             dueAt: dueAt || null,
             headerSnapshot,
             footerSnapshot,
+            customerBusinessName,
+            customerContactName,
+            customerEmail,
+            customerPhone,
+            customerAddress,
+            customerNotes,
             notes,
             linkedRequestId: linkedRequestId || null,
             linkedShippingOnlyId: linkedShippingOnlyId || null,
@@ -380,17 +450,50 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
               {customers.map((c) => (
                 <button
                   key={c.pidUser}
-                  onClick={() => setSelectedCustomer(c)}
+                  onClick={() => selectCustomer(c)}
                   className={`w-full text-left px-4 py-3 flex flex-col gap-0.5 transition-colors ${selectedCustomer?.pidUser === c.pidUser ? 'bg-primary/10 border-l-4 border-l-primary' : 'hover:bg-muted/50'}`}
                 >
                   <span className="font-bold text-sm text-foreground">
-                    {`${c.userFirstname || ''} ${c.userLastname || ''}`.trim() || 'Unnamed Account'}
+                    {c.businessName || `${c.userFirstname || ''} ${c.userLastname || ''}`.trim() || 'Unnamed Account'}
                   </span>
-                  <span className="text-xs text-muted-foreground font-mono">{c.userEmail} • {c.pidUser}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {c.businessName ? `Contact: ${`${c.userFirstname || ''} ${c.userLastname || ''}`.trim()} • ` : ''}{c.userEmail}
+                  </span>
                 </button>
               ))}
               {!customers.length && <p className="px-4 py-6 text-sm text-muted-foreground text-center italic">Use the search bar above to find a registered user.</p>}
             </div>
+
+            {selectedCustomer && (
+              <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Invoice billing details</h4>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Prefilled from the profile. Changes here apply only to this invoice.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Business / Customer name</label>
+                    <input value={customerBusinessName} onChange={(e) => setCustomerBusinessName(e.target.value)} placeholder="Leave blank for an individual customer" className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Contact person</label>
+                    <input value={customerContactName} onChange={(e) => setCustomerContactName(e.target.value)} className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Email</label>
+                    <input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Phone number</label>
+                    <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Enter a phone number" className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background" />
+                  </div>
+                  <div className="md:col-span-2 space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Billing address</label>
+                    <textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} rows={3} placeholder="Enter the address to print on this invoice" className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background resize-y" />
+                  </div>
+                </div>
+              </div>
+            )}
         </div>
       </div>
 
@@ -418,9 +521,15 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
                     <textarea value={footerSnapshot} onChange={(e) => setFooterSnapshot(e.target.value)} rows={3} className="w-full px-3 py-2 text-xs border border-input rounded-md bg-background text-foreground font-medium resize-none focus:ring-2 focus:ring-ring" />
                 </div>
             </div>
-            <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Internal Notes & Reference</label>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={11} className="w-full px-3 py-2 text-xs border border-input rounded-md bg-background text-foreground italic resize-none focus:ring-2 focus:ring-ring" />
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Customer-visible invoice notes</label>
+                <textarea value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={5} placeholder="These notes will appear on the invoice and PDF." className="w-full px-3 py-2 text-xs border border-input rounded-md bg-background text-foreground resize-y focus:ring-2 focus:ring-ring" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Private admin notes & reference</label>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={5} placeholder="Internal only. Never shown to the customer." className="w-full px-3 py-2 text-xs border border-input rounded-md bg-background text-foreground italic resize-y focus:ring-2 focus:ring-ring" />
+              </div>
             </div>
         </div>
       </div>

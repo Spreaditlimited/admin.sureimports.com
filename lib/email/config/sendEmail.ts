@@ -21,7 +21,13 @@ function ensureStandardTemplate(subject: string, html: string) {
 }
 
 
-const sendEmail = async (to: string, subject: string, html: string) => {
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+};
+
+const sendEmail = async (to: string, subject: string, html: string, attachments?: EmailAttachment[]) => {
   try {
     console.log('📧 SMTP Configuration:', {
       from: `"Sure Imports" <${SMTP_EMAIL}>`,
@@ -35,6 +41,7 @@ const sendEmail = async (to: string, subject: string, html: string) => {
       to,
       subject,
       html: ensureStandardTemplate(subject, html),
+      attachments,
     });
 
     console.log('✅ Email sent successfully');

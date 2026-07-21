@@ -198,6 +198,12 @@ export async function POST(request: NextRequest) {
       dueAt,
       headerSnapshot,
       footerSnapshot,
+      customerBusinessName: suppliedBusinessName,
+      customerContactName: suppliedContactName,
+      customerEmail: suppliedCustomerEmail,
+      customerPhone: suppliedCustomerPhone,
+      customerAddress: suppliedCustomerAddress,
+      customerNotes,
       notes,
       linkedRequestId,
       linkedShippingOnlyId,
@@ -254,9 +260,18 @@ export async function POST(request: NextRequest) {
     const invoiceNumber = await createUniqueInvoiceNumber();
 
     const userFullName = `${existingUser.userFirstname || ''} ${existingUser.userLastname || ''}`.trim() || null;
-    let customerName = userFullName;
-    let customerEmail = existingUser.userEmail;
+    let customerBusinessName = String(suppliedBusinessName || '').trim() || null;
+    let customerContactName = String(suppliedContactName || '').trim() || userFullName;
+    let customerEmail = String(suppliedCustomerEmail || '').trim() || existingUser.userEmail;
+    let customerPhone = String(suppliedCustomerPhone || '').trim() || existingUser.userPhone || existingUser.phone || null;
+    let customerAddress = String(suppliedCustomerAddress || '').trim() || [
+      existingUser.address || existingUser.userShippingAddress,
+      existingUser.userShippingAddress2,
+      existingUser.userState,
+      existingUser.userCountry || existingUser.country,
+    ].filter(Boolean).join(', ') || null;
     const userBusinessName = await getUserBusinessName(pidUser);
+    customerBusinessName = customerBusinessName || userBusinessName;
 
     const normalizedLinkedRequestId = linkedShippingOnlyId
       ? encodeShippingOnlyLinkedRequestId(String(linkedShippingOnlyId))
@@ -273,11 +288,8 @@ export async function POST(request: NextRequest) {
       });
 
       if (gift) {
-        customerName = buildCustomerDisplayName(
-          gift.contactPersonFullName,
-          gift.businessName,
-          userFullName,
-        );
+        customerBusinessName = customerBusinessName || gift.businessName || null;
+        customerContactName = customerContactName || gift.contactPersonFullName || userFullName;
         customerEmail = gift.contactEmail || existingUser.userEmail;
       }
     }
@@ -287,11 +299,12 @@ export async function POST(request: NextRequest) {
         pidInvoice,
         invoiceNumber,
         pidUser,
-        customerName: userBusinessName
-          ? buildCustomerDisplayName(customerName, userBusinessName, customerName)
-          : customerName,
+        customerName: customerBusinessName || customerContactName,
+        customerBusinessName,
+        customerContactName,
         customerEmail,
-        customerPhone: existingUser.userPhone || existingUser.phone || null,
+        customerPhone,
+        customerAddress,
         currency,
         subtotal: toMoneyInput(subtotalNum),
         discountTotal: toMoneyInput(discount),
@@ -303,6 +316,7 @@ export async function POST(request: NextRequest) {
         dueAt: dueAt ? new Date(dueAt) : null,
         headerSnapshot: headerSnapshot || null,
         footerSnapshot: footerSnapshot || null,
+        customerNotes: customerNotes || null,
         notes: notes || null,
         linkedRequestId: normalizedLinkedRequestId || null,
         createdByPidUser: admin.pidUser,

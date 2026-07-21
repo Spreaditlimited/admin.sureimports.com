@@ -12,16 +12,7 @@ import {
 } from '../../_lib/invoicing';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 import { getUserBusinessName } from '@/lib/userBusinessName';
-
-function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
-  const normalizedContact = String(contactName || '').trim();
-  const normalizedBusiness = String(businessName || '').trim();
-  const normalizedFallback = String(fallbackName || '').trim();
-  const baseName = normalizedContact || normalizedFallback;
-  if (!baseName && !normalizedBusiness) return null;
-  if (baseName && normalizedBusiness) return `${baseName} (${normalizedBusiness})`;
-  return baseName || normalizedBusiness;
-}
+import { resolveInvoiceCustomerIdentity } from '@/lib/invoicing/invoiceCustomer';
 
 function canEditInvoiceFinancials(status: string) {
   return ['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'OVERDUE'].includes(
@@ -70,6 +61,13 @@ export async function GET(
             userLastname: true,
             userEmail: true,
             userPhone: true,
+            phone: true,
+            address: true,
+            userShippingAddress: true,
+            userShippingAddress2: true,
+            userState: true,
+            userCountry: true,
+            country: true,
           },
         },
       },
@@ -97,29 +95,30 @@ export async function GET(
       if (gift) {
         enrichedInvoice = {
           ...invoice,
-          customerName: buildCustomerDisplayName(
-            gift.contactPersonFullName,
-            gift.businessName,
-            invoice.customerName,
-          ) || invoice.customerName,
+          customerName: invoice.customerName || gift.businessName || gift.contactPersonFullName,
+          customerBusinessName: invoice.customerBusinessName || gift.businessName || null,
+          customerContactName: invoice.customerContactName || gift.contactPersonFullName || null,
           customerEmail: invoice.customerEmail || gift.contactEmail || null,
         };
       }
     }
 
     const userBusinessName = await getUserBusinessName(invoice.pidUser);
-    if (userBusinessName) {
-      const baseName =
-        String(enrichedInvoice.customerName || '').trim() ||
-        String(enrichedInvoice.customerEmail || '').trim() ||
-        'Customer';
-      if (!baseName.includes(`(${userBusinessName})`)) {
-        enrichedInvoice = {
-          ...enrichedInvoice,
-          customerName: `${baseName} (${userBusinessName})`,
-        };
-      }
-    }
+    const identity = resolveInvoiceCustomerIdentity(enrichedInvoice, userBusinessName);
+    const profileAddress = [
+      invoice.user.address || invoice.user.userShippingAddress,
+      invoice.user.userShippingAddress2,
+      invoice.user.userState,
+      invoice.user.userCountry || invoice.user.country,
+    ].filter(Boolean).join(', ');
+    enrichedInvoice = {
+      ...enrichedInvoice,
+      customerName: identity.billedToName,
+      customerBusinessName: identity.businessName,
+      customerContactName: identity.contactName,
+      customerPhone: enrichedInvoice.customerPhone || invoice.user.userPhone || invoice.user.phone || null,
+      customerAddress: enrichedInvoice.customerAddress || profileAddress || null,
+    };
 
     return NextResponse.json({ statusx: 'SUCCESS', data: enrichedInvoice });
   } catch (error: any) {
@@ -155,7 +154,16 @@ export async function PATCH(
 
     if (body.headerSnapshot !== undefined) data.headerSnapshot = body.headerSnapshot || null;
     if (body.footerSnapshot !== undefined) data.footerSnapshot = body.footerSnapshot || null;
+    if (body.customerBusinessName !== undefined) data.customerBusinessName = body.customerBusinessName || null;
+    if (body.customerContactName !== undefined) data.customerContactName = body.customerContactName || null;
+    if (body.customerEmail !== undefined) data.customerEmail = body.customerEmail || null;
+    if (body.customerPhone !== undefined) data.customerPhone = body.customerPhone || null;
+    if (body.customerAddress !== undefined) data.customerAddress = body.customerAddress || null;
+    if (body.customerNotes !== undefined) data.customerNotes = body.customerNotes || null;
     if (body.notes !== undefined) data.notes = body.notes || null;
+    if (body.customerBusinessName !== undefined || body.customerContactName !== undefined) {
+      data.customerName = String(body.customerBusinessName || body.customerContactName || existing.customerName || '').trim() || null;
+    }
     if (body.dueAt !== undefined) data.dueAt = body.dueAt ? new Date(body.dueAt) : null;
 
     if (body.status !== undefined) {

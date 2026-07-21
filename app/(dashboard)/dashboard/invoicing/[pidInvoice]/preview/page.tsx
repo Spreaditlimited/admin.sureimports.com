@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { FileText, Calendar, User, CreditCard, Info } from 'lucide-react';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 import { getUserBusinessName } from '@/lib/userBusinessName';
+import Link from 'next/link';
+import { resolveInvoiceCustomerIdentity } from '@/lib/invoicing/invoiceCustomer';
 
 export default async function InvoicePreviewPage({
   params,
@@ -21,6 +23,13 @@ export default async function InvoicePreviewPage({
           userLastname: true,
           userEmail: true,
           userPhone: true,
+          phone: true,
+          address: true,
+          userShippingAddress: true,
+          userShippingAddress2: true,
+          userState: true,
+          userCountry: true,
+          country: true,
         },
       },
     },
@@ -45,19 +54,21 @@ export default async function InvoicePreviewPage({
   }
 
   const userBusinessName = await getUserBusinessName(invoice.pidUser);
-  if (userBusinessName) {
-    const baseName =
-      String(invoice.customerName || '').trim() ||
-      `${invoice.user.userFirstname || ''} ${invoice.user.userLastname || ''}`.trim() ||
-      'Customer';
-    if (!baseName.includes(`(${userBusinessName})`)) {
-      invoice.customerName = `${baseName} (${userBusinessName})`;
-    }
-  }
-
-  const customerName = invoice.customerName || `${invoice.user.userFirstname || ''} ${invoice.user.userLastname || ''}`.trim() || 'Customer';
+  const identity = resolveInvoiceCustomerIdentity(invoice, invoice.customerBusinessName || userBusinessName || corporateBusinessName);
+  const customerName = identity.billedToName;
+  const customerContactName = identity.contactName || `${invoice.user.userFirstname || ''} ${invoice.user.userLastname || ''}`.trim() || null;
   const customerEmail = invoice.customerEmail || invoice.user.userEmail || 'N/A';
-  const customerPhone = invoice.customerPhone || invoice.user.userPhone || 'N/A';
+  const customerPhone = invoice.customerPhone || invoice.user.userPhone || invoice.user.phone || 'N/A';
+  const customerAddress = invoice.customerAddress || [
+    invoice.user.address || invoice.user.userShippingAddress,
+    invoice.user.userShippingAddress2,
+    invoice.user.userState,
+    invoice.user.userCountry || invoice.user.country,
+  ].filter(Boolean).join(', ') || 'N/A';
+  const bankAccounts = await prisma.invoice_bank_accounts.findMany({
+    where: { status: 'ACTIVE', currency: invoice.currency },
+    orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
+  });
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
@@ -84,6 +95,7 @@ export default async function InvoicePreviewPage({
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">Sure Imports</span>
               <h1 className="text-3xl font-bold tracking-tight text-foreground">Invoice Preview</h1>
               <p className="text-sm text-muted-foreground italic">Official customer-facing document layout</p>
+              <Link href={`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/pdf`} className="inline-flex mt-2 px-3 py-2 rounded-md bg-primary text-primary-foreground text-xs font-bold">Download PDF</Link>
             </div>
             <div className="text-left sm:text-right flex flex-col gap-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Invoice Number</span>
@@ -101,7 +113,8 @@ export default async function InvoicePreviewPage({
             </h2>
             <div className="space-y-1">
               <p className="text-base font-bold text-foreground">{customerName}</p>
-              {corporateBusinessName && <p className="text-sm font-medium text-foreground">{corporateBusinessName}</p>}
+              {identity.businessName && customerContactName && <p className="text-sm text-muted-foreground">Contact person: <span className="font-medium text-foreground">{customerContactName}</span></p>}
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{customerAddress}</p>
               <p className="text-sm text-muted-foreground">{customerEmail}</p>
               <p className="text-sm text-muted-foreground">{customerPhone}</p>
             </div>
@@ -186,8 +199,24 @@ export default async function InvoicePreviewPage({
           </div>
         </div>
 
+        {bankAccounts.length > 0 && (
+          <div className="p-6 sm:p-8 border-t border-border">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Payment / Bank Details</h3>
+            <div className="grid md:grid-cols-2 gap-3">
+              {bankAccounts.map((account) => (
+                <div key={account.pidBankAccount} className="rounded-lg border border-border bg-muted/20 p-4 text-sm">
+                  <p className="font-bold text-foreground">{account.bankName} — {account.accountName}</p>
+                  <p className="mt-1 font-mono text-lg font-bold text-primary">{account.accountNumber}</p>
+                  <p className="text-xs text-muted-foreground">{[account.currency, account.sortCode ? `Sort code: ${account.sortCode}` : null, account.country].filter(Boolean).join(' • ')}</p>
+                  {account.notes ? <p className="mt-2 text-xs text-muted-foreground">{account.notes}</p> : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 5. Snapshots & Notes */}
-        {(invoice.headerSnapshot || invoice.footerSnapshot || invoice.notes) && (
+        {(invoice.headerSnapshot || invoice.footerSnapshot || invoice.customerNotes) && (
           <div className="p-6 sm:p-8 bg-muted/20 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-6">
             {invoice.headerSnapshot && (
               <div className="space-y-2">
@@ -201,10 +230,10 @@ export default async function InvoicePreviewPage({
                 <pre className="whitespace-pre-wrap font-sans text-xs text-foreground leading-relaxed bg-card p-3 rounded border border-border">{invoice.footerSnapshot}</pre>
               </div>
             )}
-            {invoice.notes && (
+            {invoice.customerNotes && (
               <div className="md:col-span-2 space-y-2">
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2"><FileText className="w-3 h-3" /> Additional Remarks</h3>
-                <p className="whitespace-pre-wrap text-xs text-foreground leading-relaxed bg-card p-3 rounded border border-border">{invoice.notes}</p>
+                <p className="whitespace-pre-wrap text-xs text-foreground leading-relaxed bg-card p-3 rounded border border-border">{invoice.customerNotes}</p>
               </div>
             )}
           </div>

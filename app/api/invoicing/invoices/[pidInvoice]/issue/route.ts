@@ -4,7 +4,8 @@ import { canAdminAccessInvoiceCreatedBy, createOrGetInvoiceAccessToken, ensureIn
 import { sendInvoiceIssuedNotification } from '@/lib/notifications/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
-import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
+import { createInvoicePdfBuffer, invoicePdfFilename } from '@/lib/invoicing/invoicePdf';
+import { loadInvoiceDocument } from '@/lib/invoicing/loadInvoiceDocument';
 
 export async function POST(
   _request: NextRequest,
@@ -87,20 +88,22 @@ export async function POST(
     });
 
     if (existing.customerEmail) {
-      const businessName = await getUserBusinessName(existing.pidUser);
-      const customerName = appendBusinessName(
-        existing.customerName || existing.user.userFirstname || 'Customer',
-        businessName,
-      ) || existing.customerName || existing.user.userFirstname || 'Customer';
       const token = await createOrGetInvoiceAccessToken({
         pidInvoice,
         createdByPidUser: admin.pidUser,
       });
       const customerBaseUrl = getCustomerInvoiceBaseUrl();
       const customerInvoiceLink = `${customerBaseUrl}/invoice/${token.accessToken}`;
+      const document = await loadInvoiceDocument(pidInvoice);
+      const pdfAttachment = document
+        ? {
+            filename: invoicePdfFilename(existing.invoiceNumber),
+            content: createInvoicePdfBuffer(document.invoice, document.bankAccounts),
+          }
+        : undefined;
       await sendInvoiceIssuedNotification({
         toEmail: existing.customerEmail,
-        customerName,
+        customerName: document?.invoice.customerContactName || existing.user.userFirstname || existing.customerName || 'Customer',
         invoiceNumber: existing.invoiceNumber,
         currency: existing.currency,
         grandTotal: Number(existing.grandTotal || 0),
@@ -110,6 +113,7 @@ export async function POST(
         headerSnapshot: updated.headerSnapshot,
         footerSnapshot: updated.footerSnapshot,
         invoiceLink: customerInvoiceLink,
+        pdfAttachment,
       }).catch(() => null);
     }
 

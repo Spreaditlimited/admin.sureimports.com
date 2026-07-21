@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createOrGetInvoiceAccessToken, ensureInvoicingCoreTables, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
+import { canAdminAccessInvoiceCreatedBy, createOrGetInvoiceAccessToken, ensureInvoicingCoreTables, requireAdmin, unauthorized, writeAuditLog } from '../../../_lib/invoicing';
 import { sendInvoiceIssuedNotification } from '@/lib/notifications/invoicing';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
-import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
+import { createInvoicePdfBuffer, invoicePdfFilename } from '@/lib/invoicing/invoicePdf';
+import { loadInvoiceDocument } from '@/lib/invoicing/loadInvoiceDocument';
 
 export async function POST(
   _request: NextRequest,
@@ -24,6 +25,9 @@ export async function POST(
     if (!invoice) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
     }
+    if (!(await canAdminAccessInvoiceCreatedBy(admin, invoice.createdByPidUser))) {
+      return NextResponse.json({ statusx: 'ERROR', message: 'Forbidden' }, { status: 403 });
+    }
 
     if (invoice.status === 'DRAFT' || invoice.status === 'CANCELLED') {
       return NextResponse.json(
@@ -42,15 +46,18 @@ export async function POST(
     });
     const customerBaseUrl = getCustomerInvoiceBaseUrl();
     const customerInvoiceLink = `${customerBaseUrl}/invoice/${token.accessToken}`;
-    const businessName = await getUserBusinessName(invoice.pidUser);
-    const customerName = appendBusinessName(
-      invoice.customerName || invoice.user.userFirstname || 'Customer',
-      businessName,
-    ) || invoice.customerName || invoice.user.userFirstname || 'Customer';
+    const document = await loadInvoiceDocument(pidInvoice);
+    if (!document) {
+      return NextResponse.json({ statusx: 'ERROR', message: 'Invoice document could not be prepared' }, { status: 500 });
+    }
+    const pdfAttachment = {
+      filename: invoicePdfFilename(invoice.invoiceNumber),
+      content: createInvoicePdfBuffer(document.invoice, document.bankAccounts),
+    };
 
     await sendInvoiceIssuedNotification({
       toEmail: invoice.customerEmail,
-      customerName,
+      customerName: document.invoice.customerContactName || document.invoice.customerName || 'Customer',
       invoiceNumber: invoice.invoiceNumber,
       currency: invoice.currency,
       grandTotal: Number(invoice.grandTotal || 0),
@@ -60,13 +67,14 @@ export async function POST(
       headerSnapshot: invoice.headerSnapshot,
       footerSnapshot: invoice.footerSnapshot,
       invoiceLink: customerInvoiceLink,
+      pdfAttachment,
     });
 
     await writeAuditLog({
       pidInvoice,
       pidUser: admin.pidUser,
       action: 'INVOICE_SENT',
-      metadata: JSON.stringify({ invoiceNumber: invoice.invoiceNumber }),
+      metadata: JSON.stringify({ invoiceNumber: invoice.invoiceNumber, pdfAttached: true }),
     });
 
     return NextResponse.json({

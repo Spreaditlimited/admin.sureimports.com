@@ -160,8 +160,11 @@ export async function ensureInvoicingCoreTables() {
       invoiceNumber VARCHAR(191) NOT NULL,
       pidUser VARCHAR(191) NOT NULL,
       customerName VARCHAR(191) NULL,
+      customerBusinessName VARCHAR(191) NULL,
+      customerContactName VARCHAR(191) NULL,
       customerEmail VARCHAR(191) NULL,
       customerPhone VARCHAR(191) NULL,
+      customerAddress LONGTEXT NULL,
       currency VARCHAR(191) NOT NULL DEFAULT 'NGN',
       subtotal DECIMAL(18,2) NOT NULL,
       discountTotal DECIMAL(18,2) NOT NULL DEFAULT 0,
@@ -175,6 +178,7 @@ export async function ensureInvoicingCoreTables() {
       paidAt DATETIME(3) NULL,
       headerSnapshot LONGTEXT NULL,
       footerSnapshot LONGTEXT NULL,
+      customerNotes LONGTEXT NULL,
       notes LONGTEXT NULL,
       linkedRequestId VARCHAR(191) NULL,
       createdByPidUser VARCHAR(191) NULL,
@@ -189,6 +193,14 @@ export async function ensureInvoicingCoreTables() {
       INDEX invoices_dueAt_idx (dueAt),
       PRIMARY KEY (id)
     ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE invoices
+      ADD COLUMN IF NOT EXISTS customerBusinessName VARCHAR(191) NULL AFTER customerName,
+      ADD COLUMN IF NOT EXISTS customerContactName VARCHAR(191) NULL AFTER customerBusinessName,
+      ADD COLUMN IF NOT EXISTS customerAddress LONGTEXT NULL AFTER customerPhone,
+      ADD COLUMN IF NOT EXISTS customerNotes LONGTEXT NULL AFTER footerSnapshot;
   `);
 
   await prisma.$executeRawUnsafe(`

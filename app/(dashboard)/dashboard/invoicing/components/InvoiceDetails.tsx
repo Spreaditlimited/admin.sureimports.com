@@ -15,14 +15,19 @@ import {
   User,
   RefreshCw,
   PlusCircle,
-  Mail
+  Mail,
+  Download
 } from 'lucide-react';
 
 interface InvoiceData {
   pidInvoice: string;
   invoiceNumber: string;
   customerName: string | null;
+  customerBusinessName: string | null;
+  customerContactName: string | null;
   customerEmail: string | null;
+  customerPhone: string | null;
+  customerAddress: string | null;
   currency: string;
   status: string;
   grandTotal: string;
@@ -32,6 +37,7 @@ interface InvoiceData {
   issuedAt: string | null;
   headerSnapshot: string | null;
   footerSnapshot: string | null;
+  customerNotes: string | null;
   notes: string | null;
   items: Array<{ pidInvoiceItem: string; description: string; quantity: string; unitPrice: string; lineTotal: string }>;
   payments: Array<{ pidInvoicePayment: string; amount: string; paymentMethod: string; reference: string | null; paidAt: string }>;
@@ -126,7 +132,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
     const s = status.toUpperCase();
     let style = 'bg-muted text-muted-foreground border-border';
     if (s === 'PAID') style = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
-    if (s === 'PARTIAL') style = 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+    if (s === 'PARTIAL' || s === 'PARTIALLY_PAID') style = 'bg-blue-500/10 text-blue-600 border-blue-500/20';
     if (s === 'DRAFT') style = 'bg-muted text-muted-foreground border-border';
     if (s === 'OVERDUE') style = 'bg-destructive/10 text-destructive border-destructive/20';
 
@@ -171,6 +177,10 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
                     <span className="opacity-30">•</span>
                     <span className="font-mono text-xs">{data.customerEmail}</span>
                 </div>
+                {data.customerBusinessName && data.customerContactName ? (
+                  <p className="text-xs text-muted-foreground">Contact person: {data.customerContactName}</p>
+                ) : null}
+                <p className="text-xs text-muted-foreground">{[data.customerPhone, data.customerAddress].filter(Boolean).join(' • ')}</p>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 sm:text-right">
@@ -198,6 +208,12 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
           >
             <Eye className="w-3.5 h-3.5" /> Preview Document
           </Link>
+          <a
+            href={`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/pdf`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
+          >
+            <Download className="w-3.5 h-3.5" /> Download PDF
+          </a>
           
           {data.status === 'DRAFT' ? (
             <>
@@ -230,7 +246,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
                 onClick={dispatchInvoice}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
               >
-                <Send className="w-3.5 h-3.5" /> {sendingInvoice ? 'Sending...' : 'Dispatch Email'}
+                <Send className="w-3.5 h-3.5" /> {sendingInvoice ? 'Sending PDF...' : 'Email PDF to Customer'}
               </button>
             </>
           )}
@@ -373,6 +389,18 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
       </div>
 
       {/* 6. Legal & Context Snapshots */}
+      {(data.customerNotes || data.notes) && (
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">Customer-visible notes</h3>
+            <div className="p-4 bg-card border border-border rounded-lg whitespace-pre-wrap text-xs text-foreground">{data.customerNotes || 'N/A'}</div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">Private admin notes</h3>
+            <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg whitespace-pre-wrap text-xs text-foreground">{data.notes || 'N/A'}</div>
+          </div>
+        </div>
+      )}
       <div className="grid lg:grid-cols-2 gap-6 pb-10">
         <div className="space-y-2">
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">Header Snapshot</h3>

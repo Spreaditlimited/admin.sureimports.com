@@ -3,19 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { ensureInvoicingCoreTables } from '../../../_lib/invoicing';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 import { getUserBusinessName } from '@/lib/userBusinessName';
-
-function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
-  const normalizedContact = String(contactName || '').trim();
-  const normalizedBusiness = String(businessName || '').trim();
-  const normalizedFallback = String(fallbackName || '').trim();
-  const baseName = normalizedContact || normalizedFallback;
-  if (!baseName && !normalizedBusiness) return null;
-  if (baseName && normalizedBusiness) return `${baseName} (${normalizedBusiness})`;
-  return baseName || normalizedBusiness;
-}
+import { resolveInvoiceCustomerIdentity } from '@/lib/invoicing/invoiceCustomer';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ accessToken: string }> },
 ) {
   try {
@@ -29,6 +20,21 @@ export async function GET(
           include: {
             items: { orderBy: { lineNo: 'asc' } },
             paymentClaims: { orderBy: { claimedAt: 'desc' } },
+            user: {
+              select: {
+                userFirstname: true,
+                userLastname: true,
+                userEmail: true,
+                userPhone: true,
+                phone: true,
+                address: true,
+                userShippingAddress: true,
+                userShippingAddress2: true,
+                userState: true,
+                userCountry: true,
+                country: true,
+              },
+            },
           },
         },
       },
@@ -44,8 +50,18 @@ export async function GET(
     });
 
     const bankAccounts = await prisma.invoice_bank_accounts.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', currency: token.invoice.currency },
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        pidBankAccount: true,
+        accountName: true,
+        accountNumber: true,
+        bankName: true,
+        sortCode: true,
+        currency: true,
+        country: true,
+        notes: true,
+      },
     });
 
     let invoice = token.invoice as any;
@@ -63,29 +79,40 @@ export async function GET(
       if (gift) {
         invoice = {
           ...invoice,
-          customerName: buildCustomerDisplayName(
-            gift.contactPersonFullName,
-            gift.businessName,
-            invoice.customerName,
-          ) || invoice.customerName,
+          customerName: invoice.customerName || gift.businessName || gift.contactPersonFullName,
+          customerBusinessName: invoice.customerBusinessName || gift.businessName || null,
+          customerContactName: invoice.customerContactName || gift.contactPersonFullName || null,
           customerEmail: invoice.customerEmail || gift.contactEmail || null,
         };
       }
     }
 
     const userBusinessName = await getUserBusinessName(String(invoice?.pidUser || ''));
-    if (userBusinessName) {
-      const baseName =
-        String(invoice?.customerName || '').trim() ||
-        String(invoice?.customerEmail || '').trim() ||
-        'Customer';
-      if (!baseName.includes(`(${userBusinessName})`)) {
-        invoice = {
-          ...invoice,
-          customerName: `${baseName} (${userBusinessName})`,
-        };
-      }
-    }
+    const identity = resolveInvoiceCustomerIdentity(invoice, userBusinessName);
+    const profileContactName = `${invoice.user?.userFirstname || ''} ${invoice.user?.userLastname || ''}`.trim();
+    const profileAddress = [
+      invoice.user?.address || invoice.user?.userShippingAddress,
+      invoice.user?.userShippingAddress2,
+      invoice.user?.userState,
+      invoice.user?.userCountry || invoice.user?.country,
+    ].filter(Boolean).join(', ');
+    const { notes: _privateAdminNotes, user: _privateUserProfile, ...publicInvoice } = invoice;
+    invoice = {
+      ...publicInvoice,
+      customerName: identity.billedToName,
+      customerBusinessName: identity.businessName,
+      customerContactName: identity.contactName || profileContactName || null,
+      customerEmail: publicInvoice.customerEmail || invoice.user?.userEmail || null,
+      customerPhone: publicInvoice.customerPhone || invoice.user?.userPhone || invoice.user?.phone || null,
+      customerAddress: publicInvoice.customerAddress || profileAddress || null,
+      paymentClaims: (publicInvoice.paymentClaims || []).map((claim: any) => ({
+        pidClaim: claim.pidClaim,
+        claimedAmount: claim.claimedAmount,
+        currency: claim.currency,
+        claimedAt: claim.claimedAt,
+        status: claim.status,
+      })),
+    };
 
     return NextResponse.json({
       statusx: 'SUCCESS',
@@ -93,6 +120,7 @@ export async function GET(
         token: {
           accessToken: token.accessToken,
           expiresAt: token.expiresAt,
+          pdfDownloadUrl: `${new URL(request.url).origin}/api/invoicing/public/invoice/${encodeURIComponent(accessToken)}/pdf`,
         },
         invoice,
         bankAccounts,

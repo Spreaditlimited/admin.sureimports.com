@@ -4,6 +4,8 @@ import { generatePid, requireAdmin, unauthorized } from '../_lib/invoicing';
 
 export async function GET() {
   try {
+    const admin = await requireAdmin();
+    if (!admin) return unauthorized();
     const model = (prisma as any).invoice_bank_accounts;
     const accounts = model
       ? await model.findMany({

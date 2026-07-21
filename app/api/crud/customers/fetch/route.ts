@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { getUserBusinessNameMap } from '@/lib/userBusinessName';
 
 export async function GET(request: Request) {
   try {
@@ -76,6 +77,8 @@ export async function GET(request: Request) {
         country: true,
         userState: true,
         address: true,
+        userShippingAddress: true,
+        userShippingAddress2: true,
         userCid: true,
         userStatus: true,
         userImage: true,
@@ -95,6 +98,11 @@ export async function GET(request: Request) {
     });
 
     const totalPages = Math.ceil(totalCount / limit);
+    const businessNames = await getUserBusinessNameMap(customers.map((customer) => customer.pidUser));
+    const enrichedCustomers = customers.map((customer) => ({
+      ...customer,
+      businessName: businessNames.get(customer.pidUser) || null,
+    }));
 
     return NextResponse.json({
       responsex: {
@@ -102,7 +110,7 @@ export async function GET(request: Request) {
         status: 'SUCCESS',
       },
       successx: true,
-      data: customers,
+      data: enrichedCustomers,
       pagination: {
         currentPage: page,
         totalPages,

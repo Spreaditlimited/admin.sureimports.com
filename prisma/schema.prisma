@@ -1097,8 +1097,11 @@ model invoices {
   invoiceNumber    String               @unique()
   pidUser          String
   customerName     String?
+  customerBusinessName String?
+  customerContactName  String?
   customerEmail    String?
   customerPhone    String?
+  customerAddress  String?              @db.LongText
   currency         String               @default("NGN")
   subtotal         Decimal              @db.Decimal(18, 2)
   discountTotal    Decimal              @default(0) @db.Decimal(18, 2)
@@ -1112,6 +1115,7 @@ model invoices {
   paidAt           DateTime?
   headerSnapshot   String?              @db.LongText
   footerSnapshot   String?              @db.LongText
+  customerNotes    String?              @db.LongText
   notes            String?              @db.LongText
   linkedRequestId  String?
   createdByPidUser String?

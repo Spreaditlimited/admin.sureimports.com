@@ -109,7 +109,8 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case 'PAID': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'PARTIAL': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'PARTIAL':
+      case 'PARTIALLY_PAID': return 'bg-amber-100 text-amber-700 border-amber-200';
       default: return 'bg-blue-100 text-blue-700 border-blue-200';
     }
   };
@@ -132,8 +133,16 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Updating...</span>
             ) : null}
           </div>
-          <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(invoice.status)}`}>
-            {invoice.status}
+          <div className="flex items-center gap-3">
+            <a
+              href={`/api/invoicing/public/invoice/${encodeURIComponent(accessToken)}/pdf`}
+              className="rounded-lg bg-[#0b3b88] px-4 py-2 text-xs font-bold text-white hover:bg-blue-800"
+            >
+              Download PDF
+            </a>
+            <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(invoice.status)}`}>
+              {invoice.status}
+            </div>
           </div>
         </div>
       </div>
@@ -144,7 +153,10 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
           <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">Invoice {invoice.invoiceNumber}</h1>
-              <p className="text-slate-500 mt-1">Issued to <span className="text-slate-900 font-medium">{invoice.customerName || invoice.customerEmail}</span></p>
+              <p className="text-slate-500 mt-1">Issued to <span className="text-slate-900 font-medium">{invoice.customerBusinessName || invoice.customerName || invoice.customerEmail}</span></p>
+              {invoice.customerBusinessName && invoice.customerContactName ? <p className="mt-2 text-sm text-slate-600">Contact person: <span className="font-medium text-slate-900">{invoice.customerContactName}</span></p> : null}
+              {invoice.customerAddress ? <p className="mt-1 max-w-xl whitespace-pre-wrap text-sm text-slate-600">{invoice.customerAddress}</p> : null}
+              <p className="mt-1 text-sm text-slate-600">{[invoice.customerPhone, invoice.customerEmail].filter(Boolean).join(' • ')}</p>
             </div>
             <div className="text-left md:text-right">
               <p className="text-xs uppercase font-bold text-slate-400 tracking-widest">Balance Due</p>
@@ -204,6 +216,13 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
           </div>
         </div>
 
+        {invoice.customerNotes ? (
+          <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-[#0b3b88]">Invoice Notes</h2>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{invoice.customerNotes}</p>
+          </section>
+        ) : null}
+
         <div className="grid md:grid-cols-5 gap-8">
           {/* Left Column: Bank Selection */}
           <div className="md:col-span-3 space-y-6">
@@ -245,6 +264,7 @@ export default function CustomerInvoiceClient({ accessToken }: { accessToken: st
                               <span className="text-slate-700 font-medium">{acc.sortCode}</span>
                             </>
                           )}
+                          {acc.notes ? <p className="col-span-2 mt-2 text-xs text-slate-500">{acc.notes}</p> : null}
                         </div>
                       </div>
                     </div>

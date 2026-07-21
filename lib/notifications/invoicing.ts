@@ -12,6 +12,10 @@ type InvoiceIssuedInput = {
   headerSnapshot?: string | null;
   footerSnapshot?: string | null;
   invoiceLink?: string | null;
+  pdfAttachment?: {
+    filename: string;
+    content: Buffer;
+  };
 };
 
 type ReceiptSentInput = {
@@ -67,8 +71,12 @@ Your invoice has been issued successfully. Please review the details below.`,
   <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Total Amount</b></td><td style="padding:8px;border:1px solid #e5e7eb;">${input.currency} ${input.grandTotal.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
   <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;"><b>Balance Due</b></td><td style="padding:8px;border:1px solid #e5e7eb;"><b>${input.currency} ${input.balanceDue.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b></td></tr>
 </table>`,
-    xButtonTitle: 'View Invoice',
+    xButtonTitle: input.invoiceLink ? 'View or Download Invoice' : 'View Invoice',
     xButtonLink: input.invoiceLink || 'https://sureimports.com/dashboard',
+    attachments: input.pdfAttachment
+      ? [{ ...input.pdfAttachment, contentType: 'application/pdf' }]
+      : undefined,
+    throwOnError: true,
   });
 }
 
