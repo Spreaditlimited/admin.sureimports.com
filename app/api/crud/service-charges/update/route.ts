@@ -6,11 +6,14 @@ import fileFilter from '@/app/utils/fileFilter'
 import randomGenerator from "@/lib/helpers/randomGenerator";
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/app/utils/slugGenerator'
+import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
 const prisma = new PrismaClient();
 
 
 export async function PUT(request: Request) {
+    const access = await requireAdminServiceAccess('exchange_rates', 'edit');
+    if (!access.ok) return access.response;
 
     const formData = await request.formData();
         const serviceCharge = formData.get('serviceCharge') as string;

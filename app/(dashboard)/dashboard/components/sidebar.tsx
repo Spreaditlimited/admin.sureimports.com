@@ -15,7 +15,6 @@ import {
   HandCoins,
   Landmark,
   Ship,
-  ChartCandlestick,
   Store,
   Wallet,
   BarChart3,
@@ -144,42 +143,19 @@ const marketing: MenuItem[] = [
 
 const systemSettings: MenuItem[] = [
   { title: "Profile", icon: UserCog, path: "/dashboard/profile" },
-  { title: "Settings", icon: UserCog, path: "/dashboard/settings" },
   {
-    title: "Admin Mgt.",
+    title: "Settings",
     icon: UserCog,
-    path: "/admin",
-    serviceKey: "admin_mgt",
+    path: "/dashboard/settings",
+    serviceKey: "system_settings",
     submenu: [
+      { title: "Settings Overview", path: "/dashboard/settings" },
       { title: "Manage Admins", path: "/dashboard/admin/view" },
-      { title: "Add Admin", path: "/dashboard/admin/add" },
-      { title: "Admin WhatsApp", path: "/dashboard/admin/whatsapp" },
-    ],
-  },
-  {
-    title: "Shipping Plans",
-    icon: Ship,
-    path: "/shipping-plans",
-    serviceKey: "shipping_plans",
-    submenu: [
       { title: "Shipping Plans", path: "/dashboard/shipping-plans/add" },
-    ],
-  },
-  {
-    title: "Exchanges & Rates",
-    icon: ChartCandlestick,
-    path: "/exchange-rates",
-    serviceKey: "exchange_rates",
-    submenu: [
       { title: "Exchange Rates", path: "/dashboard/exchange-rates" },
       { title: "Service Charge & VAT", path: "/dashboard/service-charges" },
+      { title: "Bank Accounts", path: "/dashboard/invoicing/bank-accounts" },
     ],
-  },
-  {
-    title: "Bank Accounts",
-    icon: Wallet,
-    path: "/dashboard/invoicing/bank-accounts",
-    serviceKey: "invoicing",
   },
 ]
 

@@ -20,6 +20,7 @@ const SERVICE_KEYS = new Set([
   'blog_management',
   'supplier_intelligence',
   'consultations',
+  'system_settings',
 ]);
 
 function isPrismaMissingTableError(error: unknown) {

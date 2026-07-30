@@ -134,11 +134,11 @@ model marketing_leads {
 }
 
 model admin {
-  id                Int       @id @default(autoincrement())
-  pidUser           String    @unique()
+  id                Int                 @id @default(autoincrement())
+  pidUser           String              @unique()
   userFirstname     String?
   userLastname      String?
-  userEmail         String    @unique()
+  userEmail         String              @unique()
   userPassword      String?
   userSession       String?
   userPhone         Int?
@@ -151,7 +151,7 @@ model admin {
   userExt1          String?
   userExt2          String?
   xStaus            String?
-  createdAt         DateTime? @default(now())
+  createdAt         DateTime?           @default(now())
   updatedAt         DateTime?
   permissions       admin_permissions[]
   //posts     Post[]
@@ -174,11 +174,11 @@ model admin_permissions {
 }
 
 model users {
-  id                   Int                  @id @default(autoincrement())
-  pidUser              String               @unique()
+  id                   Int                      @id @default(autoincrement())
+  pidUser              String                   @unique()
   userFirstname        String?
   userLastname         String?
-  userEmail            String               @unique()
+  userEmail            String                   @unique()
   userPassword         String?
   userSession          String?
   cidStatus            String?
@@ -211,7 +211,7 @@ model users {
   userExt1             String?
   userExt2             String?
   xStatus              String?
-  createdAt            DateTime?            @default(now())
+  createdAt            DateTime?                @default(now())
   updatedAt            DateTime?
   orders               orders[]
   wallets              Wallet[]
@@ -482,8 +482,8 @@ model pay_supplier {
 }
 
 model shipping_only {
-  id                      Int       @id @default(autoincrement())
-  pidShippingOnly         String    @unique()
+  id                      Int                        @id @default(autoincrement())
+  pidShippingOnly         String                     @unique()
   pidUser                 String?
   whatsappNumber          String?
   shippingName            String?
@@ -500,7 +500,7 @@ model shipping_only {
   xStatus                 String?
   ext1                    String?
   ext2                    String?
-  createdAt               DateTime? @default(now())
+  createdAt               DateTime?                  @default(now())
   updatedAt               DateTime?
 }
 
@@ -1092,44 +1092,44 @@ model invoice_settings {
 }
 
 model invoices {
-  id               Int                  @id @default(autoincrement())
-  pidInvoice       String               @unique()
-  invoiceNumber    String               @unique()
-  pidUser          String
-  customerName     String?
+  id                   Int                      @id @default(autoincrement())
+  pidInvoice           String                   @unique()
+  invoiceNumber        String                   @unique()
+  pidUser              String
+  customerName         String?
   customerBusinessName String?
   customerContactName  String?
-  customerEmail    String?
-  customerPhone    String?
-  customerAddress  String?              @db.LongText
-  currency         String               @default("NGN")
-  subtotal         Decimal              @db.Decimal(18, 2)
-  discountTotal    Decimal              @default(0) @db.Decimal(18, 2)
-  taxTotal         Decimal              @default(0) @db.Decimal(18, 2)
-  grandTotal       Decimal              @db.Decimal(18, 2)
-  amountPaid       Decimal              @default(0) @db.Decimal(18, 2)
-  balanceDue       Decimal              @db.Decimal(18, 2)
-  status           String               @default("DRAFT")
-  issuedAt         DateTime?
-  dueAt            DateTime?
-  paidAt           DateTime?
-  headerSnapshot   String?              @db.LongText
-  footerSnapshot   String?              @db.LongText
-  customerNotes    String?              @db.LongText
-  notes            String?              @db.LongText
-  linkedRequestId  String?
-  createdByPidUser String?
-  updatedByPidUser String?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  user             users                @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
-  items            invoice_items[]
-  payments         invoice_payments[]
-  receipts         receipts[]
-  auditLogs        invoice_audit_logs[]
-  accessTokens     invoice_access_tokens[]
-  paymentClaims    invoice_payment_claims[]
-  followUps        invoice_follow_ups[]
+  customerEmail        String?
+  customerPhone        String?
+  customerAddress      String?                  @db.LongText
+  currency             String                   @default("NGN")
+  subtotal             Decimal                  @db.Decimal(18, 2)
+  discountTotal        Decimal                  @default(0) @db.Decimal(18, 2)
+  taxTotal             Decimal                  @default(0) @db.Decimal(18, 2)
+  grandTotal           Decimal                  @db.Decimal(18, 2)
+  amountPaid           Decimal                  @default(0) @db.Decimal(18, 2)
+  balanceDue           Decimal                  @db.Decimal(18, 2)
+  status               String                   @default("DRAFT")
+  issuedAt             DateTime?
+  dueAt                DateTime?
+  paidAt               DateTime?
+  headerSnapshot       String?                  @db.LongText
+  footerSnapshot       String?                  @db.LongText
+  customerNotes        String?                  @db.LongText
+  notes                String?                  @db.LongText
+  linkedRequestId      String?
+  createdByPidUser     String?
+  updatedByPidUser     String?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  user                 users                    @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
+  items                invoice_items[]
+  payments             invoice_payments[]
+  receipts             receipts[]
+  auditLogs            invoice_audit_logs[]
+  accessTokens         invoice_access_tokens[]
+  paymentClaims        invoice_payment_claims[]
+  followUps            invoice_follow_ups[]
 
   @@index([pidUser])
   @@index([status])
@@ -1155,17 +1155,17 @@ model invoice_follow_ups {
 }
 
 model invoice_access_tokens {
-  id            Int      @id @default(autoincrement())
-  pidToken      String   @unique()
-  pidInvoice    String
-  accessToken   String   @unique()
-  expiresAt     DateTime
-  lastUsedAt    DateTime?
-  revokedAt     DateTime?
+  id               Int       @id @default(autoincrement())
+  pidToken         String    @unique()
+  pidInvoice       String
+  accessToken      String    @unique()
+  expiresAt        DateTime
+  lastUsedAt       DateTime?
+  revokedAt        DateTime?
   createdByPidUser String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  invoice       invoices @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  invoice          invoices  @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
 
   @@index([pidInvoice])
   @@index([accessToken])
@@ -1173,21 +1173,21 @@ model invoice_access_tokens {
 }
 
 model invoice_bank_accounts {
-  id             Int      @id @default(autoincrement())
-  pidBankAccount String   @unique()
-  accountName    String
-  accountNumber  String
-  bankName       String
-  sortCode       String?
-  currency       String   @default("NGN")
-  country        String?
-  notes          String?  @db.LongText
-  displayOrder   Int      @default(0)
-  status         String   @default("ACTIVE")
+  id               Int      @id @default(autoincrement())
+  pidBankAccount   String   @unique()
+  accountName      String
+  accountNumber    String
+  bankName         String
+  sortCode         String?
+  currency         String   @default("NGN")
+  country          String?
+  notes            String?  @db.LongText
+  displayOrder     Int      @default(0)
+  status           String   @default("ACTIVE")
   createdByPidUser String?
   updatedByPidUser String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([status])
   @@index([currency])
@@ -1195,26 +1195,26 @@ model invoice_bank_accounts {
 }
 
 model invoice_payment_claims {
-  id                Int      @id @default(autoincrement())
-  pidClaim          String   @unique()
-  pidInvoice        String
-  pidUser           String?
-  claimedAmount     Decimal  @db.Decimal(18, 2)
-  currency          String   @default("NGN")
-  selectedBankAccountId String?
-  selectedBankAccountJson String? @db.LongText
-  paymentReference  String?
-  note              String?  @db.LongText
-  claimedAt         DateTime @default(now())
-  status            String   @default("PENDING_CONFIRMATION")
-  reviewedByPidUser String?
-  reviewedAt        DateTime?
-  reviewNote        String?  @db.LongText
+  id                        Int       @id @default(autoincrement())
+  pidClaim                  String    @unique()
+  pidInvoice                String
+  pidUser                   String?
+  claimedAmount             Decimal   @db.Decimal(18, 2)
+  currency                  String    @default("NGN")
+  selectedBankAccountId     String?
+  selectedBankAccountJson   String?   @db.LongText
+  paymentReference          String?
+  note                      String?   @db.LongText
+  claimedAt                 DateTime  @default(now())
+  status                    String    @default("PENDING_CONFIRMATION")
+  reviewedByPidUser         String?
+  reviewedAt                DateTime?
+  reviewNote                String?   @db.LongText
   approvedInvoicePaymentPid String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  invoice           invoices @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
-  user              users?   @relation(fields: [pidUser], references: [pidUser], onDelete: SetNull)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  invoice                   invoices  @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+  user                      users?    @relation(fields: [pidUser], references: [pidUser], onDelete: SetNull)
 
   @@index([pidInvoice])
   @@index([pidUser])

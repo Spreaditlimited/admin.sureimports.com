@@ -19,7 +19,6 @@ import {
   ShieldCheck, 
   Layers,
   Globe,
-  Fingerprint,
   Smartphone,
   Scale,
   Calendar,
@@ -327,7 +326,6 @@ const OrdersBoxShippingOnly = () => {
                                     <div className="space-y-2.5">
                                         {[
                                             { label: 'Gross Weight', val: order.grossWeight, icon: Scale },
-                                            { label: 'Tracking Number', val: order.trackingNumber || 'N/A', icon: Fingerprint },
                                             { label: 'Shipping Plan', val: formatShippingPlanDisplay(order.shippingPlanName || order.shippingPlan), icon: Clock },
                                             { label: 'Expected Shipments', val: order.expectedShipments || 'Standard', icon: Calendar },
                                         ].map((item, i) => (

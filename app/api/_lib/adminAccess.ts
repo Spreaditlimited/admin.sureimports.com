@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 
 export const ADMIN_SERVICE_KEY = "admin_mgt";
+export const SYSTEM_SETTINGS_SERVICE_KEY = "system_settings";
 
 type AccessAction = "view" | "edit";
 
@@ -58,7 +59,11 @@ async function hasServiceAccess(
     const permission = await (prisma as any).admin_permissions?.findFirst({
       where: {
         pidUser: admin.pidUser,
-        serviceKey,
+        serviceKey: {
+          in: ["admin_mgt", "shipping_plans", "exchange_rates"].includes(serviceKey)
+            ? [serviceKey, SYSTEM_SETTINGS_SERVICE_KEY]
+            : [serviceKey],
+        },
       },
       select: {
         canView: true,

@@ -5,6 +5,7 @@ import { Sidebar } from "./sidebar"
 import { Search, Sun, Moon, ChevronDown } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { getDashboardBrowserTitle } from "@/lib/dashboardPageTitles"
+import { hasServiceAccess } from "@/lib/accessControl"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -155,6 +156,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const avatarSrc = user?.userImage
     ? (/^https?:\/\//i.test(user.userImage) ? user.userImage : `${cloudinaryBase}/${user.userImage}`)
     : "/assets/images/default.png"
+  const canOpenSettings = hasServiceAccess("system_settings", user?.userStatus, user?.serviceKeys || [])
 
   const toggleTheme = () => {
     const newTheme = !isDark
@@ -277,9 +279,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <a href="/dashboard/profile" className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors">
                       Profile
                     </a>
-                    <a href="/dashboard/settings" className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors">
-                      Settings
-                    </a>
+                    {canOpenSettings && (
+                      <a href="/dashboard/settings" className="block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors">
+                        Settings
+                      </a>
+                    )}
                   </div>
 
                   {/* Actions */}

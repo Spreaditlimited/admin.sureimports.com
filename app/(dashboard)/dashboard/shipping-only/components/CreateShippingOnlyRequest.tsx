@@ -43,7 +43,6 @@ type ShippingForm = {
   shippingName: string;
   shippingTo: string;
   grossWeight: string;
-  trackingNumber: string;
   shippingPlan: string;
   expectedShipments: string;
   wantProductVerification: boolean;
@@ -66,7 +65,6 @@ const emptyShippingForm: ShippingForm = {
   shippingName: '',
   shippingTo: '',
   grossWeight: '',
-  trackingNumber: '',
   shippingPlan: '',
   expectedShipments: '',
   wantProductVerification: false,
@@ -410,12 +408,6 @@ export default function CreateShippingOnlyRequest({ onCreated }: { onCreated?: (
                     </option>
                   ))}
                 </select>
-                <input
-                  value={shippingForm.trackingNumber}
-                  onChange={(event) => updateShippingForm('trackingNumber', event.target.value)}
-                  placeholder="Tracking number"
-                  className="rounded-md border border-input bg-background px-3 py-2.5 text-sm"
-                />
                 <input
                   value={shippingForm.expectedShipments}
                   onChange={(event) => updateShippingForm('expectedShipments', event.target.value)}

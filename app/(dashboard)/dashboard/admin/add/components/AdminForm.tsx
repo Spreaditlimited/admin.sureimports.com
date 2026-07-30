@@ -23,6 +23,7 @@ const SERVICE_OPTIONS = [
   { key: 'corporate_gifts', label: 'Corporate Gifts' },
   { key: 'pay_supplier', label: 'Pay Supplier' },
   { key: 'shipping_only', label: 'Shipping Only' },
+  { key: 'system_settings', label: 'System Settings' },
   { key: 'verify_supplier', label: 'Verify Supplier' },
   { key: 'pay_small_small', label: 'Pay Small Small' },
   { key: 'store_mgt', label: 'Store Mgt.' },

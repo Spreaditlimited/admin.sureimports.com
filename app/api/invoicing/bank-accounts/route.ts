@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { generatePid, requireAdmin, unauthorized } from '../_lib/invoicing';
+import { generatePid } from '../_lib/invoicing';
+import { requireAdminServiceAccess, SYSTEM_SETTINGS_SERVICE_KEY } from '@/app/api/_lib/adminAccess';
 
 export async function GET() {
   try {
-    const admin = await requireAdmin();
-    if (!admin) return unauthorized();
+    const access = await requireAdminServiceAccess(SYSTEM_SETTINGS_SERVICE_KEY, 'view');
+    if (!access.ok) return access.response;
     const model = (prisma as any).invoice_bank_accounts;
     const accounts = model
       ? await model.findMany({
@@ -24,8 +25,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const admin = await requireAdmin();
-    if (!admin) return unauthorized();
+    const access = await requireAdminServiceAccess(SYSTEM_SETTINGS_SERVICE_KEY, 'edit');
+    if (!access.ok) return access.response;
+    const admin = access.admin;
 
     const body = await request.json();
     const payload = {
@@ -80,8 +82,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const admin = await requireAdmin();
-    if (!admin) return unauthorized();
+    const access = await requireAdminServiceAccess(SYSTEM_SETTINGS_SERVICE_KEY, 'edit');
+    if (!access.ok) return access.response;
+    const admin = access.admin;
 
     const body = await request.json();
     const pidBankAccount = String(body?.pidBankAccount || '');

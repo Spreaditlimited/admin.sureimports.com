@@ -16,11 +16,13 @@ export const ALL_SERVICE_KEYS = [
   "blog_management",
   "supplier_intelligence",
   "consultations",
+  "system_settings",
 ] as const;
 
 export type ServiceKey = (typeof ALL_SERVICE_KEYS)[number];
 
 export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: ServiceKey }> = [
+  { prefix: "/dashboard/invoicing/bank-accounts", serviceKey: "system_settings" },
   { prefix: "/dashboard/invoicing/payment-claims", serviceKey: "invoicing" },
   { prefix: "/dashboard/invoicing/receipts", serviceKey: "invoicing" },
   { prefix: "/dashboard/intelligence", serviceKey: "supplier_intelligence" },
@@ -42,6 +44,7 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/exchange-rates", serviceKey: "exchange_rates" },
   { prefix: "/dashboard/service-charges", serviceKey: "exchange_rates" },
   { prefix: "/dashboard/blog", serviceKey: "blog_management" },
+  { prefix: "/dashboard/settings", serviceKey: "system_settings" },
   { prefix: "/dashboard", serviceKey: "dashboard" },
 ];
 
@@ -61,12 +64,15 @@ export function hasServiceAccess(
   serviceKeys: string[] = []
 ) {
   if (isSuperAdminStatus(userStatus)) return true;
+  if (
+    serviceKeys.includes("system_settings") &&
+    ["admin_mgt", "shipping_plans", "exchange_rates"].includes(serviceKey)
+  ) return true;
   return serviceKeys.includes(serviceKey);
 }
 
 export function getRequiredServiceForPath(pathname: string): ServiceKey | null {
-  // Profile and settings should remain available to any authenticated admin.
-  if (pathname.startsWith("/dashboard/profile") || pathname.startsWith("/dashboard/settings")) {
+  if (pathname.startsWith("/dashboard/profile")) {
     return null;
   }
 
@@ -94,6 +100,7 @@ const SERVICE_DEFAULT_ROUTE_MAP: Record<ServiceKey, string> = {
   blog_management: "/dashboard/blog/view",
   supplier_intelligence: "/dashboard/intelligence/reviews",
   consultations: "/dashboard/consultations",
+  system_settings: "/dashboard/settings",
 };
 
 export function getFirstAllowedDashboardRoute(
