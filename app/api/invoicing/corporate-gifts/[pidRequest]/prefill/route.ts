@@ -45,7 +45,7 @@ export async function GET(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { statusx: 'ERROR', message: 'Failed to fetch corporate gift prefill', error: error.message },
+      { statusx: 'ERROR', message: 'Failed to fetch corporate sourcing prefill', error: error.message },
       { status: 500 },
     );
   }

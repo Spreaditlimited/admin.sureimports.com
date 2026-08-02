@@ -192,12 +192,12 @@ Rules:
 - Include exactly one service CTA from this approved service catalog. Do not invent service promises.
   1. /buy-from-chinese-websites: only when the reader already has product links from Chinese websites like 1688, Alibaba, Taobao or Pinduoduo and wants SureImports to help submit, review and buy those linked products through their account.
   2. /ship-with-us: only when the reader already bought goods or has a supplier sending goods to the SureImports China warehouse and needs shipping-only logistics, consolidation updates and delivery support.
-  3. /corporate-gifts: for business or bulk sourcing, branded/custom products, supplier search, product comparison, quote review, budget/cost breakdowns, inspection planning, packaging, shipping and delivery support.
+  3. /corporate-sourcing: for machinery, equipment, business or bulk sourcing, branded/custom products, supplier search, product comparison, quote review, budget/cost breakdowns, inspection planning, packaging, shipping and delivery support.
   4. https://linescout.sureimports.com/: for machines, production equipment, industrial equipment or technical sourcing guidance where specification review and supplier qualification matter.
   5. /buy-phones-from-china: for phone/device buying.
   6. /laptops-for-business: for bulk laptop needs for teams, schools, companies or resellers.
   7. /shipping-rate or /tools/landed-cost-estimator: only for calculator/tool intent where the next best action is estimating shipping or landed cost, not requesting sourcing support.
-- If the blog topic is about landed cost clarity, manufacturer research, supplier comparison, MOQ, custom products, quality checks or sourcing strategy, choose /corporate-gifts unless it is clearly about machines/equipment, then choose https://linescout.sureimports.com/.
+- If the blog topic is about machinery, equipment, landed cost clarity, manufacturer research, supplier comparison, MOQ, custom products, quality checks or sourcing strategy, choose /corporate-sourcing. Use LineScout only when the article specifically calls for its dedicated machinery guidance experience.
 - Keep the PDF content compact enough for a short downloadable guide/checklist.
 
 Return only valid JSON with:

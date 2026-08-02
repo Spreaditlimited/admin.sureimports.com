@@ -49,7 +49,7 @@ const sureImportsInternalLinkCatalog = [
   },
   {
     label: "Corporate Sourcing",
-    url: "/corporate-gifts",
+    url: "/corporate-sourcing",
     useWhen:
       "Readers need Sure Imports to find suppliers, compare manufacturers, handle bulk sourcing, custom production, product comparison, or quote/cost review.",
   },

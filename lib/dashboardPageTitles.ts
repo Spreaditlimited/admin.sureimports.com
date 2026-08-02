@@ -14,7 +14,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/buy-phones-laptops/add-category": "Add Device Category",
   "/dashboard/buy-phones-laptops/add-devices": "Add Devices",
   "/dashboard/buy-phones-laptops/view-category": "Device Categories",
-  "/dashboard/corporate-gifts": "Corporate Gift Requests",
+  "/dashboard/corporate-sourcing": "Corporate Sourcing Requests",
   "/dashboard/consultations": "Consultations",
   "/dashboard/customer-accounts/customers": "Customers",
   "/dashboard/customer-accounts/transactions": "Wallet Transactions",

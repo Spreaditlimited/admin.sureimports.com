@@ -52,7 +52,7 @@ export type CorporateGiftNotificationResult = {
 async function sendWhatsAppTemplate(input: NotifyInput) {
   await sendApprovedWhatsAppStatusTemplate({
     ...input,
-    serviceName: 'Corporate Gifts',
+    serviceName: 'Corporate Sourcing',
   });
 }
 
@@ -67,14 +67,14 @@ export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {
 
   const introLine =
     input.status === 'Cancelled'
-      ? `Hello ${input.contactPersonFullName || 'Customer'},<br />Your corporate gift sourcing request has been cancelled.`
-      : `Hello ${input.contactPersonFullName || 'Customer'},<br />We have an update on your corporate gift sourcing request.`;
+      ? `Hello ${input.contactPersonFullName || 'Customer'},<br />Your corporate sourcing request has been cancelled.`
+      : `Hello ${input.contactPersonFullName || 'Customer'},<br />We have an update on your corporate sourcing request.`;
 
   const results = await Promise.allSettled([
     xMail({
       xEmail: input.contactEmail,
-      xTitle: `Corporate Gift Request Update - ${input.requestId} (${input.status})`,
-      xBodyTitle: 'Corporate Gift Status Update',
+      xTitle: `Corporate Sourcing Request Update - ${input.requestId} (${input.status})`,
+      xBodyTitle: 'Corporate Sourcing Status Update',
       xBody1: introLine,
       xBody2: `${bodyTable}<br />Thank you for choosing Sure Imports.`,
       xButtonTitle: 'Contact Us',

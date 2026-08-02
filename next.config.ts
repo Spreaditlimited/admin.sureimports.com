@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    async redirects() {
+      return [
+        {
+          source: '/dashboard/corporate-gifts',
+          destination: '/dashboard/corporate-sourcing',
+          permanent: true,
+        },
+      ];
+    },
   // typescript: {
   //   // !! WARN !!
   //   // Dangerously allow production builds to successfully complete even if

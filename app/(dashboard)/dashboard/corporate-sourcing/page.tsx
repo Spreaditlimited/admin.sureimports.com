@@ -27,7 +27,7 @@ import CancelProjectCard from './components/CancelProjectCard';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function CorporateGiftsAdminPage() {
+export default async function CorporateSourcingAdminPage() {
   const sourceSiteUrl =
     process.env.SUREIMPORTS_SITE_URL || 'https://www.sureimports.com';
 
@@ -72,10 +72,10 @@ export default async function CorporateGiftsAdminPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Corporate Gift Requests
+            Corporate Sourcing Requests
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage and review sourcing enquiries from corporate clients.
+            Review machinery, equipment, bulk product and branded sourcing enquiries from business clients.
           </p>
         </div>
         <div className="rounded-md border border-border bg-muted/50 px-4 py-2 shadow-sm">
@@ -193,6 +193,9 @@ export default async function CorporateGiftsAdminPage() {
                         <h2 className="text-lg font-bold text-foreground">
                           {entry.businessName}
                         </h2>
+                        <p className="mt-0.5 text-sm font-medium text-muted-foreground">
+                          Contact: {entry.contactPersonFullName}
+                        </p>
                         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" />
                           {new Date(entry.createdAt).toLocaleString('en-NG', {
@@ -227,7 +230,7 @@ export default async function CorporateGiftsAdminPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 border-y border-border py-5">
                     <div className="flex flex-col gap-1">
                       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <Package className="h-3 w-3" /> Product Needed
+                        <Package className="h-3 w-3" /> Product or Machine Needed
                       </span>
                       <span className="text-sm font-semibold text-foreground">
                         {entry.productOrItemNeeded}
@@ -235,7 +238,7 @@ export default async function CorporateGiftsAdminPage() {
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <Layers className="h-3 w-3" /> Quantity / Quality
+                        <Layers className="h-3 w-3" /> Quantity / Quality or Duty
                       </span>
                       <span className="text-sm font-semibold text-foreground">
                         {entry.quantityNeeded} units • {entry.preferredQualityLevel}
@@ -280,7 +283,7 @@ export default async function CorporateGiftsAdminPage() {
                             variant="outline"
                             className="border-border bg-background text-foreground text-xs px-2.5 py-0.5"
                           >
-                            Branding: {entry.brandingCustomizationRequired}
+                            Branding / Customization: {entry.brandingCustomizationRequired}
                           </Badge>
                           <Badge
                             variant="outline"
@@ -318,7 +321,7 @@ export default async function CorporateGiftsAdminPage() {
                           className="flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 font-medium text-primary transition-colors hover:underline"
                         >
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">Ref Image: {entry.referenceFileName || 'View'}</span>
+                          <span className="truncate">Reference / Spec: {entry.referenceFileName || 'View'}</span>
                         </a>
                       )}
                       {entry.logoFileUrl && (
@@ -332,7 +335,7 @@ export default async function CorporateGiftsAdminPage() {
                           className="flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 font-medium text-primary transition-colors hover:underline"
                         >
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">Logo: {entry.logoFileName || 'View'}</span>
+                          <span className="truncate">Company Logo: {entry.logoFileName || 'View'}</span>
                         </a>
                       )}
                     </div>

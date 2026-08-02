@@ -28,6 +28,7 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/intelligence", serviceKey: "supplier_intelligence" },
   { prefix: "/dashboard/consultations", serviceKey: "consultations" },
   { prefix: "/dashboard/procurement", serviceKey: "procurement" },
+  { prefix: "/dashboard/corporate-sourcing", serviceKey: "corporate_gifts" },
   { prefix: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
   { prefix: "/dashboard/pay-supplier", serviceKey: "pay_supplier" },
   { prefix: "/dashboard/shipping-only", serviceKey: "shipping_only" },
@@ -85,7 +86,7 @@ export function getRequiredServiceForPath(pathname: string): ServiceKey | null {
 const SERVICE_DEFAULT_ROUTE_MAP: Record<ServiceKey, string> = {
   dashboard: "/dashboard",
   procurement: "/dashboard/procurement?status=pending",
-  corporate_gifts: "/dashboard/corporate-gifts",
+  corporate_gifts: "/dashboard/corporate-sourcing",
   pay_supplier: "/dashboard/pay-supplier",
   shipping_only: "/dashboard/shipping-only?status=request-received",
   verify_supplier: "/dashboard/verify-supplier?status=SAVED",

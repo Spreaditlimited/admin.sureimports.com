@@ -203,7 +203,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
       
       setCustomerSearch(gift.contactEmail || gift.businessName || '');
       setNotes((prev) => {
-        const prefix = `Corporate Gift Request: ${gift.pidRequest}\nBusiness: ${gift.businessName}\nContact: ${gift.contactPersonFullName}\nDelivery Location: ${gift.finalDeliveryLocationNigeria}`;
+        const prefix = `Corporate Sourcing Request: ${gift.pidRequest}\nBusiness: ${gift.businessName}\nContact: ${gift.contactPersonFullName}\nDelivery Location: ${gift.finalDeliveryLocationNigeria}`;
         return prev ? `${prefix}\n\n${prev}` : prefix;
       });
       setItems([{ description: `${gift.productOrItemNeeded} (${gift.preferredQualityLevel})`, quantity: Number(gift.quantityNeeded || 1), unitPrice: 0 }]);

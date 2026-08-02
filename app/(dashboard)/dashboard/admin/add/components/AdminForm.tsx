@@ -20,7 +20,7 @@ import { useAuth } from '@/lib/AuthContext';
 const SERVICE_OPTIONS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'procurement', label: 'Procurement' },
-  { key: 'corporate_gifts', label: 'Corporate Gifts' },
+  { key: 'corporate_gifts', label: 'Corporate Sourcing' },
   { key: 'pay_supplier', label: 'Pay Supplier' },
   { key: 'shipping_only', label: 'Shipping Only' },
   { key: 'system_settings', label: 'System Settings' },

@@ -43,7 +43,7 @@ const dashboardItem: MenuItem = { title: "Dashboard", icon: LayoutDashboard, pat
 const features: MenuItem[] = [
   { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending", serviceKey: "procurement" },
   { title: "Shipping Only", icon: Ship, path: "/dashboard/shipping-only?status=request-received", serviceKey: "shipping_only" },
-  { title: "Corporate Gifts", icon: Package, path: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
+  { title: "Corporate Sourcing", icon: Package, path: "/dashboard/corporate-sourcing", serviceKey: "corporate_gifts" },
   {
     title: "Supplier Intel",
     icon: ShieldCheck,

@@ -159,13 +159,13 @@ export async function GET(request: NextRequest) {
         serviceType = link.type === 'corporate-gift' ? 'CORPORATE_GIFT' : 'INVOICE';
         serviceName =
           link.type === 'corporate-gift'
-            ? `Corporate Gift Payment - ${linkedInvoice.invoiceNumber}`
+            ? `Corporate Sourcing Payment - ${linkedInvoice.invoiceNumber}`
             : `Invoice Payment - ${linkedInvoice.invoiceNumber}`;
         links.push({ label: 'Invoice', href: `/dashboard/invoicing/${linkedInvoice.pidInvoice}` });
         if (link.type === 'corporate-gift') {
           links.push({
-            label: 'Gift Request',
-            href: `/dashboard/corporate-gifts?pidRequest=${link.id}`,
+            label: 'Sourcing Request',
+            href: `/dashboard/corporate-sourcing?pidRequest=${link.id}`,
           });
         }
         if (link.type === 'shipping-only') {
@@ -226,13 +226,13 @@ export async function GET(request: NextRequest) {
         paymentMethod: row.paymentMethod,
         reference: row.reference || row.pidInvoicePayment,
         serviceName: isCorporateGift
-          ? `Corporate Gift Payment - ${row.invoice?.invoiceNumber || ''}`.trim()
+          ? `Corporate Sourcing Payment - ${row.invoice?.invoiceNumber || ''}`.trim()
           : `Invoice Payment - ${row.invoice?.invoiceNumber || ''}`.trim(),
         serviceType: isCorporateGift ? 'CORPORATE_GIFT' : 'INVOICE',
         links: [
           { label: 'Invoice', href: `/dashboard/invoicing/${row.invoice?.pidInvoice}` },
           ...(link.type === 'corporate-gift'
-            ? [{ label: 'Gift Request', href: `/dashboard/corporate-gifts?pidRequest=${link.id}` }]
+            ? [{ label: 'Sourcing Request', href: `/dashboard/corporate-sourcing?pidRequest=${link.id}` }]
             : []),
           ...(link.type === 'shipping-only'
             ? [{ label: 'Shipping Request', href: `/dashboard/shipping-only?pidRequest=${link.id}` }]
@@ -261,13 +261,13 @@ export async function GET(request: NextRequest) {
         paymentMethod: 'CUSTOMER_CLAIM',
         reference: row.paymentReference || row.pidClaim,
         serviceName: isCorporateGift
-          ? `Corporate Gift Claim - ${row.invoice?.invoiceNumber || ''}`.trim()
+          ? `Corporate Sourcing Claim - ${row.invoice?.invoiceNumber || ''}`.trim()
           : `Invoice Claim - ${row.invoice?.invoiceNumber || ''}`.trim(),
         serviceType: isCorporateGift ? 'CORPORATE_GIFT' : 'INVOICE',
         links: [
           { label: 'Invoice', href: `/dashboard/invoicing/${row.invoice?.pidInvoice}` },
           ...(link.type === 'corporate-gift'
-            ? [{ label: 'Gift Request', href: `/dashboard/corporate-gifts?pidRequest=${link.id}` }]
+            ? [{ label: 'Sourcing Request', href: `/dashboard/corporate-sourcing?pidRequest=${link.id}` }]
             : []),
           ...(link.type === 'shipping-only'
             ? [{ label: 'Shipping Request', href: `/dashboard/shipping-only?pidRequest=${link.id}` }]

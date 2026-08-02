@@ -89,7 +89,7 @@ export async function updateCorporateGiftRequestAction(
   const isCancellation = status === 'Cancelled';
 
   if (status === 'Invoiced') {
-    throw new Error('Corporate gift requests can only move to Invoiced when a linked invoice is issued.');
+    throw new Error('Corporate sourcing requests can only move to Invoiced when a linked invoice is issued.');
   }
 
   if (!isCancellation) {
@@ -135,10 +135,10 @@ export async function updateCorporateGiftRequestAction(
     });
   }
 
-  revalidatePath('/dashboard/corporate-gifts');
+  revalidatePath('/dashboard/corporate-sourcing');
   return {
     ok: true,
-    message: `Corporate gift request updated to ${status}.${formatNotificationMessage(notification)}`,
+    message: `Corporate sourcing request updated to ${status}.${formatNotificationMessage(notification)}`,
     notification: notification || undefined,
   };
 }
@@ -163,5 +163,5 @@ export async function assignCorporateGiftRequestAction(formData: FormData) {
     },
   });
 
-  revalidatePath('/dashboard/corporate-gifts');
+  revalidatePath('/dashboard/corporate-sourcing');
 }

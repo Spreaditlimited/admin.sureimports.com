@@ -242,7 +242,7 @@ Rules:
      Do not describe this service as supplier search, manufacturer research, clearer cost consulting, custom sourcing or strategy.
   2. /ship-with-us
      Use only when the reader already bought goods or has a supplier sending goods to the SureImports China warehouse and needs shipping-only logistics, consolidation updates and delivery support.
-  3. /corporate-gifts
+  3. /corporate-sourcing
      Use for business or bulk sourcing, branded/custom products, supplier search, product comparison, quote review, budget/cost breakdowns, inspection planning, packaging, shipping and delivery support.
   4. https://linescout.sureimports.com/
      Use for machines, production equipment, industrial equipment or technical sourcing guidance where specification review and supplier qualification matter.
@@ -252,7 +252,7 @@ Rules:
      Use for bulk laptop needs for teams, schools, companies or resellers.
   7. /shipping-rate or /tools/landed-cost-estimator
      Use only for calculator/tool intent where the next best action is estimating shipping or landed cost, not requesting sourcing support.
-- If the blog topic is about landed cost clarity, manufacturer research, supplier comparison, MOQ, custom products, quality checks or sourcing strategy, choose /corporate-gifts unless it is clearly about machines/equipment, then choose https://linescout.sureimports.com/.
+- If the blog topic is about machinery, equipment, landed cost clarity, manufacturer research, supplier comparison, MOQ, custom products, quality checks or sourcing strategy, choose /corporate-sourcing. Use LineScout only when the article specifically calls for its dedicated machinery guidance experience.
 - Keep the PDF content compact enough for a short downloadable guide/checklist.
 
 Return only valid JSON with:

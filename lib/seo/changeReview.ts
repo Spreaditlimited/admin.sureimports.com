@@ -252,7 +252,7 @@ Critical rules:
 - Add internal links naturally only when relevant.
 - Use only exact URLs from the approved link catalog or approved internal link suggestions. Do not invent URLs from service names.
 - Import Hub must use /import-from-china-to-nigeria, not /import-hub.
-- Corporate Sourcing must use /corporate-gifts, not /corporate-sourcing.
+- Corporate Sourcing must use /corporate-sourcing, not /corporate-gifts.
 - LineScout must use https://linescout.sureimports.com/, not /linescout.
 - Prioritize Supplier Intelligence whenever the article discusses finding suppliers, checking suppliers, choosing product categories, requesting quotes, avoiding scams, supplier contact, MOQ, invoices, or payment risk.
 - If adding a CTA, use an exact URL from the approved link catalog, approved internal link suggestions, or approved CTA intent.
