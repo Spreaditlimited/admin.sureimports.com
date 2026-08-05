@@ -31,6 +31,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/intelligence/addresses": "Company Addresses",
   "/dashboard/intelligence/categories": "Supplier Categories",
   "/dashboard/intelligence/research": "Supplier Research Agent",
+  "/dashboard/intelligence/reports": "Supplier Intelligence Reports",
   "/dashboard/intelligence/reviews": "Supplier Intelligence Reviews",
   "/dashboard/intelligence/settings": "Supplier Intelligence Pricing",
   "/dashboard/marketing": "Marketing",
@@ -43,6 +44,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/profile": "Profile",
   "/dashboard/refunds": "Refunds",
   "/dashboard/service-charges": "Service Charge & VAT",
+  "/dashboard/social-studio": "Social Studio",
   "/dashboard/settings": "Settings",
   "/dashboard/shipping-only": "Shipping Only",
   "/dashboard/shipping-plans": "Shipping Plans",
@@ -72,7 +74,10 @@ function formatStatus(value: string | null): string {
     .join(" ");
 }
 
-export function getDashboardBrowserTitle(pathname: string, status: string | null): string {
+export function getDashboardBrowserTitle(
+  pathname: string,
+  status: string | null,
+): string {
   const routeTitle =
     pageTitles[pathname] ||
     dynamicPageTitles.find(([pattern]) => pattern.test(pathname))?.[1] ||

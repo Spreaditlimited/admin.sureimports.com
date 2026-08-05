@@ -106,7 +106,7 @@ export default function CompanyContactsForm() {
         <ContactCard
           icon={MapPin}
           title="Lagos Address"
-          description="Shown in customer-facing account areas that need the Nigerian office address."
+          description="Shown in customer-facing account areas that need the Sure Imports local office address."
           value={contacts.lagosAddress}
           onChange={(value) => updateField('lagosAddress', value)}
           rows={5}

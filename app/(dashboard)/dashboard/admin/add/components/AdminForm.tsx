@@ -36,6 +36,7 @@ const SERVICE_OPTIONS = [
   { key: 'blog_management', label: 'Blog Management' },
   { key: 'supplier_intelligence', label: 'Supplier Intelligence' },
   { key: 'consultations', label: 'Consultations' },
+  { key: 'social_studio', label: 'Social Studio' },
 ] as const;
 
 const Page = () => {

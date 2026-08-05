@@ -45,8 +45,12 @@ export function categoriesAreCloselyRelated(a: string, b: string) {
   if (!aTokens.size || !bTokens.size) return false;
 
   const intersection = Array.from(aTokens).filter((token) => bTokens.has(token));
-  const smallerSize = Math.min(aTokens.size, bTokens.size);
 
-  return intersection.length === smallerSize;
+  // A broad category must not absorb a more specific commercial category.
+  // For example, "Diesel Generators" and "Brand-engine diesel generators"
+  // belong in separate supplier reports even though they share core words.
+  return (
+    intersection.length === aTokens.size &&
+    intersection.length === bTokens.size
+  );
 }
-

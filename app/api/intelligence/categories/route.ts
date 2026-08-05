@@ -183,12 +183,15 @@ export async function GET() {
       LEFT JOIN intelligence_suppliers s
         ON s.pidSupplier = sc.supplierId
         AND s.status = 'published'
+        AND s.verificationStatus = 'official_site_contact_confirmed'
+        AND s.whatsapp IS NOT NULL
+        AND s.whatsapp <> ''
+        AND s.lastVerifiedAt IS NOT NULL
       WHERE n.status = 'published'
       ORDER BY n.name ASC, s.supplierName ASC
     `;
 
     const categories = new Map<string, any>();
-    addSeededCategories(categories);
 
     for (const row of rows) {
       const categoryKey = findCategoryKey(categories, row.name, row.pidNiche);

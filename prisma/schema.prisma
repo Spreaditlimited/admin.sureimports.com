@@ -173,6 +173,78 @@ model admin_permissions {
   @@index([serviceKey], map: "admin_permissions_serviceKey_idx")
 }
 
+model social_campaign {
+  id                 Int                  @id @default(autoincrement())
+  pidCampaign        String               @unique() @db.VarChar(80)
+  sourceType         String               @db.VarChar(40)
+  sourceRef          String?              @db.VarChar(500)
+  sourceTitle        String?              @db.VarChar(500)
+  contentPillar      String               @db.VarChar(80)
+  status             String               @default("draft") @db.VarChar(40)
+  headline           String               @db.VarChar(255)
+  accentPhrase       String?              @db.VarChar(120)
+  subtext            String               @db.VarChar(500)
+  actionLabel        String               @db.VarChar(255)
+  instagramCaption   String               @db.LongText
+  facebookCaption    String               @db.LongText
+  imagePrompt        String               @db.LongText
+  demandRationale    String?              @db.Text
+  includeWhatsapp    Boolean              @default(false)
+  backgroundImageUrl String?              @db.Text
+  backgroundPublicId String?              @db.VarChar(500)
+  designImageUrl     String?              @db.Text
+  designPublicId     String?              @db.VarChar(500)
+  scheduledFor       DateTime?
+  approvedAt         DateTime?
+  approvedBy         String?              @db.VarChar(100)
+  generatedAt        DateTime             @default(now())
+  publishedAt        DateTime?
+  lastError          String?              @db.Text
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  publications       social_publication[]
+
+  @@index([status, scheduledFor])
+  @@index([sourceType])
+  @@index([createdAt])
+}
+
+model social_publication {
+  id             Int             @id @default(autoincrement())
+  pidPublication String          @unique() @db.VarChar(80)
+  pidCampaign    String          @db.VarChar(80)
+  platform       String          @db.VarChar(40)
+  status         String          @default("pending") @db.VarChar(40)
+  externalId     String?         @db.VarChar(255)
+  externalUrl    String?         @db.Text
+  attempts       Int             @default(0)
+  lastError      String?         @db.Text
+  publishedAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  campaign       social_campaign @relation(fields: [pidCampaign], references: [pidCampaign], onDelete: Cascade)
+
+  @@unique([pidCampaign, platform])
+  @@index([status])
+}
+
+model social_connection {
+  id                   Int       @id @default(autoincrement())
+  platform             String    @unique() @db.VarChar(40)
+  status               String    @default("active") @db.VarChar(40)
+  accountName          String?   @db.VarChar(255)
+  accountId            String?   @db.VarChar(255)
+  pageId               String?   @db.VarChar(255)
+  instagramUserId      String?   @db.VarChar(255)
+  instagramUsername    String?   @db.VarChar(255)
+  encryptedAccessToken String    @db.LongText
+  tokenExpiresAt       DateTime?
+  connectedBy          String?   @db.VarChar(100)
+  lastVerifiedAt       DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
 model users {
   id                   Int                      @id @default(autoincrement())
   pidUser              String                   @unique()
@@ -482,8 +554,8 @@ model pay_supplier {
 }
 
 model shipping_only {
-  id                      Int                        @id @default(autoincrement())
-  pidShippingOnly         String                     @unique()
+  id                      Int       @id @default(autoincrement())
+  pidShippingOnly         String    @unique()
   pidUser                 String?
   whatsappNumber          String?
   shippingName            String?
@@ -500,7 +572,7 @@ model shipping_only {
   xStatus                 String?
   ext1                    String?
   ext2                    String?
-  createdAt               DateTime?                  @default(now())
+  createdAt               DateTime? @default(now())
   updatedAt               DateTime?
 }
 
@@ -1299,4 +1371,79 @@ model invoice_audit_logs {
   @@index([pidInvoice])
   @@index([pidUser])
   @@index([createdAt])
+}
+
+model intelligence_report_products {
+  id               Int       @id @default(autoincrement())
+  pidReport        String    @unique() @db.VarChar(80)
+  nicheId          String    @unique() @db.VarChar(80)
+  slug             String    @unique() @db.VarChar(180)
+  title            String    @db.VarChar(220)
+  subtitle         String?   @db.VarChar(255)
+  description      String?   @db.Text
+  editionLabel     String    @db.VarChar(120)
+  coverImageUrl    String?   @db.VarChar(1000)
+  priceNaira       Int
+  priceUsdCents    Int
+  status           String    @default("draft") @db.VarChar(40)
+  currentVersionId String?   @db.VarChar(80)
+  supplierCount    Int       @default(0)
+  publishedAt      DateTime?
+  createdByPidUser String?   @db.VarChar(191)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now())
+
+  @@index([status, publishedAt])
+  @@index([currentVersionId])
+}
+
+model intelligence_report_versions {
+  id                 Int       @id @default(autoincrement())
+  pidVersion         String    @unique() @db.VarChar(80)
+  reportId           String    @db.VarChar(80)
+  versionNumber      Int
+  editionLabel       String    @db.VarChar(120)
+  supplierSnapshot   Json
+  supplierCount      Int       @default(0)
+  pdfUrl             String?   @db.VarChar(1000)
+  pdfPublicId        String?   @db.VarChar(500)
+  fileBytes          Int?
+  status             String    @default("generated") @db.VarChar(40)
+  generatedByPidUser String?   @db.VarChar(191)
+  generatedAt        DateTime  @default(now())
+  approvedAt         DateTime?
+  publishedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now())
+
+  @@unique([reportId, versionNumber])
+  @@index([reportId, status])
+}
+
+model intelligence_report_orders {
+  id                Int       @id @default(autoincrement())
+  pidOrder          String    @unique() @db.VarChar(80)
+  reportId          String    @db.VarChar(80)
+  versionId         String    @db.VarChar(80)
+  pidUser           String?   @db.VarChar(191)
+  email             String    @db.VarChar(255)
+  firstName         String?   @db.VarChar(120)
+  lastName          String?   @db.VarChar(120)
+  billingCountry    String?   @db.VarChar(120)
+  paymentProvider   String    @db.VarChar(40)
+  providerReference String?   @unique() @db.VarChar(160)
+  status            String    @default("pending") @db.VarChar(40)
+  amountMinor       Int
+  currency          String    @db.VarChar(10)
+  downloadToken     String    @unique() @db.VarChar(160)
+  downloadCount     Int       @default(0)
+  paidAt            DateTime?
+  fulfilledAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now())
+
+  @@index([reportId, status])
+  @@index([versionId])
+  @@index([pidUser, status])
+  @@index([email, status])
 }

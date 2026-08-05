@@ -20,6 +20,7 @@ const SERVICE_KEYS = new Set([
   'blog_management',
   'supplier_intelligence',
   'consultations',
+  'social_studio',
   'system_settings',
 ]);
 

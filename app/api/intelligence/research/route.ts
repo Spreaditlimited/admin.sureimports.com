@@ -6,7 +6,6 @@ import { prisma } from '@/lib/prisma';
 import {
   canonicalCategoryKey,
   categoriesAreCloselyRelated,
-  normalizeCategoryTokens,
 } from '@/lib/intelligence/categoryNormalization';
 import {
   normalizeSupplierResearchCandidate,
@@ -16,6 +15,10 @@ import {
   SUPPLIER_RESEARCH_RULES,
 } from '@/lib/intelligence/supplierResearchRules';
 import { requireAdmin, unauthorized } from '../../invoicing/_lib/invoicing';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 type ResearchSupplierDraft = {
   supplierName: string;
@@ -382,24 +385,6 @@ function normalizeList(value: unknown, maxItems = 12) {
   return normalizeSupplierResearchList(value, maxItems);
 }
 
-function categoryLooksRelevant(categoryName: string, supplier: ResearchSupplierDraft) {
-  const categoryTokens = normalizeCategoryTokens(categoryName).filter(
-    (token) => token.length > 2,
-  );
-  if (categoryTokens.length === 0) return false;
-
-  const supplierText = [
-    supplier.productFit,
-    ...(supplier.productsMade || []),
-    ...(supplier.suggestedCategories || []),
-  ]
-    .join(' ')
-    .toLowerCase();
-
-  const supplierTokens = new Set(normalizeCategoryTokens(supplierText));
-  return categoryTokens.some((token) => supplierTokens.has(token));
-}
-
 async function upsertNiche(name: string, summary?: string | null) {
   const nicheName = clean(name, 180);
   const slug = slugify(nicheName);
@@ -558,14 +543,12 @@ async function unpublishSupplierDraft(supplier: ResearchSupplierDraft) {
 async function publishSupplierDraft(
   supplier: ResearchSupplierDraft,
   pidNiche: string,
-  publishedNiches: Array<{ pidNiche: string; name: string }>,
 ) {
   const supplierName = clean(supplier.supplierName, 180);
   const officialWebsite = clean(supplier.officialWebsite, 500);
   if (!supplierName || !officialWebsite) return false;
 
   const productsMade = normalizeList(supplier.productsMade);
-  const suggestedCategories = normalizeList(supplier.suggestedCategories, 8);
 
   const duplicate = await prisma.$queryRaw<Array<{ pidSupplier: string }>>`
     SELECT pidSupplier
@@ -650,19 +633,6 @@ async function publishSupplierDraft(
 
   await linkSupplierToNiche(pidSupplier, pidNiche, 'primary');
 
-  for (const categoryName of suggestedCategories) {
-    const suggestedNicheId = await upsertNiche(categoryName);
-    if (suggestedNicheId) {
-      await linkSupplierToNiche(pidSupplier, suggestedNicheId, 'research_suggestion');
-    }
-  }
-
-  for (const niche of publishedNiches) {
-    if (niche.pidNiche !== pidNiche && categoryLooksRelevant(niche.name, supplier)) {
-      await linkSupplierToNiche(pidSupplier, niche.pidNiche, 'auto_match');
-    }
-  }
-
   return true;
 }
 
@@ -678,13 +648,15 @@ async function runSupplierResearch(input: {
   }
 
   const prompt = [
-    'You are a supplier research analyst for Sure Imports, a China sourcing and shipping company serving Nigerian importers.',
+    'You are a supplier research analyst for Sure Imports, a China sourcing and shipping company serving importers worldwide.',
     `Research the niche: ${input.nicheName}.`,
     input.imageUrl
       ? 'An image is attached. Use it only to understand the exact product being searched for, then apply the same supplier research rules below without changing them.'
       : '',
     `Return ${input.targetSupplierCount} solid supplier candidates.`,
     input.requestNotes ? `Admin notes: ${input.requestNotes}` : '',
+    'Success means every returned candidate is a high-confidence direct manufacturer, names the specific product categories it manufactures, has category-specific production evidence, has an attributable official WhatsApp route, and contains a publication-ready commercial assessment. Return fewer candidates rather than filling the list with a weak or uncertain supplier.',
+    'Before returning JSON, check every candidate against every rule. Remove any candidate whose manufacturer status, product fit, or official contact attribution is uncertain.',
     ...SUPPLIER_RESEARCH_RULES,
     'Return only JSON with this exact shape:',
     JSON.stringify(supplierResearchJsonShape(input.nicheName)),
@@ -699,12 +671,10 @@ async function runSupplierResearch(input: {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model:
-        process.env.SUPPLIER_RESEARCH_MODEL ||
-        process.env.SEO_AUTOMATION_MODEL ||
-        process.env.OPENAI_MODEL ||
-        'gpt-5.5',
+      model: 'gpt-5.6-sol',
+      reasoning: { effort: 'max' },
       tools: [{ type: 'web_search_preview' }],
+      background: true,
       input: input.imageUrl
         ? [
             {
@@ -724,7 +694,33 @@ async function runSupplierResearch(input: {
     throw new Error(`OpenAI research failed: ${response.status} ${clean(errorText, 500)}`);
   }
 
-  const data = await response.json();
+  let data = await response.json();
+  while (data.status === 'queued' || data.status === 'in_progress') {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    const pollResponse = await fetch(
+      `https://api.openai.com/v1/responses/${encodeURIComponent(data.id)}`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      },
+    );
+    if (!pollResponse.ok) {
+      const errorText = await pollResponse.text().catch(() => '');
+      throw new Error(
+        `OpenAI research polling failed: ${pollResponse.status} ${clean(errorText, 500)}`,
+      );
+    }
+    data = await pollResponse.json();
+  }
+  if (data.status !== 'completed') {
+    throw new Error(
+      clean(
+        data.error?.message ||
+          data.incomplete_details?.reason ||
+          `OpenAI research ended with status ${data.status || 'unknown'}.`,
+        500,
+      ),
+    );
+  }
   const outputText =
     data.output_text ||
     data.output
@@ -749,7 +745,9 @@ async function runSupplierResearch(input: {
   }
 
   return {
-    nicheName: clean(draft.nicheName || input.nicheName, 180),
+    // The admin-selected niche is authoritative. Model-generated wording must
+    // not create a second, near-duplicate catalogue category during approval.
+    nicheName: clean(input.nicheName, 180),
     summary: clean(draft.summary, 1200),
     suppliers,
   };
@@ -1302,10 +1300,6 @@ export async function PATCH(request: NextRequest) {
     }
     const resultSlug = await getNicheSlugByPid(pidNiche);
 
-    const publishedNiches = await prisma.$queryRaw<Array<{ pidNiche: string; name: string }>>`
-      SELECT pidNiche, name FROM intelligence_niches WHERE status = 'published'
-    `;
-
     if (
       action === 'approve_supplier' ||
       action === 'reject_supplier' ||
@@ -1320,7 +1314,7 @@ export async function PATCH(request: NextRequest) {
       }
 
       if (action === 'approve_supplier') {
-        await publishSupplierDraft(draft.suppliers[supplierIndex], pidNiche, publishedNiches);
+        await publishSupplierDraft(draft.suppliers[supplierIndex], pidNiche);
       }
       if (action === 'unapprove_supplier') {
         await unpublishSupplierDraft(draft.suppliers[supplierIndex]);
@@ -1340,7 +1334,7 @@ export async function PATCH(request: NextRequest) {
       for (let index = 0; index < (draft.suppliers || []).length; index += 1) {
         const supplier = draft.suppliers[index];
         if (supplier.reviewStatus === 'rejected') continue;
-        await publishSupplierDraft(supplier, pidNiche, publishedNiches);
+        await publishSupplierDraft(supplier, pidNiche);
         draft.suppliers[index] = {
           ...supplier,
           reviewStatus: 'approved',

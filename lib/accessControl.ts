@@ -16,6 +16,7 @@ export const ALL_SERVICE_KEYS = [
   "blog_management",
   "supplier_intelligence",
   "consultations",
+  "social_studio",
   "system_settings",
 ] as const;
 
@@ -27,6 +28,7 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/invoicing/receipts", serviceKey: "invoicing" },
   { prefix: "/dashboard/intelligence", serviceKey: "supplier_intelligence" },
   { prefix: "/dashboard/consultations", serviceKey: "consultations" },
+  { prefix: "/dashboard/social-studio", serviceKey: "social_studio" },
   { prefix: "/dashboard/procurement", serviceKey: "procurement" },
   { prefix: "/dashboard/corporate-sourcing", serviceKey: "corporate_gifts" },
   { prefix: "/dashboard/corporate-gifts", serviceKey: "corporate_gifts" },
@@ -101,6 +103,7 @@ const SERVICE_DEFAULT_ROUTE_MAP: Record<ServiceKey, string> = {
   blog_management: "/dashboard/blog/view",
   supplier_intelligence: "/dashboard/intelligence/reviews",
   consultations: "/dashboard/consultations",
+  social_studio: "/dashboard/social-studio",
   system_settings: "/dashboard/settings",
 };
 

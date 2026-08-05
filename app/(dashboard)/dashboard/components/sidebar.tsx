@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/AuthContext"
-import { useState, useEffect } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { useAuth } from "@/lib/AuthContext";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ChevronDown,
   LayoutDashboard,
@@ -20,30 +20,55 @@ import {
   BarChart3,
   CalendarClock,
   ShieldCheck,
-} from "lucide-react"
-import type React from "react"
-import { hasServiceAccess, isSuperAdminStatus, type ServiceKey } from "@/lib/accessControl"
+  Megaphone,
+} from "lucide-react";
+import type React from "react";
+import {
+  hasServiceAccess,
+  isSuperAdminStatus,
+  type ServiceKey,
+} from "@/lib/accessControl";
 
 interface SidebarProps {
-  isOpen: boolean
-  setIsOpen: (isOpen: boolean) => void
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
 interface MenuItem {
-  title: string
-  icon: React.ElementType
-  path: string
-  serviceKey?: ServiceKey
-  submenu?: { title: string; path: string }[]
+  title: string;
+  icon: React.ElementType;
+  path: string;
+  serviceKey?: ServiceKey;
+  submenu?: { title: string; path: string }[];
 }
 
 // --- Menu Configurations ---
-const dashboardItem: MenuItem = { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", serviceKey: "dashboard" }
+const dashboardItem: MenuItem = {
+  title: "Dashboard",
+  icon: LayoutDashboard,
+  path: "/dashboard",
+  serviceKey: "dashboard",
+};
 
 const features: MenuItem[] = [
-  { title: "Procurement", icon: ShoppingCart, path: "/dashboard/procurement?status=pending", serviceKey: "procurement" },
-  { title: "Shipping Only", icon: Ship, path: "/dashboard/shipping-only?status=request-received", serviceKey: "shipping_only" },
-  { title: "Corporate Sourcing", icon: Package, path: "/dashboard/corporate-sourcing", serviceKey: "corporate_gifts" },
+  {
+    title: "Procurement",
+    icon: ShoppingCart,
+    path: "/dashboard/procurement?status=pending",
+    serviceKey: "procurement",
+  },
+  {
+    title: "Shipping Only",
+    icon: Ship,
+    path: "/dashboard/shipping-only?status=request-received",
+    serviceKey: "shipping_only",
+  },
+  {
+    title: "Corporate Sourcing",
+    icon: Package,
+    path: "/dashboard/corporate-sourcing",
+    serviceKey: "corporate_gifts",
+  },
   {
     title: "Supplier Intel",
     icon: ShieldCheck,
@@ -51,16 +76,32 @@ const features: MenuItem[] = [
     serviceKey: "supplier_intelligence",
     submenu: [
       { title: "Categories", path: "/dashboard/intelligence/categories" },
+      { title: "Reports", path: "/dashboard/intelligence/reports" },
       { title: "Review Requests", path: "/dashboard/intelligence/reviews" },
       { title: "Research Agent", path: "/dashboard/intelligence/research" },
       { title: "Addresses", path: "/dashboard/intelligence/addresses" },
       { title: "Pricing", path: "/dashboard/intelligence/settings" },
     ],
   },
-  { title: "Consultations", icon: CalendarClock, path: "/dashboard/consultations", serviceKey: "consultations" },
-  { title: "Pay Supplier", icon: Landmark, path: "/dashboard/pay-supplier?status=saved", serviceKey: "pay_supplier" },
-  { title: "Pay Small Small", icon: HandCoins, path: "/dashboard/pay-small-small?status=SAVED", serviceKey: "pay_small_small" },
-]
+  {
+    title: "Consultations",
+    icon: CalendarClock,
+    path: "/dashboard/consultations",
+    serviceKey: "consultations",
+  },
+  {
+    title: "Pay Supplier",
+    icon: Landmark,
+    path: "/dashboard/pay-supplier?status=saved",
+    serviceKey: "pay_supplier",
+  },
+  {
+    title: "Pay Small Small",
+    icon: HandCoins,
+    path: "/dashboard/pay-small-small?status=SAVED",
+    serviceKey: "pay_small_small",
+  },
+];
 
 const store: MenuItem[] = [
   {
@@ -74,7 +115,7 @@ const store: MenuItem[] = [
       { title: "Store Orders", path: "/dashboard/store-sales" },
     ],
   },
-]
+];
 
 const customerAccounts: MenuItem[] = [
   {
@@ -84,10 +125,13 @@ const customerAccounts: MenuItem[] = [
     serviceKey: "customer_accounts",
     submenu: [
       { title: "Customers", path: "/dashboard/customer-accounts/customers" },
-      { title: "Wallet Transactions", path: "/dashboard/customer-accounts/transactions" },
+      {
+        title: "Wallet Transactions",
+        path: "/dashboard/customer-accounts/transactions",
+      },
     ],
   },
-]
+];
 
 const customerPayouts: MenuItem[] = [
   {
@@ -103,13 +147,21 @@ const customerPayouts: MenuItem[] = [
     serviceKey: "payout_requests",
     submenu: [
       { title: "Payout Requests", path: "/dashboard/payout-requests/requests" },
-      { title: "Payout History", path: "/dashboard/payout-requests/transactions" },
+      {
+        title: "Payout History",
+        path: "/dashboard/payout-requests/transactions",
+      },
     ],
   },
-]
+];
 
 const financials: MenuItem[] = [
-  { title: "Payments", icon: Wallet, path: "/dashboard/financials", serviceKey: "dashboard" },
+  {
+    title: "Payments",
+    icon: Wallet,
+    path: "/dashboard/financials",
+    serviceKey: "dashboard",
+  },
   {
     title: "Invoicing",
     icon: Wallet,
@@ -123,7 +175,7 @@ const financials: MenuItem[] = [
       { title: "Invoicing Settings", path: "/dashboard/invoicing/settings" },
     ],
   },
-]
+];
 
 const marketing: MenuItem[] = [
   {
@@ -139,7 +191,13 @@ const marketing: MenuItem[] = [
       { title: "Blog Publishers", path: "/dashboard/blog/publishers" },
     ],
   },
-]
+  {
+    title: "Social Studio",
+    icon: Megaphone,
+    path: "/dashboard/social-studio",
+    serviceKey: "social_studio",
+  },
+];
 
 const systemSettings: MenuItem[] = [
   { title: "Profile", icon: UserCog, path: "/dashboard/profile" },
@@ -157,74 +215,91 @@ const systemSettings: MenuItem[] = [
       { title: "Bank Accounts", path: "/dashboard/invoicing/bank-accounts" },
     ],
   },
-]
+];
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
-  const { user, logout } = useAuth()
-  const pathname = usePathname()
-  const router = useRouter()
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const serviceKeys = user?.serviceKeys || []
-  const isSuperAdmin = isSuperAdminStatus(user?.userStatus)
+  const { user, logout } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const serviceKeys = user?.serviceKeys || [];
+  const isSuperAdmin = isSuperAdminStatus(user?.userStatus);
   const canAccess = (serviceKey?: ServiceKey) => {
-    if (!serviceKey) return true
-    return hasServiceAccess(serviceKey, user?.userStatus, serviceKeys)
-  }
-  const visibleFeatures = features.filter((item) => canAccess(item.serviceKey))
-  const visibleCustomerAccounts = customerAccounts.filter((item) => canAccess(item.serviceKey))
-  const visibleCustomerPayouts = customerPayouts.filter((item) => canAccess(item.serviceKey))
-  const visibleFinancials = financials.filter((item) => canAccess(item.serviceKey))
-  const visibleStore = store.filter((item) => canAccess(item.serviceKey))
-  const visibleMarketing = isSuperAdmin ? marketing : []
-  const visibleSystemSettings = systemSettings.filter((item) => canAccess(item.serviceKey))
+    if (!serviceKey) return true;
+    return hasServiceAccess(serviceKey, user?.userStatus, serviceKeys);
+  };
+  const visibleFeatures = features.filter((item) => canAccess(item.serviceKey));
+  const visibleCustomerAccounts = customerAccounts.filter((item) =>
+    canAccess(item.serviceKey),
+  );
+  const visibleCustomerPayouts = customerPayouts.filter((item) =>
+    canAccess(item.serviceKey),
+  );
+  const visibleFinancials = financials.filter((item) =>
+    canAccess(item.serviceKey),
+  );
+  const visibleStore = store.filter((item) => canAccess(item.serviceKey));
+  const visibleMarketing = marketing.filter((item) =>
+    item.serviceKey ? canAccess(item.serviceKey) : isSuperAdmin,
+  );
+  const visibleSystemSettings = systemSettings.filter((item) =>
+    canAccess(item.serviceKey),
+  );
 
   // Handle responsive behavior
   useEffect(() => {
     const checkWidth = () => {
-      const width = window.innerWidth
-      setIsMobile(width < 768)
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
       if (width < 768) {
-        setIsOpen(false)
+        setIsOpen(false);
       } else {
-        setIsOpen(true)
+        setIsOpen(true);
       }
-    }
+    };
 
-    checkWidth()
-    window.addEventListener("resize", checkWidth)
-    return () => window.removeEventListener("resize", checkWidth)
-  }, [setIsOpen])
+    checkWidth();
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
+  }, [setIsOpen]);
 
   const toggleSubmenu = (title: string) => {
     if (!isCollapsed) {
-      setOpenMenus((prev) => ({ ...prev, [title]: !prev[title] }))
+      setOpenMenus((prev) => ({ ...prev, [title]: !prev[title] }));
     }
-  }
+  };
 
   const handleItemClick = (path: string) => {
-    router.push(path)
-    if (isMobile) setIsOpen(false) // Auto-close on mobile after navigation
-  }
+    router.push(path);
+    if (isMobile) setIsOpen(false); // Auto-close on mobile after navigation
+  };
 
   // Individual Menu Item Component
   const MenuItemComponent = ({ item }: { item: MenuItem }) => {
-    const isActive = pathname === item.path || item.submenu?.some(sub => pathname === sub.path)
-    const isSubmenuOpen = openMenus[item.title] ?? isActive
-    const hasSubmenu = item.submenu && item.submenu.length > 0
+    const isActive =
+      pathname === item.path ||
+      item.submenu?.some((sub) => pathname === sub.path);
+    const isSubmenuOpen = openMenus[item.title] ?? isActive;
+    const hasSubmenu = item.submenu && item.submenu.length > 0;
 
     return (
       <div className="relative group">
         <button
-          onClick={() => (hasSubmenu ? toggleSubmenu(item.title) : handleItemClick(item.path))}
+          onClick={() =>
+            hasSubmenu ? toggleSubmenu(item.title) : handleItemClick(item.path)
+          }
           className={`flex w-full items-center px-3 py-2.5 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset
-            ${isActive 
-              ? "bg-primary/10 text-primary font-medium" 
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ${
+              isActive
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
         >
-          <item.icon className={`h-4 w-4 min-w-[1rem] ${isActive ? "text-primary" : ""}`} />
+          <item.icon
+            className={`h-4 w-4 min-w-[1rem] ${isActive ? "text-primary" : ""}`}
+          />
           <span
             className={`flex-1 ml-3 text-left whitespace-nowrap overflow-hidden transition-all duration-300 
               ${isCollapsed ? "w-0 ml-0 opacity-0" : "w-auto opacity-100"}`}
@@ -232,7 +307,9 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             {item.title}
           </span>
           {hasSubmenu && !isCollapsed && (
-            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isSubmenuOpen ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`h-4 w-4 transition-transform duration-200 ${isSubmenuOpen ? "rotate-180" : ""}`}
+            />
           )}
         </button>
 
@@ -240,7 +317,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {hasSubmenu && (
           <div
             className={`
-            ${isCollapsed
+            ${
+              isCollapsed
                 ? "invisible group-hover:visible absolute left-full top-0 ml-2 w-48 bg-popover rounded-md shadow-soft border border-border z-50"
                 : "relative ml-5 border-l border-border mt-1"
             }
@@ -258,36 +336,39 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                       key={`${item.title}-${subitem.path}`}
                       href={subitem.path}
                       onClick={(e) => {
-                        e.preventDefault()
-                        handleItemClick(subitem.path)
+                        e.preventDefault();
+                        handleItemClick(subitem.path);
                       }}
                       className={`block px-3 py-2 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset
                         ${isCollapsed ? "" : "ml-2"}
-                        ${isSubActive 
-                          ? "bg-primary/10 text-primary font-medium" 
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        ${
+                          isSubActive
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }
                       `}
                     >
                       {subitem.title}
                     </a>
-                  )
+                  );
                 })}
               </div>
             </div>
           </div>
         )}
       </div>
-    )
-  }
+    );
+  };
 
   // Reusable Category Header
   const CategoryHeader = ({ title }: { title: string }) => (
-    <h2 className={`px-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 mt-6 overflow-hidden whitespace-nowrap transition-all duration-300 
-      ${isCollapsed ? "opacity-0 h-0 mt-0" : "opacity-100"}`}>
+    <h2
+      className={`px-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 mt-6 overflow-hidden whitespace-nowrap transition-all duration-300
+      ${isCollapsed ? "opacity-0 h-0 mt-0" : "opacity-100"}`}
+    >
       {title}
     </h2>
-  )
+  );
 
   return (
     <>
@@ -301,9 +382,9 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
       {/* Modern Glassmorphism Mobile Overlay */}
       {isMobile && isOpen && (
-        <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity" 
-          onClick={() => setIsOpen(false)} 
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity"
+          onClick={() => setIsOpen(false)}
         />
       )}
 
@@ -315,16 +396,25 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           flex flex-col border-r border-border bg-card transition-all duration-300 overflow-hidden h-screen
         `}
       >
-        
         {/* Header / Logo Area */}
-        <div className={`p-4 border-b border-border flex items-center h-16 ${isCollapsed ? "justify-center" : "justify-between"}`}>
-          <div className={`flex items-center space-x-3 overflow-hidden ${isCollapsed ? "w-0" : "w-auto"}`}>
-            <img src="/assets/images/logo2.png" alt="Sure Imports Logo" className="h-8 w-8 min-w-[2rem]" />
-            <span className="font-bold text-foreground whitespace-nowrap tracking-tight text-lg">Sure Imports</span>
+        <div
+          className={`p-4 border-b border-border flex items-center h-16 ${isCollapsed ? "justify-center" : "justify-between"}`}
+        >
+          <div
+            className={`flex items-center space-x-3 overflow-hidden ${isCollapsed ? "w-0" : "w-auto"}`}
+          >
+            <img
+              src="/assets/images/logo2.png"
+              alt="Sure Imports Logo"
+              className="h-8 w-8 min-w-[2rem]"
+            />
+            <span className="font-bold text-foreground whitespace-nowrap tracking-tight text-lg">
+              Sure Imports
+            </span>
           </div>
           {!isMobile && (
-            <button 
-              onClick={() => setIsCollapsed(!isCollapsed)} 
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-1.5 text-muted-foreground rounded-md hover:bg-muted hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <Menu className="h-4 w-4" />
@@ -333,10 +423,13 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </div>
 
         {/* User Greeting Panel */}
-        <div className={`border-b border-border bg-muted/20 transition-all duration-300 overflow-hidden
+        <div
+          className={`border-b border-border bg-muted/20 transition-all duration-300 overflow-hidden
           ${isCollapsed ? "h-0 opacity-0" : "p-4 opacity-100"}`}
         >
-          <p className="text-xs font-medium text-muted-foreground mb-0.5">Welcome back,</p>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Welcome back,
+          </p>
           <p className="text-sm font-bold text-foreground truncate">
             {user?.userFirstname || user?.userEmail || "Admin"}
           </p>
@@ -345,24 +438,33 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Navigation Area */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
           <div className="space-y-0.5">
-            {canAccess(dashboardItem.serviceKey) && <MenuItemComponent item={dashboardItem} />}
+            {canAccess(dashboardItem.serviceKey) && (
+              <MenuItemComponent item={dashboardItem} />
+            )}
           </div>
-          
+
           {visibleFeatures.length > 0 && (
             <>
               <CategoryHeader title="Services" />
               <div className="space-y-0.5">
-                {visibleFeatures.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+                {visibleFeatures.map((item) => (
+                  <MenuItemComponent key={item.path} item={item} />
+                ))}
               </div>
             </>
           )}
 
-          {(visibleCustomerAccounts.length > 0 || visibleCustomerPayouts.length > 0) && (
+          {(visibleCustomerAccounts.length > 0 ||
+            visibleCustomerPayouts.length > 0) && (
             <>
               <CategoryHeader title="Customer Accounts" />
               <div className="space-y-0.5">
-                {visibleCustomerAccounts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
-                {visibleCustomerPayouts.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+                {visibleCustomerAccounts.map((item) => (
+                  <MenuItemComponent key={item.path} item={item} />
+                ))}
+                {visibleCustomerPayouts.map((item) => (
+                  <MenuItemComponent key={item.path} item={item} />
+                ))}
               </div>
             </>
           )}
@@ -371,7 +473,9 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             <>
               <CategoryHeader title="Financials" />
               <div className="space-y-0.5">
-                {visibleFinancials.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+                {visibleFinancials.map((item) => (
+                  <MenuItemComponent key={item.path} item={item} />
+                ))}
               </div>
             </>
           )}
@@ -380,7 +484,9 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             <>
               <CategoryHeader title="Store" />
               <div className="space-y-0.5">
-                {visibleStore.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+                {visibleStore.map((item) => (
+                  <MenuItemComponent key={item.path} item={item} />
+                ))}
               </div>
             </>
           )}
@@ -389,7 +495,9 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             <>
               <CategoryHeader title="Marketing" />
               <div className="space-y-0.5">
-                {visibleMarketing.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+                {visibleMarketing.map((item) => (
+                  <MenuItemComponent key={item.path} item={item} />
+                ))}
               </div>
             </>
           )}
@@ -398,11 +506,12 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             <>
               <CategoryHeader title="System & Settings" />
               <div className="space-y-0.5">
-                {visibleSystemSettings.map((item) => <MenuItemComponent key={item.path} item={item} />)}
+                {visibleSystemSettings.map((item) => (
+                  <MenuItemComponent key={item.path} item={item} />
+                ))}
               </div>
             </>
           )}
-
         </nav>
 
         {/* Footer Actions */}
@@ -412,17 +521,20 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             className="flex w-full items-center px-3 py-2 text-sm font-medium text-destructive rounded-md hover:bg-destructive/10 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-inset"
           >
             <LogOut className="h-4 w-4 min-w-[1rem]" />
-            <span className={`ml-3 whitespace-nowrap transition-all duration-300 ${isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
+            <span
+              className={`ml-3 whitespace-nowrap transition-all duration-300 ${isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"}`}
+            >
               Logout
             </span>
           </button>
-          
-          <div className={`mt-3 text-xs text-center font-medium text-muted-foreground whitespace-nowrap transition-all duration-300 ${isCollapsed ? "opacity-0 h-0" : "opacity-100"}`}>
+
+          <div
+            className={`mt-3 text-xs text-center font-medium text-muted-foreground whitespace-nowrap transition-all duration-300 ${isCollapsed ? "opacity-0 h-0" : "opacity-100"}`}
+          >
             © {new Date().getFullYear()} Sure Imports
           </div>
         </div>
-
       </aside>
     </>
-  )
+  );
 }

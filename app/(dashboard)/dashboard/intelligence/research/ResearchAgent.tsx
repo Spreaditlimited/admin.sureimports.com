@@ -420,7 +420,7 @@ export default function IntelligenceResearchAgent() {
             <input
               value={nicheName}
               onChange={(event) => setNicheName(event.target.value)}
-              placeholder="Example: Salon equipment for Nigerian beauty businesses"
+              placeholder="Example: Salon equipment for beauty businesses in my target market"
               className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring"
             />
           </label>
@@ -999,7 +999,7 @@ function ResearchJobCard({
                   {Array.isArray(supplier.suggestedCategories) && supplier.suggestedCategories.length > 0 ? (
                     <div className="mt-3">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        Also list under
+                        Product specialisations
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {supplier.suggestedCategories.map((category) => (
@@ -1104,7 +1104,7 @@ function ResearchJobCard({
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 <Block label="Manufacturer evidence" value={supplier.manufacturerEvidence} />
                 <Block label="China registry check" value={supplier.chinaRegistryCheck} />
-                <Block label="Verification summary" value={supplier.verifiedFrom} />
+                <Block label="Internal evidence record" value={supplier.verifiedFrom} />
                 <Block label="Buyer notes" value={supplier.buyerNotes} />
               </div>
 
