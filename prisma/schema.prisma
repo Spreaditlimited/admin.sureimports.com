@@ -1447,3 +1447,37 @@ model intelligence_report_orders {
   @@index([pidUser, status])
   @@index([email, status])
 }
+
+model intelligence_report_requests {
+  id                   Int                                   @id @default(autoincrement())
+  pidRequest           String                                @unique() @db.VarChar(80)
+  query                String                                @db.VarChar(180)
+  normalizedQuery      String                                @unique() @db.VarChar(180)
+  status               String                                @default("requested") @db.VarChar(40)
+  voteCount            Int                                   @default(0)
+  selectedWeek         String?                               @db.VarChar(20)
+  queueSearchRequestId String?                               @db.VarChar(80)
+  publishedReportSlug  String?                               @db.VarChar(180)
+  createdAt            DateTime                              @default(now())
+  updatedAt            DateTime                              @default(now()) @updatedAt
+  votes                intelligence_report_request_votes[]
+
+  @@index([status, voteCount])
+  @@index([selectedWeek])
+  @@index([queueSearchRequestId])
+}
+
+model intelligence_report_request_votes {
+  id         Int                          @id @default(autoincrement())
+  pidVote    String                       @unique() @db.VarChar(80)
+  requestId  String                       @db.VarChar(80)
+  email      String                       @db.VarChar(255)
+  voterKey   String                       @db.VarChar(64)
+  weekKey    String                       @db.VarChar(20)
+  createdAt  DateTime                     @default(now())
+  request    intelligence_report_requests @relation(fields: [requestId], references: [pidRequest], onDelete: Cascade)
+
+  @@unique([requestId, voterKey, weekKey])
+  @@index([weekKey, createdAt])
+  @@index([email])
+}

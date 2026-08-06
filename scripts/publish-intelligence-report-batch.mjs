@@ -45,8 +45,8 @@ function publish(path, cookie, body) {
 
 async function main() {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  if (manifest.failures?.length || manifest.generated?.length !== 23) {
-    throw new Error("Publication blocked: the generation manifest does not contain 23 passing editions.");
+  if (manifest.failures?.length || manifest.generated?.length !== 25) {
+    throw new Error("Publication blocked: the generation manifest does not contain 25 passing editions.");
   }
   const cookie = await adminCookie();
   let published = 0;
@@ -60,7 +60,7 @@ async function main() {
       throw new Error(`${item.slug}: ${result.data?.error || `HTTP ${result.status}`}`);
     }
     published += 1;
-    console.log(JSON.stringify({ event: "published", progress: `${published}/23`, slug: item.slug }));
+    console.log(JSON.stringify({ event: "published", progress: `${published}/25`, slug: item.slug }));
   }
   const live = await prisma.intelligence_report_products.count({
     where: {

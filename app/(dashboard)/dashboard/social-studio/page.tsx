@@ -21,6 +21,7 @@ import {
 
 import { prisma } from '@/lib/prisma';
 import { getSocialAdmin, requireSocialAdmin } from '@/lib/social/auth';
+import { SOCIAL_STUDIO_ENABLED } from '@/lib/social/config';
 import { formatWat } from '@/lib/social/time';
 import {
   approveSocialCampaign,
@@ -144,7 +145,8 @@ function Caption({
 
 export default async function SocialStudioPage() {
   await requireSocialAdmin('view');
-  const canEdit = !!(await getSocialAdmin('edit'));
+  const hasEditAccess = !!(await getSocialAdmin('edit'));
+  const canEdit = SOCIAL_STUDIO_ENABLED && hasEditAccess;
   const [campaigns, connection] = await Promise.all([
     prisma.social_campaign.findMany({
       orderBy: { createdAt: 'desc' },
@@ -180,7 +182,11 @@ export default async function SocialStudioPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {connection?.status === 'active' ? (
+          {!SOCIAL_STUDIO_ENABLED ? (
+            <span className="inline-flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
+              <CalendarClock className="h-4 w-4" /> Service paused
+            </span>
+          ) : connection?.status === 'active' ? (
             <span className="inline-flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
               <Radio className="h-4 w-4" />@{connection.instagramUsername} connected
             </span>
@@ -225,13 +231,22 @@ export default async function SocialStudioPage() {
         />
         <MetricCard
           label="Publishing Window"
-          value="10:00 WAT"
-          note="Automated once-daily publication, seven days a week."
+          value={SOCIAL_STUDIO_ENABLED ? '10:00 WAT' : 'Paused'}
+          note={SOCIAL_STUDIO_ENABLED ? 'Automated once-daily publication, seven days a week.' : 'No generation or publishing jobs are scheduled.'}
           icon={CalendarClock}
         />
       </div>
 
-      {!connection ? (
+      {!SOCIAL_STUDIO_ENABLED ? (
+        <div className="flex gap-3 rounded-lg border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          <p>
+            Social Studio is paused. Automated generation, approval actions,
+            Meta connection and publishing are disabled until the service is
+            intentionally enabled.
+          </p>
+        </div>
+      ) : !connection ? (
         <div className="flex gap-3 rounded-lg border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <p>
@@ -242,7 +257,7 @@ export default async function SocialStudioPage() {
         </div>
       ) : null}
 
-      {!canEdit ? (
+      {!hasEditAccess ? (
         <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
           Your admin role has view-only Social Studio access.
         </div>

@@ -34,6 +34,8 @@ const CATEGORY_TERMS: Record<string, string[]> = {
   "home-storage-and-organization": ["storage", "organizer", "organiser", "shelving", "bin", "basket", "closet", "wardrobe"],
   "human-hair": ["human hair", "wig", "bundle", "closure", "frontal", "hair extension"],
   "phone-accessories": ["phone", "mobile", "charger", "cable", "power bank", "earbud", "case", "screen protector"],
+  "womens-two-piece-sets-shapewear-and-activewear": ["two-piece", "two piece", "co-ord", "matching set", "shapewear", "body shaper", "activewear", "sports bra", "legging", "yoga"],
+  "makeup-and-colour-cosmetics": ["makeup", "colour cosmetic", "color cosmetic", "lipstick", "lip gloss", "foundation", "concealer", "mascara", "eyeliner", "eyeshadow", "blush", "powder"],
 };
 
 const WEAK_LANGUAGE = [

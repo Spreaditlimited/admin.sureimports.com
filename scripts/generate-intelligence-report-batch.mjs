@@ -76,7 +76,7 @@ async function main() {
     },
     orderBy: { slug: "asc" },
   });
-  const expectedCount = requestedSlugs.length || 23;
+  const expectedCount = requestedSlugs.length || 25;
   if (reports.length !== expectedCount) {
     throw new Error(`Expected ${expectedCount} prepared reports; found ${reports.length}.`);
   }

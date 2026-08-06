@@ -81,6 +81,7 @@ type SearchRequest = {
   status: string;
   creditCost: number;
   creditReserved: boolean;
+  creditSource: string | null;
   relatedPidJob: string | null;
   adminNotes: string | null;
   createdAt: string;
@@ -530,11 +531,11 @@ export default function IntelligenceResearchAgent() {
         <div className="flex items-center justify-between px-1">
           <div>
             <h2 className="text-lg font-bold text-foreground">
-              User Search Requests
+              Research Queue
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Freemium and Pro search-credit requests. Generate a draft, then
-              approve suppliers before publishing.
+              Customer searches and weekly Research Radar winners. Generate a
+              draft, then approve suppliers before publishing.
             </p>
           </div>
           <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
@@ -686,6 +687,11 @@ function SearchRequestCard({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
+            {request.creditSource === 'market_demand' ? (
+              <span className="rounded-full border border-violet-500/25 bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-violet-700 dark:text-violet-300">
+                Research Radar winner
+              </span>
+            ) : null}
             <span
               className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${statusClass(
                 request.status,
@@ -702,7 +708,11 @@ function SearchRequestCard({
           </h3>
           <div className="mt-2 flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             <span>{request.targetSupplierCount} suppliers</span>
-            <span>{request.creditCost} credit used</span>
+            {request.creditSource === 'market_demand' ? (
+              <span>Selected by customer demand</span>
+            ) : (
+              <span>{request.creditCost} credit used</span>
+            )}
             <span>{request.email}</span>
             <span className="inline-flex items-center gap-1">
               <CalendarClock className="h-3 w-3" />

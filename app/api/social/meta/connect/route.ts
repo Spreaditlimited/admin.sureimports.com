@@ -2,11 +2,12 @@ import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 
 import { getSocialAdmin } from '@/lib/social/auth';
-import { adminBaseUrl, META_GRAPH_VERSION } from '@/lib/social/config';
+import { adminBaseUrl, META_GRAPH_VERSION, SOCIAL_STUDIO_ENABLED } from '@/lib/social/config';
 
 export async function GET() {
   const admin = await getSocialAdmin('edit');
   if (!admin) return NextResponse.redirect(`${adminBaseUrl()}/dashboard`);
+  if (!SOCIAL_STUDIO_ENABLED) return NextResponse.redirect(`${adminBaseUrl()}/dashboard/social-studio?meta=studio_paused`);
   if (!process.env.META_APP_ID || !process.env.META_APP_SECRET) return NextResponse.redirect(`${adminBaseUrl()}/dashboard/social-studio?meta=missing_config`);
   const state = crypto.randomBytes(24).toString('hex');
   const callback = `${adminBaseUrl()}/api/social/meta/callback`;

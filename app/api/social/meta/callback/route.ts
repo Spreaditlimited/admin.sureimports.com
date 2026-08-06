@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 import { getSocialAdmin } from '@/lib/social/auth';
-import { adminBaseUrl, META_GRAPH_VERSION, SURE_IMPORTS_INSTAGRAM } from '@/lib/social/config';
+import { adminBaseUrl, META_GRAPH_VERSION, SOCIAL_STUDIO_ENABLED, SURE_IMPORTS_INSTAGRAM } from '@/lib/social/config';
 import { encryptSocialToken } from '@/lib/social/crypto';
 import { prisma } from '@/lib/prisma';
 
@@ -10,6 +10,7 @@ const graph = `https://graph.facebook.com/${META_GRAPH_VERSION}`;
 function studio(status: string) { return NextResponse.redirect(`${adminBaseUrl()}/dashboard/social-studio?meta=${encodeURIComponent(status)}`); }
 
 export async function GET(request: Request) {
+  if (!SOCIAL_STUDIO_ENABLED) return studio('studio_paused');
   const admin = await getSocialAdmin('edit');
   if (!admin) return studio('unauthorized');
   const url = new URL(request.url); const code = url.searchParams.get('code'); const state = url.searchParams.get('state');

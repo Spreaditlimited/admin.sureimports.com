@@ -9,17 +9,20 @@ import { generateDailySocialCampaign, sendSocialApprovalEmail } from '@/lib/soci
 import { publishSocialCampaign } from '@/lib/social/meta';
 import { validateSocialCopy, type SocialCopy } from '@/lib/social/openai';
 import { renderSocialDesign } from '@/lib/social/render';
+import { assertSocialStudioEnabled } from '@/lib/social/config';
 
 const path = '/dashboard/social-studio';
 const value = (data: FormData, key: string, max = 10000) => String(data.get(key) || '').trim().slice(0, max);
 
 export async function generateSocialDraft() {
+  assertSocialStudioEnabled();
   await assertSocialAdmin('edit');
   await generateDailySocialCampaign({ force: true });
   revalidatePath(path);
 }
 
 export async function saveSocialCampaign(data: FormData) {
+  assertSocialStudioEnabled();
   await assertSocialAdmin('edit');
   const pidCampaign = value(data, 'pidCampaign', 80);
   const campaign = await prisma.social_campaign.findUnique({ where: { pidCampaign } });
@@ -52,6 +55,7 @@ export async function saveSocialCampaign(data: FormData) {
 }
 
 export async function approveSocialCampaign(data: FormData) {
+  assertSocialStudioEnabled();
   const admin = await assertSocialAdmin('edit'); const pidCampaign = value(data, 'pidCampaign', 80);
   const result = await prisma.social_campaign.updateMany({ where: { pidCampaign, status: 'awaiting_approval' }, data: { status: 'approved', approvedAt: new Date(), approvedBy: admin.pidUser, lastError: null } });
   if (!result.count) throw new Error('Only campaigns awaiting approval can be approved.');
@@ -59,6 +63,7 @@ export async function approveSocialCampaign(data: FormData) {
 }
 
 export async function rejectSocialCampaign(data: FormData) {
+  assertSocialStudioEnabled();
   const admin = await assertSocialAdmin('edit'); const pidCampaign = value(data, 'pidCampaign', 80);
   const note = value(data, 'rejectionNote', 500) || 'Rejected by admin';
   await prisma.social_campaign.update({ where: { pidCampaign }, data: { status: 'rejected', approvedAt: null, approvedBy: admin.pidUser, lastError: `Rejected: ${note}` } });
@@ -66,10 +71,12 @@ export async function rejectSocialCampaign(data: FormData) {
 }
 
 export async function publishSocialCampaignNow(data: FormData) {
+  assertSocialStudioEnabled();
   await assertSocialAdmin('edit'); await publishSocialCampaign(value(data, 'pidCampaign', 80)); revalidatePath(path);
 }
 
 export async function resendSocialApproval(data: FormData) {
+  assertSocialStudioEnabled();
   await assertSocialAdmin('edit'); const campaign = await prisma.social_campaign.findUnique({ where: { pidCampaign: value(data, 'pidCampaign', 80) } });
   if (!campaign) throw new Error('Campaign not found.');
   await sendSocialApprovalEmail(campaign); await prisma.social_campaign.update({ where: { pidCampaign: campaign.pidCampaign }, data: { lastError: null } });

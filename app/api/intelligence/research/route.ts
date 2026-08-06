@@ -84,6 +84,7 @@ type IntelligenceSearchRequest = {
   status: string;
   creditCost: number;
   creditReserved: boolean;
+  creditSource: string | null;
   relatedPidJob: string | null;
   adminNotes: string | null;
   createdAt: Date;
@@ -804,6 +805,7 @@ async function listSearchRequests() {
       status,
       creditCost,
       creditReserved,
+      creditSource,
       relatedPidJob,
       adminNotes,
       createdAt,
