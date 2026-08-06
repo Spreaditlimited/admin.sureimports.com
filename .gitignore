@@ -20,6 +20,9 @@
 # production
 /build
 
+# generated creative deliverables
+/deliverables/
+
 # misc
 .DS_Store
 *.pem

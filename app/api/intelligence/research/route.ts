@@ -59,6 +59,10 @@ type ResearchJob = {
   requestNotes: string | null;
   draftJson: string | null;
   errorMessage: string | null;
+  openAiResponseId: string | null;
+  openAiStatus: string | null;
+  openAiSubmittedAt: Date | null;
+  openAiCompletedAt: Date | null;
   sourceSearchRequestId: string | null;
   requestedByPidUser: string | null;
   requestedByEmail: string | null;
@@ -171,6 +175,10 @@ async function ensureResearchJobsTable() {
       requestNotes LONGTEXT NULL,
       draftJson LONGTEXT NULL,
       errorMessage LONGTEXT NULL,
+      openAiResponseId VARCHAR(100) NULL,
+      openAiStatus VARCHAR(40) NULL,
+      openAiSubmittedAt DATETIME(3) NULL,
+      openAiCompletedAt DATETIME(3) NULL,
       sourceSearchRequestId VARCHAR(80) NULL,
       requestedByPidUser VARCHAR(80) NULL,
       requestedByEmail VARCHAR(255) NULL,
@@ -186,6 +194,7 @@ async function ensureResearchJobsTable() {
       updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
       UNIQUE KEY intelligence_research_jobs_pidJob_key (pidJob),
       KEY intelligence_research_jobs_status_idx (status),
+      KEY intelligence_research_jobs_openai_response_idx (openAiResponseId),
       KEY intelligence_research_jobs_nicheName_idx (nicheName),
       PRIMARY KEY (id)
     ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -195,12 +204,17 @@ async function ensureResearchJobsTable() {
     'ALTER TABLE intelligence_research_jobs ADD COLUMN sourceSearchRequestId VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByPidUser VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByEmail VARCHAR(255) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN openAiResponseId VARCHAR(100) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN openAiStatus VARCHAR(40) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN openAiSubmittedAt DATETIME(3) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN openAiCompletedAt DATETIME(3) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN imageUrl VARCHAR(800) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN imagePublicId VARCHAR(180) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN imageOriginalName VARCHAR(255) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN imageMimeType VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN imageUploadedAt DATETIME(3) NULL',
     'ALTER TABLE intelligence_research_jobs ADD KEY intelligence_research_jobs_search_request_idx (sourceSearchRequestId)',
+    'ALTER TABLE intelligence_research_jobs ADD KEY intelligence_research_jobs_openai_response_idx (openAiResponseId)',
   ]) {
     try {
       await prisma.$executeRawUnsafe(statement);
@@ -637,18 +651,15 @@ async function publishSupplierDraft(
   return true;
 }
 
-async function runSupplierResearch(input: {
+type SupplierResearchInput = {
   nicheName: string;
   targetSupplierCount: number;
   requestNotes: string;
   imageUrl?: string | null;
-}) {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured.');
-  }
+};
 
-  const prompt = [
+function supplierResearchPrompt(input: SupplierResearchInput) {
+  return [
     'You are a supplier research analyst for Sure Imports, a China sourcing and shipping company serving importers worldwide.',
     `Research the niche: ${input.nicheName}.`,
     input.imageUrl
@@ -664,6 +675,15 @@ async function runSupplierResearch(input: {
   ]
     .filter(Boolean)
     .join('\n\n');
+}
+
+async function submitSupplierResearch(input: SupplierResearchInput) {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not configured.');
+  }
+
+  const prompt = supplierResearchPrompt(input);
 
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -676,6 +696,7 @@ async function runSupplierResearch(input: {
       reasoning: { effort: 'max' },
       tools: [{ type: 'web_search_preview' }],
       background: true,
+      store: true,
       input: input.imageUrl
         ? [
             {
@@ -695,23 +716,67 @@ async function runSupplierResearch(input: {
     throw new Error(`OpenAI research failed: ${response.status} ${clean(errorText, 500)}`);
   }
 
-  let data = await response.json();
-  while (data.status === 'queued' || data.status === 'in_progress') {
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    const pollResponse = await fetch(
-      `https://api.openai.com/v1/responses/${encodeURIComponent(data.id)}`,
-      {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      },
-    );
-    if (!pollResponse.ok) {
-      const errorText = await pollResponse.text().catch(() => '');
-      throw new Error(
-        `OpenAI research polling failed: ${pollResponse.status} ${clean(errorText, 500)}`,
-      );
-    }
-    data = await pollResponse.json();
+  const data = await response.json();
+  if (!data.id) {
+    throw new Error('OpenAI research did not return a response ID.');
   }
+  return data;
+}
+
+async function retrieveSupplierResearch(responseId: string) {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not configured.');
+  }
+
+  const response = await fetch(
+    `https://api.openai.com/v1/responses/${encodeURIComponent(responseId)}`,
+    {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      cache: 'no-store',
+    },
+  );
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(
+      `OpenAI research status check failed: ${response.status} ${clean(errorText, 500)}`,
+    );
+  }
+  return response.json();
+}
+
+async function cancelSupplierResearch(responseId: string) {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not configured.');
+  }
+
+  const response = await fetch(
+    `https://api.openai.com/v1/responses/${encodeURIComponent(responseId)}/cancel`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      cache: 'no-store',
+    },
+  );
+  if (response.ok) return;
+
+  const errorText = await response.text().catch(() => '');
+  if (response.status === 400 || response.status === 404) {
+    // The response may have reached a terminal state or expired between the
+    // admin seeing the button and clicking it. Local cancellation still stops
+    // this job from being polled or published.
+    return;
+  }
+  throw new Error(
+    `OpenAI research cancellation failed: ${response.status} ${clean(errorText, 500)}`,
+  );
+}
+
+function parseSupplierResearchResponse(
+  data: any,
+  input: SupplierResearchInput,
+) {
   if (data.status !== 'completed') {
     throw new Error(
       clean(
@@ -754,6 +819,128 @@ async function runSupplierResearch(input: {
   };
 }
 
+function openAiFailureMessage(data: any) {
+  return clean(
+    data?.error?.message ||
+      data?.incomplete_details?.reason ||
+      `OpenAI research ended with status ${data?.status || 'unknown'}.`,
+    500,
+  );
+}
+
+async function failResearchJob(job: ResearchJob, message: string, openAiStatus?: string) {
+  const affected = await prisma.$executeRaw`
+    UPDATE intelligence_research_jobs
+    SET
+      status = 'failed',
+      openAiStatus = ${clean(openAiStatus, 40) || 'failed'},
+      openAiCompletedAt = ${new Date()},
+      errorMessage = ${clean(message, 4000) || 'Research failed.'},
+      updatedAt = ${new Date()}
+    WHERE pidJob = ${job.pidJob}
+      AND status <> 'cancelled'
+  `;
+
+  if (affected > 0 && job.sourceSearchRequestId) {
+    await updateLinkedSearchRequest(job.pidJob, 'failed', message);
+    await refundLinkedSearchCredit(
+      job.pidJob,
+      message || 'Research failed and the credit was returned.',
+    );
+  }
+}
+
+async function applySupplierResearchResponse(job: ResearchJob, data: any) {
+  const openAiStatus = clean(data?.status, 40) || 'unknown';
+  if (openAiStatus === 'queued' || openAiStatus === 'in_progress') {
+    await prisma.$executeRaw`
+      UPDATE intelligence_research_jobs
+      SET
+        status = 'running',
+        openAiStatus = ${openAiStatus},
+        errorMessage = NULL,
+        updatedAt = ${new Date()}
+      WHERE pidJob = ${job.pidJob}
+        AND status IN ('queued', 'running')
+    `;
+    return;
+  }
+
+  const staleFinalizingBefore = new Date(Date.now() - 2 * 60 * 1000);
+  const claimed = await prisma.$executeRaw`
+    UPDATE intelligence_research_jobs
+    SET
+      status = 'finalizing',
+      openAiStatus = ${openAiStatus},
+      updatedAt = ${new Date()}
+    WHERE pidJob = ${job.pidJob}
+      AND (
+        status IN ('queued', 'running')
+        OR (status = 'finalizing' AND updatedAt < ${staleFinalizingBefore})
+      )
+  `;
+  if (claimed === 0) return;
+
+  if (openAiStatus !== 'completed') {
+    await failResearchJob(job, openAiFailureMessage(data), openAiStatus);
+    return;
+  }
+
+  try {
+    const draft = parseSupplierResearchResponse(data, {
+      nicheName: job.nicheName,
+      targetSupplierCount: job.targetSupplierCount,
+      requestNotes: job.requestNotes || '',
+      imageUrl: job.imageUrl,
+    });
+
+    const finalized = await prisma.$executeRaw`
+      UPDATE intelligence_research_jobs
+      SET
+        status = 'awaiting_approval',
+        openAiStatus = 'completed',
+        openAiCompletedAt = ${new Date()},
+        draftJson = ${JSON.stringify(draft)},
+        errorMessage = NULL,
+        updatedAt = ${new Date()}
+      WHERE pidJob = ${job.pidJob}
+        AND status = 'finalizing'
+    `;
+
+    if (finalized > 0 && job.sourceSearchRequestId) {
+      await updateLinkedSearchRequest(job.pidJob, 'awaiting_approval');
+    }
+  } catch (error: any) {
+    await failResearchJob(
+      job,
+      error?.message || 'Research returned an invalid supplier draft.',
+      'completed',
+    );
+  }
+}
+
+async function refreshRunningResearchJobs(limit = 5) {
+  const staleFinalizingBefore = new Date(Date.now() - 2 * 60 * 1000);
+  const jobs = await prisma.$queryRaw<ResearchJob[]>`
+    SELECT *
+    FROM intelligence_research_jobs
+    WHERE (
+        status IN ('queued', 'running')
+        OR (status = 'finalizing' AND updatedAt < ${staleFinalizingBefore})
+      )
+      AND openAiResponseId IS NOT NULL
+    ORDER BY createdAt ASC
+    LIMIT ${limit}
+  `;
+
+  await Promise.allSettled(
+    jobs.map(async (job) => {
+      const data = await retrieveSupplierResearch(job.openAiResponseId as string);
+      await applySupplierResearchResponse(job, data);
+    }),
+  );
+}
+
 async function listJobs() {
   await ensureResearchJobsTable();
   return prisma.$queryRaw<ResearchJob[]>`
@@ -766,6 +953,10 @@ async function listJobs() {
       requestNotes,
       draftJson,
       errorMessage,
+      openAiResponseId,
+      openAiStatus,
+      openAiSubmittedAt,
+      openAiCompletedAt,
       sourceSearchRequestId,
       requestedByPidUser,
       requestedByEmail,
@@ -995,10 +1186,25 @@ async function refundLinkedSearchCredit(pidJob: string, reason: string) {
   });
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const admin = await requireAdmin();
-    if (!admin) return unauthorized();
+    const cronSecret = process.env.CRON_SECRET;
+    const isCronRequest = Boolean(
+      cronSecret && request.headers.get('authorization') === `Bearer ${cronSecret}`,
+    );
+    if (!isCronRequest) {
+      const admin = await requireAdmin();
+      if (!admin) return unauthorized();
+    }
+    await ensureResearchJobsTable();
+
+    if (isCronRequest || request.nextUrl.searchParams.get('refresh') === '1') {
+      await refreshRunningResearchJobs();
+    }
+
+    if (isCronRequest) {
+      return NextResponse.json({ success: true, refreshed: true });
+    }
 
     const [jobs, searchRequests] = await Promise.all([
       listJobs(),
@@ -1120,7 +1326,7 @@ export async function POST(request: NextRequest) {
         ${pidJob},
         ${nicheName},
         ${targetSupplierCount},
-        'running',
+        'queued',
         ${requestNotes || null},
         ${sourceSearchRequestId || null},
         ${requestedByPidUser},
@@ -1146,7 +1352,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const draft = await runSupplierResearch({
+      const response = await submitSupplierResearch({
         nicheName,
         targetSupplierCount,
         requestNotes,
@@ -1156,34 +1362,34 @@ export async function POST(request: NextRequest) {
       await prisma.$executeRaw`
         UPDATE intelligence_research_jobs
         SET
-          status = 'awaiting_approval',
-          draftJson = ${JSON.stringify(draft)},
+          status = ${response.status === 'queued' ? 'queued' : 'running'},
+          openAiResponseId = ${clean(response.id, 100)},
+          openAiStatus = ${clean(response.status, 40) || 'queued'},
+          openAiSubmittedAt = ${new Date()},
           errorMessage = NULL,
           updatedAt = ${new Date()}
         WHERE pidJob = ${pidJob}
       `;
 
-      if (sourceSearchRequestId) {
-        await updateLinkedSearchRequest(pidJob, 'awaiting_approval');
+      const submittedRows = await prisma.$queryRaw<ResearchJob[]>`
+        SELECT * FROM intelligence_research_jobs WHERE pidJob = ${pidJob} LIMIT 1
+      `;
+      if (
+        submittedRows[0] &&
+        response.status !== 'queued' &&
+        response.status !== 'in_progress'
+      ) {
+        await applySupplierResearchResponse(submittedRows[0], response);
       }
     } catch (error: any) {
-      await prisma.$executeRaw`
-        UPDATE intelligence_research_jobs
-        SET
-          status = 'failed',
-          errorMessage = ${error?.message || 'Research failed.'},
-          updatedAt = ${new Date()}
-        WHERE pidJob = ${pidJob}
+      const failedRows = await prisma.$queryRaw<ResearchJob[]>`
+        SELECT * FROM intelligence_research_jobs WHERE pidJob = ${pidJob} LIMIT 1
       `;
-      if (sourceSearchRequestId) {
-        await updateLinkedSearchRequest(
-          pidJob,
-          'failed',
+      if (failedRows[0]) {
+        await failResearchJob(
+          failedRows[0],
           error?.message || 'Research failed.',
-        );
-        await refundLinkedSearchCredit(
-          pidJob,
-          error?.message || 'Research failed and the credit was returned.',
+          'failed',
         );
       }
       throw error;
@@ -1193,7 +1399,10 @@ export async function POST(request: NextRequest) {
       listJobs(),
       listSearchRequests(),
     ]);
-    return NextResponse.json({ success: true, data: jobs, searchRequests });
+    return NextResponse.json(
+      { success: true, data: jobs, searchRequests, pidJob },
+      { status: 202 },
+    );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to run research.' },
@@ -1218,6 +1427,7 @@ export async function PATCH(request: NextRequest) {
       ![
         'approve',
         'reject',
+        'stop',
         'approve_supplier',
         'reject_supplier',
         'unapprove_supplier',
@@ -1238,6 +1448,44 @@ export async function PATCH(request: NextRequest) {
         { success: false, error: 'Research job not found.' },
         { status: 404 },
       );
+    }
+
+    if (action === 'stop') {
+      if (!['queued', 'running', 'finalizing'].includes(job.status)) {
+        return NextResponse.json(
+          { success: false, error: 'This research job is no longer running.' },
+          { status: 409 },
+        );
+      }
+
+      if (job.openAiResponseId) {
+        await cancelSupplierResearch(job.openAiResponseId);
+      }
+
+      const affected = await prisma.$executeRaw`
+        UPDATE intelligence_research_jobs
+        SET
+          status = 'cancelled',
+          openAiStatus = 'cancelled',
+          openAiCompletedAt = ${new Date()},
+          errorMessage = 'Stopped by admin.',
+          updatedAt = ${new Date()}
+        WHERE pidJob = ${pidJob}
+          AND status IN ('queued', 'running', 'finalizing')
+      `;
+
+      if (affected > 0 && job.sourceSearchRequestId) {
+        const stopReason =
+          'Sure Imports stopped this supplier search before completion. Your search credit has been returned.';
+        await updateLinkedSearchRequest(pidJob, 'cancelled', stopReason);
+        await refundLinkedSearchCredit(pidJob, stopReason);
+      }
+
+      const [jobs, searchRequests] = await Promise.all([
+        listJobs(),
+        listSearchRequests(),
+      ]);
+      return NextResponse.json({ success: true, data: jobs, searchRequests });
     }
 
     let draft = parseDraft(job.draftJson);

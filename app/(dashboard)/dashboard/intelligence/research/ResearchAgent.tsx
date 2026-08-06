@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Bot,
@@ -15,6 +15,7 @@ import {
   Search,
   Send,
   ShieldCheck,
+  Square,
   Upload,
   X,
   XCircle,
@@ -59,6 +60,10 @@ type ResearchJob = {
   requestNotes: string | null;
   draftJson: string | null;
   errorMessage: string | null;
+  openAiResponseId?: string | null;
+  openAiStatus?: string | null;
+  openAiSubmittedAt?: string | null;
+  openAiCompletedAt?: string | null;
   sourceSearchRequestId?: string | null;
   requestedByEmail?: string | null;
   createdAt: string;
@@ -101,8 +106,22 @@ function statusClass(status: string) {
   if (status === 'approved') return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
   if (status === 'partially_approved') return 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (status === 'awaiting_approval') return 'border-blue-500/20 bg-blue-500/10 text-blue-700';
-  if (status === 'failed' || status === 'rejected') return 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300';
+  if (status === 'failed' || status === 'rejected' || status === 'cancelled') return 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300';
   return 'border-amber-500/20 bg-amber-500/10 text-amber-700';
+}
+
+function researchProgressPercent(job: ResearchJob, now: number) {
+  if (job.status === 'queued') return 12;
+  if (job.status === 'finalizing') return 94;
+  if (job.status === 'running') {
+    const startedAt = new Date(
+      job.openAiSubmittedAt || job.createdAt,
+    ).getTime();
+    const elapsed = Number.isFinite(startedAt) ? Math.max(0, now - startedAt) : 0;
+    return Math.min(88, 22 + Math.floor(elapsed / 6000));
+  }
+  if (job.status === 'awaiting_approval' || job.status === 'approved') return 100;
+  return 100;
 }
 
 function supplierStatusClass(status: string) {
@@ -204,6 +223,7 @@ function progressMessage(actionKey: string | null, pidJob: string) {
 
   if (action === 'approve') return 'Approving pending suppliers and publishing records...';
   if (action === 'reject') return 'Rejecting this research job...';
+  if (action === 'stop') return 'Stopping this research job...';
   if (action === 'approve_supplier') return 'Approving and publishing this supplier...';
   if (action === 'reject_supplier') return 'Rejecting this supplier...';
   if (action === 'unapprove_supplier') return 'Unapproving this supplier and removing it from the published database...';
@@ -224,6 +244,8 @@ export default function IntelligenceResearchAgent() {
   const [runningSearchRequest, setRunningSearchRequest] = useState<string | null>(null);
   const [updatingJob, setUpdatingJob] = useState<string | null>(null);
   const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
+  const [progressNow, setProgressNow] = useState(() => Date.now());
+  const refreshInFlightRef = useRef(false);
 
   const awaitingCount = useMemo(
     () => jobs.filter((job) => job.status === 'awaiting_approval').length,
@@ -240,12 +262,25 @@ export default function IntelligenceResearchAgent() {
     });
   }, [jobs, researchJobSearch]);
 
-  const loadJobs = async () => {
-    setLoading(true);
+  const activeResearchCount = useMemo(
+    () => jobs.filter((job) => ['queued', 'running', 'finalizing'].includes(job.status)).length,
+    [jobs],
+  );
+
+  const loadJobs = async (options?: { silent?: boolean; refresh?: boolean }) => {
+    const silent = Boolean(options?.silent);
+    if (silent && refreshInFlightRef.current) return;
+    if (silent) refreshInFlightRef.current = true;
+    if (!silent) setLoading(true);
     try {
-      const response = await fetch('/api/intelligence/research', {
+      const response = await fetch(
+        options?.refresh
+          ? '/api/intelligence/research?refresh=1'
+          : '/api/intelligence/research',
+        {
         cache: 'no-store',
-      });
+        },
+      );
       const data = await response.json();
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Failed to load research jobs.');
@@ -263,15 +298,36 @@ export default function IntelligenceResearchAgent() {
         return next;
       });
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to load research jobs.');
+      if (!silent) {
+        toast.error(error?.message || 'Failed to load research jobs.');
+      }
     } finally {
-      setLoading(false);
+      if (silent) refreshInFlightRef.current = false;
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadJobs();
   }, []);
+
+  useEffect(() => {
+    if (activeResearchCount === 0) return;
+
+    const interval = window.setInterval(() => {
+      void loadJobs({ silent: true, refresh: true });
+    }, 6000);
+
+    return () => window.clearInterval(interval);
+  }, [activeResearchCount]);
+
+  useEffect(() => {
+    if (!running && activeResearchCount === 0) return;
+
+    setProgressNow(Date.now());
+    const interval = window.setInterval(() => setProgressNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [running, activeResearchCount]);
 
   useEffect(() => {
     if (!imageFile) {
@@ -314,7 +370,12 @@ export default function IntelligenceResearchAgent() {
       setNicheName('');
       setRequestNotes('');
       setImageFile(null);
-      toast.success('Research draft created. Review before approval.', { id: toastId });
+      if (data.pidJob) {
+        setExpandedJobs((current) => ({ ...current, [data.pidJob]: true }));
+      }
+      toast.success('Supplier research queued. This page will update when the draft is ready.', {
+        id: toastId,
+      });
     } catch (error: any) {
       toast.error(error?.message || 'Research failed.', { id: toastId });
       await loadJobs();
@@ -338,7 +399,7 @@ export default function IntelligenceResearchAgent() {
       }
       setJobs(data.data || []);
       setSearchRequests(data.searchRequests || []);
-      toast.success('User search draft created. Review before approval.', {
+      toast.success('User supplier research queued. This page will update automatically.', {
         id: toastId,
       });
     } catch (error: any) {
@@ -354,6 +415,7 @@ export default function IntelligenceResearchAgent() {
     action:
       | 'approve'
       | 'reject'
+      | 'stop'
       | 'approve_supplier'
       | 'reject_supplier'
       | 'unapprove_supplier',
@@ -377,6 +439,8 @@ export default function IntelligenceResearchAgent() {
           ? 'Research approved and published.'
           : action === 'reject'
             ? 'Research rejected.'
+            : action === 'stop'
+              ? 'Research stopped.'
             : action === 'approve_supplier'
               ? 'Supplier approved and published.'
               : action === 'reject_supplier'
@@ -522,9 +586,29 @@ export default function IntelligenceResearchAgent() {
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {running ? 'Researching...' : 'Generate research draft'}
+            {running ? 'Submitting...' : 'Generate research draft'}
           </button>
         </div>
+        {running ? (
+          <div className="mt-4 overflow-hidden rounded-lg border border-primary/20 bg-primary/10">
+            <div className="flex items-center justify-between gap-4 px-4 py-3 text-xs font-bold text-primary">
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Submitting supplier research request...
+              </span>
+              <span>5%</span>
+            </div>
+            <div className="h-2 bg-primary/10">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-700"
+                style={{ width: '5%' }}
+              />
+            </div>
+            <p className="px-4 py-2 text-[10px] font-semibold text-muted-foreground">
+              Estimated progress. The job will continue in the background after submission.
+            </p>
+          </div>
+        ) : null}
       </section>
 
       <section className="space-y-4">
@@ -612,7 +696,7 @@ export default function IntelligenceResearchAgent() {
             </label>
             <button
               type="button"
-              onClick={loadJobs}
+              onClick={() => void loadJobs()}
               className="text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
             >
               Refresh
@@ -638,6 +722,7 @@ export default function IntelligenceResearchAgent() {
               <ResearchJobCard
                 key={job.pidJob}
                 job={job}
+                progressNow={progressNow}
                 expanded={Boolean(expandedJobs[job.pidJob])}
                 updatingJob={updatingJob}
                 onToggle={() =>
@@ -648,6 +733,15 @@ export default function IntelligenceResearchAgent() {
                 }
                 onApprove={() => updateJob(job.pidJob, 'approve')}
                 onReject={() => updateJob(job.pidJob, 'reject')}
+                onStop={() => {
+                  if (
+                    window.confirm(
+                      'Stop this supplier research job? Any unfinished research will be cancelled.',
+                    )
+                  ) {
+                    void updateJob(job.pidJob, 'stop');
+                  }
+                }}
                 onApproveSupplier={(supplierIndex) =>
                   updateJob(job.pidJob, 'approve_supplier', supplierIndex)
                 }
@@ -815,21 +909,25 @@ function SearchRequestCard({
 
 function ResearchJobCard({
   job,
+  progressNow,
   expanded,
   updatingJob,
   onToggle,
   onApprove,
   onReject,
+  onStop,
   onApproveSupplier,
   onRejectSupplier,
   onUnapproveSupplier,
 }: {
   job: ResearchJob;
+  progressNow: number;
   expanded: boolean;
   updatingJob: string | null;
   onToggle: () => void;
   onApprove: () => void;
   onReject: () => void;
+  onStop: () => void;
   onApproveSupplier: (supplierIndex: number) => void;
   onRejectSupplier: (supplierIndex: number) => void;
   onUnapproveSupplier: (supplierIndex: number) => void;
@@ -840,6 +938,8 @@ function ResearchJobCard({
   const jobUpdating = Boolean(updatingJob?.startsWith(`${job.pidJob}:`));
   const activeProgressMessage = progressMessage(updatingJob, job.pidJob);
   const canReview = ['awaiting_approval', 'partially_approved'].includes(job.status);
+  const isResearching = ['queued', 'running', 'finalizing'].includes(job.status);
+  const progressPercent = researchProgressPercent(job, progressNow);
 
   return (
     <article id={`research-job-${job.pidJob}`} className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-soft">
@@ -873,6 +973,20 @@ function ResearchJobCard({
             </div>
           </div>
         </div>
+        {isResearching ? (
+          <div className="w-full shrink-0 lg:w-48">
+            <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span>Estimated progress</span>
+              <span className="text-foreground">{progressPercent}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-amber-500 transition-[width] duration-1000 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        ) : null}
       </button>
 
       {expanded ? (
@@ -936,6 +1050,23 @@ function ResearchJobCard({
             </button>
               </div>
             ) : null}
+            {isResearching ? (
+              <button
+                type="button"
+                onClick={onStop}
+                disabled={jobUpdating}
+                className="inline-flex shrink-0 items-center gap-2 rounded-md border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-500/15 disabled:opacity-60 dark:text-red-300 dark:hover:bg-red-500/20"
+              >
+                {updatingJob === `${job.pidJob}:stop:job` ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Square className="h-3.5 w-3.5 fill-current" />
+                )}
+                {updatingJob === `${job.pidJob}:stop:job`
+                  ? 'Stopping...'
+                  : 'Stop research'}
+              </button>
+            ) : null}
           </div>
 
           {activeProgressMessage ? (
@@ -957,6 +1088,33 @@ function ResearchJobCard({
                   }
                 }
               `}</style>
+            </div>
+          ) : null}
+
+          {isResearching ? (
+            <div className="mt-4 overflow-hidden rounded-lg border border-amber-500/20 bg-amber-500/10">
+              <div className="flex items-center justify-between gap-4 px-4 py-3 text-xs font-bold text-amber-700 dark:text-amber-300">
+                <span className="inline-flex items-center gap-3">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>
+                    {job.status === 'queued'
+                      ? 'Supplier research is queued.'
+                      : job.status === 'finalizing'
+                        ? 'Research is complete. Validating the supplier draft...'
+                        : 'Researching direct manufacturers and verifying supplier evidence...'}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm">{progressPercent}%</span>
+              </div>
+              <div className="h-2 bg-amber-500/10">
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-[width] duration-1000 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <p className="px-4 py-2 text-[10px] font-semibold text-muted-foreground">
+                Estimated from the current research stage; supplier verification time can vary.
+              </p>
             </div>
           ) : null}
 
