@@ -11,9 +11,14 @@ import {
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
+import { getConsultationsAdminAccess } from '@/lib/consultationAccess';
 import { prisma } from '@/lib/prisma';
-import { updateConsultationBookingAction } from './actions';
+import {
+  reconcileConsultationBookingAction,
+  updateConsultationBookingAction,
+} from './actions';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -34,6 +39,7 @@ type ConsultationBooking = {
   paystackReference: string | null;
   paystackCustomerCode: string | null;
   paidAt: Date | null;
+  paymentVerifiedAt: Date | null;
   zoomMeetingId: string | null;
   zoomJoinUrl: string | null;
   zoomStartUrl: string | null;
@@ -43,6 +49,10 @@ type ConsultationBooking = {
   nextFollowUpAt: Date | null;
   cancelReason: string | null;
   cancelledAt: Date | null;
+  customerEmailSentAt: Date | null;
+  adminEmailSentAt: Date | null;
+  fulfillmentError: string | null;
+  lastReconciledAt: Date | null;
   createdAt: Date;
 };
 
@@ -67,12 +77,14 @@ function statusClass(status: string) {
   if (status === 'booked') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
   if (status === 'pending_payment') return 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   if (status === 'cancelled') return 'border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-300';
-  if (status.includes('failed')) return 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300';
+  if (status.includes('failed') || status === 'payment_conflict') return 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300';
   return 'border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300';
 }
 
 function shouldOpenByDefault(booking: ConsultationBooking) {
-  const isUpcoming = booking.status === 'booked' && booking.slotStartUtc >= new Date();
+  const isUpcoming =
+    ['booked', 'rescheduled'].includes(booking.status) &&
+    booking.slotStartUtc >= new Date();
   return isUpcoming || isPaymentOrZoomIssue(booking);
 }
 
@@ -80,9 +92,29 @@ function isPaymentOrZoomIssue(booking: ConsultationBooking) {
   const status = booking.status.toLowerCase();
   const hasFailedStatus = status.includes('failed') || status === 'zoom_failed';
   const bookedWithoutZoom =
-    status === 'booked' && (!booking.zoomStartUrl || !booking.zoomJoinUrl);
+    ['booked', 'rescheduled'].includes(status) &&
+    (!booking.zoomStartUrl || !booking.zoomJoinUrl);
 
-  return hasFailedStatus || bookedWithoutZoom;
+  return (
+    hasFailedStatus ||
+    bookedWithoutZoom ||
+    status === 'pending_payment' ||
+    status === 'fulfilling' ||
+    Boolean(booking.fulfillmentError)
+  );
+}
+
+function canReconcileBooking(booking: ConsultationBooking) {
+  return (
+    ['pending_payment', 'payment_failed', 'zoom_failed', 'fulfilling'].includes(
+      booking.status,
+    ) ||
+    (['booked', 'rescheduled'].includes(booking.status) &&
+      (!booking.zoomStartUrl ||
+        !booking.zoomJoinUrl ||
+        !booking.customerEmailSentAt ||
+        !booking.adminEmailSentAt))
+  );
 }
 
 function isPastCall(booking: ConsultationBooking, now = new Date()) {
@@ -100,7 +132,7 @@ function isUpcomingCall(booking: ConsultationBooking, now = new Date()) {
   return (
     !isPaymentOrZoomIssue(booking) &&
     booking.slotStartUtc >= now &&
-    ['booked', 'follow_up'].includes(status)
+    ['booked', 'rescheduled', 'follow_up'].includes(status)
   );
 }
 
@@ -118,6 +150,9 @@ export default async function ConsultationsAdminPage({
   searchParams?: Promise<{ view?: string | string[] }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
+  const adminAccess = await getConsultationsAdminAccess();
+  if (!adminAccess) redirect('/auth/login');
+  if (!adminAccess.canView) redirect('/dashboard');
   const activeView = normalizeView(resolvedSearchParams.view);
   const bookings = await prisma.$queryRaw<ConsultationBooking[]>`
     SELECT
@@ -136,6 +171,7 @@ export default async function ConsultationsAdminPage({
       paystackReference,
       paystackCustomerCode,
       paidAt,
+      paymentVerifiedAt,
       zoomMeetingId,
       zoomJoinUrl,
       zoomStartUrl,
@@ -145,11 +181,15 @@ export default async function ConsultationsAdminPage({
       nextFollowUpAt,
       cancelReason,
       cancelledAt,
+      customerEmailSentAt,
+      adminEmailSentAt,
+      fulfillmentError,
+      lastReconciledAt,
       createdAt
     FROM consultation_bookings
     ORDER BY
       CASE
-        WHEN status = 'booked' AND slotStartUtc >= NOW() THEN 1
+        WHEN status IN ('booked', 'rescheduled') AND slotStartUtc >= NOW() THEN 1
         WHEN status = 'zoom_failed' THEN 2
         WHEN status = 'pending_payment' THEN 3
         WHEN status = 'booked' THEN 4
@@ -385,16 +425,21 @@ export default async function ConsultationsAdminPage({
                     <Info label="Business" value={booking.businessName} />
                     <Info label="Amount paid" value={formatMoney(booking.amountKobo, booking.currency)} />
                     <Info label="Paid at" value={formatDate(booking.paidAt)} />
+                    <Info label="Payment verified" value={formatDate(booking.paymentVerifiedAt)} />
                     <Info label="Paystack reference" value={booking.paystackReference} />
                     <Info label="Paystack customer" value={booking.paystackCustomerCode} />
                     <Info label="Zoom meeting ID" value={booking.zoomMeetingId} />
                     <Info label="Assigned owner" value={booking.assignedOwner} icon={UserRound} />
                     <Info label="Next follow-up" value={formatDate(booking.nextFollowUpAt)} />
+                    <Info label="Customer email sent" value={formatDate(booking.customerEmailSentAt)} />
+                    <Info label="Admin email sent" value={formatDate(booking.adminEmailSentAt)} />
+                    <Info label="Last reconciled" value={formatDate(booking.lastReconciledAt)} />
                   </div>
 
                   <Block label="Customer goal" value={booking.consultationGoal} important />
                   <Block label="Outcome notes" value={booking.outcomeFeedback} />
                   <Block label="Cancel reason" value={booking.cancelReason} />
+                  <Block label="Fulfillment issue" value={booking.fulfillmentError} important />
 
                   {booking.zoomJoinUrl ? (
                     <a
@@ -429,12 +474,16 @@ export default async function ConsultationsAdminPage({
                       className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                     >
                       <option value="booked">Booked</option>
+                      <option value="rescheduled">Rescheduled</option>
                       <option value="completed">Completed</option>
                       <option value="no_show">No show</option>
                       <option value="follow_up">Follow up</option>
                       <option value="cancelled">Cancelled</option>
                       <option value="zoom_failed">Zoom failed</option>
+                      <option value="payment_failed">Payment failed</option>
+                      <option value="payment_conflict">Payment conflict</option>
                       <option value="pending_payment">Pending payment</option>
+                      <option value="fulfilling">Fulfilling</option>
                     </select>
                   </label>
 
@@ -507,10 +556,21 @@ export default async function ConsultationsAdminPage({
 
                   <button
                     type="submit"
+                    disabled={!adminAccess.canEdit}
                     className="mt-5 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90"
                   >
-                    Save booking
+                    {adminAccess.canEdit ? 'Save booking' : 'View only'}
                   </button>
+
+                  {adminAccess.canEdit && canReconcileBooking(booking) ? (
+                    <button
+                      type="submit"
+                      formAction={reconcileConsultationBookingAction}
+                      className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground hover:bg-muted"
+                    >
+                      Retry payment / Zoom fulfillment
+                    </button>
+                  ) : null}
                 </form>
                   </div>
               </div>
