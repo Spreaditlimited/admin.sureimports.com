@@ -53,8 +53,6 @@ export default function IntelligenceReportsManager() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [categoryId, setCategoryId] = useState("");
-  const [priceNaira, setPriceNaira] = useState("");
-  const [priceUsd, setPriceUsd] = useState("");
   const [editionLabel, setEditionLabel] = useState(
     new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(
       new Date(),
@@ -112,8 +110,6 @@ export default function IntelligenceReportsManager() {
           nicheId: selectedCategory.pidNiche,
           categoryName: selectedCategory.name,
           editionLabel,
-          priceNaira: Number(priceNaira),
-          priceUsdCents: Math.round(Number(priceUsd) * 100),
         }),
       });
       const data = await response.json();
@@ -123,8 +119,6 @@ export default function IntelligenceReportsManager() {
         `Draft created with ${data.data.supplierCount} ${data.data.supplierCount === 1 ? "approved supplier" : "approved suppliers"}. Generate its first PDF edition when ready.`,
       );
       setCategoryId("");
-      setPriceNaira("");
-      setPriceUsd("");
       await load();
     } catch (caught) {
       setError(
@@ -279,8 +273,8 @@ export default function IntelligenceReportsManager() {
               Create a report product
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pricing is stored per product. Customers in Nigeria see NGN;
-              international customers see USD.
+              New reports automatically use the central manufacturer-report
+              price configured in Supplier Intelligence Settings.
             </p>
           </div>
         </div>
@@ -303,28 +297,6 @@ export default function IntelligenceReportsManager() {
                 </option>
               ))}
             </select>
-          </label>
-          <label className="text-sm font-medium text-foreground">
-            Price in NGN
-            <input
-              className={inputClass}
-              inputMode="numeric"
-              value={priceNaira}
-              onChange={(event) => setPriceNaira(event.target.value)}
-              placeholder="15000"
-              required
-            />
-          </label>
-          <label className="text-sm font-medium text-foreground">
-            Price in USD
-            <input
-              className={inputClass}
-              inputMode="decimal"
-              value={priceUsd}
-              onChange={(event) => setPriceUsd(event.target.value)}
-              placeholder="19.00"
-              required
-            />
           </label>
           <label className="text-sm font-medium text-foreground md:col-span-2">
             Edition label
@@ -429,39 +401,10 @@ export default function IntelligenceReportsManager() {
                 required
               />
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm font-medium text-foreground">
-                Price NGN
-                <input
-                  className={inputClass}
-                  inputMode="numeric"
-                  value={editing.priceNaira}
-                  onChange={(event) =>
-                    setEditing({
-                      ...editing,
-                      priceNaira: Number(event.target.value),
-                    })
-                  }
-                  required
-                />
-              </label>
-              <label className="text-sm font-medium text-foreground">
-                Price USD
-                <input
-                  className={inputClass}
-                  inputMode="decimal"
-                  value={(editing.priceUsdCents / 100).toFixed(2)}
-                  onChange={(event) =>
-                    setEditing({
-                      ...editing,
-                      priceUsdCents: Math.round(
-                        Number(event.target.value) * 100,
-                      ),
-                    })
-                  }
-                  required
-                />
-              </label>
+            <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              Price: ₦{editing.priceNaira.toLocaleString()} · $
+              {(editing.priceUsdCents / 100).toFixed(2)}. Update this centrally
+              from Supplier Intelligence Settings.
             </div>
             <div className="md:col-span-2">
               <button

@@ -49,6 +49,10 @@ async function main() {
     throw new Error("Publication blocked: the generation manifest does not contain 25 passing editions.");
   }
   const cookie = await adminCookie();
+  const pricing = await prisma.intelligence_report_price_settings.findUnique({
+    where: { settingKey: "manufacturer_reports" },
+  });
+  if (!pricing) throw new Error("Manufacturer report pricing is not configured.");
   let published = 0;
   for (const item of manifest.generated) {
     const result = await publish(
@@ -67,8 +71,8 @@ async function main() {
       status: "published",
       currentVersionId: { not: null },
       supplierCount: { gte: 10 },
-      priceNaira: 25_000,
-      priceUsdCents: 5_000,
+      priceNaira: pricing.priceNaira,
+      priceUsdCents: pricing.priceUsdCents,
     },
   });
   console.log(JSON.stringify({ event: "complete", published, live }));

@@ -1,6 +1,12 @@
 import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 
+import {
+  DEFAULT_REPORT_PRICE_NAIRA,
+  DEFAULT_REPORT_PRICE_USD_CENTS,
+  type ReportPricing,
+} from "@/lib/intelligence/reportPricing";
+
 import type { ReportCategorySnapshot, ReportSupplier } from "./reportData";
 
 type ReportProduct = {
@@ -79,14 +85,24 @@ function supplierText(supplier: ReportSupplier) {
 export function validateReportQuality(
   product: ReportProduct,
   snapshot: ReportCategorySnapshot,
-  options: { enforcePrice?: boolean } = {},
+  options: { enforcePrice?: boolean; expectedPricing?: ReportPricing } = {},
 ) {
   const errors: string[] = [];
   if (snapshot.suppliers.length < 10) {
     errors.push(`requires at least 10 verified manufacturers; found ${snapshot.suppliers.length}`);
   }
-  if (options.enforcePrice && (product.priceNaira !== 25_000 || product.priceUsdCents !== 5_000)) {
-    errors.push("price must be exactly NGN 25,000 and USD 50");
+  const expectedPricing = options.expectedPricing || {
+    priceNaira: DEFAULT_REPORT_PRICE_NAIRA,
+    priceUsdCents: DEFAULT_REPORT_PRICE_USD_CENTS,
+  };
+  if (
+    options.enforcePrice &&
+    (product.priceNaira !== expectedPricing.priceNaira ||
+      product.priceUsdCents !== expectedPricing.priceUsdCents)
+  ) {
+    errors.push(
+      `price must match the central setting: NGN ${expectedPricing.priceNaira.toLocaleString()} and USD ${(expectedPricing.priceUsdCents / 100).toFixed(2)}`,
+    );
   }
 
   const imagePath = coverPath(product);

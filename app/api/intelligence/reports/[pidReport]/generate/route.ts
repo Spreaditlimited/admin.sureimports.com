@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin, unauthorized } from "@/app/api/invoicing/_lib/invoicing";
 import { getReportCategorySnapshot } from "@/lib/intelligence/reportData";
 import { renderSupplierIntelligencePdf } from "@/lib/intelligence/reportPdf";
+import { getReportPricing } from "@/lib/intelligence/reportPricing";
 import { validateReportQuality } from "@/lib/intelligence/reportQuality";
 import { uploadBufferToCloudinary } from "@/lib/cloudinary/upload";
 import { prisma } from "@/lib/prisma";
@@ -32,8 +33,14 @@ export async function POST(
     );
 
   try {
-    const snapshot = await getReportCategorySnapshot(report.nicheId);
-    validateReportQuality(report, snapshot, { enforcePrice: true });
+    const [snapshot, expectedPricing] = await Promise.all([
+      getReportCategorySnapshot(report.nicheId),
+      getReportPricing(),
+    ]);
+    validateReportQuality(report, snapshot, {
+      enforcePrice: true,
+      expectedPricing,
+    });
     const latest = await prisma.intelligence_report_versions.findFirst({
       where: { reportId: report.pidReport },
       orderBy: { versionNumber: "desc" },

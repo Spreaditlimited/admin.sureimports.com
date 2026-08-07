@@ -8,11 +8,11 @@ export default function IntelligenceSettingsPage() {
           Supplier Intelligence
         </p>
         <h1 className="mt-2 text-2xl font-bold text-foreground">
-          Subscription Pricing
+          Pricing Settings
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Configure monthly subscription amounts and Paystack recurring plan
-          codes. The Paystack plan code should match the amount configured here.
+          Configure one-time manufacturer report prices and monthly subscription
+          pricing. Changes to report pricing apply across the full report library.
         </p>
       </div>
 

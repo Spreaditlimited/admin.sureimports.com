@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getReportCategorySnapshot } from "@/lib/intelligence/reportData";
+import { getReportPricing } from "@/lib/intelligence/reportPricing";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, unauthorized } from "../../invoicing/_lib/invoicing";
 
@@ -77,8 +78,7 @@ export async function POST(request: Request) {
       }).format(new Date()),
     120,
   );
-  const priceNaira = Math.round(Number(body.priceNaira || 0));
-  const priceUsdCents = Math.round(Number(body.priceUsdCents || 0));
+  const { priceNaira, priceUsdCents } = await getReportPricing();
 
   if (!nicheId || !categoryName || !title || !slug) {
     return NextResponse.json(
@@ -86,13 +86,6 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (priceNaira < 100 || priceUsdCents < 100) {
-    return NextResponse.json(
-      { success: false, error: "Enter valid NGN and USD prices." },
-      { status: 400 },
-    );
-  }
-
   const existing = await prisma.intelligence_report_products.findFirst({
     where: { OR: [{ nicheId }, { slug }] },
   });
@@ -169,8 +162,6 @@ export async function PATCH(request: Request) {
       description: clean(body.description, 5000) || null,
       editionLabel: clean(body.editionLabel, 120),
       coverImageUrl: clean(body.coverImageUrl, 1000) || null,
-      priceNaira: Math.round(Number(body.priceNaira || 0)),
-      priceUsdCents: Math.round(Number(body.priceUsdCents || 0)),
       updatedAt: new Date(),
     },
   });

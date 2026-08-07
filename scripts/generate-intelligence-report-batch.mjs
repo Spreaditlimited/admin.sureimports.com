@@ -67,11 +67,15 @@ function json(result) {
 async function main() {
   await mkdir(outputDirectory, { recursive: true });
   const cookie = await adminCookie();
+  const pricing = await prisma.intelligence_report_price_settings.findUnique({
+    where: { settingKey: "manufacturer_reports" },
+  });
+  if (!pricing) throw new Error("Manufacturer report pricing is not configured.");
   const reports = await prisma.intelligence_report_products.findMany({
     where: {
       supplierCount: { gte: 10 },
-      priceNaira: 25_000,
-      priceUsdCents: 5_000,
+      priceNaira: pricing.priceNaira,
+      priceUsdCents: pricing.priceUsdCents,
       ...(requestedSlugs.length ? { slug: { in: requestedSlugs } } : {}),
     },
     orderBy: { slug: "asc" },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin, unauthorized } from "@/app/api/invoicing/_lib/invoicing";
 import { validateReportQuality } from "@/lib/intelligence/reportQuality";
+import { getReportPricing } from "@/lib/intelligence/reportPricing";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -33,8 +34,10 @@ export async function POST(
     );
 
   try {
+    const expectedPricing = await getReportPricing();
     validateReportQuality(report, version.supplierSnapshot as any, {
       enforcePrice: true,
+      expectedPricing,
     });
   } catch (error) {
     return NextResponse.json(

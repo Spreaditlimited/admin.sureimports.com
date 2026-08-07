@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CreditCard, RefreshCw, Save } from 'lucide-react';
+import { CreditCard, FileText, RefreshCw, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 type PlanSetting = {
@@ -11,6 +11,11 @@ type PlanSetting = {
   paystackPlanCode: string | null;
   monthlySearchCredits: number;
   extraCreditPriceNaira: number;
+};
+
+type ReportPricing = {
+  priceNaira: number;
+  priceUsdCents: number;
 };
 
 const emptyPlans: PlanSetting[] = [
@@ -34,6 +39,11 @@ const emptyPlans: PlanSetting[] = [
 
 export default function IntelligencePlanSettingsForm() {
   const [plans, setPlans] = useState<PlanSetting[]>(emptyPlans);
+  const [reportPricing, setReportPricing] = useState<ReportPricing>({
+    priceNaira: 50000,
+    priceUsdCents: 5000,
+  });
+  const [reportPriceUsd, setReportPriceUsd] = useState('50.00');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -62,6 +72,15 @@ export default function IntelligencePlanSettingsForm() {
               extraCreditPriceNaira: Number(plan.extraCreditPriceNaira || 0),
             })),
           );
+          if (data.reportPricing) {
+            setReportPricing({
+              priceNaira: Number(data.reportPricing.priceNaira || 0),
+              priceUsdCents: Number(data.reportPricing.priceUsdCents || 0),
+            });
+            setReportPriceUsd(
+              (Number(data.reportPricing.priceUsdCents || 0) / 100).toFixed(2),
+            );
+          }
         }
       } catch (error: any) {
         toast.error(error.message || 'Failed to load pricing settings.');
@@ -104,13 +123,25 @@ export default function IntelligencePlanSettingsForm() {
       const response = await fetch('/api/intelligence/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plans }),
+        body: JSON.stringify({
+          plans,
+          reportPricing: {
+            ...reportPricing,
+            priceUsdCents: Math.round(Number(reportPriceUsd || 0) * 100),
+          },
+        }),
       });
       const data = await response.json();
       if (!response.ok || data?.statusx !== 'SUCCESS') {
         throw new Error(data?.message || 'Failed to save pricing settings.');
       }
-      toast.success('Supplier Intelligence pricing updated.');
+      if (data.reportPricing) {
+        setReportPricing(data.reportPricing);
+        setReportPriceUsd(
+          (Number(data.reportPricing.priceUsdCents || 0) / 100).toFixed(2),
+        );
+      }
+      toast.success('Supplier Intelligence pricing updated across all reports.');
     } catch (error: any) {
       toast.error(error.message || 'Failed to save pricing settings.');
     } finally {
@@ -120,6 +151,61 @@ export default function IntelligencePlanSettingsForm() {
 
   return (
     <div className="max-w-5xl space-y-6">
+      <section className="rounded-xl border border-border bg-card p-6 shadow-soft">
+        <div className="flex items-start gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              One-time PDF products
+            </p>
+            <h2 className="mt-1 text-lg font-bold text-foreground">
+              Manufacturer Report Pricing
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              This is the central price for every Supplier Intelligence report.
+              Saving it updates existing products and becomes the default for new reports.
+            </p>
+          </div>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Nigeria Price (Naira)
+            </span>
+            <input
+              value={reportPricing.priceNaira}
+              type="number"
+              min={1000}
+              step={500}
+              disabled={loading}
+              onChange={(event) =>
+                setReportPricing((current) => ({
+                  ...current,
+                  priceNaira: Number(event.target.value || 0),
+                }))
+              }
+              className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              International Price (USD)
+            </span>
+            <input
+              value={reportPriceUsd}
+              type="number"
+              min={1}
+              step="0.01"
+              disabled={loading}
+              onChange={(event) => setReportPriceUsd(event.target.value)}
+              className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+            />
+          </label>
+        </div>
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-2">
         {plans.map((plan) => (
           <section

@@ -1397,6 +1397,15 @@ model intelligence_report_products {
   @@index([currentVersionId])
 }
 
+model intelligence_report_price_settings {
+  id            Int      @id @default(autoincrement())
+  settingKey    String   @unique @db.VarChar(80)
+  priceNaira    Int
+  priceUsdCents Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+}
+
 model intelligence_report_versions {
   id                 Int       @id @default(autoincrement())
   pidVersion         String    @unique() @db.VarChar(80)

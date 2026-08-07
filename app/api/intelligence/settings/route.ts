@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/prisma';
+import { getReportPricing, updateReportPricing } from '@/lib/intelligence/reportPricing';
 import { requireAdmin, unauthorized } from '../../invoicing/_lib/invoicing';
 
 type PlanKey = 'starter' | 'pro';
@@ -150,7 +151,11 @@ export async function GET() {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
 
-    return NextResponse.json({ statusx: 'SUCCESS', data: await getPlanSettings() });
+    const [plans, reportPricing] = await Promise.all([
+      getPlanSettings(),
+      getReportPricing(),
+    ]);
+    return NextResponse.json({ statusx: 'SUCCESS', data: plans, reportPricing });
   } catch (error: any) {
     return NextResponse.json(
       {
@@ -173,6 +178,23 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const plans = Array.isArray(body?.plans) ? body.plans : [];
+    const currentReportPricing = await getReportPricing();
+    const reportPriceNaira = normalizePrice(
+      body?.reportPricing?.priceNaira ?? currentReportPricing.priceNaira,
+    );
+    const reportPriceUsdCents = normalizePrice(
+      body?.reportPricing?.priceUsdCents ?? currentReportPricing.priceUsdCents,
+    );
+
+    if (reportPriceNaira < 1000 || reportPriceUsdCents < 100) {
+      return NextResponse.json(
+        {
+          statusx: 'ERROR',
+          message: 'Manufacturer reports require valid NGN and USD prices.',
+        },
+        { status: 400 },
+      );
+    }
 
     for (const item of plans) {
       const planKey = item?.planKey === 'pro' ? 'pro' : item?.planKey === 'starter' ? 'starter' : null;
@@ -211,7 +233,15 @@ export async function PATCH(request: NextRequest) {
       `;
     }
 
-    return NextResponse.json({ statusx: 'SUCCESS', data: await getPlanSettings() });
+    const reportPricing = await updateReportPricing({
+      priceNaira: reportPriceNaira,
+      priceUsdCents: reportPriceUsdCents,
+    });
+    return NextResponse.json({
+      statusx: 'SUCCESS',
+      data: await getPlanSettings(),
+      reportPricing,
+    });
   } catch (error: any) {
     return NextResponse.json(
       {
