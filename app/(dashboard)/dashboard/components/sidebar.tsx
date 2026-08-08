@@ -77,6 +77,7 @@ const features: MenuItem[] = [
     submenu: [
       { title: "Categories", path: "/dashboard/intelligence/categories" },
       { title: "Reports", path: "/dashboard/intelligence/reports" },
+      { title: "Report Orders", path: "/dashboard/intelligence/report-orders" },
       { title: "Review Requests", path: "/dashboard/intelligence/reviews" },
       { title: "Research Agent", path: "/dashboard/intelligence/research" },
       { title: "Addresses", path: "/dashboard/intelligence/addresses" },

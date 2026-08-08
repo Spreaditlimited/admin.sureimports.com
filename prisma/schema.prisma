@@ -1430,45 +1430,84 @@ model intelligence_report_versions {
 }
 
 model intelligence_report_orders {
-  id                Int       @id @default(autoincrement())
-  pidOrder          String    @unique() @db.VarChar(80)
-  reportId          String    @db.VarChar(80)
-  versionId         String    @db.VarChar(80)
-  pidUser           String?   @db.VarChar(191)
-  email             String    @db.VarChar(255)
-  firstName         String?   @db.VarChar(120)
-  lastName          String?   @db.VarChar(120)
-  billingCountry    String?   @db.VarChar(120)
-  paymentProvider   String    @db.VarChar(40)
-  providerReference String?   @unique() @db.VarChar(160)
-  status            String    @default("pending") @db.VarChar(40)
-  amountMinor       Int
-  currency          String    @db.VarChar(10)
-  downloadToken     String    @unique() @db.VarChar(160)
-  downloadCount     Int       @default(0)
-  paidAt            DateTime?
-  fulfilledAt       DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @default(now())
+  id                       Int       @id @default(autoincrement())
+  pidOrder                 String    @unique() @db.VarChar(80)
+  reportId                 String    @db.VarChar(80)
+  versionId                String    @db.VarChar(80)
+  pidUser                  String?   @db.VarChar(191)
+  email                    String    @db.VarChar(255)
+  firstName                String?   @db.VarChar(120)
+  lastName                 String?   @db.VarChar(120)
+  billingCountry           String?   @db.VarChar(120)
+  paymentProvider          String    @db.VarChar(40)
+  providerReference        String?   @unique() @db.VarChar(160)
+  status                   String    @default("pending") @db.VarChar(40)
+  amountMinor              Int
+  currency                 String    @db.VarChar(10)
+  downloadToken            String    @unique() @db.VarChar(160)
+  downloadTokenExpiresAt   DateTime?
+  downloadCount            Int       @default(0)
+  paidAt                   DateTime?
+  fulfilledAt              DateTime?
+  fulfillmentClaimedAt     DateTime?
+  fulfillmentAttempts      Int       @default(0)
+  lastFulfillmentAttemptAt DateTime?
+  fulfillmentError         String?   @db.Text
+  providerCaptureReference String?   @unique() @db.VarChar(160)
+  refundedAt               DateTime?
+  revokedAt                DateTime?
+  revocationReason         String?   @db.VarChar(500)
+  lastProviderEvent        String?   @db.VarChar(160)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @default(now())
 
   @@index([reportId, status])
   @@index([versionId])
   @@index([pidUser, status])
   @@index([email, status])
+  @@index([status, fulfilledAt, lastFulfillmentAttemptAt], map: "iro_fulfillment_queue_idx")
+}
+
+model intelligence_report_checkout_rate_limits {
+  id          Int      @id @default(autoincrement())
+  scopeHash   String   @db.VarChar(64)
+  bucketStart DateTime
+  attempts    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([scopeHash, bucketStart], map: "ircrl_scope_bucket_key")
+  @@index([updatedAt], map: "ircrl_updated_idx")
+}
+
+model intelligence_report_order_events {
+  id              Int      @id @default(autoincrement())
+  pidEvent        String   @unique() @db.VarChar(80)
+  orderId         String   @db.VarChar(80)
+  source          String   @db.VarChar(40)
+  eventType       String   @db.VarChar(120)
+  providerEventId String?  @unique() @db.VarChar(160)
+  previousStatus  String?  @db.VarChar(40)
+  nextStatus      String?  @db.VarChar(40)
+  details         Json?
+  createdAt       DateTime @default(now())
+
+  @@index([orderId, createdAt], map: "iroe_order_created_idx")
+  @@index([eventType, createdAt], map: "iroe_type_created_idx")
 }
 
 model intelligence_report_requests {
-  id                   Int                                   @id @default(autoincrement())
-  pidRequest           String                                @unique() @db.VarChar(80)
-  query                String                                @db.VarChar(180)
-  normalizedQuery      String                                @unique() @db.VarChar(180)
-  status               String                                @default("requested") @db.VarChar(40)
-  voteCount            Int                                   @default(0)
-  selectedWeek         String?                               @db.VarChar(20)
-  queueSearchRequestId String?                               @db.VarChar(80)
-  publishedReportSlug  String?                               @db.VarChar(180)
-  createdAt            DateTime                              @default(now())
-  updatedAt            DateTime                              @default(now()) @updatedAt
+  id                   Int                                 @id @default(autoincrement())
+  pidRequest           String                              @unique() @db.VarChar(80)
+  query                String                              @db.VarChar(180)
+  normalizedQuery      String                              @unique() @db.VarChar(180)
+  status               String                              @default("requested") @db.VarChar(40)
+  voteCount            Int                                 @default(0)
+  selectedWeek         String?                             @db.VarChar(20)
+  queueSearchRequestId String?                             @db.VarChar(80)
+  publishedReportSlug  String?                             @db.VarChar(180)
+  createdAt            DateTime                            @default(now())
+  updatedAt            DateTime                            @default(now()) @updatedAt
   votes                intelligence_report_request_votes[]
 
   @@index([status, voteCount])
@@ -1477,14 +1516,14 @@ model intelligence_report_requests {
 }
 
 model intelligence_report_request_votes {
-  id         Int                          @id @default(autoincrement())
-  pidVote    String                       @unique() @db.VarChar(80)
-  requestId  String                       @db.VarChar(80)
-  email      String                       @db.VarChar(255)
-  voterKey   String                       @db.VarChar(64)
-  weekKey    String                       @db.VarChar(20)
-  createdAt  DateTime                     @default(now())
-  request    intelligence_report_requests @relation(fields: [requestId], references: [pidRequest], onDelete: Cascade)
+  id        Int                          @id @default(autoincrement())
+  pidVote   String                       @unique() @db.VarChar(80)
+  requestId String                       @db.VarChar(80)
+  email     String                       @db.VarChar(255)
+  voterKey  String                       @db.VarChar(64)
+  weekKey   String                       @db.VarChar(20)
+  createdAt DateTime                     @default(now())
+  request   intelligence_report_requests @relation(fields: [requestId], references: [pidRequest], onDelete: Cascade)
 
   @@unique([requestId, voterKey, weekKey])
   @@index([weekKey, createdAt])
