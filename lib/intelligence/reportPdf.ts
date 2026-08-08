@@ -212,9 +212,7 @@ function supplierPage(
   const assessmentBoxHeight = Math.max(104, 57 + assessmentHeight);
   ensureSpace(doc, assessmentBoxHeight + 18);
   const assessmentBoxY = doc.y;
-  doc
-    .roundedRect(54, assessmentBoxY, 487, assessmentBoxHeight, 12)
-    .fill(PALE);
+  doc.roundedRect(54, assessmentBoxY, 487, assessmentBoxHeight, 12).fill(PALE);
   const boxY = assessmentBoxY + 17;
   doc
     .fillColor(ORANGE)
@@ -227,12 +225,7 @@ function supplierPage(
     .fillColor(NAVY)
     .font("Helvetica")
     .fontSize(9.5)
-    .text(
-      assessment,
-      72,
-      boxY + 22,
-      { width: 451, lineGap: 3 },
-    );
+    .text(assessment, 72, boxY + 22, { width: 451, lineGap: 3 });
   doc.y = assessmentBoxY + assessmentBoxHeight + 18;
 
   label(doc, "Official contact routes");
@@ -301,6 +294,7 @@ function supplierPage(
 export async function renderSupplierIntelligencePdf(
   product: ProductDetails,
   snapshot: ReportCategorySnapshot,
+  options: { coverImage?: Buffer | string | null } = {},
 ) {
   const doc = new PDFDocument({
     size: "A4",
@@ -319,7 +313,7 @@ export async function renderSupplierIntelligencePdf(
   doc.info.Keywords =
     "supplier intelligence, China suppliers, sourcing, importing";
 
-  const coverImage = localCoverImage(product);
+  const coverImage = options.coverImage || localCoverImage(product);
   doc.rect(0, 0, 595.28, 841.89).fill(NAVY);
   if (coverImage) {
     doc.image(coverImage, 0, 0, {

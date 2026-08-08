@@ -1,0 +1,182 @@
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+import sharp from "sharp";
+
+import { uploadBufferToCloudinary } from "@/lib/cloudinary/upload";
+
+import type { ReportCategorySnapshot } from "./reportData";
+
+type CoverProduct = {
+  slug: string;
+  title: string;
+  coverImageUrl?: string | null;
+  coverImagePublicId?: string | null;
+  coverImageBytes?: number | null;
+};
+
+export type ReportCoverAsset = {
+  buffer: Buffer;
+  url: string;
+  publicId: string | null;
+  bytes: number;
+  generated: boolean;
+};
+
+const MAX_COVER_BYTES = 15 * 1024 * 1024;
+
+function localCoverPath(product: CoverProduct) {
+  const configured = String(product.coverImageUrl || "").trim();
+  if (configured.startsWith("/")) {
+    const configuredPath = path.join(process.cwd(), "public", configured);
+    if (existsSync(configuredPath)) return configuredPath;
+  }
+
+  const fallback = path.join(
+    process.cwd(),
+    "public/assets/images/intelligence-covers",
+    `${product.slug}-v1.png`,
+  );
+  return existsSync(fallback) ? fallback : null;
+}
+
+async function downloadRemoteCover(url: string) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Unable to retrieve the report cover (${response.status}).`,
+    );
+  }
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.startsWith("image/")) {
+    throw new Error("The configured report cover is not an image.");
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (!buffer.length || buffer.length > MAX_COVER_BYTES) {
+    throw new Error("The configured report cover has an invalid file size.");
+  }
+  return buffer;
+}
+
+export async function resolveReportCoverAsset(
+  product: CoverProduct,
+): Promise<ReportCoverAsset | null> {
+  const configured = String(product.coverImageUrl || "").trim();
+  const localPath = localCoverPath(product);
+  if (localPath) {
+    const buffer = await readFile(localPath);
+    const publicUrl = configured.startsWith("/")
+      ? configured
+      : `/assets/images/intelligence-covers/${product.slug}-v1.png`;
+    return {
+      buffer,
+      url: publicUrl,
+      publicId: product.coverImagePublicId || null,
+      bytes: buffer.length,
+      generated: false,
+    };
+  }
+
+  if (/^https:\/\//i.test(configured)) {
+    const buffer = await downloadRemoteCover(configured);
+    return {
+      buffer,
+      url: configured,
+      publicId: product.coverImagePublicId || null,
+      bytes: buffer.length,
+      generated: false,
+    };
+  }
+
+  return null;
+}
+
+function coverPrompt(snapshot: ReportCategorySnapshot) {
+  const products = Array.from(
+    new Set(
+      snapshot.suppliers
+        .flatMap((supplier) => supplier.productsMade)
+        .filter(Boolean),
+    ),
+  ).slice(0, 12);
+
+  return [
+    `Create a premium editorial product still-life for a commercial sourcing report about ${snapshot.name}.`,
+    products.length
+      ? `Show a coherent, realistic selection of these exact product types: ${products.join(", ")}.`
+      : "Show a coherent, realistic selection of the products in this category.",
+    "Portrait composition in a 2:3 aspect ratio. Arrange the products across the middle and lower-middle of the frame, with generous clean negative space in the top 42 percent and bottom 18 percent for a professionally typeset cover overlay.",
+    "Use a deep midnight navy studio background, subtle architectural shadows, controlled warm amber rim lighting and restrained premium highlights. The visual must feel authoritative, commercially useful and consistent with an executive market-intelligence publication.",
+    "Photorealistic materials, accurate product geometry, refined art direction, no people unless essential to show wearable products, and no scenery that distracts from the products.",
+    "Do not include text, letters, numbers, logos, trademarks, watermarks, badges, borders or invented packaging labels. Do not imitate any named brand.",
+  ].join("\n\n");
+}
+
+async function generateCoverBuffer(snapshot: ReportCategorySnapshot) {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured.");
+
+  const response = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_REPORT_IMAGE_MODEL?.trim() || "gpt-image-2",
+      prompt: coverPrompt(snapshot),
+      size: "1024x1536",
+      quality: "high",
+      n: 1,
+    }),
+    signal: AbortSignal.timeout(180_000),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(
+      `Report cover generation failed (${response.status}): ${detail.slice(0, 500)}`,
+    );
+  }
+
+  const result = await response.json();
+  const base64 = String(result?.data?.[0]?.b64_json || "");
+  if (!base64) throw new Error("OpenAI did not return a report cover image.");
+
+  const source = Buffer.from(base64, "base64");
+  return sharp(source)
+    .resize(1024, 1536, { fit: "cover", position: "centre" })
+    .png({ compressionLevel: 8, adaptiveFiltering: true })
+    .toBuffer();
+}
+
+export async function ensureReportCover(
+  product: CoverProduct,
+  snapshot: ReportCategorySnapshot,
+): Promise<ReportCoverAsset> {
+  const existing = await resolveReportCoverAsset(product);
+  if (existing) return existing;
+
+  const buffer = await generateCoverBuffer(snapshot);
+  const upload = await uploadBufferToCloudinary(buffer, {
+    folder: "sureimports/supplier-intelligence/covers",
+    publicId: `${product.slug}-v1`,
+    resourceType: "image",
+    overwrite: true,
+    useFilename: false,
+    uniqueFilename: false,
+    tags: ["supplier-intelligence", "report-cover", product.slug],
+  });
+
+  return {
+    buffer,
+    url: upload.url,
+    publicId: upload.publicId,
+    bytes: upload.bytes || buffer.length,
+    generated: true,
+  };
+}

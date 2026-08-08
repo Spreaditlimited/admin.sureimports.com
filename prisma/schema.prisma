@@ -1374,24 +1374,31 @@ model invoice_audit_logs {
 }
 
 model intelligence_report_products {
-  id               Int       @id @default(autoincrement())
-  pidReport        String    @unique() @db.VarChar(80)
-  nicheId          String    @unique() @db.VarChar(80)
-  slug             String    @unique() @db.VarChar(180)
-  title            String    @db.VarChar(220)
-  subtitle         String?   @db.VarChar(255)
-  description      String?   @db.Text
-  editionLabel     String    @db.VarChar(120)
-  coverImageUrl    String?   @db.VarChar(1000)
-  priceNaira       Int
-  priceUsdCents    Int
-  status           String    @default("draft") @db.VarChar(40)
-  currentVersionId String?   @db.VarChar(80)
-  supplierCount    Int       @default(0)
-  publishedAt      DateTime?
-  createdByPidUser String?   @db.VarChar(191)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @default(now())
+  id                    Int       @id @default(autoincrement())
+  pidReport             String    @unique() @db.VarChar(80)
+  nicheId               String    @unique() @db.VarChar(80)
+  slug                  String    @unique() @db.VarChar(180)
+  title                 String    @db.VarChar(220)
+  subtitle              String?   @db.VarChar(255)
+  description           String?   @db.Text
+  editionLabel          String    @db.VarChar(120)
+  coverImageUrl         String?   @db.VarChar(1000)
+  coverImagePublicId    String?   @db.VarChar(500)
+  coverImageBytes       Int?
+  seoProfile            Json?
+  priceNaira            Int
+  priceUsdCents         Int
+  status                String    @default("draft") @db.VarChar(40)
+  automationStatus      String    @default("idle") @db.VarChar(40)
+  automationError       String?   @db.Text
+  automationStartedAt   DateTime?
+  automationCompletedAt DateTime?
+  currentVersionId      String?   @db.VarChar(80)
+  supplierCount         Int       @default(0)
+  publishedAt           DateTime?
+  createdByPidUser      String?   @db.VarChar(191)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now())
 
   @@index([status, publishedAt])
   @@index([currentVersionId])

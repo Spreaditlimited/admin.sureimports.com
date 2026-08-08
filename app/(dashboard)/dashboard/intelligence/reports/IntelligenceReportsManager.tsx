@@ -9,6 +9,7 @@ import {
   Loader2,
   RefreshCw,
   Send,
+  Sparkles,
   Trash2,
   TriangleAlert,
 } from "lucide-react";
@@ -40,6 +41,8 @@ type Report = {
   supplierCount: number;
   status: string;
   currentVersionId?: string | null;
+  automationStatus?: string | null;
+  automationError?: string | null;
   versions: Version[];
 };
 type PendingDeletion =
@@ -88,6 +91,7 @@ export default function IntelligenceReportsManager() {
     () =>
       categories.filter(
         (category) =>
+          category.suppliers.length >= 10 &&
           !reports.some((report) => report.nicheId === category.pidNiche),
       ),
     [categories, reports],
@@ -96,37 +100,53 @@ export default function IntelligenceReportsManager() {
     (category) => category.pidNiche === categoryId,
   );
 
-  async function createReport(event: React.FormEvent) {
-    event.preventDefault();
-    if (!selectedCategory) return;
-    setBusy("create");
+  async function automateReport(input: {
+    nicheId: string;
+    categoryName: string;
+    editionLabel: string;
+    busyKey: string;
+  }) {
+    setBusy(input.busyKey);
     setError("");
     setMessage("");
     try {
-      const response = await fetch("/api/intelligence/reports", {
+      const response = await fetch("/api/intelligence/reports/automate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nicheId: selectedCategory.pidNiche,
-          categoryName: selectedCategory.name,
-          editionLabel,
+          nicheId: input.nicheId,
+          categoryName: input.categoryName,
+          editionLabel: input.editionLabel,
         }),
       });
       const data = await response.json();
       if (!response.ok)
-        throw new Error(data.error || "Unable to create report.");
+        throw new Error(data.error || "Unable to create and publish report.");
       setMessage(
-        `Draft created with ${data.data.supplierCount} ${data.data.supplierCount === 1 ? "approved supplier" : "approved suppliers"}. Generate its first PDF edition when ready.`,
+        `${input.categoryName} was created, quality-checked and published with ${data.data.version.supplierCount} verified manufacturers.`,
       );
       setCategoryId("");
       await load();
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : "Unable to create report.",
+        caught instanceof Error
+          ? caught.message
+          : "Unable to create and publish report.",
       );
     } finally {
       setBusy("");
     }
+  }
+
+  async function createReport(event: React.FormEvent) {
+    event.preventDefault();
+    if (!selectedCategory) return;
+    await automateReport({
+      nicheId: selectedCategory.pidNiche,
+      categoryName: selectedCategory.name,
+      editionLabel,
+      busyKey: "create",
+    });
   }
 
   async function generate(pidReport: string) {
@@ -227,7 +247,9 @@ export default function IntelligenceReportsManager() {
       await load();
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : "Unable to delete this edition.",
+        caught instanceof Error
+          ? caught.message
+          : "Unable to delete this edition.",
       );
     } finally {
       setBusy("");
@@ -270,11 +292,12 @@ export default function IntelligenceReportsManager() {
           </span>
           <div>
             <h2 className="font-semibold text-card-foreground">
-              Create a report product
+              Create and publish a report
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              New reports automatically use the central manufacturer-report
-              price configured in Supplier Intelligence Settings.
+              Eligible categories have at least 10 approved manufacturers. One
+              action creates the product page, generates its category cover and
+              PDF, applies the quality gate and publishes the finished edition.
             </p>
           </div>
         </div>
@@ -315,12 +338,16 @@ export default function IntelligenceReportsManager() {
               {busy === "create" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <FilePlus2 className="h-4 w-4" />
+                <Sparkles className="h-4 w-4" />
               )}
-              Create report
+              Create and publish report
             </button>
           </div>
         </form>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Cover and SEO generation can take several minutes. Keep this page open
+          until the completion message appears.
+        </p>
       </section>
 
       {message ? (
@@ -451,6 +478,12 @@ export default function IntelligenceReportsManager() {
                   {report.status}
                 </span>
               </div>
+              {report.automationStatus === "failed" &&
+              report.automationError ? (
+                <div className="mt-4 rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  Automation stopped safely: {report.automationError}
+                </div>
+              ) : null}
               <div className="mt-5 flex flex-wrap gap-2">
                 <button
                   onClick={() => setEditing(report)}
@@ -472,6 +505,34 @@ export default function IntelligenceReportsManager() {
                   )}
                   Generate new edition
                 </button>
+                {report.status === "draft" ? (
+                  <button
+                    onClick={() => {
+                      const category = categories.find(
+                        (item) => item.pidNiche === report.nicheId,
+                      );
+                      if (!category) {
+                        setError("The report category could not be resolved.");
+                        return;
+                      }
+                      void automateReport({
+                        nicheId: report.nicheId,
+                        categoryName: category.name,
+                        editionLabel: report.editionLabel,
+                        busyKey: `automate:${report.pidReport}`,
+                      });
+                    }}
+                    disabled={Boolean(busy)}
+                    className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                  >
+                    {busy === `automate:${report.pidReport}` ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    Complete and publish
+                  </button>
+                ) : null}
                 {latest?.pdfUrl ? (
                   <a
                     href={`/api/intelligence/reports/${report.pidReport}/preview?versionId=${encodeURIComponent(latest.pidVersion)}`}
