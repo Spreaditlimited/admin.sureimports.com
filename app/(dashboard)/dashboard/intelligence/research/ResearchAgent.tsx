@@ -81,6 +81,8 @@ type SearchRequest = {
   pidUser: string;
   email: string;
   query: string;
+  originalQuery: string | null;
+  confirmedAt: string | null;
   targetSupplierCount: number;
   notes: string | null;
   status: string;
@@ -242,6 +244,7 @@ export default function IntelligenceResearchAgent() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [runningSearchRequest, setRunningSearchRequest] = useState<string | null>(null);
+  const [rejectingSearchRequest, setRejectingSearchRequest] = useState<string | null>(null);
   const [updatingJob, setUpdatingJob] = useState<string | null>(null);
   const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
   const [progressNow, setProgressNow] = useState(() => Date.now());
@@ -410,6 +413,28 @@ export default function IntelligenceResearchAgent() {
     }
   };
 
+  const rejectSearchRequest = async (pidSearch: string) => {
+    setRejectingSearchRequest(pidSearch);
+    try {
+      const response = await fetch('/api/intelligence/research', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pidSearch, action: 'reject_request' }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Could not reject this request.');
+      }
+      setJobs(data.data || []);
+      setSearchRequests(data.searchRequests || []);
+      toast.success('Request rejected and its reserved credit returned.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not reject this request.');
+    } finally {
+      setRejectingSearchRequest(null);
+    }
+  };
+
   const updateJob = async (
     pidJob: string,
     action:
@@ -485,7 +510,7 @@ export default function IntelligenceResearchAgent() {
             <input
               value={nicheName}
               onChange={(event) => setNicheName(event.target.value)}
-              placeholder="Example: Salon equipment for beauty businesses in my target market"
+              placeholder="Example: Commercial hydraulic salon chairs"
               className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring"
             />
           </label>
@@ -643,7 +668,9 @@ export default function IntelligenceResearchAgent() {
                 request={request}
                 relatedJob={jobs.find((job) => job.pidJob === request.relatedPidJob)}
                 running={runningSearchRequest === request.pidSearch}
+                rejecting={rejectingSearchRequest === request.pidSearch}
                 onGenerate={() => runSearchRequestResearch(request.pidSearch)}
+                onReject={() => rejectSearchRequest(request.pidSearch)}
                 onReviewJob={
                   request.relatedPidJob
                     ? () => {
@@ -764,13 +791,17 @@ function SearchRequestCard({
   request,
   relatedJob,
   running,
+  rejecting,
   onGenerate,
+  onReject,
   onReviewJob,
 }: {
   request: SearchRequest;
   relatedJob?: ResearchJob;
   running: boolean;
+  rejecting: boolean;
   onGenerate: () => void;
+  onReject: () => void;
   onReviewJob?: () => void;
 }) {
   const canGenerate = request.status === 'awaiting_admin' && !request.relatedPidJob;
@@ -800,6 +831,11 @@ function SearchRequestCard({
           <h3 className="mt-3 text-base font-bold text-foreground">
             {request.query}
           </h3>
+          {request.originalQuery && request.originalQuery !== request.query ? (
+            <p className="mt-1 text-xs font-medium text-muted-foreground">
+              User entered: “{request.originalQuery}”
+            </p>
+          ) : null}
           <div className="mt-2 flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             <span>{request.targetSupplierCount} suppliers</span>
             {request.creditSource === 'market_demand' ? (
@@ -842,19 +878,34 @@ function SearchRequestCard({
             </button>
           ) : null}
           {canGenerate ? (
-            <button
-              type="button"
-              onClick={onGenerate}
-              disabled={running}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {running ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Bot className="h-3.5 w-3.5" />
-              )}
-              {running ? 'Generating...' : 'Generate draft'}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onGenerate}
+                disabled={running || rejecting}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {running ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Bot className="h-3.5 w-3.5" />
+                )}
+                {running ? 'Generating...' : 'Approve and generate'}
+              </button>
+              <button
+                type="button"
+                onClick={onReject}
+                disabled={running || rejecting}
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-xs font-bold text-red-700 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:text-red-300"
+              >
+                {rejecting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5" />
+                )}
+                {rejecting ? 'Returning credit...' : 'Reject and return credit'}
+              </button>
+            </>
           ) : null}
         </div>
       </div>
