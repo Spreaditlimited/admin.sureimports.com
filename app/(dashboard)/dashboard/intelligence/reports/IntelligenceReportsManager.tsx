@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  CheckCircle2,
+  Circle,
   ExternalLink,
   FilePenLine,
   FilePlus2,
@@ -48,6 +50,45 @@ type Report = {
 type PendingDeletion =
   | { kind: "report"; report: Report }
   | { kind: "version"; report: Report; version: Version };
+type PendingPublication = { report: Report; version: Version };
+
+type AutomationStepId =
+  | "draft"
+  | "suppliers"
+  | "seo"
+  | "cover"
+  | "pdf"
+  | "upload"
+  | "quality"
+  | "approval";
+type AutomationStepStatus = "pending" | "active" | "completed" | "failed";
+type AutomationStepState = {
+  id: AutomationStepId;
+  label: string;
+  status: AutomationStepStatus;
+  detail: string;
+};
+
+const automationStepDefinitions: Array<
+  Pick<AutomationStepState, "id" | "label">
+> = [
+  { id: "draft", label: "Prepare report" },
+  { id: "suppliers", label: "Validate manufacturers" },
+  { id: "seo", label: "Research and write product page" },
+  { id: "cover", label: "Create and review cover" },
+  { id: "pdf", label: "Render PDF" },
+  { id: "upload", label: "Store finished document" },
+  { id: "quality", label: "Run final quality gate" },
+  { id: "approval", label: "Ready for your approval" },
+];
+
+function freshAutomationProgress(): AutomationStepState[] {
+  return automationStepDefinitions.map((step) => ({
+    ...step,
+    status: "pending",
+    detail: "Waiting",
+  }));
+}
 
 const inputClass =
   "mt-2 w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring";
@@ -67,6 +108,25 @@ export default function IntelligenceReportsManager() {
   const [editing, setEditing] = useState<Report | null>(null);
   const [pendingDeletion, setPendingDeletion] =
     useState<PendingDeletion | null>(null);
+  const [pendingPublication, setPendingPublication] =
+    useState<PendingPublication | null>(null);
+  const [automationProgress, setAutomationProgress] = useState<
+    AutomationStepState[]
+  >([]);
+  const [automationElapsed, setAutomationElapsed] = useState(0);
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
+
+  const automationBusy =
+    busy === "create" || busy.startsWith("automate:");
+
+  useEffect(() => {
+    if (!automationBusy) return;
+    const timer = window.setInterval(
+      () => setAutomationElapsed((elapsed) => elapsed + 1),
+      1000,
+    );
+    return () => window.clearInterval(timer);
+  }, [automationBusy]);
 
   const load = useCallback(async () => {
     const [categoryResponse, reportResponse] = await Promise.all([
@@ -109,6 +169,9 @@ export default function IntelligenceReportsManager() {
     setBusy(input.busyKey);
     setError("");
     setMessage("");
+    setAutomationProgress(freshAutomationProgress());
+    setAutomationElapsed(0);
+    setAwaitingApproval(false);
     try {
       const response = await fetch("/api/intelligence/reports/automate", {
         method: "POST",
@@ -119,19 +182,79 @@ export default function IntelligenceReportsManager() {
           editionLabel: input.editionLabel,
         }),
       });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.error || "Unable to create and publish report.");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Unable to prepare the report.");
+      }
+      if (!response.body) {
+        throw new Error("The report progress stream could not be opened.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let completedSupplierCount = 0;
+      let streamError = "";
+
+      const handleEvent = (event: any) => {
+        if (event?.type === "progress") {
+          setAutomationProgress((current) =>
+            current.map((step) =>
+              step.id === event.step
+                ? {
+                    ...step,
+                    status: event.status,
+                    detail: String(event.detail || step.detail),
+                  }
+                : step,
+            ),
+          );
+        } else if (event?.type === "complete") {
+          completedSupplierCount = Number(event.supplierCount || 0);
+          setAwaitingApproval(Boolean(event.awaitingApproval));
+        } else if (event?.type === "heartbeat") {
+          setAutomationElapsed((elapsed) =>
+            Math.max(elapsed, Number(event.elapsedSeconds || 0)),
+          );
+        } else if (event?.type === "error") {
+          streamError = String(
+            event.error || "Unable to prepare the report.",
+          );
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+        const lines = buffer.split("\n");
+        buffer = done ? "" : lines.pop() || "";
+        for (const line of lines) {
+          if (line.trim()) handleEvent(JSON.parse(line));
+        }
+        if (done) {
+          if (buffer.trim()) handleEvent(JSON.parse(buffer));
+          break;
+        }
+      }
+      if (streamError) throw new Error(streamError);
+      if (!completedSupplierCount) {
+        throw new Error("The report process ended without a completion result.");
+      }
       setMessage(
-        `${input.categoryName} was created, quality-checked and published with ${data.data.version.supplierCount} verified manufacturers.`,
+        `${input.categoryName} was generated with ${completedSupplierCount} verified manufacturers and passed every quality check. Preview the PDF, then approve it before publishing.`,
       );
       setCategoryId("");
       await load();
     } catch (caught) {
+      setAutomationProgress((current) =>
+        current.map((step) =>
+          step.status === "active" ? { ...step, status: "failed" } : step,
+        ),
+      );
       setError(
         caught instanceof Error
           ? caught.message
-          : "Unable to create and publish report.",
+          : "Unable to prepare the report.",
       );
     } finally {
       setBusy("");
@@ -220,6 +343,8 @@ export default function IntelligenceReportsManager() {
       if (!response.ok)
         throw new Error(data.error || "Unable to publish report.");
       setMessage(`${report.title} is now published.`);
+      setPendingPublication(null);
+      setAwaitingApproval(false);
       await load();
     } catch (caught) {
       setError(
@@ -292,12 +417,13 @@ export default function IntelligenceReportsManager() {
           </span>
           <div>
             <h2 className="font-semibold text-card-foreground">
-              Create and publish a report
+              Create a report for review
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Eligible categories have at least 10 approved manufacturers. One
               action creates the product page, generates its category cover and
-              PDF, applies the quality gate and publishes the finished edition.
+              PDF, and applies every quality gate. Nothing is published until
+              you preview and explicitly approve the finished edition.
             </p>
           </div>
         </div>
@@ -340,15 +466,81 @@ export default function IntelligenceReportsManager() {
               ) : (
                 <Sparkles className="h-4 w-4" />
               )}
-              Create and publish report
+              Create report for review
             </button>
           </div>
         </form>
         <p className="mt-3 text-xs text-muted-foreground">
-          Cover and SEO generation can take several minutes. Keep this page open
-          until the completion message appears.
+          Works from this deployed dashboard and from localhost. Cover and SEO
+          generation can take several minutes; live progress appears below.
         </p>
       </section>
+
+      {automationProgress.length ? (
+        <section
+          className="rounded-xl border border-border bg-card p-5 shadow-sm"
+          aria-live="polite"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                Report production
+              </p>
+              <h2 className="mt-1 font-semibold text-card-foreground">
+                {automationBusy
+                  ? "Creating your report"
+                  : awaitingApproval
+                    ? "Ready for your approval"
+                    : automationProgress.every(
+                        (step) => step.status === "completed",
+                      )
+                    ? "Report completed"
+                    : "Report production stopped"}
+              </h2>
+            </div>
+            <span className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-semibold tabular-nums text-muted-foreground">
+              {Math.floor(automationElapsed / 60)}:
+              {String(automationElapsed % 60).padStart(2, "0")} elapsed
+            </span>
+          </div>
+          <div className="mt-5 grid gap-2 md:grid-cols-2">
+            {automationProgress.map((step) => (
+              <div
+                key={step.id}
+                className={`flex gap-3 rounded-lg border px-3 py-3 transition-colors ${
+                  step.status === "active"
+                    ? "border-primary/35 bg-primary/5"
+                    : step.status === "completed"
+                      ? "border-emerald-200 bg-emerald-50/60"
+                      : step.status === "failed"
+                        ? "border-destructive/25 bg-destructive/5"
+                        : "border-border bg-muted/20"
+                }`}
+              >
+                <span className="mt-0.5 shrink-0">
+                  {step.status === "completed" ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  ) : step.status === "active" ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : step.status === "failed" ? (
+                    <TriangleAlert className="h-4 w-4 text-destructive" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground/50" />
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {step.label}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    {step.detail}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {message ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -473,15 +665,27 @@ export default function IntelligenceReportsManager() {
                   </p>
                 </div>
                 <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${report.status === "published" ? "bg-emerald-100 text-emerald-800" : "bg-muted text-muted-foreground"}`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${report.status === "published" ? "bg-emerald-100 text-emerald-800" : report.automationStatus === "awaiting_approval" ? "bg-amber-100 text-amber-900" : "bg-muted text-muted-foreground"}`}
                 >
-                  {report.status}
+                  {report.status === "published"
+                    ? "published"
+                    : report.automationStatus === "awaiting_approval"
+                      ? "awaiting approval"
+                      : report.status}
                 </span>
               </div>
               {report.automationStatus === "failed" &&
               report.automationError ? (
                 <div className="mt-4 rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                   Automation stopped safely: {report.automationError}
+                </div>
+              ) : null}
+              {report.status === "draft" &&
+              report.automationStatus === "awaiting_approval" &&
+              latest?.pdfUrl ? (
+                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                  This report passed the automated quality gate and is waiting
+                  for your review. It is not visible to customers.
                 </div>
               ) : null}
               <div className="mt-5 flex flex-wrap gap-2">
@@ -505,7 +709,11 @@ export default function IntelligenceReportsManager() {
                   )}
                   Generate new edition
                 </button>
-                {report.status === "draft" ? (
+                {report.status === "draft" &&
+                !(
+                  report.automationStatus === "awaiting_approval" &&
+                  latest?.pdfUrl
+                ) ? (
                   <button
                     onClick={() => {
                       const category = categories.find(
@@ -530,7 +738,7 @@ export default function IntelligenceReportsManager() {
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    Complete and publish
+                    Complete report for review
                   </button>
                 ) : null}
                 {latest?.pdfUrl ? (
@@ -546,16 +754,14 @@ export default function IntelligenceReportsManager() {
                 ) : null}
                 {latest?.pdfUrl && latest.status !== "published" ? (
                   <button
-                    onClick={() => publish(report, latest.pidVersion)}
+                    onClick={() =>
+                      setPendingPublication({ report, version: latest })
+                    }
                     disabled={Boolean(busy)}
                     className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
                   >
-                    {busy === `publish:${report.pidReport}` ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                    Publish edition
+                    <Send className="h-4 w-4" />
+                    Review and publish
                   </button>
                 ) : null}
                 {report.status === "draft" ? (
@@ -625,6 +831,104 @@ export default function IntelligenceReportsManager() {
           );
         })}
       </section>
+
+      {pendingPublication ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-publish-title"
+        >
+          <div className="w-full max-w-lg overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+            <div className="p-6">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+                <Send className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-center text-xs font-bold uppercase tracking-widest text-primary">
+                Final confirmation
+              </p>
+              <h3
+                id="report-publish-title"
+                className="mt-2 text-center text-xl font-bold tracking-tight text-foreground"
+              >
+                Approve and publish this report?
+              </h3>
+              <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
+                “{pendingPublication.report.title}” Version {" "}
+                {pendingPublication.version.versionNumber} contains {" "}
+                {pendingPublication.version.supplierCount} manufacturers. Once
+                approved, its product page and PDF will become available to
+                customers.
+              </p>
+              <div className="mt-5 rounded-lg border border-border bg-muted/30 p-4">
+                <p className="text-sm font-semibold text-foreground">
+                  Before you publish
+                </p>
+                <ul className="mt-2 space-y-2 text-xs leading-relaxed text-muted-foreground">
+                  <li className="flex gap-2">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    Preview the complete PDF, including its cover and supplier
+                    pages.
+                  </li>
+                  <li className="flex gap-2">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    Confirm the category, edition, manufacturer count and
+                    presentation are correct.
+                  </li>
+                </ul>
+              </div>
+              <a
+                href={`/api/intelligence/reports/${pendingPublication.report.pidReport}/preview?versionId=${encodeURIComponent(pendingPublication.version.pidVersion)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Preview PDF in a new tab
+              </a>
+              {error ? (
+                <p className="mt-4 text-center text-xs text-destructive">
+                  {error}
+                </p>
+              ) : null}
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingPublication(null);
+                    setError("");
+                  }}
+                  disabled={Boolean(busy)}
+                  className="flex-1 rounded-md border border-border bg-muted px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                >
+                  Not yet
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    publish(
+                      pendingPublication.report,
+                      pendingPublication.version.pidVersion,
+                    )
+                  }
+                  disabled={Boolean(busy)}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {busy ===
+                  `publish:${pendingPublication.report.pidReport}` ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {busy === `publish:${pendingPublication.report.pidReport}`
+                    ? "Publishing..."
+                    : "Approve and publish"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {pendingDeletion ? (
         <div

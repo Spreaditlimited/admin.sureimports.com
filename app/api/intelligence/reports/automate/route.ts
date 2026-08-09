@@ -17,24 +17,64 @@ export async function POST(request: Request) {
   const admin = await requireAdmin();
   if (!admin) return unauthorized();
   const body = await request.json().catch(() => ({}));
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      let open = true;
+      const startedAt = Date.now();
+      const send = (event: Record<string, unknown>) => {
+        if (!open) return;
+        try {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        } catch {
+          open = false;
+        }
+      };
+      const heartbeat = setInterval(
+        () =>
+          send({
+            type: "heartbeat",
+            elapsedSeconds: Math.floor((Date.now() - startedAt) / 1000),
+          }),
+        15_000,
+      );
 
-  try {
-    const result = await automateReportPublication({
-      nicheId: clean(body.nicheId, 80),
-      categoryName: clean(body.categoryName, 180),
-      editionLabel: clean(body.editionLabel, 120),
-      createdByPidUser: admin.pidUser,
-    });
-    return NextResponse.json({ success: true, data: result });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Report automation failed.";
-    const status =
-      /already has a published report|already being generated/i.test(message)
-        ? 409
-        : /required|quality gate|fewer than|missing/i.test(message)
-          ? 400
-          : 500;
-    return NextResponse.json({ success: false, error: message }, { status });
-  }
+      try {
+        const result = await automateReportPublication(
+          {
+            nicheId: clean(body.nicheId, 80),
+            categoryName: clean(body.categoryName, 180),
+            editionLabel: clean(body.editionLabel, 120),
+            createdByPidUser: admin.pidUser,
+          },
+          (progress) => send({ type: "progress", ...progress }),
+        );
+        send({
+          type: "complete",
+          awaitingApproval: true,
+          supplierCount: result.version.supplierCount,
+          pidReport: result.report?.pidReport,
+        });
+      } catch (error) {
+        send({
+          type: "error",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Report automation failed.",
+        });
+      } finally {
+        clearInterval(heartbeat);
+        if (open) controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }

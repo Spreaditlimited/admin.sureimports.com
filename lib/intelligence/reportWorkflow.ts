@@ -33,6 +33,36 @@ export type CreateReportInput = {
   createdByPidUser: string;
 };
 
+export type ReportAutomationStep =
+  | "draft"
+  | "suppliers"
+  | "seo"
+  | "cover"
+  | "pdf"
+  | "upload"
+  | "quality"
+  | "approval"
+  | "publish";
+
+export type ReportAutomationProgress = {
+  step: ReportAutomationStep;
+  status: "active" | "completed";
+  detail: string;
+};
+
+type ProgressReporter = (
+  progress: ReportAutomationProgress,
+) => void | Promise<void>;
+
+async function reportProgress(
+  onProgress: ProgressReporter | undefined,
+  step: ReportAutomationStep,
+  status: ReportAutomationProgress["status"],
+  detail: string,
+) {
+  await onProgress?.({ step, status, detail });
+}
+
 export async function createOrResumeReportDraft(input: CreateReportInput) {
   const nicheId = clean(input.nicheId, 80);
   const categoryName = clean(input.categoryName, 180);
@@ -92,6 +122,7 @@ export async function createOrResumeReportDraft(input: CreateReportInput) {
 export async function generateReportEdition(
   pidReport: string,
   generatedByPidUser: string,
+  onProgress?: ProgressReporter,
 ) {
   let report = await prisma.intelligence_report_products.findUnique({
     where: { pidReport },
@@ -107,8 +138,22 @@ export async function generateReportEdition(
     expectedPricing,
     skipCoverCheck: true,
   });
+  await reportProgress(
+    onProgress,
+    "suppliers",
+    "completed",
+    `${snapshot.suppliers.length} approved manufacturers passed the report preflight`,
+  );
 
-  const cover = await ensureReportCover(report, snapshot);
+  await reportProgress(
+    onProgress,
+    "cover",
+    "active",
+    "Preparing the category-specific cover",
+  );
+  const cover = await ensureReportCover(report, snapshot, async (detail) => {
+    await reportProgress(onProgress, "cover", "active", detail);
+  });
   if (
     report.coverImageUrl !== cover.url ||
     report.coverImagePublicId !== cover.publicId ||
@@ -130,6 +175,14 @@ export async function generateReportEdition(
     expectedPricing,
     coverImageBytes: cover.buffer.length,
   });
+  await reportProgress(
+    onProgress,
+    "cover",
+    "completed",
+    cover.generated
+      ? "The generated cover passed visual review and was stored"
+      : "The approved category cover passed preflight",
+  );
 
   const latest = await prisma.intelligence_report_versions.findFirst({
     where: { reportId: report.pidReport },
@@ -137,9 +190,27 @@ export async function generateReportEdition(
   });
   const versionNumber = (latest?.versionNumber || 0) + 1;
   const pidVersion = id("SIV");
+  await reportProgress(
+    onProgress,
+    "pdf",
+    "active",
+    `Rendering edition ${versionNumber} with supplier profiles and buyer guidance`,
+  );
   const pdf = await renderSupplierIntelligencePdf(report, snapshot, {
     coverImage: cover.buffer,
   });
+  await reportProgress(
+    onProgress,
+    "pdf",
+    "completed",
+    `Edition ${versionNumber} rendered successfully`,
+  );
+  await reportProgress(
+    onProgress,
+    "upload",
+    "active",
+    "Uploading the finished PDF to secure document storage",
+  );
   const upload = await uploadBufferToCloudinary(pdf, {
     folder: "sureimports/supplier-intelligence/reports",
     publicId: `${report.slug}-${pidVersion.toLowerCase()}.pdf`,
@@ -149,6 +220,12 @@ export async function generateReportEdition(
     uniqueFilename: false,
     tags: ["supplier-intelligence", report.slug, report.editionLabel],
   });
+  await reportProgress(
+    onProgress,
+    "upload",
+    "completed",
+    "The finished PDF was uploaded successfully",
+  );
 
   const version = await prisma.intelligence_report_versions.create({
     data: {
@@ -179,27 +256,21 @@ export async function generateReportEdition(
 export async function publishReportEdition(
   pidReport: string,
   pidVersion: string,
+  onProgress?: ProgressReporter,
 ) {
-  const [report, version, expectedPricing] = await Promise.all([
-    prisma.intelligence_report_products.findUnique({ where: { pidReport } }),
-    prisma.intelligence_report_versions.findFirst({
-      where: { pidVersion, reportId: pidReport, pdfUrl: { not: null } },
-    }),
-    getReportPricing(),
-  ]);
-  if (!report || !version) {
-    throw new Error("Generate a valid edition before publishing.");
-  }
-
-  const cover = await resolveReportCoverAsset(report);
-  if (!cover) throw new Error("The category-specific report cover is missing.");
-  validateReportQuality(report, version.supplierSnapshot as any, {
-    enforcePrice: true,
-    expectedPricing,
-    coverImageBytes: cover.buffer.length,
-  });
+  const { report, version } = await validateReportEditionForPublication(
+    pidReport,
+    pidVersion,
+    onProgress,
+  );
 
   const now = new Date();
+  await reportProgress(
+    onProgress,
+    "publish",
+    "active",
+    "Publishing the report and making its product page available",
+  );
   await prisma.$transaction([
     prisma.intelligence_report_versions.updateMany({
       where: {
@@ -224,19 +295,81 @@ export async function publishReportEdition(
         status: "published",
         currentVersionId: version.pidVersion,
         supplierCount: version.supplierCount,
+        automationStatus: "completed",
+        automationError: null,
+        automationCompletedAt: now,
         publishedAt: now,
         updatedAt: now,
       },
     }),
   ]);
+  await reportProgress(
+    onProgress,
+    "publish",
+    "completed",
+    "Report and product page published successfully",
+  );
 
   return prisma.intelligence_report_products.findUnique({
     where: { pidReport },
   });
 }
 
-export async function automateReportPublication(input: CreateReportInput) {
+async function validateReportEditionForPublication(
+  pidReport: string,
+  pidVersion: string,
+  onProgress?: ProgressReporter,
+) {
+  await reportProgress(
+    onProgress,
+    "quality",
+    "active",
+    "Running the final report, price, cover and supplier quality gate",
+  );
+  const [report, version, expectedPricing] = await Promise.all([
+    prisma.intelligence_report_products.findUnique({ where: { pidReport } }),
+    prisma.intelligence_report_versions.findFirst({
+      where: { pidVersion, reportId: pidReport, pdfUrl: { not: null } },
+    }),
+    getReportPricing(),
+  ]);
+  if (!report || !version) {
+    throw new Error("Generate a valid edition before publishing.");
+  }
+
+  const cover = await resolveReportCoverAsset(report);
+  if (!cover) throw new Error("The category-specific report cover is missing.");
+  validateReportQuality(report, version.supplierSnapshot as any, {
+    enforcePrice: true,
+    expectedPricing,
+    coverImageBytes: cover.buffer.length,
+  });
+  await reportProgress(
+    onProgress,
+    "quality",
+    "completed",
+    "All publication quality gates passed",
+  );
+  return { report, version };
+}
+
+export async function automateReportPublication(
+  input: CreateReportInput,
+  onProgress?: ProgressReporter,
+) {
+  await reportProgress(
+    onProgress,
+    "draft",
+    "active",
+    "Validating the category and preparing the report record",
+  );
   const report = await createOrResumeReportDraft(input);
+  await reportProgress(
+    onProgress,
+    "draft",
+    "completed",
+    "Report record is ready",
+  );
   const staleBefore = new Date(Date.now() - 20 * 60 * 1000);
   const claimed = await prisma.intelligence_report_products.updateMany({
     where: {
@@ -259,10 +392,34 @@ export async function automateReportPublication(input: CreateReportInput) {
   }
 
   try {
+    await reportProgress(
+      onProgress,
+      "suppliers",
+      "active",
+      "Loading the approved manufacturers and checking report eligibility",
+    );
     const snapshot = await getReportCategorySnapshot(report.nicheId);
+    await reportProgress(
+      onProgress,
+      "seo",
+      "active",
+      "Researching buyer search language and writing the product page",
+    );
     const [seoProfile, version] = await Promise.all([
-      generateReportSeoProfile(snapshot),
-      generateReportEdition(report.pidReport, input.createdByPidUser),
+      generateReportSeoProfile(snapshot).then(async (profile) => {
+        await reportProgress(
+          onProgress,
+          "seo",
+          "completed",
+          `SEO profile completed around “${profile.primaryKeyword}”`,
+        );
+        return profile;
+      }),
+      generateReportEdition(
+        report.pidReport,
+        input.createdByPidUser,
+        onProgress,
+      ),
     ]);
 
     await prisma.intelligence_report_products.update({
@@ -273,22 +430,28 @@ export async function automateReportPublication(input: CreateReportInput) {
         updatedAt: new Date(),
       },
     });
-    const published = await publishReportEdition(
+    const qualityChecked = await validateReportEditionForPublication(
       report.pidReport,
       version.pidVersion,
+      onProgress,
+    );
+    await reportProgress(
+      onProgress,
+      "approval",
+      "completed",
+      "Ready for your preview and explicit publishing approval",
     );
     const completedAt = new Date();
     await prisma.intelligence_report_products.update({
       where: { pidReport: report.pidReport },
       data: {
-        automationStatus: "completed",
+        automationStatus: "awaiting_approval",
         automationError: null,
         automationCompletedAt: completedAt,
         updatedAt: completedAt,
       },
     });
-
-    return { report: published, version, seoProfile };
+    return { report: qualityChecked.report, version, seoProfile };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Report automation failed.";

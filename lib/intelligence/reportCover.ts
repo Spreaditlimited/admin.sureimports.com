@@ -24,6 +24,8 @@ export type ReportCoverAsset = {
   generated: boolean;
 };
 
+export type ReportCoverProgress = (detail: string) => void | Promise<void>;
+
 const MAX_COVER_BYTES = 15 * 1024 * 1024;
 
 function localCoverPath(product: CoverProduct) {
@@ -255,15 +257,30 @@ async function assessGeneratedCover(
 export async function ensureReportCover(
   product: CoverProduct,
   snapshot: ReportCategorySnapshot,
+  onProgress?: ReportCoverProgress,
 ): Promise<ReportCoverAsset> {
+  await onProgress?.("Checking for an approved category cover");
   const existing = await resolveReportCoverAsset(product);
-  if (existing) return existing;
+  if (existing) {
+    await onProgress?.("Using the approved category cover");
+    return existing;
+  }
 
   let buffer: Buffer | null = null;
   let revisionNotes = "";
   let finalAssessment: CoverAssessment | null = null;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
+    await onProgress?.(
+      attempt === 1
+        ? "Generating a product-specific cover image"
+        : "Revising the cover from the art director’s feedback",
+    );
     buffer = await generateCoverBuffer(snapshot, revisionNotes);
+    await onProgress?.(
+      attempt === 1
+        ? "Reviewing cover accuracy and composition"
+        : "Reviewing the revised cover against the quality standard",
+    );
     finalAssessment = await assessGeneratedCover(buffer, snapshot);
     if (finalAssessment.approved) break;
     revisionNotes = finalAssessment.issues.length
@@ -275,6 +292,9 @@ export async function ensureReportCover(
       `Generated report cover did not pass visual quality review${finalAssessment ? ` (score ${finalAssessment.score}/10: ${finalAssessment.issues.join("; ") || "quality threshold not met"})` : ""}.`,
     );
   }
+  await onProgress?.(
+    `Cover approved at ${finalAssessment.score.toFixed(1)}/10; uploading the approved artwork`,
+  );
   const upload = await uploadBufferToCloudinary(buffer, {
     folder: "sureimports/supplier-intelligence/covers",
     publicId: `${product.slug}-v1`,
