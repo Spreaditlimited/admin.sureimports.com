@@ -1060,9 +1060,25 @@ async function updateLinkedSearchRequest(
           ? 'Sure Imports specialist check completed. Your result is ready.'
           : status === 'rejected'
             ? 'Sure Imports specialist check completed. This result was declined.'
-            : null
+            : status === 'awaiting_approval'
+              ? 'Supplier research is complete and awaiting Sure Imports specialist review.'
+              : status === 'running'
+                ? 'Supplier research is in progress.'
+                : status === 'failed'
+                  ? 'Supplier research could not be completed.'
+                  : status === 'cancelled'
+                    ? 'Supplier research was stopped.'
+                    : null
       },
-      progressPercent = ${status === 'approved' || status === 'rejected' ? 100 : 100},
+      progressPercent = ${
+        ['approved', 'rejected', 'failed', 'cancelled'].includes(status)
+          ? 100
+          : status === 'awaiting_approval'
+            ? 90
+            : status === 'running'
+              ? 20
+              : 0
+      },
       updatedAt = ${new Date()}
     WHERE relatedPidJob = ${pidJob}
   `;
@@ -1545,6 +1561,7 @@ export async function PATCH(request: NextRequest) {
         'approve',
         'reject',
         'stop',
+        'restart',
         'approve_supplier',
         'reject_supplier',
         'unapprove_supplier',
@@ -1565,6 +1582,91 @@ export async function PATCH(request: NextRequest) {
         { success: false, error: 'Research job not found.' },
         { status: 404 },
       );
+    }
+
+    if (action === 'restart') {
+      if (!['failed', 'cancelled'].includes(job.status)) {
+        return NextResponse.json(
+          { success: false, error: 'Only failed or cancelled research can be restarted.' },
+          { status: 409 },
+        );
+      }
+
+      const claimed = await prisma.$executeRaw`
+        UPDATE intelligence_research_jobs
+        SET
+          status = 'restarting',
+          draftJson = NULL,
+          errorMessage = NULL,
+          openAiResponseId = NULL,
+          openAiStatus = 'restarting',
+          openAiSubmittedAt = NULL,
+          openAiCompletedAt = NULL,
+          updatedAt = ${new Date()}
+        WHERE pidJob = ${pidJob}
+          AND status IN ('failed', 'cancelled')
+      `;
+
+      if (claimed === 0) {
+        return NextResponse.json(
+          { success: false, error: 'This research job was already restarted by another admin.' },
+          { status: 409 },
+        );
+      }
+
+      if (job.sourceSearchRequestId) {
+        await updateLinkedSearchRequest(
+          pidJob,
+          'running',
+          'Supplier research has been restarted by Sure Imports.',
+        );
+      }
+
+      try {
+        const response = await submitSupplierResearch({
+          nicheName: job.nicheName,
+          targetSupplierCount: job.targetSupplierCount,
+          requestNotes: job.requestNotes || '',
+          imageUrl: job.imageUrl,
+        });
+
+        await prisma.$executeRaw`
+          UPDATE intelligence_research_jobs
+          SET
+            status = ${response.status === 'queued' ? 'queued' : 'running'},
+            openAiResponseId = ${clean(response.id, 100)},
+            openAiStatus = ${clean(response.status, 40) || 'queued'},
+            openAiSubmittedAt = ${new Date()},
+            errorMessage = NULL,
+            updatedAt = ${new Date()}
+          WHERE pidJob = ${pidJob}
+            AND status = 'restarting'
+        `;
+
+        const restartedRows = await prisma.$queryRaw<ResearchJob[]>`
+          SELECT * FROM intelligence_research_jobs WHERE pidJob = ${pidJob} LIMIT 1
+        `;
+        if (
+          restartedRows[0] &&
+          response.status !== 'queued' &&
+          response.status !== 'in_progress'
+        ) {
+          await applySupplierResearchResponse(restartedRows[0], response);
+        }
+      } catch (error: any) {
+        await failResearchJob(
+          { ...job, status: 'restarting' },
+          error?.message || 'Research restart failed.',
+          'failed',
+        );
+        throw error;
+      }
+
+      const [jobs, searchRequests] = await Promise.all([
+        listJobs(),
+        listSearchRequests(),
+      ]);
+      return NextResponse.json({ success: true, data: jobs, searchRequests });
     }
 
     if (action === 'stop') {

@@ -95,6 +95,11 @@ type SearchRequest = {
   updatedAt: string | null;
 };
 
+type ResearchConfirmation = {
+  job: ResearchJob;
+  action: 'stop' | 'restart';
+};
+
 function parseDraft(value: string | null): DraftJson | null {
   if (!value) return null;
   try {
@@ -113,6 +118,7 @@ function statusClass(status: string) {
 }
 
 function researchProgressPercent(job: ResearchJob, now: number) {
+  if (job.status === 'restarting') return 8;
   if (job.status === 'queued') return 12;
   if (job.status === 'finalizing') return 94;
   if (job.status === 'running') {
@@ -226,6 +232,7 @@ function progressMessage(actionKey: string | null, pidJob: string) {
   if (action === 'approve') return 'Approving pending suppliers and publishing records...';
   if (action === 'reject') return 'Rejecting this research job...';
   if (action === 'stop') return 'Stopping this research job...';
+  if (action === 'restart') return 'Restarting research with the original request...';
   if (action === 'approve_supplier') return 'Approving and publishing this supplier...';
   if (action === 'reject_supplier') return 'Rejecting this supplier...';
   if (action === 'unapprove_supplier') return 'Unapproving this supplier and removing it from the published database...';
@@ -246,6 +253,8 @@ export default function IntelligenceResearchAgent() {
   const [runningSearchRequest, setRunningSearchRequest] = useState<string | null>(null);
   const [rejectingSearchRequest, setRejectingSearchRequest] = useState<string | null>(null);
   const [updatingJob, setUpdatingJob] = useState<string | null>(null);
+  const [researchConfirmation, setResearchConfirmation] =
+    useState<ResearchConfirmation | null>(null);
   const [expandedJobs, setExpandedJobs] = useState<Record<string, boolean>>({});
   const [progressNow, setProgressNow] = useState(() => Date.now());
   const refreshInFlightRef = useRef(false);
@@ -266,7 +275,10 @@ export default function IntelligenceResearchAgent() {
   }, [jobs, researchJobSearch]);
 
   const activeResearchCount = useMemo(
-    () => jobs.filter((job) => ['queued', 'running', 'finalizing'].includes(job.status)).length,
+    () =>
+      jobs.filter((job) =>
+        ['restarting', 'queued', 'running', 'finalizing'].includes(job.status),
+      ).length,
     [jobs],
   );
 
@@ -441,6 +453,7 @@ export default function IntelligenceResearchAgent() {
       | 'approve'
       | 'reject'
       | 'stop'
+      | 'restart'
       | 'approve_supplier'
       | 'reject_supplier'
       | 'unapprove_supplier',
@@ -466,17 +479,28 @@ export default function IntelligenceResearchAgent() {
             ? 'Research rejected.'
             : action === 'stop'
               ? 'Research stopped.'
-            : action === 'approve_supplier'
-              ? 'Supplier approved and published.'
-              : action === 'reject_supplier'
-                ? 'Supplier rejected.'
-                : 'Supplier unapproved and removed from published supplier access.',
+              : action === 'restart'
+                ? 'Research restarted. This page will update when the draft is ready.'
+                : action === 'approve_supplier'
+                  ? 'Supplier approved and published.'
+                  : action === 'reject_supplier'
+                    ? 'Supplier rejected.'
+                    : 'Supplier unapproved and removed from published supplier access.',
       );
+      return true;
     } catch (error: any) {
       toast.error(error?.message || 'Update failed.');
+      return false;
     } finally {
       setUpdatingJob(null);
     }
+  };
+
+  const confirmResearchAction = async () => {
+    if (!researchConfirmation) return;
+    const { job, action } = researchConfirmation;
+    const succeeded = await updateJob(job.pidJob, action);
+    if (succeeded) setResearchConfirmation(null);
   };
 
   return (
@@ -760,15 +784,10 @@ export default function IntelligenceResearchAgent() {
                 }
                 onApprove={() => updateJob(job.pidJob, 'approve')}
                 onReject={() => updateJob(job.pidJob, 'reject')}
-                onStop={() => {
-                  if (
-                    window.confirm(
-                      'Stop this supplier research job? Any unfinished research will be cancelled.',
-                    )
-                  ) {
-                    void updateJob(job.pidJob, 'stop');
-                  }
-                }}
+                onStop={() => setResearchConfirmation({ job, action: 'stop' })}
+                onRestart={() =>
+                  setResearchConfirmation({ job, action: 'restart' })
+                }
                 onApproveSupplier={(supplierIndex) =>
                   updateJob(job.pidJob, 'approve_supplier', supplierIndex)
                 }
@@ -783,6 +802,136 @@ export default function IntelligenceResearchAgent() {
           </div>
         )}
       </section>
+
+      <ResearchActionConfirmationModal
+        confirmation={researchConfirmation}
+        busy={Boolean(
+          researchConfirmation &&
+            updatingJob?.startsWith(
+              `${researchConfirmation.job.pidJob}:${researchConfirmation.action}:`,
+            ),
+        )}
+        onCancel={() => setResearchConfirmation(null)}
+        onConfirm={() => void confirmResearchAction()}
+      />
+    </div>
+  );
+}
+
+function ResearchActionConfirmationModal({
+  confirmation,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  confirmation: ResearchConfirmation | null;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    if (!confirmation) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !busy) onCancel();
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [busy, confirmation, onCancel]);
+
+  if (!confirmation) return null;
+
+  const restarting = confirmation.action === 'restart';
+  const title = restarting ? 'Restart supplier research?' : 'Stop supplier research?';
+  const description = restarting
+    ? 'A fresh OpenAI research run will begin using the original product, notes, supplier count and uploaded image.'
+    : 'The unfinished OpenAI run will be cancelled. Any linked customer search credit will be returned.';
+  const confirmLabel = restarting ? 'Restart research' : 'Stop research';
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="research-confirmation-title"
+      aria-describedby="research-confirmation-description"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !busy) onCancel();
+      }}
+    >
+      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-card shadow-soft animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-6">
+          <div
+            className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border ${
+              restarting
+                ? 'border-primary/20 bg-primary/10 text-primary'
+                : 'border-destructive/20 bg-destructive/10 text-destructive'
+            }`}
+          >
+            {restarting ? (
+              <RotateCcw className="h-6 w-6" />
+            ) : (
+              <AlertTriangle className="h-6 w-6" />
+            )}
+          </div>
+
+          <h3
+            id="research-confirmation-title"
+            className="text-center text-xl font-bold tracking-tight text-foreground"
+          >
+            {title}
+          </h3>
+          <p
+            id="research-confirmation-description"
+            className="mx-auto mt-2 max-w-sm text-center text-sm leading-relaxed text-muted-foreground"
+          >
+            {description}
+          </p>
+
+          <div className="mt-5 rounded-lg border border-border bg-muted/30 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Research job
+            </p>
+            <p className="mt-1 text-sm font-bold leading-relaxed text-foreground">
+              {confirmation.job.nicheName}
+            </p>
+            <p className="mt-2 font-mono text-[10px] font-semibold text-muted-foreground">
+              {confirmation.job.pidJob}
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              autoFocus
+              onClick={onCancel}
+              disabled={busy}
+              className="rounded-md border border-border bg-background px-4 py-2.5 text-sm font-bold text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {restarting ? 'Not now' : 'Continue research'}
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={busy}
+              className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-bold shadow-sm transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+                restarting
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring'
+                  : 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive'
+              }`}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {busy ? (restarting ? 'Restarting...' : 'Stopping...') : confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -967,6 +1116,7 @@ function ResearchJobCard({
   onApprove,
   onReject,
   onStop,
+  onRestart,
   onApproveSupplier,
   onRejectSupplier,
   onUnapproveSupplier,
@@ -979,6 +1129,7 @@ function ResearchJobCard({
   onApprove: () => void;
   onReject: () => void;
   onStop: () => void;
+  onRestart: () => void;
   onApproveSupplier: (supplierIndex: number) => void;
   onRejectSupplier: (supplierIndex: number) => void;
   onUnapproveSupplier: (supplierIndex: number) => void;
@@ -989,7 +1140,9 @@ function ResearchJobCard({
   const jobUpdating = Boolean(updatingJob?.startsWith(`${job.pidJob}:`));
   const activeProgressMessage = progressMessage(updatingJob, job.pidJob);
   const canReview = ['awaiting_approval', 'partially_approved'].includes(job.status);
-  const isResearching = ['queued', 'running', 'finalizing'].includes(job.status);
+  const isResearching = ['queued', 'running', 'finalizing', 'restarting'].includes(job.status);
+  const canStop = ['queued', 'running', 'finalizing'].includes(job.status);
+  const canRestart = ['failed', 'cancelled'].includes(job.status);
   const progressPercent = researchProgressPercent(job, progressNow);
 
   return (
@@ -1101,7 +1254,7 @@ function ResearchJobCard({
             </button>
               </div>
             ) : null}
-            {isResearching ? (
+            {canStop ? (
               <button
                 type="button"
                 onClick={onStop}
@@ -1116,6 +1269,23 @@ function ResearchJobCard({
                 {updatingJob === `${job.pidJob}:stop:job`
                   ? 'Stopping...'
                   : 'Stop research'}
+              </button>
+            ) : null}
+            {canRestart ? (
+              <button
+                type="button"
+                onClick={onRestart}
+                disabled={jobUpdating}
+                className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+              >
+                {updatingJob === `${job.pidJob}:restart:job` ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-3.5 w-3.5" />
+                )}
+                {updatingJob === `${job.pidJob}:restart:job`
+                  ? 'Restarting...'
+                  : 'Restart research'}
               </button>
             ) : null}
           </div>
@@ -1150,9 +1320,11 @@ function ResearchJobCard({
                   <span>
                     {job.status === 'queued'
                       ? 'Supplier research is queued.'
-                      : job.status === 'finalizing'
-                        ? 'Research is complete. Validating the supplier draft...'
-                        : 'Researching direct manufacturers and verifying supplier evidence...'}
+                      : job.status === 'restarting'
+                        ? 'Starting a new research run with the original request...'
+                        : job.status === 'finalizing'
+                          ? 'Research is complete. Validating the supplier draft...'
+                          : 'Researching direct manufacturers and verifying supplier evidence...'}
                   </span>
                 </span>
                 <span className="shrink-0 text-sm">{progressPercent}%</span>
