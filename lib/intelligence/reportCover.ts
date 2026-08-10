@@ -26,6 +26,10 @@ export type ReportCoverAsset = {
 
 export type ReportCoverProgress = (detail: string) => void | Promise<void>;
 
+type ReportCoverOptions = {
+  revisionNotes?: string;
+};
+
 const MAX_COVER_BYTES = 15 * 1024 * 1024;
 
 function localCoverPath(product: CoverProduct) {
@@ -258,6 +262,7 @@ export async function ensureReportCover(
   product: CoverProduct,
   snapshot: ReportCategorySnapshot,
   onProgress?: ReportCoverProgress,
+  options: ReportCoverOptions = {},
 ): Promise<ReportCoverAsset> {
   await onProgress?.("Checking for an approved category cover");
   const existing = await resolveReportCoverAsset(product);
@@ -267,11 +272,13 @@ export async function ensureReportCover(
   }
 
   let buffer: Buffer | null = null;
-  let revisionNotes = "";
+  let revisionNotes = String(options.revisionNotes || "").trim();
   let finalAssessment: CoverAssessment | null = null;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     await onProgress?.(
-      attempt === 1
+      attempt === 1 && revisionNotes
+        ? "Regenerating the cover with the previous art director feedback"
+        : attempt === 1
         ? "Generating a product-specific cover image"
         : "Revising the cover from the art director’s feedback",
     );
@@ -283,9 +290,12 @@ export async function ensureReportCover(
     );
     finalAssessment = await assessGeneratedCover(buffer, snapshot);
     if (finalAssessment.approved) break;
-    revisionNotes = finalAssessment.issues.length
+    const latestRevisionNotes = finalAssessment.issues.length
       ? finalAssessment.issues.join("; ")
       : `The previous image scored ${finalAssessment.score}/10. Improve product accuracy, composition, negative space and executive visual quality.`;
+    revisionNotes = [revisionNotes, latestRevisionNotes]
+      .filter(Boolean)
+      .join("; ");
   }
   if (!buffer || !finalAssessment?.approved) {
     throw new Error(

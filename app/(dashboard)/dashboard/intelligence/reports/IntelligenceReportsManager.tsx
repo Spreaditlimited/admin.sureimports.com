@@ -678,6 +678,10 @@ export default function IntelligenceReportsManager() {
               report.automationError ? (
                 <div className="mt-4 rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                   Automation stopped safely: {report.automationError}
+                  <span className="mt-1 block font-medium">
+                    Resume to reuse completed work and continue with this
+                    feedback.
+                  </span>
                 </div>
               ) : null}
               {report.status === "draft" &&
@@ -738,7 +742,9 @@ export default function IntelligenceReportsManager() {
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    Complete report for review
+                    {report.automationStatus === "failed"
+                      ? "Resume from failed step"
+                      : "Complete report for review"}
                   </button>
                 ) : null}
                 {latest?.pdfUrl ? (

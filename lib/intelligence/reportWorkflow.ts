@@ -6,7 +6,10 @@ import { getReportCategorySnapshot } from "./reportData";
 import { renderSupplierIntelligencePdf } from "./reportPdf";
 import { getReportPricing } from "./reportPricing";
 import { validateReportQuality } from "./reportQuality";
-import { generateReportSeoProfile } from "./reportSeoGenerator";
+import {
+  generateReportSeoProfile,
+  type GeneratedReportSeoProfile,
+} from "./reportSeoGenerator";
 
 function clean(value: unknown, max = 1000) {
   return String(value || "")
@@ -24,6 +27,36 @@ function slugify(value: string) {
 
 function id(prefix: string) {
   return `${prefix}${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 9).toUpperCase()}`;
+}
+
+function storedSeoProfile(value: unknown): GeneratedReportSeoProfile | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const profile = value as Partial<GeneratedReportSeoProfile>;
+  if (
+    !profile.primaryKeyword ||
+    !profile.metaTitle ||
+    !profile.metaDescription ||
+    !profile.heading ||
+    !profile.introduction ||
+    !profile.buyerValue ||
+    !Array.isArray(profile.secondaryKeywords) ||
+    !Array.isArray(profile.products) ||
+    !Array.isArray(profile.checks) ||
+    !Array.isArray(profile.audiences) ||
+    !Array.isArray(profile.faqs)
+  ) {
+    return null;
+  }
+  return profile as GeneratedReportSeoProfile;
+}
+
+function previousCoverRevisionNotes(error: string | null | undefined) {
+  const message = String(error || "").trim();
+  if (!message.startsWith("Generated report cover did not pass visual quality review")) {
+    return "";
+  }
+  const details = message.match(/\(score\s+[\d.]+\/10:\s*([\s\S]+)\)\.?$/i)?.[1];
+  return String(details || "").trim();
 }
 
 export type CreateReportInput = {
@@ -123,6 +156,7 @@ export async function generateReportEdition(
   pidReport: string,
   generatedByPidUser: string,
   onProgress?: ProgressReporter,
+  coverRevisionNotes = "",
 ) {
   let report = await prisma.intelligence_report_products.findUnique({
     where: { pidReport },
@@ -153,7 +187,7 @@ export async function generateReportEdition(
   );
   const cover = await ensureReportCover(report, snapshot, async (detail) => {
     await reportProgress(onProgress, "cover", "active", detail);
-  });
+  }, { revisionNotes: coverRevisionNotes });
   if (
     report.coverImageUrl !== cover.url ||
     report.coverImagePublicId !== cover.publicId ||
@@ -364,6 +398,8 @@ export async function automateReportPublication(
     "Validating the category and preparing the report record",
   );
   const report = await createOrResumeReportDraft(input);
+  const coverRevisionNotes = previousCoverRevisionNotes(report.automationError);
+  const reusableSeoProfile = storedSeoProfile(report.seoProfile);
   await reportProgress(
     onProgress,
     "draft",
@@ -399,37 +435,95 @@ export async function automateReportPublication(
       "Loading the approved manufacturers and checking report eligibility",
     );
     const snapshot = await getReportCategorySnapshot(report.nicheId);
-    await reportProgress(
-      onProgress,
-      "seo",
-      "active",
-      "Researching buyer search language and writing the product page",
-    );
-    const [seoProfile, version] = await Promise.all([
-      generateReportSeoProfile(snapshot).then(async (profile) => {
-        await reportProgress(
+    const reusableVersion =
+      report.automationStatus === "failed"
+        ? await prisma.intelligence_report_versions.findFirst({
+            where: {
+              reportId: report.pidReport,
+              editionLabel: report.editionLabel,
+              supplierCount: snapshot.suppliers.length,
+              status: "generated",
+              pdfUrl: { not: null },
+            },
+            orderBy: { versionNumber: "desc" },
+          })
+        : null;
+    const seoTask = reusableSeoProfile
+      ? (async () => {
+          await reportProgress(
+            onProgress,
+            "seo",
+            "completed",
+            `Reusing the completed SEO profile around “${reusableSeoProfile.primaryKeyword}”`,
+          );
+          return reusableSeoProfile;
+        })()
+      : (async () => {
+          await reportProgress(
+            onProgress,
+            "seo",
+            "active",
+            "Researching buyer search language and writing the product page",
+          );
+          const profile = await generateReportSeoProfile(snapshot);
+          await prisma.intelligence_report_products.update({
+            where: { pidReport: report.pidReport },
+            data: {
+              seoProfile: profile as any,
+              description: profile.metaDescription,
+              updatedAt: new Date(),
+            },
+          });
+          await reportProgress(
+            onProgress,
+            "seo",
+            "completed",
+            `SEO profile completed and saved around “${profile.primaryKeyword}”`,
+          );
+          return profile;
+        })();
+    const versionTask = reusableVersion
+      ? (async () => {
+          await reportProgress(
+            onProgress,
+            "suppliers",
+            "completed",
+            `${snapshot.suppliers.length} approved manufacturers revalidated`,
+          );
+          await reportProgress(
+            onProgress,
+            "cover",
+            "completed",
+            "Reusing the approved category cover",
+          );
+          await reportProgress(
+            onProgress,
+            "pdf",
+            "completed",
+            `Reusing generated edition ${reusableVersion.versionNumber}`,
+          );
+          await reportProgress(
+            onProgress,
+            "upload",
+            "completed",
+            "Reusing the securely stored PDF",
+          );
+          return reusableVersion;
+        })()
+      : generateReportEdition(
+          report.pidReport,
+          input.createdByPidUser,
           onProgress,
-          "seo",
-          "completed",
-          `SEO profile completed around “${profile.primaryKeyword}”`,
+          coverRevisionNotes,
         );
-        return profile;
-      }),
-      generateReportEdition(
-        report.pidReport,
-        input.createdByPidUser,
-        onProgress,
-      ),
+    const [seoResult, versionResult] = await Promise.allSettled([
+      seoTask,
+      versionTask,
     ]);
-
-    await prisma.intelligence_report_products.update({
-      where: { pidReport: report.pidReport },
-      data: {
-        seoProfile: seoProfile as any,
-        description: seoProfile.metaDescription,
-        updatedAt: new Date(),
-      },
-    });
+    if (versionResult.status === "rejected") throw versionResult.reason;
+    if (seoResult.status === "rejected") throw seoResult.reason;
+    const seoProfile = seoResult.value;
+    const version = versionResult.value;
     const qualityChecked = await validateReportEditionForPublication(
       report.pidReport,
       version.pidVersion,
