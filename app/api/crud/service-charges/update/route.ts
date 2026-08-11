@@ -1,11 +1,5 @@
-// app/api/upload/route.ts
 import { PrismaClient } from '@prisma/client';
-import { random } from 'lodash';
-import getFileExt from '@/app/utils/fileExt'
-import fileFilter from '@/app/utils/fileFilter'
-import randomGenerator from "@/lib/helpers/randomGenerator";
 import { NextResponse } from 'next/server';
-import { generateSlug } from '@/app/utils/slugGenerator'
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
 const prisma = new PrismaClient();
@@ -16,19 +10,32 @@ export async function PUT(request: Request) {
     if (!access.ok) return access.response;
 
     const formData = await request.formData();
-        const serviceCharge = formData.get('serviceCharge') as string;
-        const vat = formData.get('vat') as string;
+        const serviceCharge = formData.get('serviceCharge');
+        const vat = formData.get('vat');
 
-        //const pidCountry:string = "CTY"+randomGenerator(10);
-        //const countrySlug = generateSlug(country);
+        const values = [serviceCharge, vat];
+        if (values.some((value) => typeof value !== 'string' || value.trim() === '')) {
+          return NextResponse.json(
+            { statusx: 'INVALID_INPUT', message: 'Service charge and VAT are required.' },
+            { status: 400 },
+          );
+        }
+
+        const parsedValues = values.map(Number);
+        if (parsedValues.some((value) => !Number.isFinite(value) || value < 0)) {
+          return NextResponse.json(
+            { statusx: 'INVALID_INPUT', message: 'Service charge and VAT must be valid non-negative percentages.' },
+            { status: 400 },
+          );
+        }
 
         try {
             //UPDATE RECORD
-            const post = await prisma.exchange_rate.update({  
+            await prisma.exchange_rate.update({
               where: { id: 1},  
               data: { 
-                service_charge: serviceCharge,
-                vat: vat,
+                service_charge: String(serviceCharge),
+                vat: String(vat),
               },  
             });
 

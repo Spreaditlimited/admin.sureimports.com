@@ -1,11 +1,5 @@
-// app/api/upload/route.ts
 import { PrismaClient } from '@prisma/client';
-import { random } from 'lodash';
-import getFileExt from '@/app/utils/fileExt'
-import fileFilter from '@/app/utils/fileFilter'
-import randomGenerator from "@/lib/helpers/randomGenerator";
 import { NextResponse } from 'next/server';
-import { generateSlug } from '@/app/utils/slugGenerator'
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
 const prisma = new PrismaClient();
@@ -16,21 +10,36 @@ export async function PUT(request: Request) {
     if (!access.ok) return access.response;
 
     const formData = await request.formData();
-        const nairaToDollar = formData.get('nairaToDollar') as string;
-        const yuanToDollar = formData.get('yuanToDollar') as string;
-        const nairaToYuan = formData.get('nairaToYuan') as string;
+        const nairaToDollar = formData.get('nairaToDollar');
+        const yuanToDollar = formData.get('yuanToDollar');
+        const nairaToYuan = formData.get('nairaToYuan');
+        const quotationSeaRateNgnPerCbm = formData.get('quotationSeaRateNgnPerCbm');
+        const values = [nairaToDollar, yuanToDollar, nairaToYuan, quotationSeaRateNgnPerCbm];
 
-        //const pidCountry:string = "CTY"+randomGenerator(10);
-        //const countrySlug = generateSlug(country);
+        if (values.some((value) => typeof value !== 'string' || value.trim() === '')) {
+          return NextResponse.json(
+            { statusx: 'INVALID_INPUT', message: 'All exchange and quotation-rate fields are required.' },
+            { status: 400 },
+          );
+        }
+
+        const parsedValues = values.map(Number);
+        if (parsedValues.some((value) => !Number.isFinite(value) || value <= 0)) {
+          return NextResponse.json(
+            { statusx: 'INVALID_INPUT', message: 'Exchange and quotation rates must be valid amounts greater than zero.' },
+            { status: 400 },
+          );
+        }
 
         try {
             //UPDATE RECORD
-            const post = await prisma.exchange_rate.update({  
+            await prisma.exchange_rate.update({
               where: { id: 1},  
               data: { 
-                exNairaToDollar: nairaToDollar,
-                exYuanToDollar: yuanToDollar,
-                exNairaToYuan: nairaToYuan,
+                exNairaToDollar: String(nairaToDollar),
+                exYuanToDollar: String(yuanToDollar),
+                exNairaToYuan: String(nairaToYuan),
+                quotationSeaRateNgnPerCbm: String(quotationSeaRateNgnPerCbm),
               },  
             });
 

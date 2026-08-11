@@ -17,6 +17,7 @@ export default async function DashboardPage() {
     exNairaToDollar: Number(rateRecord?.exNairaToDollar ?? 0),
     exYuanToDollar: Number(rateRecord?.exYuanToDollar ?? 0),
     exNairaToYuan: Number(rateRecord?.exNairaToYuan ?? 0),
+    quotationSeaRateNgnPerCbm: Number(rateRecord?.quotationSeaRateNgnPerCbm ?? 500000),
   };
 
   return (

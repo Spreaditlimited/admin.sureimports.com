@@ -723,25 +723,51 @@ model messages {
 }
 
 model exchange_rate {
-  id              Int       @id @default(autoincrement())
-  settings_name   String?
-  currency_name1  String?
-  currency_sign1  String?
-  currency_name2  String?
-  currency_sign2  String?
-  currency_name3  String?
-  currency_sign3  String?
-  service_charge  String?
-  vat             String?
-  exNairaToDollar String?
-  exYuanToDollar  String?
-  exNairaToYuan   String?
-  status          String
-  ext1            String?
-  ext2            String?
-  xStatus         String?
-  createdAt       DateTime? @default(now())
-  updatedAt       DateTime?
+  id                        Int       @id @default(autoincrement())
+  settings_name             String?
+  currency_name1            String?
+  currency_sign1            String?
+  currency_name2            String?
+  currency_sign2            String?
+  currency_name3            String?
+  currency_sign3            String?
+  service_charge            String?
+  vat                       String?
+  exNairaToDollar           String?
+  exYuanToDollar            String?
+  exNairaToYuan             String?
+  quotationSeaRateNgnPerCbm String?   @default("500000")
+  status                    String
+  ext1                      String?
+  ext2                      String?
+  xStatus                   String?
+  createdAt                 DateTime? @default(now())
+  updatedAt                 DateTime?
+}
+
+model quotation_builder_documents {
+  id               Int      @id @default(autoincrement())
+  pidQuotation     String   @unique @db.VarChar(80)
+  quotationNumber  String   @unique @db.VarChar(100)
+  customerName     String   @db.VarChar(220)
+  customerLocation String?  @db.VarChar(255)
+  status           String   @default("DRAFT") @db.VarChar(40)
+  sourceFiles      Json
+  extractedData    Json?
+  quoteData        Json
+  rateSnapshot     Json
+  maxPages         Int      @default(2)
+  pdfUrl           String?  @db.VarChar(1000)
+  pdfPublicId      String?  @db.VarChar(500)
+  pdfBytes         Int?
+  createdByPidUser String?  @db.VarChar(80)
+  updatedByPidUser String?  @db.VarChar(80)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([customerName])
 }
 
 model settings_financial {

@@ -14,9 +14,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     
-    /* Primary Accent: Deep Indigo (#4F46E5) */
-    --primary: 243 75% 59%; 
-    --primary-foreground: 210 40% 98%;
+    /* Monochrome interaction treatment in light mode */
+    --primary: 0 0% 5%;
+    --primary-foreground: 0 0% 100%;
     
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -32,40 +32,40 @@
     
     --border: 214.3 31.8% 91.4%; /* Subtle borders */
     --input: 214.3 31.8% 91.4%;
-    --ring: 243 75% 59%; /* Indigo focus rings */
+    --ring: 0 0% 5%;
     --radius: 0.5rem;
   }
 
   .dark {
-    /* Modern Functional Minimalism - Dark Mode */
-    --background: 222.2 47.4% 11.2%; /* Deep slate canvas */
-    --foreground: 210 40% 98%;
+    /* Neutral charcoal surfaces with indigo reserved for interaction */
+    --background: 0 0% 6%; /* Charcoal-black canvas */
+    --foreground: 0 0% 96%;
     
-    --card: 217.2 32.6% 17.5%; /* Slightly elevated dark surface */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 9%; /* Slightly elevated charcoal surface */
+    --card-foreground: 0 0% 96%;
     
-    --popover: 217.2 32.6% 17.5%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 96%;
     
-    /* Primary Accent: Indigo, slightly brighter for dark mode contrast */
-    --primary: 243 75% 65%; 
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Monochrome interaction treatment in dark mode */
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 7%;
     
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 0 0% 96%;
     
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 64%;
     
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 96%;
     
     --destructive: 0 84.2% 65%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
     
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 243 75% 65%;
+    --border: 0 0% 18%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 100%;
   }
 }
 

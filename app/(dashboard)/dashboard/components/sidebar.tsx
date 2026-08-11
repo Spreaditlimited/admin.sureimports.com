@@ -171,6 +171,7 @@ const financials: MenuItem[] = [
     submenu: [
       { title: "Invoices", path: "/dashboard/invoicing" },
       { title: "Create Invoice", path: "/dashboard/invoicing/create" },
+      { title: "Quotation Builder", path: "/dashboard/invoicing/quotation-builder" },
       { title: "Receipts", path: "/dashboard/invoicing/receipts" },
       { title: "Payment Claims", path: "/dashboard/invoicing/payment-claims" },
       { title: "Invoicing Settings", path: "/dashboard/invoicing/settings" },
@@ -404,11 +405,18 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           <div
             className={`flex items-center space-x-3 overflow-hidden ${isCollapsed ? "w-0" : "w-auto"}`}
           >
-            <img
-              src="/assets/images/logo2.png"
-              alt="Sure Imports Logo"
-              className="h-8 w-8 min-w-[2rem]"
-            />
+            <span className="relative h-8 w-8 min-w-[2rem]" aria-hidden="true">
+              <img
+                src="/assets/images/logo-icon-black.png"
+                alt=""
+                className="h-8 w-8 object-contain dark:hidden"
+              />
+              <img
+                src="/assets/images/logo-icon-white.png"
+                alt=""
+                className="hidden h-8 w-8 object-contain dark:block"
+              />
+            </span>
             <span className="font-bold text-foreground whitespace-nowrap tracking-tight text-lg">
               Sure Imports
             </span>

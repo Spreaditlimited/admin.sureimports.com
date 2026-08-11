@@ -19,6 +19,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/customer-accounts/customers": "Customers",
   "/dashboard/customer-accounts/transactions": "Wallet Transactions",
   "/dashboard/exchange-rates": "Exchange Rates",
+  "/dashboard/invoicing/quotation-builder": "Quotation Builder",
   "/dashboard/financials": "Payments",
   "/dashboard/form-template/create": "Create Form Template",
   "/dashboard/form-template/view": "Form Templates",

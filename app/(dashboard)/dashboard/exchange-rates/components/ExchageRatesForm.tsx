@@ -19,6 +19,7 @@ interface ExchangeRateProps {
         exNairaToDollar: number;
         exYuanToDollar: number;
         exNairaToYuan: number;
+        quotationSeaRateNgnPerCbm: number;
     }
 }
 
@@ -30,6 +31,7 @@ const ExchangeRatesForm: React.FC<ExchangeRateProps> = ({ rates }) => {
     const [nairaToDollar, setExNairaToDollar] = useState<number>(rates.exNairaToDollar);
     const [yuanToDollar, setExYuanToDollar] = useState<number>(rates.exYuanToDollar);
     const [nairaToYuan, setExNairaToYuan] = useState<number>(rates.exNairaToYuan);
+    const [quotationSeaRateNgnPerCbm, setQuotationSeaRateNgnPerCbm] = useState<number>(rates.quotationSeaRateNgnPerCbm);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -40,6 +42,7 @@ const ExchangeRatesForm: React.FC<ExchangeRateProps> = ({ rates }) => {
         formData.append('nairaToDollar', nairaToDollar.toString());
         formData.append('yuanToDollar', yuanToDollar.toString());
         formData.append('nairaToYuan', nairaToYuan.toString());
+        formData.append('quotationSeaRateNgnPerCbm', quotationSeaRateNgnPerCbm.toString());
 
         try {
             const res = await fetch('/api/crud/exchange-rate/update', {
@@ -94,6 +97,28 @@ const ExchangeRatesForm: React.FC<ExchangeRateProps> = ({ rates }) => {
                                         className="w-full pl-7 pr-4 py-3 text-lg border border-input rounded-md bg-background text-foreground font-bold font-mono focus:ring-2 focus:ring-ring transition-all"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <Coins className="w-3 h-3" /> Quotation sea rate (NGN / CBM)
+                                </label>
+                                <div className="relative max-w-md">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono font-bold text-xs">₦</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={quotationSeaRateNgnPerCbm}
+                                        onChange={(e) => setQuotationSeaRateNgnPerCbm(Number(e.target.value))}
+                                        required
+                                        className="w-full pl-7 pr-16 py-3 text-lg border border-input rounded-md bg-background text-foreground font-bold font-mono focus:ring-2 focus:ring-ring transition-all"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">/ CBM</span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground italic">
+                                    Alternate all-inclusive sea rate used by the quotation builder. It does not replace country shipping plans.
+                                </p>
                             </div>
 
                             {/* Yuan to Dollar */}
