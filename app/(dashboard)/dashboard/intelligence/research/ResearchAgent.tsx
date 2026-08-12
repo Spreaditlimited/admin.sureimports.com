@@ -16,6 +16,7 @@ import {
   Send,
   ShieldCheck,
   Square,
+  Trash2,
   Upload,
   X,
   XCircle,
@@ -97,8 +98,14 @@ type SearchRequest = {
 
 type ResearchConfirmation = {
   job: ResearchJob;
-  action: 'stop' | 'restart';
+  action: 'stop' | 'restart' | 'delete';
 };
+
+function sortResearchJobs(jobs: ResearchJob[]) {
+  return [...jobs].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
 
 function parseDraft(value: string | null): DraftJson | null {
   if (!value) return null;
@@ -111,10 +118,10 @@ function parseDraft(value: string | null): DraftJson | null {
 
 function statusClass(status: string) {
   if (status === 'approved') return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
-  if (status === 'partially_approved') return 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  if (status === 'partially_approved') return 'border-border bg-muted text-foreground';
   if (status === 'awaiting_approval') return 'border-blue-500/20 bg-blue-500/10 text-blue-700';
   if (status === 'failed' || status === 'rejected' || status === 'cancelled') return 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300';
-  return 'border-amber-500/20 bg-amber-500/10 text-amber-700';
+  return 'border-border bg-muted text-muted-foreground';
 }
 
 function researchProgressPercent(job: ResearchJob, now: number) {
@@ -135,7 +142,7 @@ function researchProgressPercent(job: ResearchJob, now: number) {
 function supplierStatusClass(status: string) {
   if (status === 'approved') return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
   if (status === 'rejected') return 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300';
-  return 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  return 'border-border bg-muted text-muted-foreground';
 }
 
 function effectiveSupplierStatus(jobStatus: string, supplier: SupplierDraft) {
@@ -273,6 +280,14 @@ export default function IntelligenceResearchAgent() {
       return terms.every((term) => haystack.includes(term));
     });
   }, [jobs, researchJobSearch]);
+  const pendingSearchRequests = useMemo(
+    () =>
+      searchRequests.filter(
+        (request) =>
+          request.status === 'awaiting_admin' && !request.relatedPidJob,
+      ),
+    [searchRequests],
+  );
 
   const activeResearchCount = useMemo(
     () =>
@@ -300,18 +315,9 @@ export default function IntelligenceResearchAgent() {
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Failed to load research jobs.');
       }
-      const nextJobs = data.data || [];
+      const nextJobs = sortResearchJobs(data.data || []);
       setJobs(nextJobs);
       setSearchRequests(data.searchRequests || []);
-      setExpandedJobs((current) => {
-        const next = { ...current };
-        for (const job of nextJobs as ResearchJob[]) {
-          if (job.status === 'awaiting_approval' && job.sourceSearchRequestId) {
-            next[job.pidJob] = true;
-          }
-        }
-        return next;
-      });
     } catch (error: any) {
       if (!silent) {
         toast.error(error?.message || 'Failed to load research jobs.');
@@ -355,6 +361,15 @@ export default function IntelligenceResearchAgent() {
     return () => URL.revokeObjectURL(url);
   }, [imageFile]);
 
+  const revealResearchJob = (pidJob: string) => {
+    setExpandedJobs((current) => ({ ...current, [pidJob]: true }));
+    window.setTimeout(() => {
+      document
+        .getElementById(`research-job-${pidJob}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
   const runResearch = async () => {
     if (!nicheName.trim() && !imageFile) {
       toast.error('Enter a niche name or upload a product image first.');
@@ -380,13 +395,13 @@ export default function IntelligenceResearchAgent() {
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Research failed.');
       }
-      setJobs(data.data || []);
+      setJobs(sortResearchJobs(data.data || []));
       setSearchRequests(data.searchRequests || []);
       setNicheName('');
       setRequestNotes('');
       setImageFile(null);
       if (data.pidJob) {
-        setExpandedJobs((current) => ({ ...current, [data.pidJob]: true }));
+        revealResearchJob(data.pidJob);
       }
       toast.success('Supplier research queued. This page will update when the draft is ready.', {
         id: toastId,
@@ -412,8 +427,11 @@ export default function IntelligenceResearchAgent() {
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Research failed.');
       }
-      setJobs(data.data || []);
+      setJobs(sortResearchJobs(data.data || []));
       setSearchRequests(data.searchRequests || []);
+      if (data.pidJob) {
+        revealResearchJob(data.pidJob);
+      }
       toast.success('User supplier research queued. This page will update automatically.', {
         id: toastId,
       });
@@ -437,7 +455,7 @@ export default function IntelligenceResearchAgent() {
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Could not reject this request.');
       }
-      setJobs(data.data || []);
+      setJobs(sortResearchJobs(data.data || []));
       setSearchRequests(data.searchRequests || []);
       toast.success('Request rejected and its reserved credit returned.');
     } catch (error: any) {
@@ -470,7 +488,7 @@ export default function IntelligenceResearchAgent() {
       if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Update failed.');
       }
-      setJobs(data.data || []);
+      setJobs(sortResearchJobs(data.data || []));
       setSearchRequests(data.searchRequests || []);
       toast.success(
         action === 'approve'
@@ -499,6 +517,34 @@ export default function IntelligenceResearchAgent() {
   const confirmResearchAction = async () => {
     if (!researchConfirmation) return;
     const { job, action } = researchConfirmation;
+    if (action === 'delete') {
+      setUpdatingJob(`${job.pidJob}:delete:job`);
+      try {
+        const response = await fetch('/api/intelligence/research', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pidJob: job.pidJob }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.success) {
+          throw new Error(data?.error || 'Could not delete this research job.');
+        }
+        setJobs(sortResearchJobs(data.data || []));
+        setSearchRequests(data.searchRequests || []);
+        setExpandedJobs((current) => {
+          const next = { ...current };
+          delete next[job.pidJob];
+          return next;
+        });
+        setResearchConfirmation(null);
+        toast.success('Research job deleted. Published supplier records were not removed.');
+      } catch (error: any) {
+        toast.error(error?.message || 'Could not delete this research job.');
+      } finally {
+        setUpdatingJob(null);
+      }
+      return;
+    }
     const succeeded = await updateJob(job.pidJob, action);
     if (succeeded) setResearchConfirmation(null);
   };
@@ -664,15 +710,14 @@ export default function IntelligenceResearchAgent() {
         <div className="flex items-center justify-between px-1">
           <div>
             <h2 className="text-lg font-bold text-foreground">
-              Research Queue
+              Pending User Requests
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Customer searches and weekly Research Radar winners. Generate a
-              draft, then approve suppliers before publishing.
+              Review customer requests that have not yet become research jobs.
             </p>
           </div>
           <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
-            {searchRequests.filter((request) => request.status === 'awaiting_admin').length} pending
+            {pendingSearchRequests.length} pending
           </span>
         </div>
 
@@ -680,13 +725,13 @@ export default function IntelligenceResearchAgent() {
           <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
             Loading user search requests...
           </div>
-        ) : searchRequests.length === 0 ? (
+        ) : pendingSearchRequests.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            No user search requests yet.
+            No user requests are waiting for review.
           </div>
         ) : (
           <div className="grid gap-3">
-            {searchRequests.map((request) => (
+            {pendingSearchRequests.map((request) => (
               <SearchRequestCard
                 key={request.pidSearch}
                 request={request}
@@ -788,6 +833,9 @@ export default function IntelligenceResearchAgent() {
                 onRestart={() =>
                   setResearchConfirmation({ job, action: 'restart' })
                 }
+                onDelete={() =>
+                  setResearchConfirmation({ job, action: 'delete' })
+                }
                 onApproveSupplier={(supplierIndex) =>
                   updateJob(job.pidJob, 'approve_supplier', supplierIndex)
                 }
@@ -848,11 +896,22 @@ function ResearchActionConfirmationModal({
   if (!confirmation) return null;
 
   const restarting = confirmation.action === 'restart';
-  const title = restarting ? 'Restart supplier research?' : 'Stop supplier research?';
-  const description = restarting
-    ? 'A fresh OpenAI research run will begin using the original product, notes, supplier count and uploaded image.'
-    : 'The unfinished OpenAI run will be cancelled. Any linked customer search credit will be returned.';
-  const confirmLabel = restarting ? 'Restart research' : 'Stop research';
+  const deleting = confirmation.action === 'delete';
+  const title = deleting
+    ? 'Delete research job?'
+    : restarting
+      ? 'Restart supplier research?'
+      : 'Stop supplier research?';
+  const description = deleting
+    ? 'This removes the research job and its uploaded product image. Supplier records already approved and published will remain available.'
+    : restarting
+      ? 'A fresh OpenAI research run will begin using the original product, notes, supplier count and uploaded image.'
+      : 'The unfinished OpenAI run will be cancelled. Any linked customer search credit will be returned.';
+  const confirmLabel = deleting
+    ? 'Delete job'
+    : restarting
+      ? 'Restart research'
+      : 'Stop research';
 
   return (
     <div
@@ -876,6 +935,8 @@ function ResearchActionConfirmationModal({
           >
             {restarting ? (
               <RotateCcw className="h-6 w-6" />
+            ) : deleting ? (
+              <Trash2 className="h-6 w-6" />
             ) : (
               <AlertTriangle className="h-6 w-6" />
             )}
@@ -914,7 +975,7 @@ function ResearchActionConfirmationModal({
               disabled={busy}
               className="rounded-md border border-border bg-background px-4 py-2.5 text-sm font-bold text-foreground transition hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {restarting ? 'Not now' : 'Continue research'}
+              {restarting ? 'Not now' : deleting ? 'Keep job' : 'Continue research'}
             </button>
             <button
               type="button"
@@ -927,7 +988,13 @@ function ResearchActionConfirmationModal({
               }`}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {busy ? (restarting ? 'Restarting...' : 'Stopping...') : confirmLabel}
+              {busy
+                ? restarting
+                  ? 'Restarting...'
+                  : deleting
+                    ? 'Deleting...'
+                    : 'Stopping...'
+                : confirmLabel}
             </button>
           </div>
         </div>
@@ -1004,7 +1071,7 @@ function SearchRequestCard({
             </p>
           ) : null}
           {request.adminNotes ? (
-            <p className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:text-amber-300">
+            <p className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
               {request.adminNotes}
             </p>
           ) : null}
@@ -1117,6 +1184,7 @@ function ResearchJobCard({
   onReject,
   onStop,
   onRestart,
+  onDelete,
   onApproveSupplier,
   onRejectSupplier,
   onUnapproveSupplier,
@@ -1130,6 +1198,7 @@ function ResearchJobCard({
   onReject: () => void;
   onStop: () => void;
   onRestart: () => void;
+  onDelete: () => void;
   onApproveSupplier: (supplierIndex: number) => void;
   onRejectSupplier: (supplierIndex: number) => void;
   onUnapproveSupplier: (supplierIndex: number) => void;
@@ -1147,51 +1216,70 @@ function ResearchJobCard({
 
   return (
     <article id={`research-job-${job.pidJob}`} className="scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card shadow-soft">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full flex-col gap-4 p-5 text-left transition hover:bg-muted/30 lg:flex-row lg:items-center lg:justify-between"
-      >
-        <div className="flex min-w-0 gap-3">
-          <div className="mt-1 text-muted-foreground">
-            {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${statusClass(job.status)}`}>
-                {job.status.replace(/_/g, ' ')}
-              </span>
-              <span className="font-mono text-[10px] font-bold text-muted-foreground">
-                {job.pidJob}
-              </span>
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex min-w-0 flex-1 flex-col gap-4 p-5 text-left transition hover:bg-muted/30 lg:flex-row lg:items-center lg:justify-between"
+        >
+          <div className="flex min-w-0 gap-3">
+            <div className="mt-1 text-muted-foreground">
+              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </div>
-            <h3 className="mt-3 truncate text-lg font-bold text-foreground">
-              {draft?.nicheName || job.nicheName}
-            </h3>
-            <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              <span>{counts.total} suppliers</span>
-              <span>{counts.approved} approved</span>
-              <span>{counts.rejected} rejected</span>
-              <span>{counts.pending} pending</span>
-              {job.imageUrl ? <span>image attached</span> : null}
-            </div>
-          </div>
-        </div>
-        {isResearching ? (
-          <div className="w-full shrink-0 lg:w-48">
-            <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              <span>Estimated progress</span>
-              <span className="text-foreground">{progressPercent}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-amber-500 transition-[width] duration-1000 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${statusClass(job.status)}`}>
+                  {job.status.replace(/_/g, ' ')}
+                </span>
+                <span className="rounded-full border border-border bg-background px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  {job.sourceSearchRequestId ? 'User Job' : 'Admin Job'}
+                </span>
+                <span className="font-mono text-[10px] font-bold text-muted-foreground">
+                  {job.pidJob}
+                </span>
+              </div>
+              <h3 className="mt-3 truncate text-lg font-bold text-foreground">
+                {draft?.nicheName || job.nicheName}
+              </h3>
+              <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <span>{counts.total} suppliers</span>
+                <span>{counts.approved} approved</span>
+                <span>{counts.rejected} rejected</span>
+                <span>{counts.pending} pending</span>
+                {job.imageUrl ? <span>image attached</span> : null}
+              </div>
             </div>
           </div>
-        ) : null}
-      </button>
+          {isResearching ? (
+            <div className="w-full shrink-0 lg:w-48">
+              <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span>Estimated progress</span>
+                <span className="text-foreground">{progressPercent}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={jobUpdating}
+          className="mr-5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-label={`Delete ${draft?.nicheName || job.nicheName} research job`}
+          title="Delete research job"
+        >
+          {updatingJob === `${job.pidJob}:delete:job` ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+        </button>
+      </div>
 
       {expanded ? (
         <div className="border-t border-border p-5">
@@ -1313,8 +1401,8 @@ function ResearchJobCard({
           ) : null}
 
           {isResearching ? (
-            <div className="mt-4 overflow-hidden rounded-lg border border-amber-500/20 bg-amber-500/10">
-              <div className="flex items-center justify-between gap-4 px-4 py-3 text-xs font-bold text-amber-700 dark:text-amber-300">
+            <div className="mt-4 overflow-hidden rounded-lg border border-border bg-muted/30">
+              <div className="flex items-center justify-between gap-4 px-4 py-3 text-xs font-bold text-foreground">
                 <span className="inline-flex items-center gap-3">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>
@@ -1329,9 +1417,9 @@ function ResearchJobCard({
                 </span>
                 <span className="shrink-0 text-sm">{progressPercent}%</span>
               </div>
-              <div className="h-2 bg-amber-500/10">
+              <div className="h-2 bg-muted">
                 <div
-                  className="h-full rounded-full bg-amber-500 transition-[width] duration-1000 ease-out"
+                  className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -1437,7 +1525,7 @@ function ResearchJobCard({
                       type="button"
                       onClick={() => onUnapproveSupplier(index)}
                       disabled={jobUpdating}
-                      className="inline-flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-500/15 disabled:opacity-60 dark:text-amber-300 dark:hover:bg-amber-500/20"
+                      className="inline-flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2 text-xs font-bold text-foreground transition hover:bg-muted/70 disabled:opacity-60"
                     >
                       {updatingJob === `${job.pidJob}:unapprove_supplier:${index}` ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
+import { destroyCloudinaryAsset } from '@/lib/cloudinary/destroy';
 import xMail from '@/lib/email/xMail2';
 import { prisma } from '@/lib/prisma';
 import {
@@ -978,14 +979,7 @@ async function listJobs() {
       createdAt,
       updatedAt
     FROM intelligence_research_jobs
-    ORDER BY
-      CASE
-        WHEN status = 'awaiting_approval' AND sourceSearchRequestId IS NOT NULL THEN 1
-        WHEN status = 'awaiting_approval' THEN 2
-        WHEN sourceSearchRequestId IS NOT NULL THEN 3
-        ELSE 4
-      END,
-      createdAt DESC
+    ORDER BY createdAt DESC
     LIMIT 50
   `;
 }
@@ -1471,6 +1465,85 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error?.message || 'Failed to run research.' },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const admin = await requireAdmin();
+    if (!admin) return unauthorized();
+    await ensureResearchJobsTable();
+    await ensureSearchRequestsTable();
+
+    const body = await request.json().catch(() => ({}));
+    const pidJob = clean(body.pidJob, 80);
+    if (!pidJob) {
+      return NextResponse.json(
+        { success: false, error: 'A research job is required.' },
+        { status: 400 },
+      );
+    }
+
+    const rows = await prisma.$queryRaw<ResearchJob[]>`
+      SELECT * FROM intelligence_research_jobs WHERE pidJob = ${pidJob} LIMIT 1
+    `;
+    const job = rows[0];
+    if (!job) {
+      return NextResponse.json(
+        { success: false, error: 'Research job not found.' },
+        { status: 404 },
+      );
+    }
+
+    const activeStatuses = ['queued', 'running', 'finalizing', 'restarting'];
+    if (activeStatuses.includes(job.status) && job.openAiResponseId) {
+      await cancelSupplierResearch(job.openAiResponseId).catch(() => undefined);
+    }
+
+    if (
+      job.sourceSearchRequestId &&
+      [...activeStatuses, 'awaiting_approval'].includes(job.status)
+    ) {
+      const reason =
+        'Sure Imports removed this research job before approval. Your reserved search credit has been returned.';
+      await prisma.$executeRaw`
+        UPDATE intelligence_search_requests
+        SET
+          status = 'cancelled',
+          progressStage = 'Research job removed by Sure Imports',
+          progressPercent = 100,
+          adminNotes = ${reason},
+          updatedAt = ${new Date()}
+        WHERE relatedPidJob = ${pidJob}
+      `;
+      await refundLinkedSearchCredit(pidJob, reason);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        UPDATE intelligence_search_requests
+        SET relatedPidJob = NULL, updatedAt = ${new Date()}
+        WHERE relatedPidJob = ${pidJob}
+      `;
+      await tx.$executeRaw`
+        DELETE FROM intelligence_research_jobs WHERE pidJob = ${pidJob}
+      `;
+    });
+
+    if (job.imagePublicId) {
+      await destroyCloudinaryAsset(job.imagePublicId).catch(() => undefined);
+    }
+
+    const [jobs, searchRequests] = await Promise.all([
+      listJobs(),
+      listSearchRequests(),
+    ]);
+    return NextResponse.json({ success: true, data: jobs, searchRequests });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error?.message || 'Failed to delete research job.' },
       { status: 500 },
     );
   }
