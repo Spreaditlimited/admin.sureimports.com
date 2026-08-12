@@ -203,27 +203,28 @@ export async function POST(request: Request) {
 
     const newStatus = expectedNextStatus;
 
-    await prisma.shipping_only.update({
-      where: { pidShippingOnly: pidOrder },
-      data: { status: newStatus, updatedAt: new Date() },
-    });
-
-    await prisma.messages.create({
-      data: {
-        pidMessage,
-        pidOrder,
-        pidFrom: 'admin@sureimports.com',
-        pidTo: user.userEmail,
-        fullName: user.userFirstname || '',
-        messageTitle: `Shipping Only Status Update: ${getShippingOnlyStatusLabel(newStatus)}`,
-        messageContent:
-          message ||
-          `Your Shipping Only request (${pidOrder}) has been moved to "${getShippingOnlyStatusLabel(newStatus)}".`,
-        messageStatus: 'unread',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
+    await prisma.$transaction([
+      prisma.shipping_only.update({
+        where: { pidShippingOnly: pidOrder },
+        data: { status: newStatus, updatedAt: new Date() },
+      }),
+      prisma.messages.create({
+        data: {
+          pidMessage,
+          pidOrder,
+          pidFrom: 'admin@sureimports.com',
+          pidTo: user.userEmail,
+          fullName: user.userFirstname || '',
+          messageTitle: `Shipping Only Status Update: ${getShippingOnlyStatusLabel(newStatus)}`,
+          messageContent:
+            message ||
+            `Your Shipping Only request (${pidOrder}) has been moved to "${getShippingOnlyStatusLabel(newStatus)}".`,
+          messageStatus: 'unread',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      }),
+    ]);
 
     await Promise.allSettled([
       xMail({
@@ -237,7 +238,7 @@ export async function POST(request: Request) {
           ? `Admin note:<br/>${message}`
           : 'Log in to your dashboard to view full request details and progress.',
         xButtonTitle: 'View Dashboard',
-        xButtonLink: 'https://www.sureimports.com/dashboard/shipping-only/request-received',
+        xButtonLink: `https://www.sureimports.com/dashboard/shipping-only/${newStatus}`,
       }),
       sendApprovedWhatsAppStatusTemplate({
         requestId: pidOrder,

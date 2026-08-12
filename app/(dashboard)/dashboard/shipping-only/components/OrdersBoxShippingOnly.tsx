@@ -168,6 +168,8 @@ const OrdersBoxShippingOnly = () => {
         }
 
         formData.append('serviceType', 'shipping-only');
+        formData.append('pidUser', pidUser);
+        formData.append('pidOrder', pidOrder);
         formData.append('action', action);
         formData.append('currentStatus', orderCurrentStatus);
         if (nextStatus) {
@@ -311,7 +313,7 @@ const OrdersBoxShippingOnly = () => {
                                 <span className="text-[9px] font-bold text-muted-foreground uppercase">Provisioned On</span>
                                 <span className="text-[10px] font-mono font-bold text-foreground">{new Date(order.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div className={`p-2 rounded-lg transition-transform duration-300 ${active === order.pidShippingOnly ? 'rotate-180 bg-primary text-white shadow-sm' : 'bg-muted text-muted-foreground'}`}>
+                            <div className={`p-2 rounded-lg transition-transform duration-300 ${active === order.pidShippingOnly ? 'rotate-180 bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground'}`}>
                                 <ChevronDown className="w-4 h-4" />
                             </div>
                         </div>
@@ -406,7 +408,7 @@ const OrdersBoxShippingOnly = () => {
                                                     }
                                                     handleIssueInvoice(order.invoice.pidInvoice);
                                                 }}
-                                                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
                                                 {order.invoice && invoiceStatus === 'DRAFT' && issuingInvoiceId === order.invoice.pidInvoice ? (
                                                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -421,7 +423,7 @@ const OrdersBoxShippingOnly = () => {
                                                 name="action"
                                                 value="approve"
                                                 onClick={() => setPendingAction('approve')}
-                                                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all"
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all"
                                             >
                                                 <CheckCircle2 className="w-4 h-4" /> {approveActionLabel}
                                             </button>
