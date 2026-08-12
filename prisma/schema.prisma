@@ -1176,6 +1176,30 @@ model corporate_gift_request {
   updatedAt                     DateTime @updatedAt
 }
 
+model corporate_sourcing_research_payments {
+  id                       Int       @id @default(autoincrement())
+  pidPayment               String    @unique @db.VarChar(80)
+  pidUser                  String?   @db.VarChar(191)
+  requestId                String?   @unique @db.VarChar(80)
+  email                    String    @db.VarChar(255)
+  firstName                String?   @db.VarChar(120)
+  lastName                 String?   @db.VarChar(120)
+  billingCountry           String?   @db.VarChar(120)
+  paymentProvider          String    @db.VarChar(40)
+  providerReference        String?   @unique @db.VarChar(160)
+  providerCaptureReference String?   @unique @db.VarChar(160)
+  status                   String    @default("pending") @db.VarChar(40)
+  amountMinor              Int
+  currency                 String    @db.VarChar(10)
+  submissionTokenHash      String    @db.VarChar(64)
+  paidAt                   DateTime?
+  consumedAt               DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @default(now()) @updatedAt
+
+  @@index([email, status])
+}
+
 model invoice_settings {
   id                     Int      @id @default(autoincrement())
   pidSetting             String   @unique()

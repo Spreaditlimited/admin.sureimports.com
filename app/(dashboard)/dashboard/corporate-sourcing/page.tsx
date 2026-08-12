@@ -23,6 +23,8 @@ import {
 } from './actions';
 import Link from 'next/link';
 import CancelProjectCard from './components/CancelProjectCard';
+import ResearchFeeSettings from './components/ResearchFeeSettings';
+import { getCorporateSourcingPricing } from '@/lib/corporateSourcing/pricing';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -35,8 +37,26 @@ export default async function CorporateSourcingAdminPage() {
     orderBy: { createdAt: 'desc' },
     take: 100,
   });
+  const researchFee = await getCorporateSourcingPricing();
 
   const requestIds = entries.map((entry) => entry.pidRequest);
+  const paymentRows = requestIds.length
+    ? await prisma.$queryRaw<Array<{
+        requestId: string;
+        paymentProvider: string;
+        amountMinor: number;
+        currency: string;
+        paidAt: Date | null;
+      }>>`
+        SELECT requestId, paymentProvider, amountMinor, currency, paidAt
+        FROM corporate_sourcing_research_payments
+        WHERE requestId IN (${Prisma.join(requestIds)})
+          AND status = 'paid'
+      `.catch(() => [])
+    : [];
+  const paymentByRequestId = new Map(
+    paymentRows.map((payment) => [payment.requestId, payment]),
+  );
   const cancellationReasonRows = requestIds.length
     ? await prisma.$queryRaw<Array<{ pidRequest: string; cancellationReason: string | null }>>`
         SELECT pidRequest, cancellationReason
@@ -85,6 +105,8 @@ export default async function CorporateSourcingAdminPage() {
         </div>
       </div>
 
+      <ResearchFeeSettings initialPricing={researchFee} />
+
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-20 text-center shadow-soft">
           <Package className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -109,6 +131,7 @@ export default async function CorporateSourcingAdminPage() {
             const canCancel =
               entryStatus !== 'Delivered' && entryStatus !== 'Cancelled';
             const linkedInvoice = invoiceByRequestId.get(entry.pidRequest);
+            const researchPayment = paymentByRequestId.get(entry.pidRequest);
             const invoiceHref = linkedInvoice
               ? `/dashboard/invoicing/${linkedInvoice.pidInvoice}`
               : `/dashboard/invoicing/create?linkedRequestId=${entry.pidRequest}`;
@@ -153,6 +176,11 @@ export default async function CorporateSourcingAdminPage() {
                         >
                           {entryStatus}
                         </Badge>
+                        {researchPayment ? (
+                          <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                            Research Fee Paid
+                          </Badge>
+                        ) : null}
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span className="font-medium text-foreground">
@@ -165,6 +193,16 @@ export default async function CorporateSourcingAdminPage() {
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         <span className="font-mono">ID: {entry.pidRequest}</span>
+                        {researchPayment ? (
+                          <span>
+                            {researchPayment.currency === 'NGN' ? '₦' : '$'}
+                            {(researchPayment.amountMinor / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: researchPayment.currency === 'USD' ? 2 : 0,
+                              maximumFractionDigits: researchPayment.currency === 'USD' ? 2 : 0,
+                            })}
+                            {' · '}{researchPayment.paymentProvider}
+                          </span>
+                        ) : null}
                         <span>Handler: {entryView.handledByName || 'Unassigned'}</span>
                       </div>
                     </div>
