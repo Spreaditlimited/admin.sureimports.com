@@ -80,6 +80,10 @@ export async function extractQuotationFiles(files: ExtractionFile[]): Promise<Qu
       type: 'input_text',
       text: `Extract a customer-ready product quotation draft from the attached source files.\n\nSource indexes:\n${fileList}\n\nRules:\n- Read every page and image carefully.\n- Preserve distinct product configurations as separate products.\n- Correct spelling, grammar and awkward supplier wording while preserving technical meaning.\n- Convert weights to kilograms and carton dimensions to centimetres.\n- Use RMB for Chinese yuan prices.\n- Never invent a missing commercial value: return null for missing measurements and 0 for a missing price or domestic transport cost.\n- imageSourceIndex must point to the uploaded image that best represents the product; use null when the visual exists only inside a PDF or no suitable image was uploaded.\n- Supplier identities are internal only and must not appear in title, introduction, product descriptions or notes.\n- Write a concise professional title and introduction suitable for a Sure Imports customer quotation.\n- Put uncertainties that require human review in extractionNotes.`,
     },
+    {
+      type: 'input_text',
+      text: 'Permanent customer-quotation rule: do not add recommendations for physical vehicle, product, supplier or factory verification.',
+    },
   ];
 
   files.forEach((file) => {
