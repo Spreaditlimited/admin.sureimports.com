@@ -92,6 +92,10 @@ export async function updateCorporateGiftRequestAction(
     throw new Error('Corporate sourcing requests can only move to Invoiced when a linked invoice is issued.');
   }
 
+  if (status === 'Sourced') {
+    throw new Error('Create and send a linked quotation to move this request to Sourced.');
+  }
+
   if (!isCancellation) {
     const expectedNextStatus = getNextCorporateGiftStatus(existing.status);
     if (!expectedNextStatus || status !== expectedNextStatus) {

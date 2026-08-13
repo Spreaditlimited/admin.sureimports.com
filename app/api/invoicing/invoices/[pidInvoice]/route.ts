@@ -70,6 +70,14 @@ export async function GET(
             country: true,
           },
         },
+        quotation: {
+          select: {
+            pidQuotation: true,
+            quotationNumber: true,
+            customerName: true,
+            status: true,
+          },
+        },
       },
     });
 
@@ -161,6 +169,22 @@ export async function PATCH(
     if (body.customerAddress !== undefined) data.customerAddress = body.customerAddress || null;
     if (body.customerNotes !== undefined) data.customerNotes = body.customerNotes || null;
     if (body.notes !== undefined) data.notes = body.notes || null;
+    if (body.pidQuotation !== undefined) {
+      const nextPidQuotation = String(body.pidQuotation || '').trim() || null;
+      if (nextPidQuotation) {
+        const quotation = await prisma.quotation_builder_documents.findUnique({
+          where: { pidQuotation: nextPidQuotation },
+          select: { pidUser: true },
+        });
+        if (!quotation) {
+          return NextResponse.json({ statusx: 'ERROR', message: 'Selected quotation was not found.' }, { status: 400 });
+        }
+        if (quotation.pidUser && quotation.pidUser !== existing.pidUser) {
+          return NextResponse.json({ statusx: 'ERROR', message: 'The selected quotation belongs to a different customer account.' }, { status: 400 });
+        }
+      }
+      data.pidQuotation = nextPidQuotation;
+    }
     if (body.customerBusinessName !== undefined || body.customerContactName !== undefined) {
       data.customerName = String(body.customerBusinessName || body.customerContactName || existing.customerName || '').trim() || null;
     }

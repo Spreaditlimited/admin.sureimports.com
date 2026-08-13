@@ -111,14 +111,32 @@ export async function GET() {
       quotationNumber: true,
       customerName: true,
       customerLocation: true,
+      pidUser: true,
+      linkedRequestId: true,
       status: true,
       maxPages: true,
       pdfBytes: true,
       createdAt: true,
       updatedAt: true,
+      lastSentAt: true,
+      sendCount: true,
+      invoices: {
+        select: {
+          pidInvoice: true,
+          invoiceNumber: true,
+          status: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
-  return NextResponse.json({ statusx: 'SUCCESS', data: records });
+  const pidUsers = Array.from(new Set(records.map((record) => record.pidUser).filter(Boolean))) as string[];
+  const users = pidUsers.length ? await prisma.users.findMany({
+    where: { pidUser: { in: pidUsers } },
+    select: { pidUser: true, userFirstname: true, userLastname: true, userEmail: true },
+  }) : [];
+  const userMap = new Map(users.map((user) => [user.pidUser, user]));
+  return NextResponse.json({ statusx: 'SUCCESS', data: records.map((record) => ({ ...record, user: record.pidUser ? userMap.get(record.pidUser) || null : null })) });
 }
 
 export async function POST(request: Request) {
@@ -128,6 +146,22 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const input = validateInput(body);
+    const pidUser = clean(body.pidUser, 191);
+    const linkedRequestId = clean(body.linkedRequestId, 191) || null;
+    if (!pidUser) throw new Error('Select a customer account before building the quotation.');
+    const customer = await prisma.users.findUnique({ where: { pidUser } });
+    if (!customer) throw new Error('The selected customer account could not be found.');
+    if (linkedRequestId) {
+      const sourcingRequest = await prisma.corporate_gift_request.findUnique({
+        where: { pidRequest: linkedRequestId },
+        select: { pidRequest: true, contactEmail: true },
+      });
+      if (!sourcingRequest) throw new Error('The linked corporate sourcing request could not be found.');
+      const accountEmails = [customer.userEmail, customer.email].map((value) => String(value || '').trim().toLowerCase());
+      if (!accountEmails.includes(String(sourcingRequest.contactEmail || '').trim().toLowerCase())) {
+        throw new Error('The selected customer account does not match the corporate sourcing request.');
+      }
+    }
     const calculated = calculateQuote(input);
     const pidQuotation = quotationId();
     const quoteNumber = quotationNumber();
@@ -146,6 +180,8 @@ export async function POST(request: Request) {
         quotationNumber: quoteNumber,
         customerName: input.customerName,
         customerLocation: input.customerLocation || null,
+        pidUser,
+        linkedRequestId,
         status: 'BUILT',
         sourceFiles: input.sourceAssets as any,
         extractedData: body.extractedData || undefined,

@@ -78,6 +78,7 @@ interface InvoiceEditPayload {
     quantity?: string | number;
     unitPrice?: string | number;
   }>;
+  pidQuotation?: string | null;
 }
 
 export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps) {
@@ -86,6 +87,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
   const isEditMode = Boolean(pidInvoice);
   const linkedRequestId = searchParams.get('linkedRequestId') || '';
   const linkedShippingOnlyId = searchParams.get('linkedShippingOnlyId') || '';
+  const requestedPidQuotation = searchParams.get('pidQuotation') || '';
 
   const [customerSearch, setCustomerSearch] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -116,6 +118,8 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
   const [taxTotal, setTaxTotal] = useState(0);
   const [items, setItems] = useState<ItemRow[]>([{ description: '', quantity: 1, unitPrice: 0 }]);
   const [invoiceStatus, setInvoiceStatus] = useState('');
+  const [pidQuotation, setPidQuotation] = useState('');
+  const [availableQuotations, setAvailableQuotations] = useState<Array<{ pidQuotation: string; quotationNumber: string; customerName: string }>>([]);
   const [saving, setSaving] = useState(false);
   const isIssuedEdit = isEditMode && invoiceStatus && invoiceStatus !== 'DRAFT';
 
@@ -167,6 +171,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
       setCustomerNotes(invoice.customerNotes || '');
       setNotes(invoice.notes || '');
       setInvoiceStatus(invoice.status || '');
+      setPidQuotation(invoice.pidQuotation || '');
       setDueAt(invoice.dueAt ? new Date(invoice.dueAt).toISOString().slice(0, 10) : '');
       setDiscountTotal(Number(invoice.discountTotal || 0));
       setTaxTotal(Number(invoice.taxTotal || 0));
@@ -183,6 +188,37 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
 
     void loadExistingInvoice();
   }, [pidInvoice]);
+
+  useEffect(() => {
+    const loadQuotation = async () => {
+      if (isEditMode || !requestedPidQuotation) return;
+      const response = await fetch(`/api/invoicing/quotation-builder/${encodeURIComponent(requestedPidQuotation)}/prefill`);
+      const json = await response.json();
+      if (!response.ok || !json?.data?.user) return;
+      const quotation = json.data;
+      const customer = quotation.user as Customer;
+      selectCustomer(customer);
+      setCustomerSearch(customer.userEmail || quotation.customerName || '');
+      setPidQuotation(quotation.pidQuotation);
+      setAvailableQuotations([{ pidQuotation: quotation.pidQuotation, quotationNumber: quotation.quotationNumber, customerName: quotation.customerName }]);
+      const quoteData = quotation.quoteData || {};
+      setNotes((current) => current || `Quotation: ${quotation.quotationNumber}`);
+      if (Array.isArray(quoteData.products) && quoteData.products.length) {
+        setItems(quoteData.products.map((product: any) => ({ description: product.name || product.description || quoteData.title || 'Quoted products', quantity: Number(product.quantity || 1), unitPrice: Number(product.unitPrice || 0) })));
+      }
+    };
+    void loadQuotation();
+  }, [isEditMode, requestedPidQuotation]);
+
+  useEffect(() => {
+    const loadCustomerQuotations = async () => {
+      if (!selectedCustomer?.pidUser) return;
+      const response = await fetch('/api/invoicing/quotation-builder', { cache: 'no-store' });
+      const json = await response.json();
+      setAvailableQuotations((json?.data || []).filter((quote: any) => quote.pidUser === selectedCustomer.pidUser));
+    };
+    void loadCustomerQuotations();
+  }, [selectedCustomer?.pidUser]);
 
   useEffect(() => {
     const loadCorporateGiftPrefill = async () => {
@@ -330,6 +366,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
             customerAddress,
             customerNotes,
             notes,
+            pidQuotation: pidQuotation || null,
             discountTotal,
             taxTotal,
             items,
@@ -349,6 +386,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
             notes,
             linkedRequestId: linkedRequestId || null,
             linkedShippingOnlyId: linkedShippingOnlyId || null,
+            pidQuotation: pidQuotation || null,
             discountTotal,
             taxTotal,
             items,
@@ -511,6 +549,14 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
                         <Calendar className="w-3 h-3" /> Due Date
                     </label>
                     <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring" />
+                </div>
+                <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Related quotation (optional)</label>
+                    <select value={pidQuotation} onChange={(e) => setPidQuotation(e.target.value)} className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring">
+                      <option value="">No quotation linked</option>
+                      {availableQuotations.map((quotation) => <option key={quotation.pidQuotation} value={quotation.pidQuotation}>{quotation.quotationNumber} — {quotation.customerName}</option>)}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground">Only quotations linked to the selected customer account are shown.</p>
                 </div>
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Header Details (Snapshot)</label>

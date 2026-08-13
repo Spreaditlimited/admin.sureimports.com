@@ -207,6 +207,7 @@ export async function POST(request: NextRequest) {
       notes,
       linkedRequestId,
       linkedShippingOnlyId,
+      pidQuotation,
       status = 'DRAFT',
       items = [],
       discountTotal = 0,
@@ -228,6 +229,26 @@ export async function POST(request: NextRequest) {
     const existingUser = await prisma.users.findUnique({ where: { pidUser } });
     if (!existingUser) {
       return NextResponse.json({ statusx: 'ERROR', message: 'User not found. Invoice can only be issued to registered users.' }, { status: 400 });
+    }
+
+    const normalizedPidQuotation = String(pidQuotation || '').trim() || null;
+    if (normalizedPidQuotation) {
+      const quotation = await prisma.quotation_builder_documents.findUnique({
+        where: { pidQuotation: normalizedPidQuotation },
+        select: { pidUser: true, linkedRequestId: true, lastSentAt: true },
+      });
+      if (!quotation) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'Selected quotation was not found.' }, { status: 400 });
+      }
+      if (quotation.pidUser && quotation.pidUser !== pidUser) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'The selected quotation belongs to a different customer account.' }, { status: 400 });
+      }
+      if (quotation.linkedRequestId && quotation.linkedRequestId !== String(linkedRequestId || '').trim()) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'The quotation and corporate sourcing request do not match.' }, { status: 400 });
+      }
+      if (quotation.linkedRequestId && !quotation.lastSentAt) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'Send the corporate sourcing quotation before creating its invoice.' }, { status: 400 });
+      }
     }
 
     let subtotalNum = 0;
@@ -288,6 +309,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (gift) {
+        if (!normalizedPidQuotation) {
+          return NextResponse.json({ statusx: 'ERROR', message: 'A corporate sourcing invoice must be created from its sent quotation.' }, { status: 400 });
+        }
         customerBusinessName = customerBusinessName || gift.businessName || null;
         customerContactName = customerContactName || gift.contactPersonFullName || userFullName;
         customerEmail = gift.contactEmail || existingUser.userEmail;
@@ -319,6 +343,7 @@ export async function POST(request: NextRequest) {
         customerNotes: customerNotes || null,
         notes: notes || null,
         linkedRequestId: normalizedLinkedRequestId || null,
+        pidQuotation: normalizedPidQuotation,
         createdByPidUser: admin.pidUser,
         updatedByPidUser: admin.pidUser,
         items: {

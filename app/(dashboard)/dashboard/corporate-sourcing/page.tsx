@@ -84,6 +84,26 @@ export default async function CorporateSourcingAdminPage() {
       invoiceByRequestId.set(invoice.linkedRequestId, invoice);
     }
   });
+  const linkedQuotations = requestIds.length
+    ? await prisma.quotation_builder_documents.findMany({
+        where: { linkedRequestId: { in: requestIds } },
+        select: {
+          pidQuotation: true,
+          quotationNumber: true,
+          linkedRequestId: true,
+          status: true,
+          lastSentAt: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+    : [];
+  const quotationByRequestId = new Map<string, (typeof linkedQuotations)[number]>();
+  linkedQuotations.forEach((quotation) => {
+    if (quotation.linkedRequestId && !quotationByRequestId.has(quotation.linkedRequestId)) {
+      quotationByRequestId.set(quotation.linkedRequestId, quotation);
+    }
+  });
 
   return (
     <div className="space-y-6 pb-10">
@@ -131,10 +151,13 @@ export default async function CorporateSourcingAdminPage() {
             const canCancel =
               entryStatus !== 'Delivered' && entryStatus !== 'Cancelled';
             const linkedInvoice = invoiceByRequestId.get(entry.pidRequest);
+            const linkedQuotation = quotationByRequestId.get(entry.pidRequest);
             const researchPayment = paymentByRequestId.get(entry.pidRequest);
             const invoiceHref = linkedInvoice
               ? `/dashboard/invoicing/${linkedInvoice.pidInvoice}`
-              : `/dashboard/invoicing/create?linkedRequestId=${entry.pidRequest}`;
+              : linkedQuotation
+                ? `/dashboard/invoicing/create?pidQuotation=${encodeURIComponent(linkedQuotation.pidQuotation)}&linkedRequestId=${encodeURIComponent(entry.pidRequest)}`
+                : '';
             const invoiceLabel = linkedInvoice ? 'Manage Invoice' : 'Create Invoice';
               
             return (
@@ -419,12 +442,21 @@ export default async function CorporateSourcingAdminPage() {
                     </div>
 
                       <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-3 lg:gap-3">
-                      <Link
-                        href={invoiceHref}
-                        className="w-full text-center rounded-md bg-primary px-3 py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
-                      >
-                        {invoiceLabel}
-                      </Link>
+                      {linkedInvoice || linkedQuotation?.lastSentAt ? (
+                        <Link
+                          href={invoiceHref}
+                          className="w-full text-center rounded-md bg-primary px-3 py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
+                        >
+                          {invoiceLabel}
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/dashboard/invoicing/quotation-builder?linkedRequestId=${encodeURIComponent(entry.pidRequest)}#quotation-history`}
+                          className="w-full text-center rounded-md bg-primary px-3 py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
+                        >
+                          {linkedQuotation ? 'View and Send Quote' : 'Create Quote'}
+                        </Link>
+                      )}
                       
                       <form action={assignCorporateGiftRequestAction} className="w-full">
                         <input type="hidden" name="pidRequest" value={entry.pidRequest} />
@@ -438,7 +470,11 @@ export default async function CorporateSourcingAdminPage() {
 
                       <form action={updateCorporateGiftRequestFormAction} className="w-full">
                         <input type="hidden" name="pidRequest" value={entry.pidRequest} />
-                        {nextStatus === 'Invoiced' ? (
+                        {nextStatus === 'Sourced' ? (
+                          <span className="flex min-h-[38px] w-full items-center justify-center rounded-md border border-border bg-muted/50 px-3 py-2 text-center text-xs font-medium text-muted-foreground">
+                            Send quote to mark Sourced
+                          </span>
+                        ) : nextStatus === 'Invoiced' ? (
                           <span className="flex min-h-[38px] w-full items-center justify-center rounded-md border border-border bg-muted/50 px-3 py-2 text-center text-xs font-medium text-muted-foreground">
                             Awaiting invoice
                           </span>

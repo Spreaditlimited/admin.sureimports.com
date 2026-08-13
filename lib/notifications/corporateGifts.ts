@@ -1,4 +1,5 @@
 import xMail from '@/lib/email/xMail2';
+import type { EmailAttachment } from '@/lib/email/config/sendEmail';
 import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
 
 export const CORPORATE_GIFT_STATUSES = [
@@ -36,6 +37,7 @@ type NotifyInput = {
   status: CorporateGiftStatus;
   handledByName?: string | null;
   cancellationReason?: string | null;
+  emailAttachments?: EmailAttachment[];
 };
 
 export type NotificationChannelResult = {
@@ -68,6 +70,8 @@ export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {
   const introLine =
     input.status === 'Cancelled'
       ? `Hello ${input.contactPersonFullName || 'Customer'},<br />Your corporate sourcing request has been cancelled.`
+      : input.status === 'Sourced'
+        ? `Hello ${input.contactPersonFullName || 'Customer'},<br />We have completed the sourcing stage for your request. Your Sure Imports quotation is attached for your review.`
       : `Hello ${input.contactPersonFullName || 'Customer'},<br />We have an update on your corporate sourcing request.`;
 
   const results = await Promise.allSettled([
@@ -79,6 +83,7 @@ export async function notifyCustomerCorporateGiftStatus(input: NotifyInput) {
       xBody2: `${bodyTable}<br />Thank you for choosing Sure Imports.`,
       xButtonTitle: 'Contact Us',
       xButtonLink: 'https://sureimports.com/contact',
+      attachments: input.emailAttachments,
       throwOnError: true,
     }),
     sendWhatsAppTemplate(input),

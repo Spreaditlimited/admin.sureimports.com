@@ -38,6 +38,20 @@ export async function POST(
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice has no line items' }, { status: 400 });
     }
 
+    const linkedService = parseInvoiceLinkedRequestId(existing.linkedRequestId);
+    if (linkedService.type === 'corporate-gift') {
+      if (!existing.pidQuotation) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'Create and send a linked quotation before issuing this corporate sourcing invoice.' }, { status: 400 });
+      }
+      const quotation = await prisma.quotation_builder_documents.findUnique({
+        where: { pidQuotation: existing.pidQuotation },
+        select: { linkedRequestId: true, lastSentAt: true },
+      });
+      if (!quotation?.lastSentAt || quotation.linkedRequestId !== linkedService.id) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'The linked corporate sourcing quotation must be sent before this invoice can be issued.' }, { status: 400 });
+      }
+    }
+
     const settings = await prisma.invoice_settings.findFirst({
       where: { status: 'ACTIVE' },
       orderBy: { createdAt: 'asc' },
@@ -56,7 +70,6 @@ export async function POST(
       },
     });
 
-    const linkedService = parseInvoiceLinkedRequestId(updated.linkedRequestId);
     if (linkedService.type === 'corporate-gift') {
       await prisma.corporate_gift_request.updateMany({
         where: { pidRequest: linkedService.id },

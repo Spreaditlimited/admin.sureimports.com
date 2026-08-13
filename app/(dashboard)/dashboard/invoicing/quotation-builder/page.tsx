@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   description: 'Build branded Sure Imports quotations from supplier images and PDF documents.',
 };
 
-export default function QuotationBuilderPage() {
-  return <QuotationBuilder />;
+export default async function QuotationBuilderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ linkedRequestId?: string }>;
+}) {
+  const params = await searchParams;
+  return <QuotationBuilder linkedRequestId={String(params.linkedRequestId || '').trim()} />;
 }

@@ -751,6 +751,8 @@ model quotation_builder_documents {
   quotationNumber  String   @unique @db.VarChar(100)
   customerName     String   @db.VarChar(220)
   customerLocation String?  @db.VarChar(255)
+  pidUser          String?  @db.VarChar(191)
+  linkedRequestId  String?  @db.VarChar(191)
   status           String   @default("DRAFT") @db.VarChar(40)
   sourceFiles      Json
   extractedData    Json?
@@ -762,12 +764,18 @@ model quotation_builder_documents {
   pdfBytes         Int?
   createdByPidUser String?  @db.VarChar(80)
   updatedByPidUser String?  @db.VarChar(80)
+  lastSentAt       DateTime?
+  lastSentByPidUser String? @db.VarChar(80)
+  sendCount        Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  invoices         invoices[]
 
   @@index([status])
   @@index([createdAt])
   @@index([customerName])
+  @@index([pidUser])
+  @@index([linkedRequestId])
 }
 
 model settings_financial {
@@ -1240,6 +1248,7 @@ model invoices {
   customerNotes        String?                  @db.LongText
   notes                String?                  @db.LongText
   linkedRequestId      String?
+  pidQuotation         String?                  @db.VarChar(80)
   createdByPidUser     String?
   updatedByPidUser     String?
   createdAt            DateTime                 @default(now())
@@ -1252,11 +1261,13 @@ model invoices {
   accessTokens         invoice_access_tokens[]
   paymentClaims        invoice_payment_claims[]
   followUps            invoice_follow_ups[]
+  quotation            quotation_builder_documents? @relation(fields: [pidQuotation], references: [pidQuotation], onDelete: SetNull)
 
   @@index([pidUser])
   @@index([status])
   @@index([createdAt])
   @@index([dueAt])
+  @@index([pidQuotation])
 }
 
 model invoice_follow_ups {

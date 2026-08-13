@@ -39,6 +39,7 @@ interface InvoiceData {
   footerSnapshot: string | null;
   customerNotes: string | null;
   notes: string | null;
+  quotation: { pidQuotation: string; quotationNumber: string; customerName: string; status: string } | null;
   items: Array<{ pidInvoiceItem: string; description: string; quantity: string; unitPrice: string; lineTotal: string }>;
   payments: Array<{ pidInvoicePayment: string; amount: string; paymentMethod: string; reference: string | null; paidAt: string }>;
   receipts: Array<{ pidReceipt: string; receiptNumber: string; amount: string; deliveryStatus: string }>;
@@ -214,6 +215,16 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
           >
             <Download className="w-3.5 h-3.5" /> Download PDF
           </a>
+          {data.quotation ? (
+            <a
+              href={`/api/invoicing/quotation-builder/${encodeURIComponent(data.quotation.pidQuotation)}/pdf`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-xs font-bold hover:bg-muted transition-all shadow-sm"
+            >
+              <FileText className="w-3.5 h-3.5" /> Quotation {data.quotation.quotationNumber}
+            </a>
+          ) : null}
           
           {data.status === 'DRAFT' ? (
             <>

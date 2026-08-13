@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   FileImage,
   FileText,
+  Mail,
   Loader2,
   PackagePlus,
   Plus,
@@ -39,10 +40,24 @@ type HistoryRow = {
   quotationNumber: string;
   customerName: string;
   customerLocation: string | null;
+  pidUser: string | null;
+  linkedRequestId: string | null;
   status: string;
   maxPages: number;
   pdfBytes: number | null;
   createdAt: string;
+  lastSentAt: string | null;
+  sendCount: number;
+  user: { userFirstname: string | null; userLastname: string | null; userEmail: string } | null;
+  invoices: Array<{ pidInvoice: string; invoiceNumber: string; status: string }>;
+};
+
+type Customer = {
+  pidUser: string;
+  userFirstname: string | null;
+  userLastname: string | null;
+  userEmail: string;
+  businessName?: string | null;
 };
 
 const emptyProduct = (index: number): QuoteProduct => ({
@@ -68,7 +83,7 @@ function Field({ label, children, hint }: { label: string; children: React.React
 
 const inputClass = 'w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm font-medium text-foreground outline-none transition focus:ring-2 focus:ring-primary/30';
 
-export default function QuotationBuilder() {
+export default function QuotationBuilder({ linkedRequestId = '' }: { linkedRequestId?: string }) {
   const [files, setFiles] = useState<File[]>([]);
   const [assets, setAssets] = useState<QuotationSourceAsset[]>([]);
   const [extraction, setExtraction] = useState<Extraction | null>(null);
@@ -76,6 +91,12 @@ export default function QuotationBuilder() {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [products, setProducts] = useState<QuoteProduct[]>([]);
   const [customerName, setCustomerName] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAdding, setQuickAdding] = useState(false);
+  const [quickUser, setQuickUser] = useState({ userFirstname: '', userLastname: '', userEmail: '', businessName: '', phone: '', country: 'Nigeria', sendSetupLink: true });
   const [customerLocation, setCustomerLocation] = useState('Lagos, Nigeria');
   const [title, setTitle] = useState('');
   const [introduction, setIntroduction] = useState('');
@@ -86,6 +107,7 @@ export default function QuotationBuilder() {
   const [analysing, setAnalysing] = useState(false);
   const [building, setBuilding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sendingPid, setSendingPid] = useState('');
 
   const loadData = async () => {
     setLoading(true);
@@ -106,6 +128,47 @@ export default function QuotationBuilder() {
   };
 
   useEffect(() => { void loadData(); }, []);
+
+  useEffect(() => {
+    if (!linkedRequestId) return;
+    const loadSourcingRequest = async () => {
+      try {
+        const response = await fetch(`/api/invoicing/corporate-gifts/${encodeURIComponent(linkedRequestId)}/prefill`, { cache: 'no-store' });
+        const json = await response.json();
+        if (!response.ok || !json?.data?.request) throw new Error(json?.message || 'Could not load the corporate sourcing request.');
+        const request = json.data.request;
+        const matched = (json.data.matchedUsers || []) as Customer[];
+        if (matched[0]) selectCustomer(matched[0]);
+        setCustomerName(request.businessName || request.contactPersonFullName || '');
+        setCustomerSearch(request.contactEmail || '');
+        setCustomerLocation(request.finalDeliveryLocationNigeria || '');
+        setTitle(`Quotation for ${request.productOrItemNeeded}`);
+        setIntroduction(`Prepared from corporate sourcing request ${request.pidRequest}.`);
+        setProducts([{
+          ...emptyProduct(0),
+          name: request.productOrItemNeeded || '',
+          description: request.detailedSpecifications || '',
+          quantity: Number(request.quantityNeeded || 1),
+        }]);
+        if (!matched[0]) {
+          setShowQuickAdd(true);
+          const names = String(request.contactPersonFullName || '').trim().split(/\s+/);
+          setQuickUser((current) => ({
+            ...current,
+            userFirstname: names.shift() || '',
+            userLastname: names.join(' '),
+            userEmail: request.contactEmail || '',
+            businessName: request.businessName || '',
+            phone: request.whatsappNumber || '',
+          }));
+          toast.info('No matching customer account was found. Review and create the prefilled account before building the quote.');
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Could not load the corporate sourcing request.');
+      }
+    };
+    void loadSourcingRequest();
+  }, [linkedRequestId]);
 
   const draftInput = useMemo<QuoteBuildInput | null>(() => rates ? ({
     customerName, customerLocation, title, introduction, products, sourceAssets: assets,
@@ -149,7 +212,7 @@ export default function QuotationBuilder() {
     try {
       const response = await fetch('/api/invoicing/quotation-builder', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...draftInput, extractedData: extraction }),
+        body: JSON.stringify({ ...draftInput, pidUser: selectedCustomer?.pidUser, linkedRequestId: linkedRequestId || null, extractedData: extraction }),
       });
       const json = await response.json();
       if (!response.ok || !json?.data) throw new Error(json?.message || 'Could not build quotation.');
@@ -160,6 +223,52 @@ export default function QuotationBuilder() {
       toast.error(error instanceof Error ? error.message : 'Quotation build failed.');
     } finally {
       setBuilding(false);
+    }
+  };
+
+  const searchCustomers = async () => {
+    const params = new URLSearchParams({ search: customerSearch, limit: '10', page: '1', status: 'all' });
+    const response = await fetch(`/api/crud/customers/fetch?${params.toString()}`);
+    const json = await response.json();
+    setCustomers(Array.isArray(json?.data) ? json.data : []);
+  };
+
+  const selectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setCustomerSearch(customer.userEmail);
+    setCustomers([]);
+    setCustomerName(customer.businessName || `${customer.userFirstname || ''} ${customer.userLastname || ''}`.trim());
+  };
+
+  const quickAddCustomer = async () => {
+    if (!quickUser.userFirstname.trim() || !quickUser.userEmail.trim()) return toast.error('First name and email are required.');
+    setQuickAdding(true);
+    try {
+      const response = await fetch('/api/invoicing/users/quick-create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(quickUser) });
+      const json = await response.json();
+      if (!response.ok || !json?.data) throw new Error(json?.message || 'Could not create customer account.');
+      selectCustomer(json.data as Customer);
+      setShowQuickAdd(false);
+      toast.success('Customer account created and selected.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not create customer account.');
+    } finally {
+      setQuickAdding(false);
+    }
+  };
+
+  const sendQuotation = async (pidQuotation: string) => {
+    setSendingPid(pidQuotation);
+    try {
+      const response = await fetch(`/api/invoicing/quotation-builder/${encodeURIComponent(pidQuotation)}/send`, { method: 'POST' });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.message || 'Could not send quotation.');
+      toast.success(json?.sourcingStatus === 'Sourced' ? 'Quotation sent and sourcing request moved to Sourced.' : 'Quotation emailed with the PDF attached.');
+      await loadData();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not send quotation.');
+    } finally {
+      setSendingPid('');
     }
   };
 
@@ -191,10 +300,16 @@ export default function QuotationBuilder() {
 
     {extraction?.extractionNotes?.length ? <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4"><p className="text-xs font-black uppercase tracking-wider text-amber-700">Review notes</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">{extraction.extractionNotes.map((note, index) => <li key={index}>{note}</li>)}</ul></div> : null}
 
-    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <section id="quotation-history" className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="border-b border-border bg-muted/20 px-6 py-4"><h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-foreground"><FileText className="h-4 w-4 text-primary" /> 2. Customer and quotation</h2></div>
       <div className="grid gap-5 p-6 md:grid-cols-2">
-        <Field label="Customer name"><input className={inputClass} value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Customer or business name" /></Field>
+        <div className="md:col-span-2 space-y-2">
+          <Field label="Customer account"><div className="flex gap-2"><input className={inputClass} value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)} placeholder="Search registered customer name or email" /><button type="button" onClick={searchCustomers} className="rounded-lg border border-border bg-background px-4 text-xs font-bold hover:bg-muted">Search</button><button type="button" onClick={() => setShowQuickAdd((value) => !value)} className="rounded-lg bg-primary px-4 text-xs font-bold text-primary-foreground">{showQuickAdd ? 'Cancel' : 'Quick add'}</button></div></Field>
+          {showQuickAdd ? <div className="grid gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 md:grid-cols-2 lg:grid-cols-3"><input className={inputClass} value={quickUser.userFirstname} onChange={(e) => setQuickUser({ ...quickUser, userFirstname: e.target.value })} placeholder="First name *" /><input className={inputClass} value={quickUser.userLastname} onChange={(e) => setQuickUser({ ...quickUser, userLastname: e.target.value })} placeholder="Last name" /><input className={inputClass} value={quickUser.userEmail} onChange={(e) => setQuickUser({ ...quickUser, userEmail: e.target.value })} placeholder="Email *" /><input className={inputClass} value={quickUser.businessName} onChange={(e) => setQuickUser({ ...quickUser, businessName: e.target.value })} placeholder="Business name" /><input className={inputClass} value={quickUser.phone} onChange={(e) => setQuickUser({ ...quickUser, phone: e.target.value })} placeholder="Phone" /><button type="button" disabled={quickAdding} onClick={quickAddCustomer} className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{quickAdding ? 'Creating…' : 'Create and select'}</button></div> : null}
+          {customers.length ? <div className="overflow-hidden rounded-lg border border-border bg-background">{customers.map((customer) => <button key={customer.pidUser} type="button" onClick={() => selectCustomer(customer)} className="flex w-full items-center justify-between border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-muted"><span className="text-sm font-bold">{customer.businessName || `${customer.userFirstname || ''} ${customer.userLastname || ''}`.trim() || 'Customer'}</span><span className="text-xs text-muted-foreground">{customer.userEmail}</span></button>)}</div> : null}
+          {selectedCustomer ? <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm"><strong>{customerName}</strong><span className="ml-2 text-muted-foreground">{selectedCustomer.userEmail}</span></div> : null}
+        </div>
+        <Field label="Customer name on quotation"><input className={inputClass} value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Customer or business name" /></Field>
         <Field label="Customer location"><input className={inputClass} value={customerLocation} onChange={(e) => setCustomerLocation(e.target.value)} /></Field>
         <Field label="Quotation title"><input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Product quotation title" /></Field>
         <Field label="Maximum pages"><select className={inputClass} value={maxPages} onChange={(e) => setMaxPages(Number(e.target.value))}>{[2,3,4,5,6,7,8].map((value) => <option key={value} value={value}>{value} pages</option>)}</select></Field>
@@ -241,13 +356,13 @@ export default function QuotationBuilder() {
     <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div><h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider"><Calculator className="h-4 w-4 text-primary" /> Live estimate</h2>{calculated ? <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-4"><div><span className="block text-xs text-muted-foreground">Before shipping</span><strong>{ngn(calculated.subtotalBeforeShippingNgn)}</strong></div>{includeSea ? <div><span className="block text-xs text-muted-foreground">Landed by sea</span><strong>{ngn(calculated.landedBySeaNgn)}</strong></div> : null}{includeAir ? <div><span className="block text-xs text-muted-foreground">Landed by air</span><strong>{ngn(calculated.landedByAirNgn)}</strong></div> : null}<div><span className="block text-xs text-muted-foreground">Products</span><strong>{products.length}</strong></div></div> : <p className="mt-2 text-sm text-muted-foreground">Complete the product fields to see the estimate.</p>}</div>
-        <button disabled={building || !products.length || !customerName || !title} onClick={build} className="inline-flex min-w-48 items-center justify-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-sm font-black text-primary-foreground shadow-sm disabled:opacity-50">{building ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}{building ? 'Building and saving…' : 'Build quote'}</button>
+        <button disabled={building || !products.length || !customerName || !title || !selectedCustomer} onClick={build} className="inline-flex min-w-48 items-center justify-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-sm font-black text-primary-foreground shadow-sm disabled:opacity-50">{building ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}{building ? 'Building and saving…' : 'Build quote'}</button>
       </div>
     </section>
 
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="border-b border-border bg-muted/20 px-6 py-4"><h2 className="text-sm font-black uppercase tracking-wider">Recent quotations</h2></div>
-      {!history.length ? <div className="p-8 text-center text-sm text-muted-foreground">No generated quotations yet.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground"><tr><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Created</th><th className="px-5 py-3">Pages</th><th className="px-5 py-3 text-right">Document</th></tr></thead><tbody>{history.map((row) => <tr key={row.pidQuotation} className="border-t border-border"><td className="px-5 py-4 font-bold">{row.quotationNumber}</td><td className="px-5 py-4"><strong className="block">{row.customerName}</strong><span className="text-xs text-muted-foreground">{row.customerLocation}</span></td><td className="px-5 py-4 text-muted-foreground">{new Date(row.createdAt).toLocaleString('en-NG')}</td><td className="px-5 py-4">≤ {row.maxPages}</td><td className="px-5 py-4 text-right"><a target="_blank" rel="noreferrer" href={`/api/invoicing/quotation-builder/${encodeURIComponent(row.pidQuotation)}/pdf`} className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted"><FileText className="h-3.5 w-3.5" /> Open PDF</a></td></tr>)}</tbody></table></div>}
+      {!history.length ? <div className="p-8 text-center text-sm text-muted-foreground">No generated quotations yet.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground"><tr><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Created</th><th className="px-5 py-3">Invoice</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody>{history.map((row) => <tr key={row.pidQuotation} className="border-t border-border"><td className="px-5 py-4 font-bold">{row.quotationNumber}{row.linkedRequestId ? <span className="mt-1 block text-[10px] font-medium text-muted-foreground">Sourcing: {row.linkedRequestId}</span> : null}</td><td className="px-5 py-4"><strong className="block">{row.customerName}</strong><span className="text-xs text-muted-foreground">{row.user?.userEmail || 'Customer account not linked'}</span></td><td className="px-5 py-4 text-muted-foreground"><span className="block">{new Date(row.createdAt).toLocaleString('en-NG')}</span>{row.lastSentAt ? <span className="text-[10px]">Sent {row.sendCount} time{row.sendCount === 1 ? '' : 's'}</span> : null}</td><td className="px-5 py-4">{row.invoices?.length ? row.invoices.map((invoice) => <a key={invoice.pidInvoice} href={`/dashboard/invoicing/${invoice.pidInvoice}`} className="block font-bold text-primary hover:underline">{invoice.invoiceNumber}</a>) : <span className="text-xs text-muted-foreground">Not invoiced</span>}</td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2"><a target="_blank" rel="noreferrer" href={`/api/invoicing/quotation-builder/${encodeURIComponent(row.pidQuotation)}/pdf`} className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted"><FileText className="h-3.5 w-3.5" /> Open PDF</a><button type="button" disabled={!row.pidUser || sendingPid === row.pidQuotation} onClick={() => sendQuotation(row.pidQuotation)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{sendingPid === row.pidQuotation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Email</button>{!row.invoices?.length ? <a href={`/dashboard/invoicing/create?pidQuotation=${encodeURIComponent(row.pidQuotation)}${row.linkedRequestId ? `&linkedRequestId=${encodeURIComponent(row.linkedRequestId)}` : ''}`} className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted">Create invoice</a> : null}</div></td></tr>)}</tbody></table></div>}
     </section>
   </div>;
 }
