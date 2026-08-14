@@ -11,6 +11,10 @@
     {
       "path": "/api/intelligence/research",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/marketing-events",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
