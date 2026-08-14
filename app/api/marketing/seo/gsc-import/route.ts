@@ -1,5 +1,4 @@
-import { randomUUID } from 'crypto'
-import jwt from 'jsonwebtoken'
+import { createHash, randomBytes, randomUUID } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 
@@ -13,9 +12,6 @@ import { prisma } from '@/lib/prisma'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
-
-const TOKEN_ISSUER = 'admin.sureimports.com'
-const TOKEN_AUDIENCE = 'sureimports-gsc-manual-import'
 
 type ImportRunRow = {
   pidRun: string
@@ -59,20 +55,31 @@ function importServiceOrigin() {
   return url.origin
 }
 
-function manualImportToken(pidUser: string) {
-  const secret = process.env.JWT_SECRET
-  if (!secret) throw new Error('JWT_SECRET is not configured.')
+async function createManualDispatchToken(input: {
+  pidUser: string
+  startDate: string
+  endDate: string
+}) {
+  const pidToken = `GSCJOBTOKEN${randomUUID().replace(/-/g, '')}`
+  const token = randomBytes(32).toString('base64url')
+  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+  const now = new Date()
 
-  return jwt.sign(
-    { purpose: 'manual-gsc-import', pidUser },
-    secret,
-    {
-      issuer: TOKEN_ISSUER,
-      audience: TOKEN_AUDIENCE,
-      expiresIn: '2m',
-      jwtid: randomUUID(),
-    },
+  await prisma.$executeRaw(
+    Prisma.sql`
+      INSERT INTO seo_manual_gsc_dispatch_tokens (
+        pidToken, tokenHash, pidUser, startDate, endDate, status, expiresAt, createdAt, updatedAt
+      ) VALUES (
+        ${pidToken}, ${tokenHash}, ${input.pidUser},
+        ${new Date(`${input.startDate}T00:00:00.000Z`)},
+        ${new Date(`${input.endDate}T00:00:00.000Z`)},
+        'pending', ${expiresAt}, ${now}, ${now}
+      )
+    `,
   )
+
+  return { pidToken, token }
 }
 
 function elapsedSeconds(startedAt: Date | null) {
@@ -156,12 +163,14 @@ export async function POST(request: NextRequest) {
   }
 
   let serviceOrigin = ''
+  let dispatch: { pidToken: string; token: string } | null = null
   try {
     serviceOrigin = importServiceOrigin()
+    dispatch = await createManualDispatchToken({ pidUser: admin.pidUser, startDate, endDate })
     const response = await fetch(`${serviceOrigin}/api/internal/seo/search-console-import`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${manualImportToken(admin.pidUser)}`,
+        Authorization: `Bearer ${dispatch.token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ startDate, endDate }),
@@ -175,6 +184,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: response.status })
   } catch (error) {
+    if (dispatch) {
+      await prisma.$executeRaw(
+        Prisma.sql`
+          UPDATE seo_manual_gsc_dispatch_tokens
+          SET status = 'cancelled', updatedAt = ${new Date()}
+          WHERE pidToken = ${dispatch.pidToken}
+            AND status = 'pending'
+        `,
+      ).catch(() => undefined)
+    }
     const message = error instanceof Error ? error.message : 'Could not start the GSC import.'
     const serviceUnavailable = error instanceof TypeError || /fetch failed|timed out|abort/i.test(message)
     return NextResponse.json(
