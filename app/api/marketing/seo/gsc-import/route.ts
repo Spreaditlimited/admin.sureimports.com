@@ -1,0 +1,196 @@
+import { randomUUID } from 'crypto'
+import jwt from 'jsonwebtoken'
+import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
+
+import {
+  isSuperAdmin,
+  requireAdmin,
+  unauthorized,
+} from '@/app/api/invoicing/_lib/invoicing'
+import { prisma } from '@/lib/prisma'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const maxDuration = 30
+
+const TOKEN_ISSUER = 'admin.sureimports.com'
+const TOKEN_AUDIENCE = 'sureimports-gsc-manual-import'
+
+type ImportRunRow = {
+  pidRun: string
+  siteUrl: string
+  startDate: Date
+  endDate: Date
+  rowCount: number
+  status: string
+  errorMessage: string | null
+  startedAt: Date | null
+  completedAt: Date | null
+  updatedAt: Date | null
+}
+
+function validDate(value: unknown) {
+  const date = String(value || '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
+  const parsed = new Date(`${date}T00:00:00.000Z`)
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date
+    ? null
+    : date
+}
+
+function importServiceOrigin() {
+  const configured = String(
+    process.env.SEO_IMPORT_SERVICE_URL || process.env.SUREIMPORTS_SITE_URL || '',
+  ).trim()
+  if (!configured) {
+    throw new Error('SEO_IMPORT_SERVICE_URL or SUREIMPORTS_SITE_URL is not configured.')
+  }
+
+  const url = new URL(configured)
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('The Search Console import service URL must use HTTP or HTTPS.')
+  }
+  return url.origin
+}
+
+function manualImportToken(pidUser: string) {
+  const secret = process.env.JWT_SECRET
+  if (!secret) throw new Error('JWT_SECRET is not configured.')
+
+  return jwt.sign(
+    { purpose: 'manual-gsc-import', pidUser },
+    secret,
+    {
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+      expiresIn: '2m',
+      jwtid: randomUUID(),
+    },
+  )
+}
+
+function elapsedSeconds(startedAt: Date | null) {
+  return startedAt
+    ? Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1000))
+    : 0
+}
+
+function statusPayload(run: ImportRunRow) {
+  const elapsed = elapsedSeconds(run.startedAt)
+  const completed = run.status === 'completed'
+  const failed = run.status === 'failed'
+  const percent = completed || failed
+    ? 100
+    : run.rowCount > 0
+      ? 82
+      : elapsed < 5
+        ? 12
+        : elapsed < 20
+          ? 35
+          : 60
+  const stage = completed
+    ? 'Import completed and SEO opportunities refreshed'
+    : failed
+      ? 'Import stopped with an error'
+      : run.rowCount > 0
+        ? 'GSC rows saved; refreshing SEO opportunities'
+        : elapsed < 5
+          ? 'Connecting securely to Google Search Console'
+          : 'Downloading Search Console performance rows'
+
+  return {
+    pidRun: run.pidRun,
+    siteUrl: run.siteUrl,
+    startDate: run.startDate.toISOString().slice(0, 10),
+    endDate: run.endDate.toISOString().slice(0, 10),
+    rowCount: Number(run.rowCount || 0),
+    status: run.status,
+    error: run.errorMessage,
+    startedAt: run.startedAt?.toISOString() || null,
+    completedAt: run.completedAt?.toISOString() || null,
+    updatedAt: run.updatedAt?.toISOString() || null,
+    elapsedSeconds: elapsed,
+    percent,
+    stage,
+    ready: completed || failed,
+  }
+}
+
+async function getRun(pidRun: string) {
+  const rows = await prisma.$queryRaw<ImportRunRow[]>(
+    Prisma.sql`
+      SELECT pidRun, siteUrl, startDate, endDate, rowCount, status, errorMessage,
+             startedAt, completedAt, updatedAt
+      FROM search_console_import_runs
+      WHERE pidRun = ${pidRun}
+      LIMIT 1
+    `,
+  )
+  return rows[0] || null
+}
+
+export async function POST(request: NextRequest) {
+  const admin = await requireAdmin()
+  if (!admin || !isSuperAdmin(admin.userStatus)) return unauthorized()
+
+  const body = await request.json().catch(() => null)
+  const startDate = validDate(body?.startDate)
+  const endDate = validDate(body?.endDate)
+  if (!startDate || !endDate || startDate > endDate) {
+    return NextResponse.json({ error: 'Choose a valid import date range.' }, { status: 400 })
+  }
+
+  const latestAvailable = new Date()
+  latestAvailable.setUTCDate(latestAvailable.getUTCDate() - 2)
+  if (endDate > latestAvailable.toISOString().slice(0, 10)) {
+    return NextResponse.json(
+      { error: 'Search Console data is available only through two days ago.' },
+      { status: 400 },
+    )
+  }
+
+  let serviceOrigin = ''
+  try {
+    serviceOrigin = importServiceOrigin()
+    const response = await fetch(`${serviceOrigin}/api/internal/seo/search-console-import`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${manualImportToken(admin.pidUser)}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ startDate, endDate }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
+    })
+    const result = await response.json().catch(() => null)
+    if (!response.ok && !result?.pidRun) {
+      throw new Error(result?.error || `The import service returned status ${response.status}.`)
+    }
+
+    return NextResponse.json(result, { status: response.status })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Could not start the GSC import.'
+    const serviceUnavailable = error instanceof TypeError || /fetch failed|timed out|abort/i.test(message)
+    return NextResponse.json(
+      {
+        error: serviceUnavailable
+          ? `The public SureImports import service is not reachable at ${serviceOrigin || 'the configured origin'}. Start that service or update SEO_IMPORT_SERVICE_URL. No import job was created.`
+          : message,
+      },
+      { status: serviceUnavailable ? 503 : 502 },
+    )
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const admin = await requireAdmin()
+  if (!admin || !isSuperAdmin(admin.userStatus)) return unauthorized()
+
+  const pidRun = String(request.nextUrl.searchParams.get('pidRun') || '').trim()
+  if (!pidRun) return NextResponse.json({ error: 'Import run ID is required.' }, { status: 400 })
+
+  const run = await getRun(pidRun)
+  if (!run) return NextResponse.json({ error: 'Import run was not found.' }, { status: 404 })
+  return NextResponse.json(statusPayload(run))
+}

@@ -23,6 +23,7 @@ import { verifyToken } from "@/lib/jwt"
 import { prisma } from "@/lib/prisma"
 import { generateSeoDraftForOpportunity } from "@/lib/seo/opportunityDrafts"
 import GenerateDraftButton from "./components/GenerateDraftButton"
+import GscImportControl from "./components/GscImportControl"
 
 type OpportunityStatus = "open" | "reviewing" | "dismissed" | "applied"
 type OpportunityType = "all" | "low_ctr" | "ranking_push"
@@ -57,6 +58,17 @@ interface OpportunityStats {
   totalDismissed: bigint | number
   importedRows: bigint | number
   latestImportAt: Date | null
+}
+
+interface GscImportRunSummary {
+  pidRun: string
+  startDate: Date
+  endDate: Date
+  rowCount: number
+  status: string
+  errorMessage: string | null
+  startedAt: Date | null
+  completedAt: Date | null
 }
 
 const statusOptions: Array<{ label: string; value: OpportunityStatus | "all" }> = [
@@ -233,7 +245,7 @@ async function getSeoOpportunities(input: {
   const statusFilter = input.status === "all" ? null : input.status
   const typeFilter = input.type === "all" ? null : input.type
 
-  const [statsRows, opportunityRows] = await Promise.all([
+  const [statsRows, opportunityRows, importRunRows] = await Promise.all([
     prisma.$queryRaw<OpportunityStats[]>(
       Prisma.sql`
         SELECT
@@ -295,6 +307,14 @@ async function getSeoOpportunities(input: {
         LIMIT 100
       `,
     ),
+    prisma.$queryRaw<GscImportRunSummary[]>(
+      Prisma.sql`
+        SELECT pidRun, startDate, endDate, rowCount, status, errorMessage, startedAt, completedAt
+        FROM search_console_import_runs
+        ORDER BY createdAt DESC
+        LIMIT 20
+      `,
+    ),
   ])
 
   return {
@@ -306,6 +326,7 @@ async function getSeoOpportunities(input: {
       latestImportAt: null,
     },
     opportunities: opportunityRows,
+    importRuns: importRunRows,
   }
 }
 
@@ -321,7 +342,10 @@ export default async function SeoOpportunitiesPage({
   const type = (resolvedSearchParams.type || "all") as OpportunityType
   const draftError = resolvedSearchParams.draftError
   const draftCreated = resolvedSearchParams.draft === "created"
-  const { stats, opportunities } = await getSeoOpportunities({ status, type })
+  const { stats, opportunities, importRuns } = await getSeoOpportunities({ status, type })
+  const activeImport = importRuns.find((run) => run.status === "started") || null
+  const latestCompletedImport = importRuns.find((run) => run.status === "completed") || null
+  const visibleImport = activeImport || importRuns[0] || null
 
   return (
     <main className="space-y-8 pb-20 animate-in fade-in duration-500">
@@ -393,6 +417,30 @@ export default async function SeoOpportunitiesPage({
           icon={XCircle}
         />
       </div>
+
+      <GscImportControl
+        latestCompletedEndDate={latestCompletedImport?.endDate.toISOString().slice(0, 10) || null}
+        initialRun={visibleImport ? {
+          pidRun: visibleImport.pidRun,
+          startDate: visibleImport.startDate.toISOString().slice(0, 10),
+          endDate: visibleImport.endDate.toISOString().slice(0, 10),
+          rowCount: Number(visibleImport.rowCount || 0),
+          status: visibleImport.status,
+          error: visibleImport.errorMessage,
+          startedAt: visibleImport.startedAt?.toISOString() || null,
+          completedAt: visibleImport.completedAt?.toISOString() || null,
+          elapsedSeconds: visibleImport.startedAt
+            ? Math.max(0, Math.floor(((visibleImport.completedAt || new Date()).getTime() - visibleImport.startedAt.getTime()) / 1000))
+            : 0,
+          percent: ["completed", "failed"].includes(visibleImport.status) ? 100 : 8,
+          stage: visibleImport.status === "completed"
+            ? "Import completed and SEO opportunities refreshed"
+            : visibleImport.status === "failed"
+              ? "Import stopped with an error"
+              : "Reconnecting to the saved import job",
+          ready: ["completed", "failed"].includes(visibleImport.status),
+        } : null}
+      />
 
       <div className="mx-1 flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <div>
