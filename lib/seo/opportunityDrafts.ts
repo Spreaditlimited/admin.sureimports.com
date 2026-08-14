@@ -2,6 +2,7 @@ import crypto from "crypto"
 import { Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/prisma"
+import { getSeoLinkCatalog, type SeoLinkCatalogItem } from "@/lib/seo/linkCatalog"
 
 interface OpportunityDraftContext {
   pidOpportunity: string
@@ -39,49 +40,6 @@ interface SeoDraft {
 }
 
 const RULES_VERSION = "2026-06-27"
-
-const sureImportsInternalLinkCatalog = [
-  {
-    label: "Supplier Intelligence",
-    url: "/supplier-intelligence",
-    useWhen:
-      "Readers need supplier leads, product category research, supplier checks, quote review, invoice review, or help reducing supplier risk before payment. Prioritize this link in most China sourcing and importing articles where it fits naturally.",
-  },
-  {
-    label: "Corporate Sourcing",
-    url: "/corporate-sourcing",
-    useWhen:
-      "Readers need Sure Imports to find suppliers, compare manufacturers, handle bulk sourcing, custom production, product comparison, or quote/cost review.",
-  },
-  {
-    label: "Buy From Chinese Websites",
-    url: "/buy-from-chinese-websites",
-    useWhen:
-      "Readers already have product links from 1688, Taobao, Tmall or another Chinese website and need Sure Imports to buy on their behalf.",
-  },
-  {
-    label: "LineScout",
-    url: "https://linescout.sureimports.com/",
-    useWhen:
-      "Readers are sourcing machines, equipment, production lines, industrial tools, or technical machinery from China.",
-  },
-  {
-    label: "Ship With Us",
-    url: "/ship-with-us",
-    useWhen:
-      "Readers already have goods or a supplier and mainly need China-to-Nigeria shipping, warehouse receiving, consolidation, or freight support.",
-  },
-  {
-    label: "Import Hub",
-    url: "/import-from-china-to-nigeria",
-    useWhen:
-      "Readers need a broad learning path for importing from China to Nigeria, calculators, guides, tools and next steps.",
-  },
-]
-
-const approvedSureImportsUrls = new Set(
-  sureImportsInternalLinkCatalog.map((item) => item.url),
-)
 
 function stripHtml(value: string | null | undefined) {
   return String(value || "")
@@ -190,7 +148,7 @@ const seoDraftSchema = {
   additionalProperties: false,
 }
 
-function buildPrompt(context: OpportunityDraftContext) {
+function buildPrompt(context: OpportunityDraftContext, linkCatalog: SeoLinkCatalogItem[]) {
   const seoData = parseSeoData(context.blogExt2)
   const articleText = truncate(stripHtml(context.blogContent), 7000)
 
@@ -199,7 +157,10 @@ You are the SureImports SEO operations assistant. Create a reviewable SEO improv
 
 Strict rules:
 - Do not invent prices, customs rates, timelines, laws, supplier claims, payment guarantees, or live market statistics.
-- Keep the current article's intent and audience: Nigerian buyers/importers sourcing from China.
+- Keep Nigeria and Nigerian buyers/importers sourcing from China as the primary market context.
+- Make every recommendation useful to non-Nigerian readers too: ask the rewrite to explain Nigerian-specific terms, separate local requirements from general principles, and include globally transferable sourcing, verification, costing and risk-management lessons.
+- Identify where current research or authoritative external sources would improve, verify or update the article. Existing useful external citations must be retained; outdated or weak citations may only be replaced with more authoritative and relevant sources.
+- Encourage new external links to official or primary sources when they materially help readers verify claims or continue their research. External links are valuable editorial citations and must never be removed merely because they leave Sure Imports.
 - The draft must be useful even if an editor only applies the metadata and FAQ suggestions.
 - The CTA must match the searcher's intent and the recommended CTA.
 - Internal links must come from the approved Sure Imports link catalog below. Do not invent URLs from service names.
@@ -209,7 +170,7 @@ Strict rules:
 - Never mark this as ready for automatic publishing when the change would alter factual claims.
 
 Approved Sure Imports internal link catalog:
-${sureImportsInternalLinkCatalog
+${linkCatalog
   .map((item, index) => `${index + 1}. ${item.label}: ${item.url} - ${item.useWhen}`)
   .join("\n")}
 
@@ -251,7 +212,7 @@ ${articleText}
 `.trim()
 }
 
-function validateDraft(draft: SeoDraft) {
+function validateDraft(draft: SeoDraft, approvedUrls: Set<string>) {
   const errors: string[] = []
   const warnings: string[] = []
   const allowedChangeTypes = ["meta_refresh", "content_refresh", "faq_addition"]
@@ -279,7 +240,7 @@ function validateDraft(draft: SeoDraft) {
 
   if (Array.isArray(draft.internalLinks)) {
     draft.internalLinks.forEach((link, index) => {
-      if (!link.url || !approvedSureImportsUrls.has(link.url)) {
+      if (!link.url || !approvedUrls.has(link.url)) {
         errors.push(`Internal link ${index + 1} must use an approved catalog URL.`)
       }
     })
@@ -383,8 +344,9 @@ export async function generateSeoDraftForOpportunity(pidOpportunity: string) {
   if (!context) throw new Error("SEO opportunity was not found.")
   if (!context.pidBlog) throw new Error("SEO opportunity is not matched to a blog post yet.")
 
-  const draft = await callOpenAi(buildPrompt(context))
-  const validation = validateDraft(draft)
+  const linkCatalog = await getSeoLinkCatalog()
+  const draft = await callOpenAi(buildPrompt(context, linkCatalog))
+  const validation = validateDraft(draft, new Set(linkCatalog.map((item) => item.url)))
   const seoData = parseSeoData(context.blogExt2)
   const now = new Date()
   const pidChange = `seo_change_${crypto.randomUUID()}`

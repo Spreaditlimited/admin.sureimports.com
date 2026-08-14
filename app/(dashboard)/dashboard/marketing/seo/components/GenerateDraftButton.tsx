@@ -32,6 +32,11 @@ export default function GenerateDraftButton() {
           `}</style>
         </div>
       )}
+      {!pending && (
+        <p className="text-center text-[9px] leading-relaxed text-muted-foreground">
+          Creates a reviewable SEO proposal. Nothing is published.
+        </p>
+      )}
     </div>
   )
 }

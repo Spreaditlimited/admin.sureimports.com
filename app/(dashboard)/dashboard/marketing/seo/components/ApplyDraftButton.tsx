@@ -5,9 +5,15 @@ import { CheckCircle2, Loader2 } from "lucide-react"
 
 type ApplyDraftButtonProps = {
   label: string
+  pendingLabel?: string
+  pendingMessage?: string
 }
 
-export default function ApplyDraftButton({ label }: ApplyDraftButtonProps) {
+export default function ApplyDraftButton({
+  label,
+  pendingLabel = "Applying Draft",
+  pendingMessage = "Saving the approved SEO rewrite and metadata...",
+}: ApplyDraftButtonProps) {
   const { pending } = useFormStatus()
 
   return (
@@ -23,7 +29,7 @@ export default function ApplyDraftButton({ label }: ApplyDraftButtonProps) {
         ) : (
           <CheckCircle2 className="h-3.5 w-3.5" />
         )}
-        {pending ? "Applying Draft" : label}
+        {pending ? pendingLabel : label}
       </button>
 
       {pending ? (
@@ -32,7 +38,7 @@ export default function ApplyDraftButton({ label }: ApplyDraftButtonProps) {
             <div className="h-1.5 w-1/2 animate-[apply-draft-progress_1.2s_ease-in-out_infinite] rounded-full bg-emerald-500" />
           </div>
           <p className="text-[10px] font-semibold leading-relaxed text-emerald-700 dark:text-emerald-300">
-            Rewriting content, applying links and saving SEO updates...
+            {pendingMessage}
           </p>
           <style jsx>{`
             @keyframes apply-draft-progress {

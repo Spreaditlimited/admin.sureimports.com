@@ -121,6 +121,20 @@ async function generateDraftAction(formData: FormData) {
   const pidOpportunity = String(formData.get("pidOpportunity") || "").trim()
   if (!pidOpportunity) return
 
+  const [existingDraft] = await prisma.$queryRaw<Array<{ pidChange: string; status: string }>>(
+    Prisma.sql`
+      SELECT pidChange, status
+      FROM seo_content_change_logs
+      WHERE pidOpportunity = ${pidOpportunity}
+      ORDER BY createdAt DESC
+      LIMIT 1
+    `,
+  )
+
+  if (existingDraft?.pidChange && existingDraft.status !== "rejected") {
+    redirect(`/dashboard/marketing/seo/changes/${encodeURIComponent(existingDraft.pidChange)}`)
+  }
+
   let nextUrl = "/dashboard/marketing/seo?status=reviewing&draft=created"
   try {
     const result = await generateSeoDraftForOpportunity(pidOpportunity)
@@ -446,7 +460,7 @@ export default async function SeoOpportunitiesPage({
                         <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                           CTA: {ctaLabel(opportunity.recommendedCta)}
                         </span>
-                        {opportunity.latestChangeId && (
+                        {opportunity.latestChangeId && opportunity.latestChangeStatus !== "rejected" && (
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
                             <Sparkles className="h-3 w-3" />
                             Draft {opportunity.latestChangeStatus || "saved"}
@@ -529,7 +543,7 @@ export default async function SeoOpportunitiesPage({
                           Public Page <ArrowUpRight className="h-3.5 w-3.5" />
                         </a>
 
-                        {opportunity.latestChangeId && (
+                        {opportunity.latestChangeId && opportunity.latestChangeStatus !== "rejected" && (
                           <Link
                             href={`/dashboard/marketing/seo/changes/${encodeURIComponent(opportunity.latestChangeId)}`}
                             className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/15"
@@ -538,17 +552,19 @@ export default async function SeoOpportunitiesPage({
                           </Link>
                         )}
 
-                        <form action={updateOpportunityStatus} className="grid grid-cols-2 gap-2">
+                        <form action={updateOpportunityStatus} className={opportunity.status === "reviewing" ? "grid gap-2" : "grid grid-cols-2 gap-2"}>
                           <input type="hidden" name="pidOpportunity" value={opportunity.pidOpportunity} />
-                          <button
-                            type="submit"
-                            name="status"
-                            value="reviewing"
-                            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:bg-blue-500/15"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Review
-                          </button>
+                          {opportunity.status !== "reviewing" && (
+                            <button
+                              type="submit"
+                              name="status"
+                              value="reviewing"
+                              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:bg-blue-500/15"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Mark for Review
+                            </button>
+                          )}
                           <button
                             type="submit"
                             name="status"
@@ -560,10 +576,12 @@ export default async function SeoOpportunitiesPage({
                           </button>
                         </form>
 
-                        <form action={generateDraftAction}>
-                          <input type="hidden" name="pidOpportunity" value={opportunity.pidOpportunity} />
-                          <GenerateDraftButton />
-                        </form>
+                        {(!opportunity.latestChangeId || opportunity.latestChangeStatus === "rejected") && (
+                          <form action={generateDraftAction}>
+                            <input type="hidden" name="pidOpportunity" value={opportunity.pidOpportunity} />
+                            <GenerateDraftButton />
+                          </form>
+                        )}
                       </div>
                     </aside>
                   </div>
