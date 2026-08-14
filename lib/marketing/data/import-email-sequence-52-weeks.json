@@ -1,0 +1,539 @@
+{
+  "pidSequence": "SEQ-CHINA-IMPORT-52-WEEKS",
+  "name": "China Import 52-Week Series",
+  "description": "Welcome email followed by one practical China-import lesson every week for 52 weeks.",
+  "triggerKey": "general-insights-opt-in",
+  "cadence": "WEEKLY",
+  "steps": [
+    {
+      "stepNumber": 0,
+      "delayDays": 0,
+      "title": "Welcome Email",
+      "subject": "Your China import guide is ready",
+      "previewText": "Start with the guide, then follow the weekly lessons.",
+      "bodyText": "Hi {{firstName}},\n\nYour guide is ready.\n\nBefore you buy anything from China, remember this: importing is not just about finding a cheap supplier. You need the right product, a supplier you can verify, clear pricing, sensible shipping, and a way to check risks before money leaves your account.\n\nOver the next 52 weeks, I’ll send you one practical import lesson every week. Each email will focus on one thing: product selection, supplier checks, landed cost, payment risk, shipping, inspections, or scaling your import business.\n\nStart with the guide today. When you are ready to investigate suppliers more seriously, use Supplier Intelligence.",
+      "ctaLabel": "Keep learning in the Sure Imports China import resource hub",
+      "ctaUrl": "https://www.sureimports.com/import-from-china-to-nigeria"
+    },
+    {
+      "stepNumber": 1,
+      "delayDays": 7,
+      "title": "How China importing actually works",
+      "subject": "How importing from China actually works",
+      "previewText": "It is a chain, not a single transaction.",
+      "bodyText": "Importing from China is a chain of decisions. You choose a product, identify suppliers, compare quotes, check the supplier, confirm samples or evidence, pay, arrange production or purchase, ship, clear, and sell.\n\nMany beginners fail because they treat importing as “send money and wait.” That is risky. Every step should answer a question: Is this product worth buying? Is this supplier real? Is the price complete? Is shipping understood? Is there a plan if something goes wrong?\n\nGood importers do not rush the chain. They control it.",
+      "ctaLabel": "See the complete Sure Imports import process and choose your next step.",
+      "ctaUrl": "https://www.sureimports.com/import-from-china-to-nigeria"
+    },
+    {
+      "stepNumber": 2,
+      "delayDays": 14,
+      "title": "The biggest beginner mistake",
+      "subject": "The biggest mistake new importers make",
+      "previewText": "It happens before payment.",
+      "bodyText": "The biggest mistake is choosing a product because it looks cheap online.\n\nA cheap product can still fail if nobody wants it, if quality is poor, if shipping is expensive, if accessories are missing, or if competitors already sell it better.\n\nBefore buying, ask: Who will buy this? Why will they choose mine? What quality level is acceptable? What is the total cost after shipping and local expenses? Can I sell fast enough to recover cash?\n\nThe product decision is more important than the supplier search. Before you contact any supplier, speak to at least five likely buyers or test the offer with a small audience. Questions, deposits and genuine price enquiries are stronger evidence than likes.",
+      "ctaLabel": "Review the beginner resources before choosing what to import.",
+      "ctaUrl": "https://www.sureimports.com/import-from-china-to-nigeria"
+    },
+    {
+      "stepNumber": 3,
+      "delayDays": 21,
+      "title": "How to test demand in Nigeria",
+      "subject": "Does the product have real demand?",
+      "previewText": "Likes are not demand.",
+      "bodyText": "Demand is not the same as excitement. People may like a product and still not pay for it.\n\nCheck demand by looking at actual buying behavior. Are similar products selling in markets, shops, Jumia, Instagram stores, WhatsApp groups or retail clusters? Are people asking questions about price, warranty, delivery and availability? Are sellers repeating stock?\n\nAlso check pain. Products that solve a clear problem usually sell better than products that only look interesting.\n\nIf you cannot explain who will buy and why, pause before importing.\n\nIf the product is not available yet, you can search for it on the reports page and add your vote to the Research Radar. Treat that as another signal of buyer interest—not a replacement for checking demand in your own market.",
+      "ctaLabel": "Check whether the product already has a supplier report.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 4,
+      "delayDays": 28,
+      "title": "Compare product ideas before spending",
+      "subject": "Compare product ideas before you spend",
+      "previewText": "Do not fall in love with one product too early.",
+      "bodyText": "Before importing, compare at least three product ideas.\n\nScore each one on demand, competition, shipping weight, damage risk, warranty risk, selling price, repeat purchase potential, and how easy it is to explain to customers.\n\nA product with lower profit per unit but faster turnover may beat a “high margin” product that sits unsold. A light product may beat a bulky one if shipping cost is the difference between profit and loss.\n\nGood importers compare options before they commit cash. Give every idea a score from 1 to 5 for demand, competition, shipping, defect risk, cash required and expected selling speed. The numbers do not make the decision for you, but they expose weak assumptions.",
+      "ctaLabel": "Compare the product categories with ready-made supplier reports.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 5,
+      "delayDays": 35,
+      "title": "MOQ without mistakes",
+      "subject": "MOQ is not always fixed",
+      "previewText": "Minimum order quantity can often be negotiated.",
+      "bodyText": "MOQ means minimum order quantity. It tells you the smallest quantity a supplier prefers to produce or sell.\n\nBeginners often see MOQ and give up. But MOQ can sometimes be negotiated, especially if you are willing to pay a sample fee, accept available stock, reduce customization, or start with a trial order.\n\nDo not ask “Can you reduce MOQ?” only. Ask: “What is the smallest paid trial order you can support without customization?” That question sounds more serious.\n\nWhen reviewing a ready-made supplier report, use its product-fit and buyer-note sections to prepare MOQ questions; do not assume every supplier in a category will accept the same trial quantity.",
+      "ctaLabel": "See how product-specific supplier research is organised.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 6,
+      "delayDays": 42,
+      "title": "Reading supplier listings",
+      "subject": "How to read Chinese supplier listings",
+      "previewText": "Listings are marketing, not proof.",
+      "bodyText": "Alibaba, 1688 and Made-in-China listings can be useful, but they are not enough.\n\nLook beyond the headline price. Check product specifications, material, packaging, MOQ, sample policy, lead time, customization options, company name, years in operation, certifications, and contact details.\n\nIf the listing is vague, ask for clarification before paying. If the supplier avoids basic questions, that is a warning sign.\n\nListings help you start the conversation. They do not replace supplier verification.",
+      "ctaLabel": "Already have product links? Use Buy From Chinese Websites.",
+      "ctaUrl": "https://www.sureimports.com/buy-from-chinese-websites"
+    },
+    {
+      "stepNumber": 7,
+      "delayDays": 49,
+      "title": "Manufacturer vs trading company",
+      "subject": "Manufacturer or trading company?",
+      "previewText": "Both can be useful, but know the difference.",
+      "bodyText": "A manufacturer produces goods. A trading company sources and sells goods from factories. One is not always better than the other.\n\nFactories can give better control, but may require higher MOQ. Trading companies can be flexible, but pricing and product control may vary.\n\nAsk direct questions: Do you manufacture this product yourself? Where is the factory? Can you show production photos or videos? Can the invoice name match the company you are dealing with?\n\nThe goal is not labels. The goal is clarity.\n\nIf you want an example of how manufacturer evidence, product fit and contact attribution can be recorded, compare the structure of a product-specific supplier report with the claims made in a marketplace listing.",
+      "ctaLabel": "See available product-specific manufacturer reports.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 8,
+      "delayDays": 56,
+      "title": "Supplier verification basics",
+      "subject": "How to verify a supplier before paying",
+      "previewText": "Verification reduces risk; it does not remove it.",
+      "bodyText": "Supplier verification starts with identity.\n\nAsk for the Chinese company name, Chinese address, website, contact person, phone, business license, invoice details, and bank/payment details. Compare these details. If the names do not match, ask why.\n\nAlso check whether the supplier can answer product-specific questions. A real supplier should understand materials, MOQ, production time, packaging, warranty and export requirements.\n\nNever rely on one signal. Use several checks together.\n\nUse a three-part check: identity, capability and transaction. Identity asks whether the legal company, address and payment beneficiary match. Capability asks whether the supplier can actually make the exact product. Transaction asks whether the quotation, invoice, specifications and payment instructions describe the same deal.",
+      "ctaLabel": "See how pre-payment supplier review works.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 9,
+      "delayDays": 63,
+      "title": "Documents serious suppliers should provide",
+      "subject": "Documents a serious supplier should provide",
+      "previewText": "The documents depend on the product, but basics matter.",
+      "bodyText": "For many products, a serious supplier should be able to provide company details, business license, product specifications, quotation, invoice or proforma invoice, packaging details, and sample or production evidence.\n\nSome products may also need test reports, certifications, manuals, labels, or compliance documents. Do not assume every certificate online is valid. Ask what the document covers and whether it matches the exact product model.\n\nDocuments are not decoration. They help you check what you are buying.",
+      "ctaLabel": "See how invoice and supplier-document review works.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 10,
+      "delayDays": 70,
+      "title": "Questions that expose red flags",
+      "subject": "Ask suppliers these questions",
+      "previewText": "Good questions reveal weak suppliers.",
+      "bodyText": "Ask questions that require specific answers.\n\nWhat is the exact material? What is the MOQ for no-logo stock? What is the MOQ for custom branding? What is the sample cost? What is production time after payment? What is carton size and weight? What warranty or defect policy applies? What company name will appear on the invoice?\n\nWeak suppliers answer vaguely. Stronger suppliers give clear details or explain limitations.\n\nYour questions should make risk visible before payment.",
+      "ctaLabel": "Learn how Pro review can support this check.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 11,
+      "delayDays": 77,
+      "title": "Requesting samples wisely",
+      "subject": "How to request samples without wasting money",
+      "previewText": "Samples should answer specific questions.",
+      "bodyText": "Do not request samples just to “see the product.” Request samples to answer a decision.\n\nIs the material acceptable? Is the size correct? Does the product perform as claimed? Is packaging good enough? Does the color match? Is branding clean? Will customers accept this quality?\n\nBefore paying for a sample, ask if the sample is from current production or a special sample unit. Also ask whether bulk production will match it.\n\nA sample is useful only when you inspect it with purpose.",
+      "ctaLabel": "For custom/bulk items, use Corporate Sourcing.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 12,
+      "delayDays": 84,
+      "title": "When samples are not enough",
+      "subject": "A good sample does not guarantee a good bulk order",
+      "previewText": "Bulk production can still go wrong.",
+      "bodyText": "Samples reduce risk, but they do not remove it.\n\nA supplier may send a good sample and later produce lower quality in bulk. That is why you need written specifications, clear packaging requirements, agreed tolerances, production evidence, and sometimes inspection before shipment.\n\nIf the order is large, custom, technical or time-sensitive, do not rely on a sample alone. Plan how quality will be checked before goods leave China.\n\nThe larger the order, the more control you need.",
+      "ctaLabel": "Use Corporate Sourcing for custom or bulk sourcing support.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 13,
+      "delayDays": 91,
+      "title": "Product cost beyond listed price",
+      "subject": "The listed price is not your real cost",
+      "previewText": "Real cost includes more than product price.",
+      "bodyText": "The supplier’s listed price is only the beginning.\n\nYour real cost may include sample fee, local China delivery, packaging, customization, inspection, bank/payment charges, freight, clearing, duties, local delivery, defects, returns and marketing.\n\nIf you price your product using only the supplier’s unit price, you may sell at a loss without knowing it.\n\nAlways build a simple landed cost sheet before you buy.\n\nUse separate rows for unit price, quantity, China delivery, packaging, inspection, international freight, clearing, local delivery, payment charges and a contingency buffer. Leaving an unknown row blank is safer than pretending it is zero.",
+      "ctaLabel": "Estimate the wider cost before you commit.",
+      "ctaUrl": "https://www.sureimports.com/tools/landed-cost-estimator"
+    },
+    {
+      "stepNumber": 14,
+      "delayDays": 98,
+      "title": "Landed cost",
+      "subject": "Calculate landed cost before importing",
+      "previewText": "Profit begins before the goods move.",
+      "bodyText": "Landed cost means the total cost of getting goods from supplier to your selling point.\n\nIt includes product cost, China-side charges, shipping, clearing, local delivery and other direct costs. You should also leave room for defects, returns and price changes.\n\nDo not wait until goods arrive before calculating. If landed cost is too high, you need to change product, quantity, shipping method, supplier or selling price.\n\nLanded cost is where many import mistakes become visible.",
+      "ctaLabel": "Build a landed-cost estimate before ordering.",
+      "ctaUrl": "https://www.sureimports.com/tools/landed-cost-estimator"
+    },
+    {
+      "stepNumber": 15,
+      "delayDays": 105,
+      "title": "Shipping method and profit",
+      "subject": "Shipping method can change your profit",
+      "previewText": "Fast shipping is not always smart shipping.",
+      "bodyText": "Air, sea and express shipping solve different problems.\n\nFast shipping may help urgent or high-value goods, but it can damage profit on bulky or low-margin products. Sea freight may reduce cost per unit, but requires more planning and patience.\n\nBefore choosing shipping, consider weight, volume, urgency, product value, cash flow and customer expectations.\n\nThe best shipping method is not the fastest. It is the one that protects the business case.",
+      "ctaLabel": "Compare air and sea shipping for your order.",
+      "ctaUrl": "https://www.sureimports.com/tools/air-vs-sea-calculator"
+    },
+    {
+      "stepNumber": 16,
+      "delayDays": 112,
+      "title": "Air, sea and express",
+      "subject": "Air, sea and express shipping explained simply",
+      "previewText": "Choose based on product economics.",
+      "bodyText": "Express shipping is usually for urgent, smaller parcels. Air freight is useful when speed matters and the product can carry the cost. Sea freight is often better for heavier or larger shipments, especially when time is planned properly.\n\nDo not choose shipping by habit. Ask what the shipment can afford.\n\nIf shipping cost makes the product too expensive to sell, the problem may be product choice, quantity, packaging, or shipping method.\n\nShipping is part of product strategy.\n\nCheck the current shipping-rate guide before deciding, then submit a Ship With Us request when your goods are ready.",
+      "ctaLabel": "Review current China-to-Nigeria shipping rates.",
+      "ctaUrl": "https://www.sureimports.com/shipping-rate"
+    },
+    {
+      "stepNumber": 17,
+      "delayDays": 119,
+      "title": "Cheap shipping risk",
+      "subject": "Cheap shipping can become expensive",
+      "previewText": "Low price is not the only question.",
+      "bodyText": "Cheap shipping can be useful, but ask what is included.\n\nDoes it include pickup? China warehouse handling? Customs process? Delivery location? Insurance or claim route? What happens if goods are delayed, damaged or misdeclared?\n\nThe cheapest quote can become expensive if communication is poor, documentation is weak, or hidden charges appear later.\n\nChoose shipping based on clarity, not price alone.\n\nCompare quotations on the same basis: chargeable weight or CBM, route, included handling, customs assumptions, delivery point, transit range and exclusions. Two prices are not comparable when one ends at the port and the other includes local delivery.",
+      "ctaLabel": "Use Ship With Us when your supplier already has goods ready.",
+      "ctaUrl": "https://www.sureimports.com/ship-with-us"
+    },
+    {
+      "stepNumber": 18,
+      "delayDays": 126,
+      "title": "Packaging affects cost",
+      "subject": "Packaging can affect shipping and damage",
+      "previewText": "Carton details matter.",
+      "bodyText": "Packaging affects carton size, chargeable weight, damage risk and customer experience.\n\nAsk suppliers for carton dimensions, gross weight, units per carton, inner packaging, fragile protection and whether packaging changes for custom branding.\n\nPoor packaging can increase shipping cost or cause damage. Over-packaging can also make shipment unnecessarily bulky.\n\nDo not treat packaging as an afterthought. It is part of the import plan.\n\nUse the CBM calculator to compare the effect of carton size and weight before approving a packaging change: https://www.sureimports.com/tools/cbm-volumetric-weight-calculator\n\nIf packaging itself is the product you plan to source, the Beauty and Cosmetic Packaging report is a relevant research example: https://www.sureimports.com/supplier-intelligence/reports/beauty-and-cosmetic-packaging",
+      "ctaLabel": "Test carton dimensions before approving packaging.",
+      "ctaUrl": "https://www.sureimports.com/tools/carton-optimization"
+    },
+    {
+      "stepNumber": 19,
+      "delayDays": 133,
+      "title": "Customs without guessing",
+      "subject": "Do not guess customs and clearing",
+      "previewText": "Build a buffer and ask early.",
+      "bodyText": "Customs and clearing depend on product type, documentation, classification, value and route. Do not copy someone else’s cost blindly.\n\nBefore importing, ask what documents are needed and whether the product has special restrictions, standards or clearing concerns. Build a buffer into your cost plan because final charges can vary.\n\nIf a product’s profit only works when every cost is perfect, it may be too fragile.\n\nPlan with margin for uncertainty.",
+      "ctaLabel": "Learn how quote review works before supplier payment.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 20,
+      "delayDays": 140,
+      "title": "Avoid underpricing",
+      "subject": "Many importers underprice without knowing",
+      "previewText": "Selling price must cover more than goods.",
+      "bodyText": "Underpricing happens when you calculate only product cost and shipping.\n\nYour selling price should also consider defects, discounts, delivery, payment charges, marketing, packaging, storage, time, and the next restock.\n\nIf you sell too cheaply, you may move stock but still weaken your business. Profit must support replacement inventory.\n\nThe goal is not just to sell out. The goal is to sell and have enough cash to buy again.\n\nSubtract every expected cost from the proposed selling price—not only product and freight. Then ask whether the amount left can absorb discounts, a few defects and the next restock. If one small problem removes the entire profit, the price is too fragile.",
+      "ctaLabel": "Turn your estimated landed cost into a sensible selling price.",
+      "ctaUrl": "https://www.sureimports.com/tools/retail-price-builder"
+    },
+    {
+      "stepNumber": 21,
+      "delayDays": 147,
+      "title": "Profit margins",
+      "subject": "How to think about import profit margin",
+      "previewText": "Margin must match risk and turnover.",
+      "bodyText": "A good margin depends on product type, competition, sales speed, warranty risk and cash cycle.\n\nFast-moving products can work with lower margins if turnover is reliable. Slow-moving or risky products need higher margins because your cash is tied down longer.\n\nDo not set margin by copying other sellers. Understand your cost, your customers and your risk.\n\nProfit is not just the difference between buying and selling. It is what remains after the full business reality.",
+      "ctaLabel": "Build a retail price from your real costs and target margin.",
+      "ctaUrl": "https://www.sureimports.com/tools/retail-price-builder"
+    },
+    {
+      "stepNumber": 22,
+      "delayDays": 154,
+      "title": "Fast turnover",
+      "subject": "Choose products that can turn over",
+      "previewText": "Cash stuck in stock is a problem.",
+      "bodyText": "Importing is a cash-flow business.\n\nA product that sells slowly can trap your money, even if margin looks good. Before importing, ask how often customers buy it, whether it solves an urgent problem, how easy it is to display or explain, and whether you already have a channel to sell it.\n\nDo not import just because the product is unique. Unique products still need buyers.\n\nFast turnover gives you room to learn and restock.",
+      "ctaLabel": "Continue with the practical product-selection guides.",
+      "ctaUrl": "https://www.sureimports.com/import-from-china-to-nigeria"
+    },
+    {
+      "stepNumber": 23,
+      "delayDays": 161,
+      "title": "Avoid trapped cash",
+      "subject": "Avoid products that tie down cash",
+      "previewText": "Inventory can become a burden.",
+      "bodyText": "Some products look profitable but are hard to move.\n\nWarning signs include unclear target buyers, too many sizes or variants, fragile parts, high warranty risk, seasonal demand, bulky packaging, or customers who need heavy education before buying.\n\nIf you are new, choose products that are easier to explain, easier to ship locally, and easier to test in small quantity.\n\nYour first goal is not to impress people. It is to learn without losing too much money.\n\nIf you cannot find the product you are considering, search for it on the reports page and vote for it on the Research Radar instead of guessing.",
+      "ctaLabel": "Search reports and vote for missing categories.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 24,
+      "delayDays": 168,
+      "title": "Seasonality",
+      "subject": "Seasonality can help or hurt you",
+      "previewText": "Timing matters in importing.",
+      "bodyText": "Some products sell better during school resumption, festive periods, rainy season, dry season, office procurement cycles or event seasons.\n\nSeasonality can create demand, but it also creates timing pressure. If goods arrive late, the opportunity may pass.\n\nPlan backward: selling season, arrival deadline, shipping time, production time, supplier confirmation and payment date.\n\nSeasonal importing rewards planning and punishes delay.\n\nIf you are actively considering either category, these are relevant research examples—not proof of demand in your own market:\n- https://www.sureimports.com/supplier-intelligence/reports/children-and-school-supplies\n- https://www.sureimports.com/supplier-intelligence/reports/event-and-conference-materials",
+      "ctaLabel": "Review available category research after checking the selling season.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 25,
+      "delayDays": 175,
+      "title": "First test order",
+      "subject": "Plan your first test order properly",
+      "previewText": "A test order is for learning.",
+      "bodyText": "A test order should answer business questions.\n\nCan the supplier deliver what they promised? Does the product quality match your market? What is the real landed cost? How fast can you sell? What objections do customers raise? What would you change before ordering more?\n\nDo not test too many variants at once. Keep the order focused so you can learn clearly.\n\nThe best test order protects your cash and gives useful information.",
+      "ctaLabel": "Use Buy From Chinese Websites for link-based trial orders.",
+      "ctaUrl": "https://www.sureimports.com/buy-from-chinese-websites"
+    },
+    {
+      "stepNumber": 26,
+      "delayDays": 182,
+      "title": "Scaling after test order",
+      "subject": "From test order to repeat supply",
+      "previewText": "Do not scale blindly.",
+      "bodyText": "If a test order sells well, do not immediately jump too far.\n\nReview customer feedback, defect rate, delivery complaints, packaging, true margin, supplier communication and restock timing. Then decide whether to increase quantity, improve quality, change packaging or negotiate better terms.\n\nScaling should be based on evidence, not excitement.\n\nThe goal is repeatable supply, not one lucky shipment.\n\nBefore increasing quantity, record four numbers from the test: units sold, average days to sell, defect or return rate, and cash left after every cost. Scale the proven sizes, colours or models first instead of multiplying every option equally.",
+      "ctaLabel": "Review the available supplier and quotation checks before scaling.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 27,
+      "delayDays": 189,
+      "title": "Photos and specs",
+      "subject": "Photos are not enough",
+      "previewText": "Specifications protect you.",
+      "bodyText": "Product photos can mislead. Two products can look similar but differ in material, size, weight, battery capacity, finishing, packaging or durability.\n\nAsk for specifications in writing. Confirm model number, dimensions, material, color, power rating, accessories, carton details and packaging.\n\nIf the supplier sends vague answers, keep asking before payment.\n\nWritten specs give you something to compare when goods arrive.\n\nYour specification sheet should cover dimensions, material grade, colour reference, components, logo position, packaging, accessories, voltage or plug where relevant, acceptable tolerances and the approved sample. Date every version so an old file cannot quietly become the production instruction.",
+      "ctaLabel": "Use Corporate Sourcing when specifications require hands-on sourcing support.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 28,
+      "delayDays": 196,
+      "title": "Sourcing brief",
+      "subject": "Write a proper sourcing brief",
+      "previewText": "Clear briefs get better quotes.",
+      "bodyText": "A sourcing brief tells suppliers exactly what you want.\n\nInclude product name, usage, specifications, quantity, quality level, packaging, branding needs, destination, target timeline and any must-have standards.\n\nIf your request is vague, suppliers will quote different things and comparison becomes useless.\n\nA good brief saves time, improves quotes and reduces mistakes.\n\nUse this order: product and intended use; required specifications; quantity and acceptable MOQ; quality level; branding and packaging; destination; deadline; required documents; inspection expectation; and questions the supplier must answer. Mark each requirement as “must have” or “preferred.”",
+      "ctaLabel": "For bulk/custom sourcing, use Corporate Sourcing.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 29,
+      "delayDays": 203,
+      "title": "Compare quotes correctly",
+      "subject": "Do not compare quotes by price alone",
+      "previewText": "Cheap quotes may not be equal quotes.",
+      "bodyText": "When comparing quotes, check whether suppliers are quoting the same material, quality level, packaging, MOQ, branding, lead time, warranty, payment terms and shipping assumptions.\n\nA cheaper quote may exclude something important. A higher quote may include better packaging or quality.\n\nCreate a simple comparison table. If information is missing, ask before deciding.\n\nThe best quote is the clearest quote that fits your market and risk level.\n\nPut every quotation into one table. Use the same columns for specification, quantity, unit price, tooling, samples, packaging, China delivery, lead time, payment terms, warranty and exclusions. Highlight blank cells: missing information is a comparison risk, not an automatic saving.",
+      "ctaLabel": "See how quotation review works before payment.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 30,
+      "delayDays": 210,
+      "title": "Supplier payment safety",
+      "subject": "Be careful before paying a supplier",
+      "previewText": "Payment is where risk becomes real.",
+      "bodyText": "Before paying, confirm the invoice name, company name, bank/payment details, order details, product specs, quantity, lead time, packaging and refund/defect terms.\n\nIf you are paying a person instead of a company, understand the risk. If payment details suddenly change, pause and verify.\n\nDo not let pressure force payment before clarity.\n\nMoney should leave your account only after the basics are checked.\n\nIf you already have a confirmed supplier and need Sure Imports to process the payment, use Pay Supplier. If the invoice or beneficiary details are unclear, use Pro review first.",
+      "ctaLabel": "Start a Pay Supplier request.",
+      "ctaUrl": "https://www.sureimports.com/auth/login?next=%2Fdashboard%2Fpay-supplier%2Fcreate"
+    },
+    {
+      "stepNumber": 31,
+      "delayDays": 217,
+      "title": "Bank details",
+      "subject": "Supplier bank details must be verified",
+      "previewText": "Small mismatch, big risk.",
+      "bodyText": "Payment details should match the supplier relationship you believe you are entering.\n\nCheck the account name, company name, invoice name and contact person. If names differ, ask why. Sometimes there may be a legitimate reason, but you need an explanation before paying.\n\nAlso be careful with last-minute account changes. That is a common risk point in international trade.\n\nSlow down at the payment stage. It is better to delay than to pay blindly.",
+      "ctaLabel": "See how invoice and beneficiary review works before payment.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 32,
+      "delayDays": 224,
+      "title": "Inspection",
+      "subject": "Inspection reduces import risk",
+      "previewText": "It is cheaper to find problems before shipment.",
+      "bodyText": "Inspection means checking goods before they leave China.\n\nIt can include quantity check, packaging check, visual quality check, product function check and carton condition. For technical products, inspection may need a more serious checklist.\n\nInspection is not needed for every small order, but it becomes more important as order value, customization or risk increases.\n\nProblems are easier to handle before goods ship.\n\nDefine the inspection before production ends: what quantity will be checked, which measurements matter, what counts as a major or minor defect, which functional tests apply, and what evidence the inspector must provide. “Check quality” is not an inspection standard.",
+      "ctaLabel": "For bulk/custom orders, use Corporate Sourcing.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 33,
+      "delayDays": 231,
+      "title": "Factory inspection",
+      "subject": "When factory inspection is worth it",
+      "previewText": "Larger risk needs stronger checks.",
+      "bodyText": "Factory inspection may be worth it when the order is large, custom, technical, branded, high-value, or mission-critical.\n\nIt can help confirm whether the supplier has the environment, process and capacity to support the order. It can also reveal whether you are dealing with a factory, a trading office or something else.\n\nDo not use factory inspection for ego. Use it when the risk justifies the cost.\n\nFor machinery, use a written specification before comparing factories: output per hour, raw material, power source, voltage, included accessories, installation, spare parts and warranty. The following reports are useful examples only when they match the machine you need:\n- https://www.sureimports.com/supplier-intelligence/reports/hammer-mills\n- https://www.sureimports.com/supplier-intelligence/reports/freeze-dryers\n- https://www.sureimports.com/supplier-intelligence/reports/dehydrators\n- https://www.sureimports.com/supplier-intelligence/reports/diesel-generators\n\nIf your immediate question is generator capacity rather than supplier choice, use the Generator Sizing tool first: https://www.sureimports.com/tools/generator-sizing",
+      "ctaLabel": "For machinery and technical equipment, use LineScout.",
+      "ctaUrl": "https://linescout.sureimports.com/"
+    },
+    {
+      "stepNumber": 34,
+      "delayDays": 238,
+      "title": "Defective goods",
+      "subject": "What if goods arrive defective?",
+      "previewText": "Plan before there is a problem.",
+      "bodyText": "Defects are part of product business. Your job is to reduce them and plan for them.\n\nBefore payment, ask the supplier how defects are handled. Will they replace in the next order? Give credit? Send parts? What evidence is required?\n\nAlso keep your own buffer. If you sell every unit assuming zero defects, one bad batch can destroy margin.\n\nDefect policy should be discussed before payment, not after anger.\n\nPut the remedy in writing. Define how defects will be counted, the evidence deadline, whether the solution is replacement, spare parts or credit, and when it will be delivered. Keep samples, inspection records and batch photographs so the discussion is based on evidence.",
+      "ctaLabel": "See how supplier and quotation review works before ordering.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 35,
+      "delayDays": 245,
+      "title": "Supplier relationships",
+      "subject": "Good suppliers are built over time",
+      "previewText": "Do not treat every order as a one-off.",
+      "bodyText": "Supplier relationships improve when communication is clear, payment is organized, feedback is specific and expectations are realistic.\n\nDo not disappear after receiving goods. Send feedback. Explain what customers liked or complained about. Ask how to improve the next batch.\n\nA supplier who sees repeat potential may cooperate better on price, packaging, MOQ and priority.\n\nImporting becomes easier when you build reliable supply relationships.\n\nKeep a supplier scorecard after every order: response time, specification accuracy, sample quality, production punctuality, inspection result, document accuracy and how problems were resolved. Relationships may improve cooperation, but records should still guide your decisions.",
+      "ctaLabel": "Explore researched supplier categories when you need a new starting point.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 36,
+      "delayDays": 252,
+      "title": "Negotiation",
+      "subject": "How to negotiate without sounding unserious",
+      "previewText": "Serious buyers ask serious questions.",
+      "bodyText": "Do not start negotiation with “last price” only.\n\nShow the supplier you understand the product. Ask about quantity breaks, packaging options, sample cost, no-logo stock, customization MOQ, payment terms and lead time.\n\nYou can negotiate better when you know what can move: price, MOQ, packaging, accessories, timeline or shipping terms.\n\nGood negotiation is not begging. It is finding a workable order structure.\n\nNegotiate in sequence. Confirm the specification first, then ask for quantity-price breaks, and only then explore packaging, stock materials, payment structure and timing. Changing five variables at once makes it difficult to know what concession produced the lower price—or what quality was removed.",
+      "ctaLabel": "See how quotation review can prepare you for negotiation.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 37,
+      "delayDays": 259,
+      "title": "Branded vs generic",
+      "subject": "Branded or generic products?",
+      "previewText": "Branding changes the risk.",
+      "bodyText": "Generic products are easier to start with because they usually require lower commitment.\n\nBranded or customized products can create stronger market positioning, but they may require higher MOQ, longer lead time, design approval, packaging work and inspection.\n\nIf you are still testing demand, be careful with heavy customization. If you already understand your customers, branding may help you stand out.\n\nChoose the level of branding that matches your stage.\n\nIf fashion accessories or bags are already among your tested ideas, these reports provide relevant manufacturer-research examples:\n- https://www.sureimports.com/supplier-intelligence/reports/fashion-accessories\n- https://www.sureimports.com/supplier-intelligence/reports/bags-and-backpacks",
+      "ctaLabel": "Review the available research after deciding how much branding you need.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 38,
+      "delayDays": 266,
+      "title": "White label importing",
+      "subject": "How white label importing works",
+      "previewText": "It is more than putting your logo on a product.",
+      "bodyText": "White label importing means selling a product under your brand, often with custom logo, packaging or minor changes.\n\nThe risk is that you now own the customer promise. If quality is poor, your brand takes the blame.\n\nBefore white labeling, confirm product quality, packaging, warranty route, MOQ, sample approval and whether the supplier can repeat the same standard.\n\nWhite label can be powerful, but only when execution is controlled.\n\nIf sneakers are the category you have already chosen, the High Quality Sneakers with OEM Capability report is a relevant example of supplier research for an own-brand programme.",
+      "ctaLabel": "Review the OEM-capable sneakers research.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports/high-quality-sneakers-with-oem-capability"
+    },
+    {
+      "stepNumber": 39,
+      "delayDays": 273,
+      "title": "Building a product brand",
+      "subject": "Build a simple imported-product brand",
+      "previewText": "Brand starts with consistency.",
+      "bodyText": "You do not need a big brand budget to start. You need consistency.\n\nChoose a clear product promise, maintain quality, package properly, communicate honestly, and collect customer feedback. Keep records of supplier, batch, specs and complaints.\n\nIf every batch is different, customers will not trust the brand.\n\nA brand is not just logo. It is the experience customers can expect again.\n\nIf you are building a cosmetics business, separate the product supplier decision from the packaging decision. These two reports cover those distinct parts of the supply chain:\n- https://www.sureimports.com/supplier-intelligence/reports/makeup-and-colour-cosmetics\n- https://www.sureimports.com/supplier-intelligence/reports/beauty-and-cosmetic-packaging",
+      "ctaLabel": "Use Corporate Sourcing when you are ready to develop the branded order.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 40,
+      "delayDays": 280,
+      "title": "Retail repeat inventory",
+      "subject": "Retailers need repeat inventory planning",
+      "previewText": "Stockouts and overstock both hurt.",
+      "bodyText": "If you sell retail, plan reorder timing.\n\nTrack how many units sell weekly, how long sourcing takes, how long shipping takes, and how much buffer you need. If you wait until stock is finished before reordering, you may lose customers.\n\nBut do not overstock blindly. Use sales data to decide reorder quantity.\n\nRetail importing works better when stock movement guides buying.\n\nWhen evaluating a repeat-inventory category, check whether the product has stable specifications, several viable suppliers and a reorder lead time your cash flow can support. Ready-made reports currently cover examples such as Human Hair, Diapers, Home Storage and Fitness Products.",
+      "ctaLabel": "Check the available research for the category you already sell or have tested.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 41,
+      "delayDays": 287,
+      "title": "Ecommerce sellers",
+      "subject": "Ecommerce importers need proof before buying",
+      "previewText": "Online selling needs content and trust.",
+      "bodyText": "If you sell online, think beyond product cost.\n\nYou need photos, videos, clear specs, delivery promise, return policy, customer education and proof that the product works as claimed.\n\nAsk suppliers for clean photos, product videos, manuals, packaging images and specification sheets. But verify quality yourself before using supplier claims in your marketing.\n\nOnline customers buy what they understand and trust.\n\nCalculate the order at SKU level. Include advertising, platform or payment fees, failed local deliveries, returns, replacement units and the time stock may sit before selling. A product can look profitable at gross-margin level and lose money after fulfilment.",
+      "ctaLabel": "Check available reports for the product category you plan to sell.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 42,
+      "delayDays": 294,
+      "title": "Corporate buyers",
+      "subject": "Corporate buyers should source differently",
+      "previewText": "Bulk orders need control.",
+      "bodyText": "Corporate sourcing often involves branding, deadlines, samples, approvals, packaging, stakeholder expectations and higher reputational risk.\n\nDo not treat a corporate order like casual shopping. Build a brief, compare options, confirm samples, plan inspection, confirm delivery timeline and keep communication documented.\n\nIf the product is for clients, staff, events or resale, quality consistency matters.\n\nCorporate orders need structure before payment.\n\nWhen the brief involves gifts, promotional items or event materials, these reports can support the supplier-comparison stage:\n- https://www.sureimports.com/supplier-intelligence/reports/corporate-gifts-and-promotional-merchandise\n- https://www.sureimports.com/supplier-intelligence/reports/event-and-conference-materials",
+      "ctaLabel": "Use Corporate Sourcing for business and bulk orders.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 43,
+      "delayDays": 301,
+      "title": "Phones and electronics",
+      "subject": "Import electronics more carefully",
+      "previewText": "Specifications can be misleading.",
+      "bodyText": "Electronics require extra caution.\n\nCheck model, chipset, battery, plug type, warranty route, accessories, packaging, certification claims and whether specs are genuine. For phones and similar devices, small differences can affect customer trust.\n\nDo not buy electronics only because the margin looks attractive. Warranty and defects can erase profit quickly.\n\nWith electronics, verification and after-sales planning matter.\n\nIf you want tested ready-to-buy devices rather than a supplier shortlist, the Sure Imports shop is the more relevant route: https://www.sureimports.com/shop\n\nFor accessories and security electronics, use the report that matches the exact product rather than treating all electronics as one category:\n- https://www.sureimports.com/supplier-intelligence/reports/phone-accessories\n- https://www.sureimports.com/supplier-intelligence/reports/cctv-and-security-gadgets\n- https://www.sureimports.com/supplier-intelligence/reports/body-cameras",
+      "ctaLabel": "Review the Phone Accessories supplier report.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports/phone-accessories"
+    },
+    {
+      "stepNumber": 44,
+      "delayDays": 308,
+      "title": "Laptops for business",
+      "subject": "Sourcing laptops for business use",
+      "previewText": "Match device to use case.",
+      "bodyText": "Business laptops should be chosen by use case, not just price.\n\nAsk what the laptops will be used for: office work, design, coding, school, field operations or resale. Confirm processor, RAM, storage, battery, keyboard, charger, grade, warranty and configuration consistency.\n\nFor bulk laptop procurement, inconsistent specs can create serious complaints.\n\nPlan the device standard before sourcing.\n\nCreate a minimum configuration for each user group. Office users may prioritise battery, keyboard and reliability; designers may need stronger graphics and displays; resellers need consistent grade and easy-to-explain specifications. For used or refurbished units, define acceptable cosmetic grade, battery-health threshold and testing evidence.",
+      "ctaLabel": "Use the dedicated Laptops for Business sourcing route.",
+      "ctaUrl": "https://www.sureimports.com/laptops-for-business"
+    },
+    {
+      "stepNumber": 45,
+      "delayDays": 315,
+      "title": "Fake specs",
+      "subject": "Beware of fake specifications",
+      "previewText": "Some listings exaggerate.",
+      "bodyText": "Fake or misleading specs are common in some product categories.\n\nWatch for unrealistic battery capacity, fake memory/storage claims, copied brand photos, vague material descriptions, and prices that are too low for the claimed specification.\n\nAsk for real photos, videos, model numbers, test evidence and packaging details. If possible, check samples or use inspection.\n\nIf the claim sounds too good for the price, investigate before paying.\n\nCross-check important claims in three places: the manufacturer model number, the quotation or invoice, and independent test evidence or a physical sample. For electronics, compare the operating-system screen with diagnostic results. For machinery, ask for a continuous production test.",
+      "ctaLabel": "See how pre-payment supplier review works.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 46,
+      "delayDays": 322,
+      "title": "Videos and evidence",
+      "subject": "Ask for evidence before payment",
+      "previewText": "A short video can reveal a lot.",
+      "bodyText": "Ask suppliers for product videos, packaging videos, carton photos, production photos and close-ups of important details.\n\nBut be specific. Ask them to show the model, measurement, function, logo area, packaging and accessories. Generic videos may not prove anything about your order.\n\nEvidence helps, but it must match the product you plan to buy.\n\nDo not accept “trust me” when a simple video can answer the question.\n\nAsk for one continuous, timestamped video rather than several edited clips. Request a handwritten card showing your name and date, then have the supplier show the product label, quantity, key measurement and functional test in the same recording. This makes recycled evidence harder to use.",
+      "ctaLabel": "See how supplier evidence can be reviewed before payment.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 47,
+      "delayDays": 329,
+      "title": "Delays",
+      "subject": "Delays happen. Plan for them.",
+      "previewText": "Importing needs buffers.",
+      "bodyText": "Delays can happen in supplier production, China delivery, warehouse handling, shipping, customs, clearing or local delivery.\n\nDo not promise customers timelines with no buffer. Do not plan seasonal orders too late. Do not assume every supplier lead time is exact.\n\nAsk for realistic production time, confirm before payment, and build a communication plan if delays happen.\n\nProfessional importers expect uncertainty and plan around it.\n\nPlan three dates instead of one: supplier-ready date, latest acceptable shipping date and must-arrive date. Add decision points for sample approval, production update and inspection. If one milestone slips, decide immediately whether to change route, reduce scope or inform customers.",
+      "ctaLabel": "For time-sensitive business orders, use Corporate Sourcing early.",
+      "ctaUrl": "https://www.sureimports.com/corporate-sourcing"
+    },
+    {
+      "stepNumber": 48,
+      "delayDays": 336,
+      "title": "Records",
+      "subject": "Keep records for every import order",
+      "previewText": "Records protect decisions.",
+      "bodyText": "Keep supplier name, Chinese company name, address, contact person, invoice, payment details, product specs, quote, photos, videos, chat history, shipping details and complaints.\n\nRecords help you reorder, resolve disputes, compare suppliers and understand profit.\n\nIf something goes wrong, records give you evidence. If something goes right, records help you repeat it.\n\nImporting without records is guessing with money.\n\nCreate one folder per order containing the licence, contacts, approved specification, quotation, invoice, payment proof, production updates, inspection evidence, packing list, shipping documents and complaint history. Use dates and version numbers instead of filenames such as “final latest.”",
+      "ctaLabel": "Use Supplier Intelligence Pro when records reveal a supplier, quote or payment mismatch.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    },
+    {
+      "stepNumber": 49,
+      "delayDays": 343,
+      "title": "When to use an agent",
+      "subject": "When should you use an import agent?",
+      "previewText": "Use help when risk is bigger than your experience.",
+      "bodyText": "You may need an agent when the product is technical, custom, high value, urgent, bulky, regulated, or when you do not have time to manage supplier communication.\n\nAn agent should not replace your judgment completely. You still need to understand the product, cost and risk.\n\nUse help when it reduces risk, saves time or gives access to better process.\n\nThe right support can prevent expensive mistakes.\n\nIf the right route is still unclear—or the decision involves a large budget, machinery, several suppliers or complex shipping—book a private consultation before committing.",
+      "ctaLabel": "Book a Sure Imports consultation.",
+      "ctaUrl": "https://www.sureimports.com/book-consultation"
+    },
+    {
+      "stepNumber": 50,
+      "delayDays": 350,
+      "title": "How Sure Imports helps",
+      "subject": "Where Sure Imports fits in your import process",
+      "previewText": "Different needs require different services.",
+      "bodyText": "If you already have product links, Buy From Chinese Websites can help process the purchase.\n\nIf goods are already with your supplier, Ship With Us can help move them from China.\n\nIf you need supplier search, comparison, branding or bulk sourcing, Corporate Sourcing is better.\n\nIf you need machinery or technical sourcing, LineScout is the right route.\n\nIf you need a ready-made shortlist for one specific product, search Supplier Reports. If you need continuing database access, fresh supplier searches and pre-payment review support, use Supplier Intelligence.\n\nIf you already have a confirmed supplier and only need payment handling, use Pay Supplier. For laptops needed by a company, school or reseller, use Laptops for Business.\n\nIf the order is high-value or you are still unsure which route fits, book a consultation before committing money. Choose the narrowest service that solves the actual problem; you do not need every service for every import.",
+      "ctaLabel": "Choose the right Sure Imports route.",
+      "ctaUrl": "https://www.sureimports.com/import-from-china-to-nigeria"
+    },
+    {
+      "stepNumber": 51,
+      "delayDays": 357,
+      "title": "Plan a profitable import year",
+      "subject": "Plan your import year like a business",
+      "previewText": "Random buying creates random results.",
+      "bodyText": "A profitable import year needs planning.\n\nChoose target categories, test products, track selling speed, build supplier records, review landed cost, plan seasonal opportunities and decide when to restock.\n\nDo not jump from product to product because someone posted profit online. Build knowledge in a few categories and improve your process.\n\nImporting becomes easier when your decisions become repeatable.\n\nPlan in quarters. Give each quarter a test budget, restock budget and risk limit. Review products using selling speed, actual margin, defect rate and supplier performance. Stop weak categories early and give more cash only to products that have earned it through evidence.",
+      "ctaLabel": "Use ready-made supplier reports as your category research base.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence/reports"
+    },
+    {
+      "stepNumber": 52,
+      "delayDays": 364,
+      "title": "Final checklist",
+      "subject": "Your checklist before the next order",
+      "previewText": "Use this before money leaves your account.",
+      "bodyText": "Before your next China order, check:\n\nDo I understand demand? Do I know the true landed cost? Have I checked supplier identity? Do I have Chinese company name and address? Are specs written clearly? Are quote terms complete? Is payment detail verified? Is shipping planned? Do I have a defect plan? Can I sell at a real profit?\n\nIf any answer is weak, pause and fix it.\n\nGood importing is not luck. It is process.\n\nIf you need a product-specific shortlist, start with a report. If you already have a supplier or invoice, use Supplier Intelligence Pro before payment.",
+      "ctaLabel": "Choose the right research or review route.",
+      "ctaUrl": "https://www.sureimports.com/supplier-intelligence"
+    }
+  ]
+}

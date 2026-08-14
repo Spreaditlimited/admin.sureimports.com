@@ -133,6 +133,171 @@ model marketing_leads {
   @@index([utmCampaign])
 }
 
+model marketing_contacts {
+  id                    Int                     @id @default(autoincrement())
+  pidContact            String                  @unique @db.VarChar(80)
+  email                 String                  @unique @db.VarChar(255)
+  firstName             String?                 @db.VarChar(100)
+  lastName              String?                 @db.VarChar(100)
+  status                String                  @default("ACTIVE") @db.VarChar(40)
+  consentStatus         String                  @default("OPTED_IN") @db.VarChar(40)
+  consentSource         String?                 @db.VarChar(120)
+  consentContext        Json?
+  consentAt             DateTime?
+  unsubscribedAt        DateTime?
+  bouncedAt             DateTime?
+  complainedAt          DateTime?
+  sesVerificationStatus String                  @default("UNVERIFIED") @db.VarChar(40)
+  sesContactSyncedAt    DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  enrollments           marketing_enrollments[]
+  deliveries            marketing_deliveries[]
+
+  @@index([status])
+  @@index([consentStatus])
+  @@index([createdAt])
+}
+
+model marketing_sequences {
+  id          Int                        @id @default(autoincrement())
+  pidSequence String                     @unique @db.VarChar(80)
+  name        String                     @db.VarChar(180)
+  description String?                    @db.Text
+  triggerKey  String?                    @db.VarChar(100)
+  cadence     String                     @default("WEEKLY") @db.VarChar(40)
+  status      String                     @default("DRAFT") @db.VarChar(40)
+  totalSteps  Int                        @default(0)
+  createdBy   String?                    @db.VarChar(80)
+  activatedAt DateTime?
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+  steps       marketing_sequence_steps[]
+  enrollments marketing_enrollments[]
+
+  @@index([status])
+  @@index([triggerKey])
+}
+
+model marketing_sequence_steps {
+  id          Int                    @id @default(autoincrement())
+  pidStep     String                 @unique @db.VarChar(80)
+  sequenceId  Int
+  stepNumber  Int
+  delayDays   Int                    @default(0)
+  title       String                 @db.VarChar(200)
+  subject     String                 @db.VarChar(255)
+  previewText String?                @db.VarChar(500)
+  bodyText    String                 @db.LongText
+  ctaLabel    String?                @db.VarChar(255)
+  ctaUrl      String?                @db.VarChar(1000)
+  status      String                 @default("ACTIVE") @db.VarChar(40)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  sequence    marketing_sequences    @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  deliveries  marketing_deliveries[]
+
+  @@unique([sequenceId, stepNumber])
+  @@index([status])
+}
+
+model marketing_enrollments {
+  id            Int                    @id @default(autoincrement())
+  pidEnrollment String                 @unique @db.VarChar(80)
+  contactId     Int
+  sequenceId    Int
+  status        String                 @default("ACTIVE") @db.VarChar(40)
+  currentStep   Int                    @default(0)
+  nextSendAt    DateTime?
+  enrolledAt    DateTime               @default(now())
+  lastSentAt    DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  contact       marketing_contacts     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  sequence      marketing_sequences    @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  deliveries    marketing_deliveries[]
+
+  @@unique([contactId, sequenceId])
+  @@index([status, nextSendAt])
+}
+
+model marketing_campaigns {
+  id           Int                    @id @default(autoincrement())
+  pidCampaign  String                 @unique @db.VarChar(80)
+  name         String                 @db.VarChar(180)
+  subject      String                 @db.VarChar(255)
+  previewText  String?                @db.VarChar(500)
+  bodyText     String                 @db.LongText
+  ctaLabel     String?                @db.VarChar(255)
+  ctaUrl       String?                @db.VarChar(1000)
+  audienceType String                 @default("TEST") @db.VarChar(40)
+  status       String                 @default("DRAFT") @db.VarChar(40)
+  scheduledAt  DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdBy    String?                @db.VarChar(80)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  deliveries   marketing_deliveries[]
+
+  @@index([status, scheduledAt])
+}
+
+model marketing_deliveries {
+  id             Int                       @id @default(autoincrement())
+  pidDelivery    String                    @unique @db.VarChar(80)
+  contactId      Int?
+  campaignId     Int?
+  sequenceStepId Int?
+  enrollmentId   Int?
+  provider       String                    @default("SES") @db.VarChar(40)
+  mode           String                    @default("SANDBOX") @db.VarChar(40)
+  status         String                    @default("QUEUED") @db.VarChar(40)
+  recipientEmail String                    @db.VarChar(255)
+  subject        String                    @db.VarChar(255)
+  idempotencyKey String                    @unique @db.VarChar(191)
+  sesMessageId   String?                   @unique @db.VarChar(255)
+  errorMessage   String?                   @db.Text
+  scheduledAt    DateTime?
+  attemptedAt    DateTime?
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  bouncedAt      DateTime?
+  complainedAt   DateTime?
+  openedAt       DateTime?
+  clickedAt      DateTime?
+  unsubscribedAt DateTime?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  contact        marketing_contacts?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  campaign       marketing_campaigns?      @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  sequenceStep   marketing_sequence_steps? @relation(fields: [sequenceStepId], references: [id], onDelete: SetNull)
+  enrollment     marketing_enrollments?    @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  events         marketing_events[]
+
+  @@index([status, scheduledAt])
+  @@index([recipientEmail])
+  @@index([campaignId])
+  @@index([sequenceStepId])
+}
+
+model marketing_events {
+  id           Int                   @id @default(autoincrement())
+  pidEvent     String                @unique @db.VarChar(80)
+  dedupeKey    String                @unique @db.VarChar(191)
+  deliveryId   Int?
+  sesMessageId String?               @db.VarChar(255)
+  eventType    String                @db.VarChar(60)
+  payload      Json
+  occurredAt   DateTime?
+  createdAt    DateTime              @default(now())
+  delivery     marketing_deliveries? @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+
+  @@index([eventType, occurredAt])
+  @@index([sesMessageId])
+}
+
 model admin {
   id                Int                 @id @default(autoincrement())
   pidUser           String              @unique()
@@ -746,30 +911,30 @@ model exchange_rate {
 }
 
 model quotation_builder_documents {
-  id               Int      @id @default(autoincrement())
-  pidQuotation     String   @unique @db.VarChar(80)
-  quotationNumber  String   @unique @db.VarChar(100)
-  customerName     String   @db.VarChar(220)
-  customerLocation String?  @db.VarChar(255)
-  pidUser          String?  @db.VarChar(191)
-  linkedRequestId  String?  @db.VarChar(191)
-  status           String   @default("DRAFT") @db.VarChar(40)
-  sourceFiles      Json
-  extractedData    Json?
-  quoteData        Json
-  rateSnapshot     Json
-  maxPages         Int      @default(2)
-  pdfUrl           String?  @db.VarChar(1000)
-  pdfPublicId      String?  @db.VarChar(500)
-  pdfBytes         Int?
-  createdByPidUser String?  @db.VarChar(80)
-  updatedByPidUser String?  @db.VarChar(80)
-  lastSentAt       DateTime?
-  lastSentByPidUser String? @db.VarChar(80)
-  sendCount        Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  invoices         invoices[]
+  id                Int        @id @default(autoincrement())
+  pidQuotation      String     @unique @db.VarChar(80)
+  quotationNumber   String     @unique @db.VarChar(100)
+  customerName      String     @db.VarChar(220)
+  customerLocation  String?    @db.VarChar(255)
+  pidUser           String?    @db.VarChar(191)
+  linkedRequestId   String?    @db.VarChar(191)
+  status            String     @default("DRAFT") @db.VarChar(40)
+  sourceFiles       Json
+  extractedData     Json?
+  quoteData         Json
+  rateSnapshot      Json
+  maxPages          Int        @default(2)
+  pdfUrl            String?    @db.VarChar(1000)
+  pdfPublicId       String?    @db.VarChar(500)
+  pdfBytes          Int?
+  createdByPidUser  String?    @db.VarChar(80)
+  updatedByPidUser  String?    @db.VarChar(80)
+  lastSentAt        DateTime?
+  lastSentByPidUser String?    @db.VarChar(80)
+  sendCount         Int        @default(0)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  invoices          invoices[]
 
   @@index([status])
   @@index([createdAt])
@@ -1222,38 +1387,38 @@ model invoice_settings {
 }
 
 model invoices {
-  id                   Int                      @id @default(autoincrement())
-  pidInvoice           String                   @unique()
-  invoiceNumber        String                   @unique()
+  id                   Int                          @id @default(autoincrement())
+  pidInvoice           String                       @unique()
+  invoiceNumber        String                       @unique()
   pidUser              String
   customerName         String?
   customerBusinessName String?
   customerContactName  String?
   customerEmail        String?
   customerPhone        String?
-  customerAddress      String?                  @db.LongText
-  currency             String                   @default("NGN")
-  subtotal             Decimal                  @db.Decimal(18, 2)
-  discountTotal        Decimal                  @default(0) @db.Decimal(18, 2)
-  taxTotal             Decimal                  @default(0) @db.Decimal(18, 2)
-  grandTotal           Decimal                  @db.Decimal(18, 2)
-  amountPaid           Decimal                  @default(0) @db.Decimal(18, 2)
-  balanceDue           Decimal                  @db.Decimal(18, 2)
-  status               String                   @default("DRAFT")
+  customerAddress      String?                      @db.LongText
+  currency             String                       @default("NGN")
+  subtotal             Decimal                      @db.Decimal(18, 2)
+  discountTotal        Decimal                      @default(0) @db.Decimal(18, 2)
+  taxTotal             Decimal                      @default(0) @db.Decimal(18, 2)
+  grandTotal           Decimal                      @db.Decimal(18, 2)
+  amountPaid           Decimal                      @default(0) @db.Decimal(18, 2)
+  balanceDue           Decimal                      @db.Decimal(18, 2)
+  status               String                       @default("DRAFT")
   issuedAt             DateTime?
   dueAt                DateTime?
   paidAt               DateTime?
-  headerSnapshot       String?                  @db.LongText
-  footerSnapshot       String?                  @db.LongText
-  customerNotes        String?                  @db.LongText
-  notes                String?                  @db.LongText
+  headerSnapshot       String?                      @db.LongText
+  footerSnapshot       String?                      @db.LongText
+  customerNotes        String?                      @db.LongText
+  notes                String?                      @db.LongText
   linkedRequestId      String?
-  pidQuotation         String?                  @db.VarChar(80)
+  pidQuotation         String?                      @db.VarChar(80)
   createdByPidUser     String?
   updatedByPidUser     String?
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
-  user                 users                    @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  user                 users                        @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
   items                invoice_items[]
   payments             invoice_payments[]
   receipts             receipts[]

@@ -186,6 +186,7 @@ const marketing: MenuItem[] = [
     path: "/dashboard/marketing",
     submenu: [
       { title: "Lead Analytics", path: "/dashboard/marketing" },
+      { title: "Email Operations", path: "/dashboard/marketing/email" },
       { title: "SEO Opportunities", path: "/dashboard/marketing/seo" },
       { title: "Blog Posts", path: "/dashboard/blog/view" },
       { title: "Create Blog Post", path: "/dashboard/blog/create" },
