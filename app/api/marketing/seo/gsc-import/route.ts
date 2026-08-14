@@ -41,10 +41,15 @@ function validDate(value: unknown) {
 
 function importServiceOrigin() {
   const configured = String(
-    process.env.SEO_IMPORT_SERVICE_URL || process.env.SUREIMPORTS_SITE_URL || '',
+    process.env.SEO_IMPORT_SERVICE_URL ||
+      process.env.SUREIMPORTS_SITE_URL ||
+      process.env.ROOT_URL ||
+      (process.env.NODE_ENV === 'production' ? 'https://www.sureimports.com' : ''),
   ).trim()
   if (!configured) {
-    throw new Error('SEO_IMPORT_SERVICE_URL or SUREIMPORTS_SITE_URL is not configured.')
+    throw new Error(
+      'The local public service origin is not configured. Set SEO_IMPORT_SERVICE_URL to the public app origin currently in use.',
+    )
   }
 
   const url = new URL(configured)
