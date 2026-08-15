@@ -35,18 +35,22 @@ function validDate(value: unknown) {
     : date
 }
 
-function importServiceOrigin() {
-  const configured = String(
-    process.env.SEO_IMPORT_SERVICE_URL ||
-      process.env.SUREIMPORTS_SITE_URL ||
-      process.env.ROOT_URL ||
-      (process.env.NODE_ENV === 'production' ? 'https://www.sureimports.com' : ''),
-  ).trim()
-  if (!configured) {
-    throw new Error(
-      'The local public service origin is not configured. Set SEO_IMPORT_SERVICE_URL to the public app origin currently in use.',
-    )
+function importServiceOrigin(localOverride?: unknown) {
+  const requested = String(localOverride || '').trim()
+  if (process.env.NODE_ENV !== 'production' && requested) {
+    const localUrl = new URL(requested)
+    const localHosts = new Set(['localhost', '127.0.0.1', '[::1]'])
+    if (!localHosts.has(localUrl.hostname) || (localUrl.protocol !== 'http:' && localUrl.protocol !== 'https:')) {
+      throw new Error('The local public service origin must be an HTTP(S) localhost URL.')
+    }
+    return localUrl.origin
   }
+
+  const configured = String(
+    process.env.SUREIMPORTS_SITE_URL ||
+      process.env.ROOT_URL ||
+      'https://www.sureimports.com',
+  ).trim()
 
   const url = new URL(configured)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
@@ -165,7 +169,7 @@ export async function POST(request: NextRequest) {
   let serviceOrigin = ''
   let dispatch: { pidToken: string; token: string } | null = null
   try {
-    serviceOrigin = importServiceOrigin()
+    serviceOrigin = importServiceOrigin(body?.serviceOrigin)
     dispatch = await createManualDispatchToken({ pidUser: admin.pidUser, startDate, endDate })
     const response = await fetch(`${serviceOrigin}/api/internal/seo/search-console-import`, {
       method: 'POST',
@@ -199,7 +203,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: serviceUnavailable
-          ? `The public SureImports import service is not reachable at ${serviceOrigin || 'the configured origin'}. Start that service or update SEO_IMPORT_SERVICE_URL. No import job was created.`
+          ? `The public SureImports import service is not reachable at ${serviceOrigin || 'the selected origin'}. Start that service or enter its current local origin on the SEO page. No import job was created.`
           : message,
       },
       { status: serviceUnavailable ? 503 : 502 },

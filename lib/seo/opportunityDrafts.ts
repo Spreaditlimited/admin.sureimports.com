@@ -344,6 +344,24 @@ export async function generateSeoDraftForOpportunity(pidOpportunity: string) {
   if (!context) throw new Error("SEO opportunity was not found.")
   if (!context.pidBlog) throw new Error("SEO opportunity is not matched to a blog post yet.")
 
+  const [existingChange] = await prisma.$queryRaw<Array<{ pidChange: string }>>(
+    Prisma.sql`
+      SELECT pidChange
+      FROM seo_content_change_logs
+      WHERE pidBlog = ${context.pidBlog}
+        AND status NOT IN ('applied', 'rejected')
+      ORDER BY createdAt DESC
+      LIMIT 1
+    `,
+  )
+  if (existingChange?.pidChange) {
+    return {
+      pidChange: existingChange.pidChange,
+      validation: { errors: [], warnings: ["This article already has a saved SEO change."] },
+      reused: true,
+    }
+  }
+
   const linkCatalog = await getSeoLinkCatalog()
   const draft = await callOpenAi(buildPrompt(context, linkCatalog))
   const validation = validateDraft(draft, new Set(linkCatalog.map((item) => item.url)))
@@ -390,6 +408,20 @@ export async function generateSeoDraftForOpportunity(pidOpportunity: string) {
         SET status = 'reviewing',
             updatedAt = ${now}
         WHERE pidOpportunity = ${context.pidOpportunity}
+      `,
+    ),
+    prisma.$executeRaw(
+      Prisma.sql`
+        UPDATE seo_opportunities sibling
+        INNER JOIN seo_opportunities selected
+          ON selected.pidOpportunity = ${context.pidOpportunity}
+        SET sibling.status = 'dismissed', sibling.updatedAt = ${now}
+        WHERE sibling.pidOpportunity <> selected.pidOpportunity
+          AND sibling.status IN ('open', 'reviewing')
+          AND (
+            sibling.blogSlug = selected.blogSlug
+            OR (selected.blogSlug IS NULL AND sibling.blogSlug IS NULL AND sibling.pageUrl = selected.pageUrl)
+          )
       `,
     ),
   ])

@@ -113,14 +113,38 @@ async function updateOpportunityStatus(formData: FormData) {
 
   if (!pidOpportunity || !allowed.includes(nextStatus)) return
 
-  await prisma.$executeRaw(
-    Prisma.sql`
-      UPDATE seo_opportunities
-      SET status = ${nextStatus},
-          updatedAt = ${new Date()}
-      WHERE pidOpportunity = ${pidOpportunity}
-    `,
-  )
+  const now = new Date()
+  const updates = [
+    prisma.$executeRaw(
+      Prisma.sql`
+        UPDATE seo_opportunities
+        SET status = ${nextStatus},
+            updatedAt = ${now}
+        WHERE pidOpportunity = ${pidOpportunity}
+      `,
+    ),
+  ]
+
+  if (["open", "reviewing", "applied"].includes(nextStatus)) {
+    updates.push(
+      prisma.$executeRaw(
+        Prisma.sql`
+          UPDATE seo_opportunities sibling
+          INNER JOIN seo_opportunities selected
+            ON selected.pidOpportunity = ${pidOpportunity}
+          SET sibling.status = 'dismissed', sibling.updatedAt = ${now}
+          WHERE sibling.pidOpportunity <> selected.pidOpportunity
+            AND sibling.status IN ('open', 'reviewing')
+            AND (
+              sibling.blogSlug = selected.blogSlug
+              OR (selected.blogSlug IS NULL AND sibling.blogSlug IS NULL AND sibling.pageUrl = selected.pageUrl)
+            )
+        `,
+      ),
+    )
+  }
+
+  await prisma.$transaction(updates)
 
   revalidatePath("/dashboard/marketing/seo")
 }
@@ -135,15 +159,20 @@ async function generateDraftAction(formData: FormData) {
 
   const [existingDraft] = await prisma.$queryRaw<Array<{ pidChange: string; status: string }>>(
     Prisma.sql`
-      SELECT pidChange, status
-      FROM seo_content_change_logs
-      WHERE pidOpportunity = ${pidOpportunity}
-      ORDER BY createdAt DESC
+      SELECT changeLog.pidChange, changeLog.status
+      FROM seo_opportunities selected
+      LEFT JOIN blog selectedBlog ON selectedBlog.blogSlug = selected.blogSlug
+      INNER JOIN seo_content_change_logs changeLog
+        ON changeLog.pidOpportunity = selected.pidOpportunity
+        OR (selectedBlog.pidBlog IS NOT NULL AND changeLog.pidBlog = selectedBlog.pidBlog)
+      WHERE selected.pidOpportunity = ${pidOpportunity}
+        AND changeLog.status NOT IN ('applied', 'rejected')
+      ORDER BY changeLog.createdAt DESC
       LIMIT 1
     `,
   )
 
-  if (existingDraft?.pidChange && existingDraft.status !== "rejected") {
+  if (existingDraft?.pidChange) {
     redirect(`/dashboard/marketing/seo/changes/${encodeURIComponent(existingDraft.pidChange)}`)
   }
 
@@ -419,6 +448,7 @@ export default async function SeoOpportunitiesPage({
       </div>
 
       <GscImportControl
+        requireLocalServiceOrigin={process.env.NODE_ENV !== "production"}
         latestCompletedEndDate={latestCompletedImport?.endDate.toISOString().slice(0, 10) || null}
         initialRun={visibleImport ? {
           pidRun: visibleImport.pidRun,

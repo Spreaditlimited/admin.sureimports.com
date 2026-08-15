@@ -22,6 +22,7 @@ type ImportRun = {
 type GscImportControlProps = {
   latestCompletedEndDate: string | null
   initialRun: ImportRun | null
+  requireLocalServiceOrigin: boolean
 }
 
 function dateDaysAgo(days: number) {
@@ -45,6 +46,7 @@ function formatElapsed(seconds = 0) {
 export default function GscImportControl({
   latestCompletedEndDate,
   initialRun,
+  requireLocalServiceOrigin,
 }: GscImportControlProps) {
   const router = useRouter()
   const latestAvailable = useMemo(() => dateDaysAgo(2), [])
@@ -57,8 +59,14 @@ export default function GscImportControl({
   const [run, setRun] = useState<ImportRun | null>(initialRun)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState('')
+  const [localServiceOrigin, setLocalServiceOrigin] = useState('')
 
   const running = Boolean(run && run.status === 'started' && !run.ready)
+
+  useEffect(() => {
+    if (!requireLocalServiceOrigin) return
+    setLocalServiceOrigin(window.localStorage.getItem('gsc-public-service-origin') || '')
+  }, [requireLocalServiceOrigin])
 
   useEffect(() => {
     if (!running || !run?.pidRun) return
@@ -104,7 +112,11 @@ export default function GscImportControl({
       const response = await fetch('/api/marketing/seo/gsc-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startDate, endDate }),
+        body: JSON.stringify({
+          startDate,
+          endDate,
+          serviceOrigin: requireLocalServiceOrigin ? localServiceOrigin : undefined,
+        }),
       })
       const result = (await response.json()) as ImportRun & {
         error?: string
@@ -147,7 +159,24 @@ export default function GscImportControl({
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          {requireLocalServiceOrigin && (
+            <label className="grid gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Current public app origin
+              <input
+                type="url"
+                value={localServiceOrigin}
+                disabled={running || starting}
+                onChange={(event) => {
+                  const value = event.target.value
+                  setLocalServiceOrigin(value)
+                  window.localStorage.setItem('gsc-public-service-origin', value)
+                }}
+                placeholder="Paste the Local URL shown by the public app"
+                className="h-10 min-w-64 rounded-lg border border-border bg-background px-3 font-mono text-xs font-medium normal-case tracking-normal text-foreground disabled:opacity-60"
+              />
+            </label>
+          )}
           <label className="grid gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Start date
             <input
@@ -173,7 +202,7 @@ export default function GscImportControl({
           </label>
           <button
             type="button"
-            disabled={running || starting || !startDate || !endDate || startDate > endDate}
+            disabled={running || starting || !startDate || !endDate || startDate > endDate || (requireLocalServiceOrigin && !localServiceOrigin)}
             onClick={startImport}
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-[10px] font-bold uppercase tracking-widest text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
           >
