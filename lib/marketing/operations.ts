@@ -60,6 +60,7 @@ export async function sendSequenceStep(input: {
       recipientEmail: email,
       firstName: input.firstName,
       subject: step.subject,
+      bodyTitle: step.title,
       previewText: step.previewText,
       bodyText: step.bodyText,
       ctaLabel: step.ctaLabel,

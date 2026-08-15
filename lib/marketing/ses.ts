@@ -97,6 +97,7 @@ export async function sendMarketingEmail(input: {
   recipientEmail: string;
   firstName?: string | null;
   subject: string;
+  bodyTitle?: string | null;
   previewText?: string | null;
   bodyText: string;
   ctaLabel?: string | null;
