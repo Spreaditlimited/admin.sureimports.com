@@ -19,16 +19,16 @@ async function requireAccess() {
 
 export default async function MarketingEmailPage() {
   await requireAccess();
-  const [contacts, deliveries, events, sequence, recentUsers] = await Promise.all([
+  const [contacts, deliveries, events, sequence, recentContacts] = await Promise.all([
     prisma.marketing_contacts.count(), prisma.marketing_deliveries.count(), prisma.marketing_events.count(),
     prisma.marketing_sequences.findFirst({
       where: { pidSequence: 'SEQ-CHINA-IMPORT-52-WEEKS' },
       include: { steps: { orderBy: { stepNumber: 'asc' } } },
     }),
-    prisma.users.findMany({
+    prisma.marketing_contacts.findMany({
       where: { createdAt: { gte: SES_MARKETING_CUTOVER_AT } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 50,
-      select: { userEmail: true, userFirstname: true, userLastname: true, createdAt: true },
+      select: { email: true, firstName: true, lastName: true, consentStatus: true, optInRequestedAt: true },
     }),
   ]);
   const mode = getMarketingSendMode();
@@ -42,9 +42,9 @@ export default async function MarketingEmailPage() {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {[['Contacts', contacts], ['Sequence emails', steps.length], ['Deliveries', deliveries], ['Provider events', events]].map(([label, value]) => <div key={label} className="rounded-xl border border-border bg-card p-5 shadow-soft"><p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold">{value}</p></div>)}
     </div>
-    <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm leading-relaxed"><strong>The channel cutover is active.</strong> Existing Flodesk contacts remain there. SES can select only accounts registered from 14 August 2026 onward (or an explicit internal allowlist), after their address is verified by AWS.</div>
+    <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm leading-relaxed"><strong>The channel cutover is active.</strong> Existing Flodesk contacts remain there. New contacts receive a branded Sure Imports confirmation through Hostinger and are not eligible until they explicitly confirm.</div>
     <EmailOperations steps={steps} />
-    <section className="overflow-hidden rounded-xl border border-border bg-card shadow-soft"><div className="border-b border-border px-6 py-4"><h2 className="font-bold">Post-cutover sandbox users</h2><p className="text-xs text-muted-foreground">Accounts registered since the cutover. AWS verification is still required before any test send.</p></div><div className="divide-y divide-border">{recentUsers.length ? recentUsers.map((user) => <div key={user.userEmail} className="flex flex-col justify-between gap-1 px-6 py-3 text-sm sm:flex-row sm:items-center"><span className="font-semibold">{[user.userFirstname, user.userLastname].filter(Boolean).join(' ') || 'Customer'}</span><span className="text-xs text-muted-foreground">{user.userEmail}</span></div>) : <p className="px-6 py-5 text-sm text-muted-foreground">No post-cutover registrations yet.</p>}</div></section>
+    <section className="overflow-hidden rounded-xl border border-border bg-card shadow-soft"><div className="border-b border-border px-6 py-4"><h2 className="font-bold">Post-cutover email contacts</h2><p className="text-xs text-muted-foreground">Pending contacts have received a confirmation request. Only confirmed contacts can enter a future SES sequence.</p></div><div className="divide-y divide-border">{recentContacts.length ? recentContacts.map((contact) => <div key={contact.email} className="flex flex-col justify-between gap-2 px-6 py-3 text-sm sm:flex-row sm:items-center"><div><span className="font-semibold">{[contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'Subscriber'}</span><p className="text-xs text-muted-foreground">{contact.email}</p></div><span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide ${contact.consentStatus === 'OPTED_IN' ? 'bg-emerald-500/10 text-emerald-700' : 'bg-amber-500/10 text-amber-700'}`}>{contact.consentStatus.replaceAll('_', ' ')}</span></div>) : <p className="px-6 py-5 text-sm text-muted-foreground">No post-cutover contacts yet.</p>}</div></section>
     {steps.length > 0 && <section className="overflow-hidden rounded-xl border border-border bg-card shadow-soft"><div className="border-b border-border px-6 py-4"><h2 className="font-bold">Imported sequence</h2><p className="text-xs text-muted-foreground">{sequence?.name}</p></div><div className="max-h-[560px] divide-y divide-border overflow-y-auto">{steps.map((step) => <div key={step.pidStep} className="grid gap-1 px-6 py-4 md:grid-cols-[80px_1fr]"><span className="text-xs font-bold text-primary">Email {step.stepNumber}</span><div><p className="text-sm font-semibold">{step.subject}</p><p className="text-xs text-muted-foreground">{step.title}</p></div></div>)}</div></section>}
   </main>;
 }

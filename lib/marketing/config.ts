@@ -29,6 +29,17 @@ export function getSandboxAllowedRecipients() {
   );
 }
 
+export function isFiveDaySandboxTestEnabled() {
+  return (
+    getMarketingSendMode() === 'sandbox' &&
+    process.env.SES_SANDBOX_FIVE_DAY_TEST_ENABLED === 'true'
+  );
+}
+
+export function getSandboxTestFirstName() {
+  return process.env.SES_SANDBOX_TEST_FIRST_NAME?.trim() || 'Tochukwu';
+}
+
 export const SES_MARKETING_CUTOVER_AT = new Date(
   process.env.SES_MARKETING_CUTOVER_AT || '2026-08-13T23:00:00.000Z',
 );

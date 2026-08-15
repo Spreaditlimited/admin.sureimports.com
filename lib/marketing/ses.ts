@@ -4,7 +4,6 @@ import {
   CreateEmailIdentityCommand,
   GetEmailIdentityCommand,
   SendEmailCommand,
-  UpdateContactCommand,
 } from '@aws-sdk/client-sesv2';
 
 import { createMarketingSesClient } from './aws';
@@ -19,7 +18,6 @@ import {
   MARKETING_FROM_NAME,
   MARKETING_REPLY_TO,
   normalizeMarketingRecipient,
-  SES_MARKETING_CUTOVER_AT,
 } from './config';
 import { renderMarketingEmail } from './content';
 import { prisma } from '@/lib/prisma';
@@ -28,13 +26,9 @@ export async function assertRecipientCanReceive(email: string) {
   const normalized = normalizeMarketingRecipient(email);
   if (getMarketingSendMode() === 'production' || isMailboxSimulatorAddress(normalized)) return normalized;
   if (getSandboxAllowedRecipients().has(normalized)) return normalized;
-
-  const cutoverUser = await prisma.users.findFirst({
-    where: { userEmail: normalized, createdAt: { gte: SES_MARKETING_CUTOVER_AT } },
-    select: { id: true },
-  });
-  if (cutoverUser) return normalized;
-  throw new Error('SES sandbox safety blocked this recipient. Only accounts registered after the marketing cutover can be selected.');
+  throw new Error(
+    'SES sandbox safety blocked this recipient. Only explicitly allowlisted internal test addresses can receive sandbox email.',
+  );
 }
 
 export async function requestSandboxRecipientVerification(email: string) {
@@ -56,7 +50,7 @@ export async function requestSandboxRecipientVerification(email: string) {
     where: { email: recipientEmail },
     create: {
       pidContact: crypto.randomUUID(), email: recipientEmail, status: 'ACTIVE',
-      consentStatus: 'TEST_ONLY', consentSource: 'ses_sandbox_recent_user',
+      consentStatus: 'TEST_ONLY', consentSource: 'ses_internal_sandbox_test',
       sesVerificationStatus: verified ? 'VERIFIED' : 'PENDING',
     },
     update: { sesVerificationStatus: verified ? 'VERIFIED' : 'PENDING' },
@@ -96,7 +90,6 @@ async function syncSesContact(input: {
     if (!(error instanceof AlreadyExistsException) && (error as { name?: string })?.name !== 'AlreadyExistsException') {
       throw error;
     }
-    await client.send(new UpdateContactCommand(request));
   }
 }
 

@@ -10,6 +10,7 @@ export async function sendSequenceStep(input: {
   firstName?: string | null;
   idempotencyKey: string;
   enrollmentId?: number | null;
+  tags?: Record<string, string>;
 }) {
   const email = input.email.trim().toLowerCase();
   const existing = await prisma.marketing_deliveries.findUnique({
@@ -66,6 +67,7 @@ export async function sendSequenceStep(input: {
       tags: {
         delivery: delivery.pidDelivery,
         source: 'sequence',
+        ...input.tags,
       },
     });
     return prisma.marketing_deliveries.update({

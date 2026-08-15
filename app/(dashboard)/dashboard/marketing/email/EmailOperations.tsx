@@ -33,7 +33,7 @@ export default function EmailOperations({ steps }: { steps: Step[] }) {
       <section className="rounded-xl border border-border bg-card p-6 shadow-soft">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2 text-primary"><Send className="h-4 w-4" /></div>
-          <div><h2 className="font-bold">Sandbox test send</h2><p className="text-xs text-muted-foreground">Only allowlisted, SES-verified addresses can receive mail.</p></div>
+          <div><h2 className="font-bold">Internal SES test</h2><p className="text-xs text-muted-foreground">Use only an internal allowlisted address or an SES mailbox simulator.</p></div>
         </div>
         <div className="grid gap-4">
           <label className="grid gap-1.5 text-xs font-semibold">Recipient email
@@ -50,10 +50,7 @@ export default function EmailOperations({ steps }: { steps: Step[] }) {
           <button disabled={busy || !email || !pidStep} onClick={() => call('/api/marketing/email/test-send', { email, firstName, pidStep })} className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">
             {busy ? 'Working…' : 'Send test email'}
           </button>
-          <button disabled={busy || !email} onClick={() => call('/api/marketing/email/recipient-verification', { email })} className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50">
-            Request SES address verification
-          </button>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">AWS sends a confirmation message to this address. Use this only after the customer has agreed to participate in the sandbox test.</p>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">Customer confirmation is handled separately through the branded Sure Imports double-opt-in email. Do not use this form for customers while SES remains in sandbox.</p>
         </div>
       </section>
       <section className="rounded-xl border border-border bg-card p-6 shadow-soft">

@@ -144,6 +144,9 @@ model marketing_contacts {
   consentSource         String?                 @db.VarChar(120)
   consentContext        Json?
   consentAt             DateTime?
+  optInTokenHash        String?                 @unique @db.Char(64)
+  optInRequestedAt      DateTime?
+  optInExpiresAt        DateTime?
   unsubscribedAt        DateTime?
   bouncedAt             DateTime?
   complainedAt          DateTime?
