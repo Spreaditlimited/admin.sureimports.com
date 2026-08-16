@@ -93,7 +93,7 @@ async function syncSesContact(input: {
   }
 }
 
-export async function sendMarketingEmail(input: {
+export async function sendSesMarketingEmail(input: {
   recipientEmail: string;
   firstName?: string | null;
   subject: string;
@@ -153,5 +153,10 @@ export async function sendMarketingEmail(input: {
   );
 
   if (!result.MessageId) throw new Error('SES did not return a message ID.');
-  return { messageId: result.MessageId, recipientEmail, mode: getMarketingSendMode() };
+  return {
+    messageId: result.MessageId,
+    recipientEmail,
+    provider: 'ses' as const,
+    mode: getMarketingSendMode(),
+  };
 }

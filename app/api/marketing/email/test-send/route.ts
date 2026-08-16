@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     const delivery = await sendSequenceStep({
       stepId: step.id, email: String(body.email || ''), firstName: body.firstName,
       idempotencyKey: `manual:${step.pidStep}:${String(body.email || '').toLowerCase()}:${randomUUID()}`,
+      testOnly: true,
     });
     return NextResponse.json({ statusx: 'SUCCESS', delivery });
   } catch (error) {

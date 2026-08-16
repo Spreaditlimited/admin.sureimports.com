@@ -16,6 +16,8 @@ test('SES marketing email uses the standard Sure Imports Hostinger design', () =
   assert.match(content, /const standardHtml = mailTemplate\(/);
   assert.match(content, /zBodyTitle: escapeHtml\(input\.bodyTitle \|\| input\.subject\)/);
   assert.match(content, /zButtonTitle: input\.ctaLabel/);
+  assert.match(content, /border-bottom:4px solid #c2410c/);
+  assert.match(content, /box-shadow:0 8px 18px/);
   assert.match(content, /\{\{amazonSESUnsubscribeUrl\}\}/);
   assert.match(content, /standardHtml\.replace\(/);
 

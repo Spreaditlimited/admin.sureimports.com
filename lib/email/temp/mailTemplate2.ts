@@ -5,6 +5,7 @@ interface Props {
   zBody2: any;
   zButtonTitle: any;
   zButtonLink: any;
+  zButtonStyle?: string;
 }
 
 const brandAddress = `
@@ -20,6 +21,7 @@ export const mailTemplate: React.FC<Props> = ({
   zBody2 = '',
   zButtonTitle = '',
   zButtonLink = '',
+  zButtonStyle = 'display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;',
 }) => {
   const hasButton = Boolean(zButtonTitle && zButtonLink);
 
@@ -67,7 +69,7 @@ export const mailTemplate: React.FC<Props> = ({
           ${hasButton ? `
           <tr>
             <td style="padding:0 28px 24px 28px;">
-              <a href="${zButtonLink}" style="display:inline-block;background:#f97316;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:700;">${zButtonTitle}</a>
+              <a href="${zButtonLink}" style="${zButtonStyle}">${zButtonTitle}</a>
               <div style="margin-top:12px;color:#64748b;font-size:12px;line-height:1.6;">
                 If the button does not work, copy and paste this link into your browser:<br/>
                 <a href="${zButtonLink}" style="color:#1558b0;text-decoration:none;word-break:break-all;">${zButtonLink}</a>

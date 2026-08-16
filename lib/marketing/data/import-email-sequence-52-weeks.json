@@ -8,11 +8,11 @@
     {
       "stepNumber": 0,
       "delayDays": 0,
-      "title": "Welcome Email",
-      "subject": "Your China import guide is ready",
-      "previewText": "Start with the guide, then follow the weekly lessons.",
-      "bodyText": "Hi {{firstName}},\n\nYour guide is ready.\n\nBefore you buy anything from China, remember this: importing is not just about finding a cheap supplier. You need the right product, a supplier you can verify, clear pricing, sensible shipping, and a way to check risks before money leaves your account.\n\nOver the next 52 weeks, I’ll send you one practical import lesson every week. Each email will focus on one thing: product selection, supplier checks, landed cost, payment risk, shipping, inspections, or scaling your import business.\n\nStart with the guide today. When you are ready to investigate suppliers more seriously, use Supplier Intelligence.",
-      "ctaLabel": "Keep learning in the Sure Imports China import resource hub",
+      "title": "Welcome to Sure Imports Insights",
+      "subject": "Welcome to Sure Imports Insights",
+      "previewText": "Your first practical China import lesson starts here.",
+      "bodyText": "Hi {{firstName}},\n\nThank you for confirming that you would like to receive Sure Imports Insights.\n\nBefore you buy anything from China, remember this: importing is not simply about finding the cheapest supplier. You need the right product, a supplier you can verify, clear pricing, sensible shipping, and a way to understand the risks before money leaves your account.\n\nOver the next 52 weeks, I’ll send you one practical import lesson each week. We will examine product selection, supplier checks, landed cost, payment risk, shipping, inspections, and how to build a more resilient import business.\n\nYou can begin with the China import resource hub. It explains the wider import process and brings together practical resources you can use as questions arise.",
+      "ctaLabel": "Visit Import Hub",
       "ctaUrl": "https://www.sureimports.com/import-from-china-to-nigeria"
     },
     {

@@ -5,7 +5,13 @@ import { RefreshCw, Send, ShieldCheck } from 'lucide-react';
 
 type Step = { pidStep: string; stepNumber: number; title: string; subject: string };
 
-export default function EmailOperations({ steps }: { steps: Step[] }) {
+export default function EmailOperations({
+  steps,
+  provider,
+}: {
+  steps: Step[];
+  provider: 'hostinger' | 'ses';
+}) {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [pidStep, setPidStep] = useState(steps[0]?.pidStep || '');
@@ -21,7 +27,7 @@ export default function EmailOperations({ steps }: { steps: Step[] }) {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || 'Request failed.');
-      setMessage(result.delivery ? `Sent. SES message ID: ${result.delivery.sesMessageId}` : 'Completed successfully.');
+      setMessage(result.delivery ? `Sent. Provider message ID: ${result.delivery.sesMessageId}` : (result.message || 'Completed successfully.'));
       if (url.includes('/seed')) window.location.reload();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Request failed.');
@@ -33,7 +39,7 @@ export default function EmailOperations({ steps }: { steps: Step[] }) {
       <section className="rounded-xl border border-border bg-card p-6 shadow-soft">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2 text-primary"><Send className="h-4 w-4" /></div>
-          <div><h2 className="font-bold">Internal SES test</h2><p className="text-xs text-muted-foreground">Use only an internal allowlisted address or an SES mailbox simulator.</p></div>
+          <div><h2 className="font-bold">Internal {provider === 'hostinger' ? 'Hostinger' : 'SES'} test</h2><p className="text-xs text-muted-foreground">Send a real sequence email to an address you control before activating a campaign.</p></div>
         </div>
         <div className="grid gap-4">
           <label className="grid gap-1.5 text-xs font-semibold">Recipient email
@@ -50,7 +56,7 @@ export default function EmailOperations({ steps }: { steps: Step[] }) {
           <button disabled={busy || !email || !pidStep} onClick={() => call('/api/marketing/email/test-send', { email, firstName, pidStep })} className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">
             {busy ? 'Working…' : 'Send test email'}
           </button>
-          <p className="text-[11px] leading-relaxed text-muted-foreground">Customer confirmation is handled separately through the branded Sure Imports double-opt-in email. Do not use this form for customers while SES remains in sandbox.</p>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">This test control does not subscribe the recipient. Customer delivery remains restricted to contacts who completed the Sure Imports double opt-in.</p>
         </div>
       </section>
       <section className="rounded-xl border border-border bg-card p-6 shadow-soft">
@@ -59,8 +65,9 @@ export default function EmailOperations({ steps }: { steps: Step[] }) {
           <div><h2 className="font-bold">Operations</h2><p className="text-xs text-muted-foreground">Safe administrative controls.</p></div>
         </div>
         <div className="grid gap-3">
+          {provider === 'hostinger' ? <button type="button" disabled={busy} onClick={() => call('/api/marketing/email/provider/verify')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><ShieldCheck className="h-4 w-4" /> Verify Hostinger connection</button> : null}
           <button disabled={busy} onClick={() => call('/api/marketing/email/sequence/seed')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><RefreshCw className="h-4 w-4" /> Import or refresh 53 emails</button>
-          <button disabled={busy} onClick={() => call('/api/marketing/email/events/process')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><RefreshCw className="h-4 w-4" /> Process SES events now</button>
+          {provider === 'ses' ? <button type="button" disabled={busy} onClick={() => call('/api/marketing/email/events/process')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><RefreshCw className="h-4 w-4" /> Process SES events now</button> : null}
         </div>
         {message && <p className="mt-4 break-words rounded-lg bg-muted p-3 text-xs leading-relaxed">{message}</p>}
       </section>
