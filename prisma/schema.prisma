@@ -582,6 +582,7 @@ model orders {
   additionalCostDescription String?
   pidAdmin                  String?
   pidAdminLast              String?
+  claimedAt                 DateTime?
   status                    String?
   ext1                      String?
   ext2                      String?

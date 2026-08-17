@@ -5,7 +5,7 @@ import AnimateHeight from 'react-animate-height';
 import TableProcurementProducts from './TableProcurementProducts';
 import Loader from '@/app/uix/Loader';
 import { useSearchParams } from 'next/navigation';
-import { Check, Copy, CornerRightDown } from 'lucide-react';
+import { Check, Copy, CornerRightDown, UserCheck } from 'lucide-react';
 import { getTimeDifference } from '@/lib/getTimeDifference';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
@@ -40,6 +40,11 @@ interface Order {
   updatedAt: string; // Added to interface based on your usage
   products: Product[];
   user: User; // Added based on your usage
+  claimedByAdmin: {
+    pidAdmin: string;
+    adminName: string;
+    claimedAt: string;
+  } | null;
 }
 
 interface User {
@@ -97,6 +102,7 @@ const ComponentsAccordionsBasic = () => {
   const [orderALL, setOrderALL] = useState<Order[]>([]);
   const [cleanupRunning, setCleanupRunning] = useState(false);
   const [copiedOrderId, setCopiedOrderId] = useState<string>('');
+  const [claimingOrderId, setClaimingOrderId] = useState<string>('');
   const { user } = useAuth();
   const canRunCleanup = user?.userStatus === 'superadmin' || user?.userStatus === 'L1';
 
@@ -136,6 +142,41 @@ const ComponentsAccordionsBasic = () => {
       toast.error('Unable to copy order ID');
     }
   };
+
+  const claimOrder = async (pidOrder: string) => {
+    setClaimingOrderId(pidOrder);
+    try {
+      const response = await fetch(
+        `/api/procurement/orders/${encodeURIComponent(pidOrder)}/claim`,
+        { method: 'POST' },
+      );
+      const data = await response.json();
+      if (!response.ok || data.statusx !== 'SUCCESS') {
+        toast.error(data.message || 'Unable to claim this order.');
+        await fetchDataOrder();
+        return;
+      }
+
+      setOrderALL((orders) =>
+        orders.map((order) =>
+          order.pidOrder === pidOrder
+            ? { ...order, claimedByAdmin: data.claim }
+            : order,
+        ),
+      );
+      toast.success('Order claimed successfully.');
+    } catch {
+      toast.error('Unable to claim this order.');
+    } finally {
+      setClaimingOrderId('');
+    }
+  };
+
+  const formatClaimedAt = (value: string) =>
+    new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value));
 
   // GET RECORDS FROM DATABASE
   async function fetchDataOrder() {
@@ -286,6 +327,16 @@ const ComponentsAccordionsBasic = () => {
 
               {/* Right Side: Dates & Icon */}
               <div className="flex items-center justify-between sm:justify-end gap-6">
+                {datax.claimedByAdmin && (
+                  <div className="hidden rounded-md border border-primary/20 bg-primary/10 px-3 py-1.5 text-right sm:block">
+                    <span className="block text-xs font-semibold text-primary">
+                      Claimed by {datax.claimedByAdmin.adminName}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      {formatClaimedAt(datax.claimedByAdmin.claimedAt)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex flex-col sm:items-end text-xs text-muted-foreground">
                   <span>Updated: {getTimeDifference(datax.updatedAt)}</span>
                   <span>Created: {getTimeDifference(datax.createdAt)}</span>
@@ -300,6 +351,41 @@ const ComponentsAccordionsBasic = () => {
             {/* Accordion Content */}
             <AnimateHeight duration={300} height={isActive ? 'auto' : 0}>
               <div className="border-t border-border p-4 sm:p-6 bg-background/50 space-y-6">
+                {status === 'pending' && (
+                  <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                    {datax.claimedByAdmin ? (
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-full bg-primary/10 p-2 text-primary">
+                          <UserCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            Claimed by {datax.claimedByAdmin.adminName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Treating this order since {formatClaimedAt(datax.claimedByAdmin.claimedAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">This order is unclaimed</p>
+                          <p className="text-xs text-muted-foreground">Claim it to show other admins that you are treating it.</p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={claimingOrderId === datax.pidOrder}
+                          onClick={() => claimOrder(datax.pidOrder)}
+                          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <UserCheck className="h-4 w-4" />
+                          {claimingOrderId === datax.pidOrder ? 'Claiming...' : 'Claim Order'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
                 
                 {/* Customer Details Panel */}
                 <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
