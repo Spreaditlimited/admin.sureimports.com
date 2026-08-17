@@ -117,7 +117,7 @@ const ExchangeRatesForm: React.FC<ExchangeRateProps> = ({ rates }) => {
                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">/ CBM</span>
                                 </div>
                                 <p className="text-[10px] text-muted-foreground italic">
-                                    Alternate all-inclusive sea rate used by the quotation builder. It does not replace country shipping plans.
+                                    Authoritative Nigeria sea-shipping rate used by procurement, quotations, and the public shipping-rate page. New orders snapshot this rate when they are created.
                                 </p>
                             </div>
 

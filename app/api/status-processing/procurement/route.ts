@@ -104,6 +104,8 @@ export async function POST(request: Request) {
     },
     select: {
       status: true,
+      shippingMeasurementUnit: true,
+      shippingPricingVersion: true,
     },
   });
 
@@ -135,7 +137,10 @@ export async function POST(request: Request) {
 
     if (!Number.isFinite(actualWeightValue) || actualWeightValue <= 0 || !Number.isFinite(actualDomesticShippingCostValue) || actualDomesticShippingCostValue <= 0) {
       return NextResponse.json(
-        { statusx: 'ACTION_FAILED', message: 'Actual weight and domestic shipping cost are required to move this order to Pay for Shipping.' },
+        {
+          statusx: 'ACTION_FAILED',
+          message: `Actual ${orderRecord.shippingMeasurementUnit === 'CBM' ? 'volume' : 'weight'} and domestic shipping cost are required to move this order to Pay for Shipping.`,
+        },
         { status: 400 },
       );
     }
@@ -459,6 +464,10 @@ export async function POST(request: Request) {
     // .................... PENDING STAGE MAIL ....................//
     if(newStatus == "pending"){
 
+          const preserveServerSnapshot =
+            recordStatus === 'bank-pending-saved-orders' &&
+            orderRecord.shippingPricingVersion === 2;
+
           //UPDATE AND BAKE ORDER DETAILS
           const updatex = await prisma.orders.update({
             where: {  
@@ -466,15 +475,15 @@ export async function POST(request: Request) {
                       pidOrder: pidOrder 
                   },
             data: {
-                      orderShippingCost: orderShippingCost,
-                      orderTotalCost: orderTotalCost,
-                      vat: vat,
-                      serviceCharge: serviceCharge,
-                      exchangeRate1: exchangeRate1,
-                      exchangeRate2: exchangeRate2,
-                      exchangeRate3: exchangeRate3,
-                      orderWeight: actualWeight,
-                      shippingCost1: actualDomesticShippingCost,
+                      orderShippingCost: preserveServerSnapshot ? undefined : orderShippingCost,
+                      orderTotalCost: preserveServerSnapshot ? undefined : orderTotalCost,
+                      vat: preserveServerSnapshot ? undefined : vat,
+                      serviceCharge: preserveServerSnapshot ? undefined : serviceCharge,
+                      exchangeRate1: preserveServerSnapshot ? undefined : exchangeRate1,
+                      exchangeRate2: preserveServerSnapshot ? undefined : exchangeRate2,
+                      exchangeRate3: preserveServerSnapshot ? undefined : exchangeRate3,
+                      orderWeight: preserveServerSnapshot ? undefined : actualWeight,
+                      shippingCost1: preserveServerSnapshot ? undefined : actualDomesticShippingCost,
                       updatedAt: new Date(),
             },
           });

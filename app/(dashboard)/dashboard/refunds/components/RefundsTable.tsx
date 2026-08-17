@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle,
   ChevronLeft,
@@ -9,8 +9,8 @@ import {
   Loader2,
   RefreshCw,
   Search,
-} from 'lucide-react';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface Customer {
   pidUser: string;
@@ -42,19 +42,22 @@ interface RefundRecord {
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
-function formatCurrency(amount: string | number | null | undefined, currency = 'NGN') {
-  const value = Number.parseFloat(String(amount || '0'));
+function formatCurrency(
+  amount: string | number | null | undefined,
+  currency = "NGN",
+) {
+  const value = Number.parseFloat(String(amount || "0"));
   const safeValue = Number.isFinite(value) ? value : 0;
-  const safeCurrency = String(currency || 'NGN').toUpperCase();
+  const safeCurrency = String(currency || "NGN").toUpperCase();
 
   try {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
       currency: safeCurrency,
       minimumFractionDigits: 2,
     }).format(safeValue);
   } catch {
-    return `${safeCurrency} ${safeValue.toLocaleString('en-NG', {
+    return `${safeCurrency} ${safeValue.toLocaleString("en-NG", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -62,28 +65,37 @@ function formatCurrency(amount: string | number | null | undefined, currency = '
 }
 
 function formatDate(dateString: string | null) {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-GB', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  if (!dateString) return "N/A";
+  return new Date(dateString).toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
 function statusBadge(status: string | null) {
-  const s = String(status || 'pending').toLowerCase();
-  let style = 'bg-muted text-muted-foreground border-border';
-  if (s === 'pending') style = 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-  if (s === 'requested') style = 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-  if (s === 'wallet-transferred') style = 'bg-purple-500/10 text-purple-600 border-purple-500/20';
-  if (s === 'paid') style = 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
-  if (s === 'cancelled' || s === 'rejected') style = 'bg-destructive/10 text-destructive border-destructive/20';
+  const s = String(status || "pending").toLowerCase();
+  let style = "bg-muted text-muted-foreground border-border";
+  if (s === "pending")
+    style = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+  if (s === "requested")
+    style = "bg-blue-500/10 text-blue-600 border-blue-500/20";
+  if (s === "wallet-transferred")
+    style = "bg-purple-500/10 text-purple-600 border-purple-500/20";
+  if (s === "paid")
+    style = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+  if (s === "refunded")
+    style = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+  if (s === "cancelled" || s === "rejected")
+    style = "bg-destructive/10 text-destructive border-destructive/20";
 
   return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${style}`}>
-      {s.replace('-', ' ')}
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${style}`}
+    >
+      {s.replace("-", " ")}
     </span>
   );
 }
@@ -97,12 +109,16 @@ export default function RefundsTable() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [totalsByCurrency, setTotalsByCurrency] = useState<Record<string, number>>({});
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [serviceType, setServiceType] = useState('');
+  const [totalsByCurrency, setTotalsByCurrency] = useState<
+    Record<string, number>
+  >({});
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [serviceType, setServiceType] = useState("");
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
-  const [selectedRefund, setSelectedRefund] = useState<RefundRecord | null>(null);
+  const [selectedRefund, setSelectedRefund] = useState<RefundRecord | null>(
+    null,
+  );
 
   const fetchRefunds = useCallback(async () => {
     setLoading(true);
@@ -120,17 +136,17 @@ export default function RefundsTable() {
       const response = await fetch(`/api/refunds?${params}`);
       const data = await response.json();
 
-      if (data.statusx === 'SUCCESS') {
+      if (data.statusx === "SUCCESS") {
         setRefunds(data.data || []);
         setTotalPages(data.totalPages || 1);
         setTotalCount(data.totalCount || 0);
         setTotalsByCurrency(data.totalsByCurrency || {});
         setServiceTypes(data.serviceTypes || []);
       } else {
-        setError(data.message || 'Failed to fetch refunds');
+        setError(data.message || "Failed to fetch refunds");
       }
     } catch {
-      setError('Connection error. Please try again.');
+      setError("Connection error. Please try again.");
       setRefunds([]);
     } finally {
       setLoading(false);
@@ -144,36 +160,39 @@ export default function RefundsTable() {
 
   const markPaid = async (refund: RefundRecord) => {
     const reference = window.prompt(
-      'Payment reference or note for this refund',
-      refund.ext1 || refund.pidRefund
+      "Bank payment reference or note for this refund",
+      refund.ext1 || refund.pidRefund,
     );
     if (reference === null) return;
 
     setSettlingId(refund.pidRefund);
     try {
-      const response = await fetch(`/api/refunds/${refund.pidRefund}/mark-paid`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference }),
-      });
+      const response = await fetch(
+        `/api/refunds/${refund.pidRefund}/mark-paid`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference }),
+        },
+      );
       const data = await response.json();
 
-      if (!response.ok || data.statusx !== 'SUCCESS') {
-        toast.error(data.message || 'Failed to mark refund as paid');
+      if (!response.ok || data.statusx !== "SUCCESS") {
+        toast.error(data.message || "Failed to mark refund as refunded");
         return;
       }
 
-      toast.success(data.message || 'Refund marked as paid');
+      toast.success(data.message || "Refund marked as refunded");
       fetchRefunds();
     } catch {
-      toast.error('Failed to mark refund as paid');
+      toast.error("Failed to mark refund as refunded");
     } finally {
       setSettlingId(null);
     }
   };
 
   const canMarkPaid = (refund: RefundRecord) =>
-    String(refund.refundStatus || '').toLowerCase() !== 'paid';
+    String(refund.refundStatus || "").toLowerCase() === "requested";
 
   return (
     <div className="space-y-6">
@@ -185,25 +204,43 @@ export default function RefundsTable() {
           <div className="mt-3 flex flex-wrap gap-3">
             {Object.keys(totalsByCurrency).length > 0 ? (
               Object.entries(totalsByCurrency).map(([currency, amount]) => (
-                <div key={currency} className="rounded-md border border-border bg-muted/20 px-4 py-3">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{currency}</div>
-                  <div className="text-2xl font-bold text-foreground">{formatCurrency(amount, currency)}</div>
+                <div
+                  key={currency}
+                  className="rounded-md border border-border bg-muted/20 px-4 py-3"
+                >
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {currency}
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {formatCurrency(amount, currency)}
+                  </div>
                 </div>
               ))
             ) : (
-              <div className="text-2xl font-bold text-foreground">{formatCurrency(0)}</div>
+              <div className="text-2xl font-bold text-foreground">
+                {formatCurrency(0)}
+              </div>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">Across {totalCount} refund records</p>
+          <p className="text-xs text-muted-foreground">
+            Across {totalCount} refund records
+          </p>
         </div>
         <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card p-6 text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Open Items
+            Manual Refund Requests
           </span>
           <span className="mt-1 text-3xl font-bold text-foreground">
-            {refunds.filter((item) => String(item.refundStatus || '').toLowerCase() !== 'paid').length}
+            {
+              refunds.filter(
+                (item) =>
+                  String(item.refundStatus || "").toLowerCase() === "requested",
+              ).length
+            }
           </span>
-          <span className="text-[10px] font-medium text-muted-foreground">ON THIS PAGE</span>
+          <span className="text-[10px] font-medium text-muted-foreground">
+            ON THIS PAGE
+          </span>
         </div>
       </div>
 
@@ -235,6 +272,7 @@ export default function RefundsTable() {
             <option value="pending">Pending</option>
             <option value="requested">Requested</option>
             <option value="wallet-transferred">Wallet Transferred</option>
+            <option value="refunded">Refunded</option>
             <option value="paid">Paid</option>
             <option value="cancelled">Cancelled</option>
           </select>
@@ -249,7 +287,9 @@ export default function RefundsTable() {
           >
             <option value="">All Services</option>
             {serviceTypes.map((item) => (
-              <option key={item} value={item}>{item}</option>
+              <option key={item} value={item}>
+                {item}
+              </option>
             ))}
           </select>
 
@@ -263,14 +303,18 @@ export default function RefundsTable() {
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring"
             >
               {ITEMS_PER_PAGE_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option} / page</option>
+                <option key={option} value={option}>
+                  {option} / page
+                </option>
               ))}
             </select>
             <button
               onClick={fetchRefunds}
               className="rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-muted"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
             </button>
           </div>
         </div>
@@ -303,39 +347,64 @@ export default function RefundsTable() {
                 </tr>
               ) : refunds.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center text-muted-foreground">
+                  <td
+                    colSpan={6}
+                    className="px-6 py-20 text-center text-muted-foreground"
+                  >
                     No refunds found.
                   </td>
                 </tr>
               ) : (
                 refunds.map((refund) => {
                   const customerName =
-                    `${refund.customer?.userFirstname || ''} ${refund.customer?.userLastname || ''}`.trim() ||
-                    'Unknown Customer';
+                    `${refund.customer?.userFirstname || ""} ${refund.customer?.userLastname || ""}`.trim() ||
+                    "Unknown Customer";
 
                   return (
-                    <tr key={refund.pidRefund} className="transition-colors hover:bg-muted/30">
+                    <tr
+                      key={refund.pidRefund}
+                      className="transition-colors hover:bg-muted/30"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
-                          <span className="font-bold text-foreground">{refund.pidRefund}</span>
-                          <span className="text-[11px] text-muted-foreground">Order: {refund.pidOrder || 'N/A'}</span>
-                          <span className="text-[11px] text-muted-foreground">{formatDate(refund.createdAt)}</span>
+                          <span className="font-bold text-foreground">
+                            {refund.pidRefund}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            Order: {refund.pidOrder || "N/A"}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {formatDate(refund.createdAt)}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
-                          <span className="font-semibold text-foreground">{customerName}</span>
-                          <span className="text-[11px] text-muted-foreground">{refund.customer?.userEmail || refund.pidUser || 'N/A'}</span>
-                          <span className="text-[11px] text-muted-foreground">{refund.customer?.userPhone || 'No phone'}</span>
+                          <span className="font-semibold text-foreground">
+                            {customerName}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {refund.customer?.userEmail ||
+                              refund.pidUser ||
+                              "N/A"}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {refund.customer?.userPhone || "No phone"}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-xs text-muted-foreground">
-                        {refund.serviceType || 'N/A'}
+                        {refund.serviceType || "N/A"}
                       </td>
                       <td className="px-6 py-4 font-bold">
-                        {formatCurrency(refund.amount, refund.currency || 'NGN')}
+                        {formatCurrency(
+                          refund.amount,
+                          refund.currency || "NGN",
+                        )}
                       </td>
-                      <td className="px-6 py-4">{statusBadge(refund.refundStatus)}</td>
+                      <td className="px-6 py-4">
+                        {statusBadge(refund.refundStatus)}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -356,7 +425,7 @@ export default function RefundsTable() {
                               ) : (
                                 <CheckCircle className="h-3.5 w-3.5" />
                               )}
-                              Mark Paid
+                              Mark Refunded
                             </button>
                           )}
                         </div>
@@ -370,7 +439,9 @@ export default function RefundsTable() {
         </div>
 
         <div className="flex items-center justify-between border-t border-border px-6 py-4">
-          <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
           <div className="flex gap-2">
             <button
               disabled={page === 1}
@@ -381,7 +452,9 @@ export default function RefundsTable() {
             </button>
             <button
               disabled={page === totalPages}
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              onClick={() =>
+                setPage((current) => Math.min(totalPages, current + 1))
+              }
               className="rounded-md border border-border p-2 text-muted-foreground transition hover:bg-muted disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />
@@ -395,8 +468,12 @@ export default function RefundsTable() {
           <div className="w-full max-w-2xl rounded-lg border border-border bg-card p-6 shadow-soft">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-foreground">{selectedRefund.pidRefund}</h2>
-                <p className="text-sm text-muted-foreground">Refund details and customer settlement information</p>
+                <h2 className="text-lg font-bold text-foreground">
+                  {selectedRefund.pidRefund}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Refund details and customer settlement information
+                </p>
               </div>
               <button
                 onClick={() => setSelectedRefund(null)}
@@ -407,13 +484,38 @@ export default function RefundsTable() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Detail label="Customer" value={`${selectedRefund.customer?.userFirstname || ''} ${selectedRefund.customer?.userLastname || ''}`.trim() || 'Unknown'} />
-              <Detail label="Email" value={selectedRefund.customer?.userEmail || 'N/A'} />
-              <Detail label="Bank" value={selectedRefund.customer?.bank_name || 'N/A'} />
-              <Detail label="Account Name" value={selectedRefund.customer?.bank_account_name || 'N/A'} />
-              <Detail label="Account Number" value={selectedRefund.customer?.bank_account_number || 'N/A'} />
-              <Detail label="Wallet Reference" value={selectedRefund.ext1 || 'N/A'} />
-              <Detail label="Settlement Metadata" value={selectedRefund.ext2 || 'N/A'} wide />
+              <Detail
+                label="Customer"
+                value={
+                  `${selectedRefund.customer?.userFirstname || ""} ${selectedRefund.customer?.userLastname || ""}`.trim() ||
+                  "Unknown"
+                }
+              />
+              <Detail
+                label="Email"
+                value={selectedRefund.customer?.userEmail || "N/A"}
+              />
+              <Detail
+                label="Bank"
+                value={selectedRefund.customer?.bank_name || "N/A"}
+              />
+              <Detail
+                label="Account Name"
+                value={selectedRefund.customer?.bank_account_name || "N/A"}
+              />
+              <Detail
+                label="Account Number"
+                value={selectedRefund.customer?.bank_account_number || "N/A"}
+              />
+              <Detail
+                label="Wallet Reference"
+                value={selectedRefund.ext1 || "N/A"}
+              />
+              <Detail
+                label="Settlement Metadata"
+                value={selectedRefund.ext2 || "N/A"}
+                wide
+              />
             </div>
           </div>
         </div>
@@ -432,9 +534,15 @@ function Detail({
   wide?: boolean;
 }) {
   return (
-    <div className={`rounded-md border border-border bg-muted/20 p-3 ${wide ? 'md:col-span-2' : ''}`}>
-      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 break-words text-sm font-medium text-foreground">{value}</div>
+    <div
+      className={`rounded-md border border-border bg-muted/20 p-3 ${wide ? "md:col-span-2" : ""}`}
+    >
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-1 break-words text-sm font-medium text-foreground">
+        {value}
+      </div>
     </div>
   );
 }

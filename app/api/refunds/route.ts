@@ -90,11 +90,12 @@ export async function GET(request: NextRequest) {
     const userMap = new Map(users.map((user) => [user.pidUser, user]));
     const data = refunds.map((refund) => ({
       ...refund,
+      currency: refund.currency || 'UNSPECIFIED',
       customer: refund.pidUser ? userMap.get(refund.pidUser) || null : null,
     }));
 
     const totalsByCurrency = allForTotal.reduce<Record<string, number>>((totals, item) => {
-      const currency = (item.currency || 'NGN').toUpperCase();
+      const currency = (item.currency || 'UNSPECIFIED').toUpperCase();
       totals[currency] = (totals[currency] || 0) + parseAmount(item.amount);
       return totals;
     }, {});

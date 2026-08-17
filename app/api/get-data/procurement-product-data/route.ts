@@ -1,310 +1,60 @@
-// app/api/orders/total/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // Assuming you have Prisma setup in `lib/prisma.ts`
 import { formatShippingPlanDisplay } from '@/lib/formatShippingPlan';
-
-function replaceNullWithZero<T>(value: T | null): T | number {
-  return value === null ? 0 : value;
-}
+import { getProcurementOrderLifecycle } from '@/lib/procurement/orderLifecycle';
 
 export async function GET(request: NextRequest) {
   const pidOrder = request.nextUrl.searchParams.get('pidOrder');
-
+  if (!pidOrder) {
+    return NextResponse.json(
+      { error: 'pidOrder is required' },
+      { status: 400 },
+    );
+  }
 
   try {
-    //TOTAL PRODUCTS PRICE
-    const price: any = await prisma.$queryRaw`
-        SELECT pidOrder, SUM(productQuantity * productPrice) as totalPricex
-        FROM products
-        WHERE pidOrder = ${pidOrder}
-      `;
+    const lifecycle = await getProcurementOrderLifecycle(pidOrder);
+    const currencyType = lifecycle.order.currencyType || '';
 
-    //TOTAL PRODUCTS WEIGHT
-    const weight: any = await prisma.$queryRaw`
-        SELECT pidOrder, SUM(productQuantity * productWeight) as totalWeightx
-        FROM products
-        WHERE pidOrder = ${pidOrder}
-      `;
-
-    //PRODUCTS TOTAL COUNT
-    const count = await prisma.products.count({
-      where: {
-        pidOrder: pidOrder as any,
-      },
-    });
-
-    //PRODUCTS ALL RECORDS
-    const products = await prisma.products.findMany({
-      where: {
-        pidOrder: pidOrder as any,
-      },
-    });
-
-    //ORDER CURRENCY, COUNTRY AND SHIPPING PLAN
-    const orderRecord = await prisma.orders.findUnique({
-      where: { pidOrder: pidOrder as string | undefined },
-      select: {
-        currencyType: true,
-        destinationCountry: true,
-        shippingPlan: true,
-        orderWeight: true,
-        shippingCost1: true,
-        status: true,
-      },
-    });
-
-    //DESTINATION COUNTRY
-    const destinationCountry: any = await prisma.country.findUnique({
-      where: {
-        pidCountry: orderRecord?.destinationCountry as string | undefined,
-      },
-      select: {
-        countryName: true,
-      },
-    });
-
-  
-
-    //SHIPPING RATE DYNAMIC
-    const shippingRate: any = await prisma.shippingplan.findUnique({
-      where: {
-        //countryId: orderRecord?.destinationCountry,
-        pidShippingPlan: orderRecord?.shippingPlan,
-      } as any,
-      select: {
-        shippingPlanRate: true,
-        shippingPlanUnit: true,
-      },
-    });
-
-
-    //SHIPPING RATE
-    const shippingPlanNamex: any = await prisma.shippingplan.findUnique({
-      where: {
-        //countryId: orderRecord?.destinationCountry,
-        pidShippingPlan: orderRecord?.shippingPlan,
-      } as any,
-      select: {
-        shippingPlanRate: true,
-        shippingPlanName: true,
-        shippingPlanUnit: true,
-      },
-    });
-
-    //EXCHANGE RATE
-    const exRate = await prisma.exchange_rate.findUnique({
-      where: { id: 1 as number },
-      select: {
-        currency_name1: true,
-        currency_sign1: true,
-        currency_name2: true,
-        currency_sign2: true,
-        currency_name3: true,
-        currency_sign3: true,
-        service_charge: true,
-        vat: true,
-        exNairaToDollar: true,
-        exYuanToDollar: true,
-        exNairaToYuan: true,
-      },
-    });
-    
-
-    const totalPriceValue = replaceNullWithZero(price[0].totalPricex);
-    const totalWeight = replaceNullWithZero(weight[0].totalWeightx);
-    const totalCount = replaceNullWithZero(count);
-
-    //CURRENCY UPDATE
-    let totalPrice = totalPriceValue;
-
-    if (orderRecord?.currencyType == 'USD') {
-      totalPrice = totalPriceValue;
-    }
-    if (orderRecord?.currencyType == 'CNY') {
-      totalPrice = totalPriceValue / parseFloat(exRate?.exYuanToDollar as any);
-    }
-
-    console.log('JESUS CHRIST IS GREAT!!!');
-
-    //CURRENCY UPDATE
-    let currencyName = '';
-    let currencyLogo = '';
-
-    //currency name
-    if (orderRecord?.currencyType == 'USD') {
-      currencyName = 'USD';
-    }
-    if (orderRecord?.currencyType == 'CNY') {
-      currencyName = 'Yuan';
-    }
-    if (orderRecord?.currencyType == 'NGN') {
-      currencyName = 'Naira';
-    }
-
-    //currency logo
-    if (orderRecord?.currencyType == 'USD') {
-      currencyLogo = '$';
-    }
-    if (orderRecord?.currencyType == 'CNY') {
-      currencyLogo = '¥';
-    }
-    if (orderRecord?.currencyType == 'NGN') {
-      currencyLogo = '₦';
-    }
-
-    
-
-    //Shipping Plan Name
-    const shippingPlanName = formatShippingPlanDisplay(shippingPlanNamex?.shippingPlanName);
-
-    //Shipping rate unit defaults to KG to preserve existing plans.
-    const shippingPlanRate = shippingRate.shippingPlanRate || 10; //value in USD
-    const shippingPlanUnit = shippingRate.shippingPlanUnit === 'CBM' ? 'CBM' : 'KG';
-
-    //Domestic Shipping Cost within China
-    const domesticShippingCost = 5; //value in USD
-
-    //International Shipping Cost
-    const internationalShippingCost =
-      totalWeight * parseFloat(shippingPlanRate as any);
-
-    //Estimated Total Weight of Order
-    let estimatedTotalShippingCost =
-      internationalShippingCost + domesticShippingCost;
-
-      
-    //Service Charge
-    const serviceChargeValue =
-      totalPrice * (parseFloat(exRate?.service_charge as any) / 100);
-
-    //vat value
-    const vatValue = serviceChargeValue * (parseFloat(exRate?.vat as any) / 100);
-
-    //Grand Total Cost
-    let grandTotalCost = parseFloat(
-      totalPrice + estimatedTotalShippingCost + serviceChargeValue + vatValue,
-    );
-
-    //SERVICE CHARGES, EXCHANGE RATES & VAT
-    let vat = exRate?.vat ?? 7;
-    let serviceCharge = exRate?.service_charge ?? 15;
-    let exNairaToDollar = exRate?.exNairaToDollar ?? 1550;
-    let exYuanToDollar = exRate?.exYuanToDollar ?? 7.5;
-    let exNairaToYuan = exRate?.exNairaToYuan ?? 205;
-
-    //CHECK IF USER NOT IN SAVED ORDER OR IN ON-HOLD ORDER
-    const order = await prisma.orders.findUnique({
-      where: { pidOrder: pidOrder as string | undefined },
-      select: {
-        orderShippingCost: true,
-        orderTotalCost: true,
-        orderWeight: true,
-        vat: true,
-        serviceCharge: true,
-        exchangeRate1: true,
-        exchangeRate2: true,
-        exchangeRate3: true,
-        status: true,
-      },
-    });
-
-
-    
-       
-    const useLatestEstimate = orderRecord?.status == 'saved' || orderRecord?.status == 'on-hold';
-    if (!useLatestEstimate) {
-        grandTotalCost = order?.orderTotalCost as any;
-        estimatedTotalShippingCost = order?.orderShippingCost as any;
-        //totalWeight = order?.orderWeight as any;
-        vat = order?.vat ?? vat;
-        serviceCharge = order?.serviceCharge ?? serviceCharge;
-        exNairaToDollar = order?.exchangeRate1 ?? exNairaToDollar;
-        exYuanToDollar = order?.exchangeRate2 ?? exYuanToDollar;
-        exNairaToYuan = order?.exchangeRate3 ?? exNairaToYuan;
-    }
-
-    //ACTUAL WEIGHT & DOMESTIC SHIPPING COST
-    const actualWeight = orderRecord?.orderWeight;
-    const actualDomesticShippingCost = parseFloat(orderRecord?.shippingCost1 as any ?? 0) / parseFloat(exYuanToDollar as any ?? 0);
-    const actualInternationalShippingCost = parseFloat(actualWeight as any ?? 0) * parseFloat(shippingPlanRate as any ?? 0);
-    const actualTotalShippingCost = actualDomesticShippingCost + actualInternationalShippingCost;
-    const costDifference = actualTotalShippingCost - parseFloat(estimatedTotalShippingCost as any ?? 0);
-    
-    
-    
-    //--------------------------------//RESPONSE//--------------------------------//
     return NextResponse.json({
-      //PRODUCTS RECORD TABLE
-      productsGetAll: products,
-
-      //TOTAL PRICE
-      productsTotalPrice: totalPrice,
-
-      //PRODUCTS TOTAL COUNT
-      productsTotalCount: totalCount,
-
-      //TOTAL WEIGHT
-      productsTotalWeight: totalWeight,
-
-      //ACTUAL WEIGHT
-      actualWeight: actualWeight,
-
-      //ACTUAL DOMESTIC SHIPPING COST
-      actualDomesticShippingCost: actualDomesticShippingCost,
-
-      //ACTUAL INTERNATIONAL SHIPPING COST
-      actualInternationalShippingCost: actualInternationalShippingCost,
-
-      //ACTUAL TOTAL SHIPPING COST
-      actualTotalShippingCost: actualTotalShippingCost,
-
-      //COST DIFFERENCE
-      costDifference: costDifference,
-
-      //CURRENCY TYPE, NAME & LOGO
-      currencyType: orderRecord?.currencyType,
-      currencyName: currencyName,
-      currencyLogo: currencyLogo,
-
-      //NAIRA TO DOLLAR EX-RATE
-      exNairaToDollar: exNairaToDollar,
-
-      //YUAN TO DOLLAR EX-RATE
-      exYuanToDollar: exYuanToDollar,
-
-      //NAIRA TO YUAN EX-RATE
-      exNairaToYuan: exNairaToYuan,
-
-      //SERVICE CHARGE PERCENTAGE & VALUE
-      serviceCharge: serviceCharge,
-      serviceChargeValue: serviceChargeValue,
-
-      //VAT PERCENTAGE & VALUE
-      vat: vat,
-      vatValue: vatValue,
-
-      //SHIPPING DESTINATION COUNTRY
-      destinationCountry: destinationCountry.countryName,
-
-      //SHIPPING PLAN NAME & RATE
-      shippingPlanName: shippingPlanName,
-      shippingPlanRate: shippingPlanRate,
-      shippingPlanUnit: shippingPlanUnit,
-
-      //DOMESTIC SHIPPING COST
-      domesticShippingCost: domesticShippingCost,
-
-      //INTERNATIONAL SHIPPING COST
-      internationalShippingCost: internationalShippingCost,
-
-      //ESTIMATED TOTAL SHIPPING COST
-      estimatedTotalShippingCost: estimatedTotalShippingCost,
-
-      //GRAND TOTAL COST IN DOLLARS
-      grandTotalCost: grandTotalCost,
+      productsGetAll: lifecycle.products,
+      productsTotalPrice: lifecycle.productsTotalUsd,
+      productsTotalCount: lifecycle.productsCount,
+      productsTotalWeight: lifecycle.totalMeasurement,
+      actualWeight: lifecycle.actualMeasurement,
+      actualDomesticShippingCost: lifecycle.actualDomesticShippingCostUsd,
+      actualInternationalShippingCost:
+        lifecycle.actualInternationalShippingCostUsd,
+      actualTotalShippingCost: lifecycle.actualTotalShippingCostUsd,
+      costDifference: lifecycle.costDifferenceUsd,
+      currencyType,
+      currencyName:
+        currencyType === 'CNY'
+          ? 'Yuan'
+          : currencyType === 'NGN'
+            ? 'Naira'
+            : 'USD',
+      currencyLogo:
+        currencyType === 'CNY' ? '¥' : currencyType === 'NGN' ? '₦' : '$',
+      exNairaToDollar: lifecycle.rates.ngnPerUsd,
+      exYuanToDollar: lifecycle.rates.cnyPerUsd,
+      exNairaToYuan: lifecycle.rates.ngnPerCny,
+      serviceCharge: lifecycle.serviceChargePercent,
+      serviceChargeValue: lifecycle.serviceChargeValueUsd,
+      vat: lifecycle.vatPercent,
+      vatValue: lifecycle.vatValueUsd,
+      destinationCountry: lifecycle.destinationCountry,
+      shippingPlanName: formatShippingPlanDisplay(lifecycle.shippingPlanName),
+      shippingPlanRate: lifecycle.shippingRate,
+      shippingPlanUnit: lifecycle.shippingUnit,
+      shippingRateCurrency: lifecycle.shippingRateCurrency,
+      usesMeasurementPricing: lifecycle.usesMeasurementPricing,
+      domesticShippingCost: lifecycle.domesticShippingCostUsd,
+      internationalShippingCost: lifecycle.internationalShippingCostUsd,
+      estimatedTotalShippingCost: lifecycle.estimatedShippingCostUsd,
+      grandTotalCost: lifecycle.grandTotalUsd,
     });
   } catch (error) {
-    console.error('Error calculating total amount:', error);
+    console.error('Error calculating procurement order lifecycle:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 },

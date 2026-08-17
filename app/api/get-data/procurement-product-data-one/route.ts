@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
             productCategory: true,
             productPrice: true,
             productWeight: true,
+            shippingMeasurePerUnit: true,
             productQuantity: true,
             productInfo: true,
             createdAt: true,

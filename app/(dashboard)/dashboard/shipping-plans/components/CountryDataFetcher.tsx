@@ -9,6 +9,8 @@ export interface ShippingPlan {
     shippingPlanName: string | null;
     shippingPlanRate: number | null;
     shippingPlanUnit: string | null;
+    shippingRateCurrency?: 'USD' | 'NGN';
+    isGloballyManaged?: boolean;
 }
 
 export interface CountryWithPlans {
@@ -24,20 +26,41 @@ export interface CountryWithPlans {
  */
 export async function CountryDataFetcher(): Promise<CountryWithPlans[]> {
     try {
-        const countries = await prisma.country.findMany({
-            include: {
-                shippingPlans: {
-                    orderBy: {
-                        shippingPlanName: 'asc'
-                    }
+        const [countries, financial] = await Promise.all([
+            prisma.country.findMany({
+                include: {
+                    shippingPlans: {
+                        orderBy: {
+                            shippingPlanName: 'asc'
+                        }
+                    },
                 },
-            },
-            orderBy: {
-                countryName: 'asc'
-            }
-        });
+                orderBy: {
+                    countryName: 'asc'
+                }
+            }),
+            prisma.exchange_rate.findUnique({
+                where: { id: 1 },
+                select: { quotationSeaRateNgnPerCbm: true },
+            }),
+        ]);
+        const nigeriaSeaRate = Number(financial?.quotationSeaRateNgnPerCbm || 0);
 
-        return countries as CountryWithPlans[];
+        return countries.map((country) => ({
+            ...country,
+            shippingPlans: country.shippingPlans.map((plan) => {
+                const isNigeriaSea =
+                    country.countryName?.trim().toLowerCase() === 'nigeria' &&
+                    plan.shippingPlanName?.trim().toUpperCase() === 'SEA_SHIPPING';
+                return {
+                    ...plan,
+                    shippingPlanRate: isNigeriaSea ? nigeriaSeaRate : plan.shippingPlanRate,
+                    shippingPlanUnit: isNigeriaSea ? 'CBM' : plan.shippingPlanUnit,
+                    shippingRateCurrency: isNigeriaSea ? 'NGN' as const : 'USD' as const,
+                    isGloballyManaged: isNigeriaSea,
+                };
+            }),
+        })) as CountryWithPlans[];
     } catch (error) {
         console.error("[LOGISTICS_FETCHER_ERROR]:", error);
         return [];

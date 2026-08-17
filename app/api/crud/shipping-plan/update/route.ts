@@ -30,6 +30,7 @@ async function refreshUnpaidProcurementOrdersForPlan(pidShippingPlan: string, sh
     where: {
       shippingPlan: pidShippingPlan,
       status: { in: UNPAID_PROCUREMENT_STATUSES },
+      NOT: { shippingPricingVersion: 2 },
       products: { some: {} },
     },
     select: {

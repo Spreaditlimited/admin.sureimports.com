@@ -20,6 +20,7 @@ interface Product {
     productCategory: string;
     productPrice: string;
     productWeight: string;
+    shippingMeasurePerUnit?: string | number | null;
     productQuantity: string;
     productInfo: string;
     productStatus: string;
@@ -99,6 +100,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [shippingPlanName, setShippingPlanName] = useState<string>('...');
   const [shippingPlanRate, setShippingPlanRate] = useState<number>(0);
   const [shippingPlanUnit, setShippingPlanUnit] = useState<string>('KG');
+  const [shippingRateCurrency, setShippingRateCurrency] = useState<string>('USD');
+  const [usesMeasurementPricing, setUsesMeasurementPricing] = useState(false);
   const [domesticShippingCost, setDomesticShippingCost] = useState<number>(0);
   const [internationalShippingCost, setInternationalShippingCost] = useState<number>(0);
   const [estimatedTotalShippingCost, setEstimatedTotalShippingCost] = useState<number>(0);
@@ -160,6 +163,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         setShippingPlanName(data.shippingPlanName);
         setShippingPlanRate(replaceNullWithZero(data.shippingPlanRate));
         setShippingPlanUnit(data.shippingPlanUnit === 'CBM' ? 'CBM' : 'KG');
+        setShippingRateCurrency(data.shippingRateCurrency === 'NGN' ? 'NGN' : 'USD');
+        setUsesMeasurementPricing(Boolean(data.usesMeasurementPricing));
         setDomesticShippingCost(replaceNullWithZero(data.domesticShippingCost));
         setInternationalShippingCost(replaceNullWithZero(data.internationalShippingCost));
         setEstimatedTotalShippingCost(replaceNullWithZero(data.estimatedTotalShippingCost));
@@ -320,7 +325,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               <th className="px-4 py-3">Product Name</th>
               <th className="px-4 py-3 text-center">Unit Price ({currencyType})</th>
               <th className="px-4 py-3 text-center">Quantity</th>
-              <th className="px-4 py-3 text-center">Weight ({shippingPlanUnit})</th>
+              <th className="px-4 py-3 text-center">{shippingPlanUnit === 'CBM' ? 'CBM per item' : 'Weight per item'} ({shippingPlanUnit})</th>
               <th className="px-4 py-3 text-center">Total Price ({currencyType})</th>
             </tr>
           </thead>
@@ -343,7 +348,9 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
                   </td>
                   <td className="px-4 py-3 text-center">{datax.productPrice}</td>
                   <td className="px-4 py-3 text-center">{datax.productQuantity}</td>
-                  <td className="px-4 py-3 text-center">{datax.productWeight}</td>
+                  <td className="px-4 py-3 text-center">
+                    {usesMeasurementPricing ? datax.shippingMeasurePerUnit : datax.productWeight}
+                  </td>
                   <td className="px-4 py-3 text-center font-medium">
                     {(parseFloat(datax.productQuantity) * parseFloat(datax.productPrice)).toFixed(2)}
                   </td>
@@ -427,7 +434,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Shipping Rate:</span>
-              <span className="font-medium text-foreground">${shippingPlanRate}/{shippingPlanUnit}</span>
+              <span className="font-medium text-foreground">{shippingRateCurrency === 'NGN' ? '₦' : '$'}{Number(shippingPlanRate).toLocaleString()}/{shippingPlanUnit}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Estimated Total {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'}:</span>
@@ -514,7 +521,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Plan Rate:</span>
-                <span className="font-medium text-foreground">${((shippingPlanRate as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} / {shippingPlanUnit}</span>
+                <span className="font-medium text-foreground">{shippingRateCurrency === 'NGN' ? '₦' : '$'}{Number(shippingPlanRate).toLocaleString()} / {shippingPlanUnit}</span>
               </div>
               <div className="flex justify-between pt-3 border-t border-border mt-3">
                 <span className="text-muted-foreground">Actual Domestic (China):</span>

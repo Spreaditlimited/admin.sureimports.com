@@ -25,6 +25,8 @@ type ShippingPlan = {
   shippingPlanName: string | null
   shippingPlanRate: number | null
   shippingPlanUnit: string | null
+  shippingRateCurrency?: "USD" | "NGN"
+  isGloballyManaged?: boolean
 }
 
 type Country = {
@@ -43,10 +45,10 @@ export function CountryTable({ countries }: { countries: Country[] }) {
   const [editingPlanUnit, setEditingPlanUnit] = useState<"KG" | "CBM">("KG")
   const [savingEdit, setSavingEdit] = useState(false)
 
-  const formatCurrency = (amount: number | null) => {
+  const formatCurrency = (amount: number | null, currency: "USD" | "NGN" = "USD") => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency,
     }).format(amount || 0);
   }
 
@@ -160,7 +162,7 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                             className="w-32 rounded border border-input bg-background px-2 py-1 text-right text-xs font-semibold"
                                           />
                                         ) : (
-                                          formatCurrency(plan.shippingPlanRate)
+                                          formatCurrency(plan.shippingPlanRate, plan.shippingRateCurrency)
                                         )}
                                       </td>
                                       <td className="px-4 py-3 text-right font-mono font-bold text-foreground">
@@ -179,7 +181,9 @@ export function CountryTable({ countries }: { countries: Country[] }) {
                                       </td>
                                       <td className="px-4 py-3 text-right">
                                         <div className="flex justify-end gap-1">
-                                          {editingPlanPid === plan.pidShippingPlan ? (
+                                          {plan.isGloballyManaged ? (
+                                            <span className="text-[10px] font-bold uppercase text-primary" title="Edit this rate under Exchange Rates">Global config</span>
+                                          ) : editingPlanPid === plan.pidShippingPlan ? (
                                             <>
                                               <button
                                                 disabled={savingEdit}

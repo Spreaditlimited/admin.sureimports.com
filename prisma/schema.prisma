@@ -487,6 +487,7 @@ model products {
   productCategory String?
   productPrice    Float?
   productWeight   Float?
+  shippingMeasurePerUnit Float?
   productQuantity Float?
   productInfo     String?
   productStatus   String?
@@ -561,6 +562,10 @@ model orders {
   orderShippingCostOld      String?
   orderTotalCost            String?
   orderWeight               String?
+  shippingPricingVersion    Int?
+  shippingMeasurementUnit   String?
+  shippingRateSnapshot      Float?
+  shippingRateCurrency      String?
   orderTotalCostOld         String?
   orderWeightOld            String?
   orderStatus               String?
