@@ -326,10 +326,10 @@ const ComponentsAccordionsBasic = () => {
               </div>
 
               {/* Right Side: Dates & Icon */}
-              <div className="flex items-center justify-between sm:justify-end gap-6">
+              <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:flex-nowrap sm:justify-end sm:gap-6">
                 {datax.claimedByAdmin && (
-                  <div className="hidden rounded-md border border-primary/20 bg-primary/10 px-3 py-1.5 text-right sm:block">
-                    <span className="block text-xs font-semibold text-primary">
+                  <div className="min-w-0 flex-1 rounded-md border border-primary/20 bg-primary/10 px-3 py-1.5 text-left sm:flex-none sm:text-right">
+                    <span className="block break-words text-xs font-semibold text-primary">
                       Claimed by {datax.claimedByAdmin.adminName}
                     </span>
                     <span className="block text-[11px] text-muted-foreground">
@@ -337,7 +337,7 @@ const ComponentsAccordionsBasic = () => {
                     </span>
                   </div>
                 )}
-                <div className="flex flex-col sm:items-end text-xs text-muted-foreground">
+                <div className="order-3 flex w-full flex-row justify-between text-xs text-muted-foreground sm:order-none sm:w-auto sm:flex-col sm:items-end">
                   <span>Updated: {getTimeDifference(datax.updatedAt)}</span>
                   <span>Created: {getTimeDifference(datax.createdAt)}</span>
                 </div>
