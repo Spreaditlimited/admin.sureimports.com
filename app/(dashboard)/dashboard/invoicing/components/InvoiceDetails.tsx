@@ -117,10 +117,15 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: Number(paymentAmount), paymentMethod, reference: paymentRef || null }),
       });
-      if (!res.ok) throw new Error('Failed to record payment');
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || 'Failed to record payment');
       setPaymentAmount('');
       setPaymentRef('');
-      toast.success("Payment recorded successfully");
+      toast.success(
+        json?.data?.approvedPaymentClaimPid
+          ? 'Payment recorded and matching claim approved'
+          : 'Payment recorded successfully',
+      );
       await fetchData();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to record payment');

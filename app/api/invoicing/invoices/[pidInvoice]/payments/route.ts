@@ -26,6 +26,10 @@ export async function POST(
     const { pidInvoice } = await params;
     const body = await request.json();
     const { amount, paymentMethod, reference, note, paidAt } = body;
+    const paymentReference =
+      typeof reference === 'string' && reference.trim()
+        ? reference.trim()
+        : null;
 
     if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Valid payment amount is required' }, { status: 400 });
@@ -76,13 +80,13 @@ export async function POST(
           amount: toMoneyInput(amountNum),
           currency: invoice.currency,
           paymentMethod,
-          reference: reference || null,
+          reference: paymentReference,
           note: note || null,
           paidAt: paidAt ? new Date(paidAt) : new Date(),
           recordedByPidUser: admin.pidUser,
         },
       });
-      const legacyTxRef = reference || pidInvoicePayment;
+      const legacyTxRef = paymentReference || pidInvoicePayment;
       await tx.payments.create({
         data: {
           pidPayment: generatePid('PMT'),
@@ -145,6 +149,55 @@ export async function POST(
         },
       });
 
+      const matchingClaim = await tx.invoice_payment_claims.findFirst({
+        where: {
+          pidInvoice,
+          status: 'PENDING_CONFIRMATION',
+          claimedAmount: toMoneyInput(amountNum),
+          ...(paymentReference
+            ? { paymentReference }
+            : {}),
+        },
+        orderBy: { claimedAt: 'asc' },
+        select: { pidClaim: true },
+      });
+
+      let approvedPaymentClaimPid: string | null = null;
+      if (matchingClaim) {
+        const claimApproval = await tx.invoice_payment_claims.updateMany({
+          where: {
+            pidClaim: matchingClaim.pidClaim,
+            status: 'PENDING_CONFIRMATION',
+          },
+          data: {
+            status: 'APPROVED',
+            reviewedByPidUser: admin.pidUser,
+            reviewedAt: new Date(),
+            approvedInvoicePaymentPid: pidInvoicePayment,
+          },
+        });
+
+        if (claimApproval.count === 1) {
+          approvedPaymentClaimPid = matchingClaim.pidClaim;
+          await tx.invoice_audit_logs.create({
+            data: {
+              pidAuditLog: generatePid('IAL'),
+              pidInvoice,
+              pidUser: admin.pidUser,
+              action: 'CUSTOMER_PAYMENT_CLAIM_AUTO_APPROVED',
+              oldStatus: invoice.status,
+              newStatus,
+              metadata: JSON.stringify({
+                pidClaim: matchingClaim.pidClaim,
+                pidInvoicePayment,
+                amount: amountNum,
+                paymentReference,
+              }),
+            },
+          });
+        }
+      }
+
       await tx.invoice_audit_logs.create({
         data: {
           pidAuditLog: generatePid('IAL'),
@@ -156,14 +209,15 @@ export async function POST(
           metadata: JSON.stringify({
             amount: amountNum,
             paymentMethod,
-            reference: reference || null,
+            reference: paymentReference,
             pidInvoicePayment,
             receiptNumber,
+            approvedPaymentClaimPid,
           }),
         },
       });
 
-      return { payment, updatedInvoice, receipt };
+      return { payment, updatedInvoice, receipt, approvedPaymentClaimPid };
     });
 
     const customerEmail = invoice.customerEmail;
@@ -190,7 +244,7 @@ export async function POST(
         totalPaid: newPaid,
         balanceAfter: newBalance,
         paymentMethod,
-        paymentReference: reference || null,
+        paymentReference,
         paidAt: result.payment.paidAt,
         receiptLink,
       })
