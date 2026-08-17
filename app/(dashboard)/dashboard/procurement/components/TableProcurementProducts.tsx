@@ -1,9 +1,9 @@
 import Loader from "@/app/uix/Loader";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
+import { normalizeProductUrl } from '@/lib/productUrl';
 
 // (Assuming PrismaClient is used in an API route, not directly here since this is 'use client', 
 // but leaving your imports intact as requested)
@@ -325,23 +325,31 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </tr>
           </thead>
           <tbody className="divide-y divide-border bg-card text-foreground">
-            {productALL.map((datax: Product, index: number) => (
-              <tr key={index + 1} className="hover:bg-muted/30 transition-colors">
-                <td className="px-4 py-3 text-center">{index + 1}</td>
-                <td className="px-4 py-3">
-                  <Link href={datax.productLink} target="blank" className="font-semibold text-primary hover:underline">
-                    {datax.productName}
-                  </Link>
-                  <p className="text-xs text-muted-foreground mt-1">Info: {datax.productInfo}</p>
-                </td>
-                <td className="px-4 py-3 text-center">{datax.productPrice}</td>
-                <td className="px-4 py-3 text-center">{datax.productQuantity}</td>
-                <td className="px-4 py-3 text-center">{datax.productWeight}</td>
-                <td className="px-4 py-3 text-center font-medium">
-                  {(parseFloat(datax.productQuantity) * parseFloat(datax.productPrice)).toFixed(2)}
-                </td>
-              </tr>
-            ))}
+            {productALL.map((datax: Product, index: number) => {
+              const productUrl = normalizeProductUrl(datax.productLink);
+
+              return (
+                <tr key={index + 1} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 text-center">{index + 1}</td>
+                  <td className="px-4 py-3">
+                    {productUrl ? (
+                      <a href={productUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+                        {datax.productName}
+                      </a>
+                    ) : (
+                      <span className="font-semibold">{datax.productName}</span>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">Info: {datax.productInfo}</p>
+                  </td>
+                  <td className="px-4 py-3 text-center">{datax.productPrice}</td>
+                  <td className="px-4 py-3 text-center">{datax.productQuantity}</td>
+                  <td className="px-4 py-3 text-center">{datax.productWeight}</td>
+                  <td className="px-4 py-3 text-center font-medium">
+                    {(parseFloat(datax.productQuantity) * parseFloat(datax.productPrice)).toFixed(2)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -216,11 +216,11 @@ export async function GET(request: NextRequest) {
         grandTotalCost = order?.orderTotalCost as any;
         estimatedTotalShippingCost = order?.orderShippingCost as any;
         //totalWeight = order?.orderWeight as any;
-        vat = order?.vat as any;
-        serviceCharge = order?.serviceCharge as any;
-        exNairaToDollar = order?.exchangeRate1 as any;
-        exYuanToDollar = order?.exchangeRate2 as any;
-        exNairaToYuan = order?.exchangeRate3 as any;
+        vat = order?.vat ?? vat;
+        serviceCharge = order?.serviceCharge ?? serviceCharge;
+        exNairaToDollar = order?.exchangeRate1 ?? exNairaToDollar;
+        exYuanToDollar = order?.exchangeRate2 ?? exYuanToDollar;
+        exNairaToYuan = order?.exchangeRate3 ?? exNairaToYuan;
     }
 
     //ACTUAL WEIGHT & DOMESTIC SHIPPING COST
@@ -267,16 +267,16 @@ export async function GET(request: NextRequest) {
       currencyLogo: currencyLogo,
 
       //NAIRA TO DOLLAR EX-RATE
-      exNairaToDollar: exRate?.exNairaToDollar,
+      exNairaToDollar: exNairaToDollar,
 
       //YUAN TO DOLLAR EX-RATE
-      exYuanToDollar: exRate?.exYuanToDollar,
+      exYuanToDollar: exYuanToDollar,
 
       //NAIRA TO YUAN EX-RATE
-      exNairaToYuan: exRate?.exNairaToYuan,
+      exNairaToYuan: exNairaToYuan,
 
       //SERVICE CHARGE PERCENTAGE & VALUE
-      serviceCharge: exRate?.service_charge,
+      serviceCharge: serviceCharge,
       serviceChargeValue: serviceChargeValue,
 
       //VAT PERCENTAGE & VALUE
