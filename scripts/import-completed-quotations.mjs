@@ -62,7 +62,34 @@ const quotations = [
     maxPages: 5,
     preparedAt: new Date('2026-08-13T11:56:00+01:00'),
   },
+  {
+    pidQuotation: 'QTBLEGACY260818SUN167',
+    quotationNumber: 'SI-Q-260818-SUN167',
+    customerName: 'Cafe One',
+    customerLocation: 'Nigeria',
+    pidUser: 'USR-1780312864600-14DBFG',
+    title: 'SUN-167 (CG) Electric Motorcycles',
+    filename: 'Sure-Imports-SUN-167-Electric-Motorcycles-Quotation-Cafe-One.pdf',
+    maxPages: 2,
+    preparedAt: new Date('2026-08-18T12:50:00+01:00'),
+  },
+  {
+    pidQuotation: 'QTBLEGACY260819STERLINGBWC',
+    quotationNumber: 'SI-Q-260819-BWC',
+    customerName: 'Sterling Bank',
+    customerLocation: 'Lagos, Nigeria',
+    pidUser: 'USR-1780312864600-14DBFG',
+    title: 'Body-Worn Camera & Digital Evidence Management Solution',
+    filename: 'Sure-Imports-Body-Worn-Camera-Digital-Evidence-Quotation-Sterling-Bank.pdf',
+    maxPages: 8,
+    preparedAt: new Date('2026-08-19T10:30:00+01:00'),
+  },
 ];
+
+const requestedQuotationNumbers = new Set(process.argv.slice(2));
+const quotationsToImport = requestedQuotationNumbers.size
+  ? quotations.filter((quotation) => requestedQuotationNumbers.has(quotation.quotationNumber))
+  : quotations;
 
 function requireEnv(name) {
   const value = String(process.env[name] || '').trim();
@@ -98,7 +125,7 @@ async function uploadPdf(buffer, quotationNumber) {
 }
 
 try {
-  for (const quotation of quotations) {
+  for (const quotation of quotationsToImport) {
     const path = resolve(sourceRoot, quotation.filename);
     const [buffer, fileInfo] = await Promise.all([readFile(path), stat(path)]);
     if (buffer.subarray(0, 5).toString('ascii') !== '%PDF-') throw new Error(`${quotation.filename} is not a valid PDF.`);

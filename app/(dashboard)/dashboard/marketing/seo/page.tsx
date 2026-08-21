@@ -27,10 +27,20 @@ import GscImportControl from "./components/GscImportControl"
 
 type OpportunityStatus = "open" | "reviewing" | "dismissed" | "applied"
 type OpportunityType = "all" | "low_ctr" | "ranking_push"
+type OpportunityPageType =
+  | "all"
+  | "blog"
+  | "commercial"
+  | "sureimports_home"
+  | "linescout_home"
+  | "white_label_catalog"
+  | "white_label_product"
+  | "public_page"
 
 interface SeoOpportunity {
   pidOpportunity: string
   pageUrl: string
+  pageType: string
   blogSlug: string | null
   blogTitle: string | null
   pidBlog: string | null
@@ -82,6 +92,15 @@ const typeOptions: Array<{ label: string; value: OpportunityType }> = [
   { label: "All Types", value: "all" },
   { label: "Low CTR", value: "low_ctr" },
   { label: "Ranking Push", value: "ranking_push" },
+]
+
+const pageTypeOptions: Array<{ label: string; value: OpportunityPageType }> = [
+  { label: "All Pages", value: "all" },
+  { label: "Blogs", value: "blog" },
+  { label: "Commercial", value: "commercial" },
+  { label: "White Label Hub", value: "white_label_catalog" },
+  { label: "Products", value: "white_label_product" },
+  { label: "Other Public", value: "public_page" },
 ]
 
 async function requireSuperAdminPageAccess() {
@@ -218,6 +237,9 @@ function typeLabel(value: string) {
 
 function ctaLabel(value?: string | null) {
   if (!value) return "General procurement"
+  if (value === "linescout_white_label") return "LineScout white label"
+  if (value === "linescout_machine_sourcing") return "LineScout machine sourcing"
+  if (value === "linescout_bulk_sourcing") return "LineScout bulk sourcing"
   return value
     .split("_")
     .filter(Boolean)
@@ -270,9 +292,11 @@ function MetricCard({
 async function getSeoOpportunities(input: {
   status: OpportunityStatus | "all"
   type: OpportunityType
+  pageType: OpportunityPageType
 }) {
   const statusFilter = input.status === "all" ? null : input.status
   const typeFilter = input.type === "all" ? null : input.type
+  const pageTypeFilter = input.pageType === "all" ? null : input.pageType
 
   const [statsRows, opportunityRows, importRunRows] = await Promise.all([
     prisma.$queryRaw<OpportunityStats[]>(
@@ -291,6 +315,7 @@ async function getSeoOpportunities(input: {
         SELECT
           o.pidOpportunity,
           o.pageUrl,
+          o.pageType,
           o.blogSlug,
           b.pidBlog,
           b.blogTitle,
@@ -332,6 +357,7 @@ async function getSeoOpportunities(input: {
         LEFT JOIN blog b ON b.blogSlug = o.blogSlug
         WHERE (${statusFilter} IS NULL OR o.status = ${statusFilter})
           AND (${typeFilter} IS NULL OR o.opportunityType = ${typeFilter})
+          AND (${pageTypeFilter} IS NULL OR o.pageType = ${pageTypeFilter})
         ORDER BY o.confidence DESC, o.impressions DESC, o.createdAt DESC
         LIMIT 100
       `,
@@ -362,16 +388,17 @@ async function getSeoOpportunities(input: {
 export default async function SeoOpportunitiesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ status?: string; type?: string; draft?: string; draftError?: string }>
+  searchParams?: Promise<{ status?: string; type?: string; pageType?: string; draft?: string; draftError?: string }>
 }) {
   await requireSuperAdminPageAccess()
 
   const resolvedSearchParams = searchParams ? await searchParams : {}
   const status = (resolvedSearchParams.status || "open") as OpportunityStatus | "all"
   const type = (resolvedSearchParams.type || "all") as OpportunityType
+  const pageType = (resolvedSearchParams.pageType || "all") as OpportunityPageType
   const draftError = resolvedSearchParams.draftError
   const draftCreated = resolvedSearchParams.draft === "created"
-  const { stats, opportunities, importRuns } = await getSeoOpportunities({ status, type })
+  const { stats, opportunities, importRuns } = await getSeoOpportunities({ status, type, pageType })
   const activeImport = importRuns.find((run) => run.status === "started") || null
   const latestCompletedImport = importRuns.find((run) => run.status === "completed") || null
   const visibleImport = activeImport || importRuns[0] || null
@@ -395,7 +422,7 @@ export default async function SeoOpportunitiesPage({
           {statusOptions.map((option) => (
             <Link
               key={option.value}
-              href={`/dashboard/marketing/seo?status=${option.value}&type=${type}`}
+              href={`/dashboard/marketing/seo?status=${option.value}&type=${type}&pageType=${pageType}`}
               className={`rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${
                 status === option.value
                   ? "border-primary bg-primary text-primary-foreground"
@@ -483,7 +510,7 @@ export default async function SeoOpportunitiesPage({
           {typeOptions.map((option) => (
             <Link
               key={option.value}
-              href={`/dashboard/marketing/seo?status=${status}&type=${option.value}`}
+              href={`/dashboard/marketing/seo?status=${status}&type=${option.value}&pageType=${pageType}`}
               className={`rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${
                 type === option.value
                   ? "border-primary bg-primary/10 text-primary"
@@ -494,6 +521,22 @@ export default async function SeoOpportunitiesPage({
             </Link>
           ))}
         </div>
+      </div>
+
+      <div className="mx-1 flex flex-wrap gap-2">
+        {pageTypeOptions.map((option) => (
+          <Link
+            key={option.value}
+            href={`/dashboard/marketing/seo?status=${status}&type=${type}&pageType=${option.value}`}
+            className={`rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+              pageType === option.value
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {option.label}
+          </Link>
+        ))}
       </div>
 
       <section className="mx-1 overflow-hidden rounded-xl border border-border bg-card shadow-soft">
@@ -538,6 +581,9 @@ export default async function SeoOpportunitiesPage({
                         <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                           CTA: {ctaLabel(opportunity.recommendedCta)}
                         </span>
+                        <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          {opportunity.pageType.replace(/_/g, " ")}
+                        </span>
                         {opportunity.latestChangeId && opportunity.latestChangeStatus !== "rejected" && (
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
                             <Sparkles className="h-3 w-3" />
@@ -547,7 +593,7 @@ export default async function SeoOpportunitiesPage({
                       </div>
 
                       <h3 className="mt-4 text-lg font-bold leading-tight text-foreground">
-                        {opportunity.blogTitle || opportunity.blogSlug || "Unmatched blog page"}
+                        {opportunity.blogTitle || opportunity.blogSlug || opportunity.pageType.replace(/_/g, " ")}
                       </h3>
                       <p className="mt-2 font-mono text-[11px] text-muted-foreground break-all">
                         {opportunity.pageUrl}
@@ -605,12 +651,14 @@ export default async function SeoOpportunitiesPage({
                       )}
 
                       <div className="grid gap-2">
-                        <Link
-                          href={editHref}
-                          className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground hover:bg-muted"
-                        >
-                          Edit Blog <ArrowUpRight className="h-3.5 w-3.5" />
-                        </Link>
+                        {opportunity.pageType === "blog" && (
+                          <Link
+                            href={editHref}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground hover:bg-muted"
+                          >
+                            Edit Blog <ArrowUpRight className="h-3.5 w-3.5" />
+                          </Link>
+                        )}
 
                         <a
                           href={opportunity.pageUrl}
@@ -654,7 +702,7 @@ export default async function SeoOpportunitiesPage({
                           </button>
                         </form>
 
-                        {(!opportunity.latestChangeId || opportunity.latestChangeStatus === "rejected") && (
+                        {opportunity.pageType === "blog" && (!opportunity.latestChangeId || opportunity.latestChangeStatus === "rejected") && (
                           <form action={generateDraftAction}>
                             <input type="hidden" name="pidOpportunity" value={opportunity.pidOpportunity} />
                             <GenerateDraftButton />

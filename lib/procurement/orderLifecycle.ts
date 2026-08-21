@@ -3,6 +3,14 @@ import { prisma } from '@/lib/prisma';
 const EDITABLE_ESTIMATE_STATUSES = new Set(['saved', 'on-hold']);
 
 function finite(value: unknown, fallback = 0) {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === 'string' && value.trim() === '')
+  ) {
+    return fallback;
+  }
+
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
