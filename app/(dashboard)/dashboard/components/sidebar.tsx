@@ -21,6 +21,7 @@ import {
   CalendarClock,
   ShieldCheck,
   Megaphone,
+  Camera,
 } from "lucide-react";
 import type React from "react";
 import {
@@ -89,6 +90,12 @@ const features: MenuItem[] = [
     icon: CalendarClock,
     path: "/dashboard/consultations",
     serviceKey: "consultations",
+  },
+  {
+    title: "Body Cam Enquiries",
+    icon: Camera,
+    path: "/dashboard/body-camera-enquiries",
+    serviceKey: "body_camera_solutions",
   },
   {
     title: "Pay Supplier",

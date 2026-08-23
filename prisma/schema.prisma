@@ -1358,6 +1358,36 @@ model corporate_gift_request {
   updatedAt                     DateTime @updatedAt
 }
 
+model body_camera_enquiries {
+  id                         Int       @id @default(autoincrement())
+  pidEnquiry                 String    @unique @db.VarChar(80)
+  name                       String    @db.VarChar(100)
+  email                      String    @db.VarChar(160)
+  organisation               String    @db.VarChar(160)
+  phone                      String    @db.VarChar(40)
+  country                    String    @db.VarChar(80)
+  fleetSize                  String?   @db.VarChar(40)
+  liveCommand                String?   @db.VarChar(40)
+  timeframe                  String?   @db.VarChar(60)
+  requirements               String    @db.LongText
+  source                     String    @default("body-camera-solutions") @db.VarChar(200)
+  status                     String    @default("new") @db.VarChar(40)
+  assignedOwner              String?   @db.VarChar(160)
+  internalNotes              String?   @db.LongText
+  adminNotificationStatus    String    @default("pending") @db.VarChar(40)
+  customerNotificationStatus String    @default("pending") @db.VarChar(40)
+  notificationError          String?   @db.Text
+  submittedAt                DateTime  @default(now())
+  handledAt                  DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @default(now()) @updatedAt
+
+  @@index([status, submittedAt])
+  @@index([email])
+  @@index([organisation])
+  @@index([assignedOwner])
+}
+
 model corporate_sourcing_research_payments {
   id                       Int       @id @default(autoincrement())
   pidPayment               String    @unique @db.VarChar(80)

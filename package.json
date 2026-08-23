@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:search-policy": "node --test --experimental-strip-types tests/search-query-policy.test.mjs",
+    "test:research-expansion": "node --test --experimental-strip-types tests/supplier-research-expansion.test.mjs",
     "test:seo-links": "node --test --experimental-strip-types tests/seo-link-policy.test.mjs",
     "test:seo-review": "node --test tests/seo-review-workflow.test.mjs",
     "seed:marketing-email": "node scripts/seed-marketing-sequence.mjs",

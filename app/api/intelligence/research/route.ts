@@ -16,6 +16,12 @@ import {
   SUPPLIER_RESEARCH_RULES,
 } from '@/lib/intelligence/supplierResearchRules';
 import { assessSupplierSearchQuery } from '@/lib/intelligence/searchQueryPolicy';
+import {
+  filterUniqueNewSuppliers,
+  normalizeSupplierResearchCount,
+  supplierMatchesExisting,
+  type SupplierIdentity,
+} from '@/lib/intelligence/supplierResearchExpansion';
 import { requireAdmin, unauthorized } from '../../invoicing/_lib/invoicing';
 
 export const runtime = 'nodejs';
@@ -56,6 +62,7 @@ type ResearchJob = {
   id: number;
   pidJob: string;
   nicheName: string;
+  targetNicheId: string | null;
   targetSupplierCount: number;
   status: string;
   requestNotes: string | null;
@@ -119,9 +126,7 @@ function randomId(prefix: string) {
 }
 
 function normalizeTargetSupplierCount(value: unknown) {
-  const count = Number(value || 3);
-  if (!Number.isFinite(count)) return 3;
-  return Math.min(10, Math.max(3, Math.round(count)));
+  return normalizeSupplierResearchCount(value);
 }
 
 function normalizeImageFilename(value: string) {
@@ -174,6 +179,7 @@ async function ensureResearchJobsTable() {
       id INT NOT NULL AUTO_INCREMENT,
       pidJob VARCHAR(80) NOT NULL,
       nicheName VARCHAR(180) NOT NULL,
+      targetNicheId VARCHAR(80) NULL,
       targetSupplierCount INT NOT NULL DEFAULT 3,
       status VARCHAR(40) NOT NULL DEFAULT 'draft',
       requestNotes LONGTEXT NULL,
@@ -200,6 +206,7 @@ async function ensureResearchJobsTable() {
       KEY intelligence_research_jobs_status_idx (status),
       KEY intelligence_research_jobs_openai_response_idx (openAiResponseId),
       KEY intelligence_research_jobs_nicheName_idx (nicheName),
+      KEY intelligence_research_jobs_target_niche_idx (targetNicheId),
       PRIMARY KEY (id)
     ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `);
@@ -208,6 +215,7 @@ async function ensureResearchJobsTable() {
     'ALTER TABLE intelligence_research_jobs ADD COLUMN sourceSearchRequestId VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByPidUser VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN requestedByEmail VARCHAR(255) NULL',
+    'ALTER TABLE intelligence_research_jobs ADD COLUMN targetNicheId VARCHAR(80) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN openAiResponseId VARCHAR(100) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN openAiStatus VARCHAR(40) NULL',
     'ALTER TABLE intelligence_research_jobs ADD COLUMN openAiSubmittedAt DATETIME(3) NULL',
@@ -219,6 +227,7 @@ async function ensureResearchJobsTable() {
     'ALTER TABLE intelligence_research_jobs ADD COLUMN imageUploadedAt DATETIME(3) NULL',
     'ALTER TABLE intelligence_research_jobs ADD KEY intelligence_research_jobs_search_request_idx (sourceSearchRequestId)',
     'ALTER TABLE intelligence_research_jobs ADD KEY intelligence_research_jobs_openai_response_idx (openAiResponseId)',
+    'ALTER TABLE intelligence_research_jobs ADD KEY intelligence_research_jobs_target_niche_idx (targetNicheId)',
   ]) {
     try {
       await prisma.$executeRawUnsafe(statement);
@@ -397,6 +406,79 @@ function parseDraft(value: string | null): ResearchDraft | null {
   }
 }
 
+async function mergeAndRemoveAdditionalResearchJob(
+  job: ResearchJob,
+  draft: ResearchDraft,
+) {
+  if (!job.targetNicheId) return false;
+
+  const approvedSuppliers = (draft.suppliers || []).filter(
+    (supplier) => supplier.reviewStatus === 'approved',
+  );
+  if (approvedSuppliers.length === 0) return false;
+
+  return prisma.$transaction(async (tx) => {
+    const sourceRows = await tx.$queryRaw<Array<{ pidJob: string }>>`
+      SELECT pidJob
+      FROM intelligence_research_jobs
+      WHERE pidJob = ${job.pidJob}
+        AND targetNicheId = ${job.targetNicheId}
+        AND status IN ('approved', 'partially_approved')
+      LIMIT 1
+      FOR UPDATE
+    `;
+    if (!sourceRows[0]) return false;
+
+    const baseRows = await tx.$queryRaw<
+      Array<{ pidJob: string; draftJson: string | null }>
+    >`
+      SELECT pidJob, draftJson
+      FROM intelligence_research_jobs
+      WHERE pidJob <> ${job.pidJob}
+        AND targetNicheId IS NULL
+        AND status = 'approved'
+        AND LOWER(nicheName) = LOWER(${job.nicheName})
+      ORDER BY createdAt ASC
+      LIMIT 1
+      FOR UPDATE
+    `;
+    const baseJob = baseRows[0];
+
+    if (baseJob) {
+      const baseDraft = parseDraft(baseJob.draftJson);
+      if (!baseDraft) {
+        throw new Error(
+          'The original approved category job has an invalid supplier draft.',
+        );
+      }
+
+      for (const supplier of approvedSuppliers) {
+        if (!supplierMatchesExisting(supplier, baseDraft.suppliers)) {
+          baseDraft.suppliers.push(supplier);
+        }
+      }
+
+      await tx.$executeRaw`
+        UPDATE intelligence_research_jobs
+        SET
+          draftJson = ${JSON.stringify(baseDraft)},
+          targetSupplierCount = ${baseDraft.suppliers.length},
+          updatedAt = ${new Date()}
+        WHERE pidJob = ${baseJob.pidJob}
+      `;
+    }
+
+    const removed = await tx.$executeRaw`
+      DELETE FROM intelligence_research_jobs
+      WHERE pidJob = ${job.pidJob}
+        AND targetNicheId = ${job.targetNicheId}
+        AND status IN ('approved', 'partially_approved')
+    `;
+
+    return removed > 0;
+  });
+}
+
 function extractJson(text: string) {
   const trimmed = text.trim();
   if (trimmed.startsWith('{')) return trimmed;
@@ -492,6 +574,31 @@ async function getNicheSlugByPid(pidNiche: string) {
   return rows[0]?.slug || null;
 }
 
+async function getExistingNicheResearchContext(pidNiche: string) {
+  const niches = await prisma.$queryRaw<
+    Array<{ pidNiche: string; name: string; slug: string }>
+  >`
+    SELECT pidNiche, name, slug
+    FROM intelligence_niches
+    WHERE pidNiche = ${pidNiche}
+      AND status = 'published'
+    LIMIT 1
+  `;
+  const niche = niches[0];
+  if (!niche) return null;
+
+  const suppliers = await prisma.$queryRaw<SupplierIdentity[]>`
+    SELECT s.supplierName, s.officialWebsite
+    FROM intelligence_supplier_categories sc
+    INNER JOIN intelligence_suppliers s
+      ON s.pidSupplier = sc.supplierId
+    WHERE sc.nicheId = ${pidNiche}
+      AND s.status = 'published'
+  `;
+
+  return { ...niche, suppliers };
+}
+
 function summarizeDraftStatus(draft: ResearchDraft) {
   const suppliers = draft.suppliers || [];
   const statuses = suppliers.map((supplier) => supplier.reviewStatus || 'pending');
@@ -521,7 +628,10 @@ function normalizeLegacySupplierStatuses(draft: ResearchDraft, jobStatus: string
   };
 }
 
-async function unpublishSupplierDraft(supplier: ResearchSupplierDraft) {
+async function unpublishSupplierDraft(
+  supplier: ResearchSupplierDraft,
+  pidNiche: string,
+) {
   const supplierName = clean(supplier.supplierName, 180);
   const officialWebsite = clean(supplier.officialWebsite, 500);
   if (!supplierName && !officialWebsite) return false;
@@ -547,20 +657,29 @@ async function unpublishSupplierDraft(supplier: ResearchSupplierDraft) {
   const pidSupplier = byWebsite[0]?.pidSupplier || byName[0]?.pidSupplier;
   if (!pidSupplier) return false;
 
-  await prisma.$executeRaw`
+  const removed = await prisma.$executeRaw`
     DELETE FROM intelligence_supplier_categories
+    WHERE supplierId = ${pidSupplier}
+      AND nicheId = ${pidNiche}
+  `;
+
+  const remainingLinks = await prisma.$queryRaw<Array<{ total: bigint }>>`
+    SELECT COUNT(*) AS total
+    FROM intelligence_supplier_categories
     WHERE supplierId = ${pidSupplier}
   `;
 
-  await prisma.$executeRaw`
-    UPDATE intelligence_suppliers
-    SET
-      status = 'draft',
-      updatedAt = ${new Date()}
-    WHERE pidSupplier = ${pidSupplier}
-  `;
+  if (Number(remainingLinks[0]?.total || 0) === 0) {
+    await prisma.$executeRaw`
+      UPDATE intelligence_suppliers
+      SET
+        status = 'draft',
+        updatedAt = ${new Date()}
+      WHERE pidSupplier = ${pidSupplier}
+    `;
+  }
 
-  return true;
+  return removed > 0;
 }
 
 async function publishSupplierDraft(
@@ -664,16 +783,28 @@ type SupplierResearchInput = {
   targetSupplierCount: number;
   requestNotes: string;
   imageUrl?: string | null;
+  existingSuppliers?: SupplierIdentity[];
 };
 
 function supplierResearchPrompt(input: SupplierResearchInput) {
+  const exclusionList = (input.existingSuppliers || [])
+    .map((supplier) =>
+      [supplier.supplierName, supplier.officialWebsite].filter(Boolean).join(' — '),
+    )
+    .filter(Boolean);
+
   return [
     'You are a supplier research analyst for Sure Imports, a China sourcing and shipping company serving importers worldwide.',
     `Research the niche: ${input.nicheName}.`,
     input.imageUrl
       ? 'An image is attached. Use it only to understand the exact product being searched for, then apply the same supplier research rules below without changing them.'
       : '',
-    `Return ${input.targetSupplierCount} solid supplier candidates.`,
+    `Return up to ${input.targetSupplierCount} new, solid supplier candidates.`,
+    exclusionList.length
+      ? `This is additional research for an existing category. Do not return, re-research or rename any supplier already in the category. Existing suppliers to exclude:\n${exclusionList
+          .map((supplier) => `- ${supplier}`)
+          .join('\n')}`
+      : '',
     input.requestNotes ? `Admin notes: ${input.requestNotes}` : '',
     'Success means every returned candidate is a high-confidence direct manufacturer, names the specific product categories it manufactures, has category-specific production evidence, has an attributable official WhatsApp route, and contains a publication-ready commercial assessment. Return fewer candidates rather than filling the list with a weak or uncertain supplier.',
     'Before returning JSON, check every candidate against every rule. Remove any candidate whose manufacturer status, product fit, or official contact attribution is uncertain.',
@@ -703,6 +834,10 @@ async function submitSupplierResearch(input: SupplierResearchInput) {
       model: 'gpt-5.6-sol',
       reasoning: { effort: 'max' },
       tools: [{ type: 'web_search_preview' }],
+      max_tool_calls: Math.min(
+        40,
+        Math.max(8, input.targetSupplierCount * 4),
+      ),
       background: true,
       store: true,
       input: input.imageUrl
@@ -809,10 +944,13 @@ function parseSupplierResearchResponse(
     throw new Error('Research returned no supplier candidates.');
   }
 
-  const suppliers = draft.suppliers
-    .slice(0, input.targetSupplierCount)
-    .map(normalizeSupplierResearchCandidate)
-    .filter(supplierPassesResearchRules);
+  const suppliers = filterUniqueNewSuppliers(
+    draft.suppliers
+      .slice(0, input.targetSupplierCount)
+      .map(normalizeSupplierResearchCandidate)
+      .filter(supplierPassesResearchRules),
+    input.existingSuppliers || [],
+  );
 
   if (suppliers.length === 0) {
     throw new Error('Research returned no manufacturer suppliers with public WhatsApp evidence.');
@@ -895,11 +1033,18 @@ async function applySupplierResearchResponse(job: ResearchJob, data: any) {
   }
 
   try {
+    const existingContext = job.targetNicheId
+      ? await getExistingNicheResearchContext(job.targetNicheId)
+      : null;
+    if (job.targetNicheId && !existingContext) {
+      throw new Error('The selected existing product category is no longer available.');
+    }
     const draft = parseSupplierResearchResponse(data, {
       nicheName: job.nicheName,
       targetSupplierCount: job.targetSupplierCount,
       requestNotes: job.requestNotes || '',
       imageUrl: job.imageUrl,
+      existingSuppliers: existingContext?.suppliers || [],
     });
 
     const finalized = await prisma.$executeRaw`
@@ -956,6 +1101,7 @@ async function listJobs() {
       id,
       pidJob,
       nicheName,
+      targetNicheId,
       targetSupplierCount,
       status,
       requestNotes,
@@ -1272,6 +1418,10 @@ export async function POST(request: NextRequest) {
       formData?.get('sourceSearchRequestId') ?? body.sourceSearchRequestId,
       80,
     );
+    let targetNicheId = clean(
+      formData?.get('targetNicheId') ?? body.targetNicheId,
+      80,
+    );
     const formImage = formData?.get('image');
     const imageFile = formImage instanceof File && formImage.size > 0 ? formImage : null;
     let nicheName = clean(formData?.get('nicheName') ?? body.nicheName, 180);
@@ -1283,6 +1433,7 @@ export async function POST(request: NextRequest) {
     let requestedByEmail: string | null = null;
 
     if (sourceSearchRequestId) {
+      targetNicheId = '';
       const requests = await prisma.$queryRaw<IntelligenceSearchRequest[]>`
         SELECT
           pidSearch,
@@ -1332,7 +1483,39 @@ export async function POST(request: NextRequest) {
       requestedByEmail = searchRequest.email;
     }
 
-    if (!imageFile) {
+    let existingNicheContext: Awaited<
+      ReturnType<typeof getExistingNicheResearchContext>
+    > = null;
+    if (targetNicheId) {
+      await ensureSupplierTables();
+      existingNicheContext = await getExistingNicheResearchContext(targetNicheId);
+      if (!existingNicheContext) {
+        return NextResponse.json(
+          { success: false, error: 'The selected product category was not found.' },
+          { status: 404 },
+        );
+      }
+      nicheName = existingNicheContext.name;
+
+      const activeJobs = await prisma.$queryRaw<Array<{ pidJob: string }>>`
+        SELECT pidJob
+        FROM intelligence_research_jobs
+        WHERE targetNicheId = ${targetNicheId}
+          AND status IN ('queued', 'running', 'finalizing', 'restarting')
+        LIMIT 1
+      `;
+      if (activeJobs[0]) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Additional supplier research is already running for this category.',
+          },
+          { status: 409 },
+        );
+      }
+    }
+
+    if (!imageFile && !targetNicheId) {
       const assessment = assessSupplierSearchQuery(nicheName);
       if (assessment.status !== 'valid' || !assessment.canonicalQuery) {
         return NextResponse.json(
@@ -1359,6 +1542,32 @@ export async function POST(request: NextRequest) {
       : null;
 
     await prisma.$transaction(async (tx) => {
+      if (targetNicheId) {
+        // Serialize starts for the same category. The earlier read gives a
+        // friendly conflict response; this locked re-check closes the small
+        // race where two admins submit simultaneously and prevents paying for
+        // the same expansion twice.
+        await tx.$queryRaw<Array<{ pidNiche: string }>>`
+          SELECT pidNiche
+          FROM intelligence_niches
+          WHERE pidNiche = ${targetNicheId}
+          LIMIT 1
+          FOR UPDATE
+        `;
+        const concurrentJobs = await tx.$queryRaw<Array<{ pidJob: string }>>`
+          SELECT pidJob
+          FROM intelligence_research_jobs
+          WHERE targetNicheId = ${targetNicheId}
+            AND status IN ('queued', 'running', 'finalizing', 'restarting')
+          LIMIT 1
+        `;
+        if (concurrentJobs[0]) {
+          throw new Error(
+            'Additional supplier research is already running for this category.',
+          );
+        }
+      }
+
       if (sourceSearchRequestId) {
         const claimed = await tx.$executeRaw`
         UPDATE intelligence_search_requests
@@ -1379,6 +1588,7 @@ export async function POST(request: NextRequest) {
         INSERT INTO intelligence_research_jobs (
           pidJob,
           nicheName,
+          targetNicheId,
           targetSupplierCount,
           status,
           requestNotes,
@@ -1394,6 +1604,7 @@ export async function POST(request: NextRequest) {
         ) VALUES (
           ${pidJob},
           ${nicheName},
+          ${targetNicheId || null},
           ${targetSupplierCount},
           'queued',
           ${requestNotes || null},
@@ -1416,6 +1627,7 @@ export async function POST(request: NextRequest) {
         targetSupplierCount,
         requestNotes,
         imageUrl: uploadedImage?.imageUrl || null,
+        existingSuppliers: existingNicheContext?.suppliers || [],
       });
 
       await prisma.$executeRaw`
@@ -1696,11 +1908,18 @@ export async function PATCH(request: NextRequest) {
       }
 
       try {
+        const existingNicheContext = job.targetNicheId
+          ? await getExistingNicheResearchContext(job.targetNicheId)
+          : null;
+        if (job.targetNicheId && !existingNicheContext) {
+          throw new Error('The selected existing product category is no longer available.');
+        }
         const response = await submitSupplierResearch({
           nicheName: job.nicheName,
           targetSupplierCount: job.targetSupplierCount,
           requestNotes: job.requestNotes || '',
           imageUrl: job.imageUrl,
+          existingSuppliers: existingNicheContext?.suppliers || [],
         });
 
         await prisma.$executeRaw`
@@ -1833,7 +2052,18 @@ export async function PATCH(request: NextRequest) {
     draft = normalizeLegacySupplierStatuses(draft, job.status);
 
     const nicheName = clean(draft.nicheName || job.nicheName, 180);
-    const pidNiche = await upsertNiche(nicheName, draft.summary);
+    const selectedNicheContext = job.targetNicheId
+      ? await getExistingNicheResearchContext(job.targetNicheId)
+      : null;
+    if (job.targetNicheId && !selectedNicheContext) {
+      return NextResponse.json(
+        { success: false, error: 'The selected existing product category is no longer available.' },
+        { status: 409 },
+      );
+    }
+    const pidNiche =
+      selectedNicheContext?.pidNiche ||
+      (await upsertNiche(nicheName, draft.summary));
     if (!pidNiche) {
       return NextResponse.json(
         { success: false, error: 'Could not create the primary product category.' },
@@ -1841,6 +2071,11 @@ export async function PATCH(request: NextRequest) {
       );
     }
     const resultSlug = await getNicheSlugByPid(pidNiche);
+    const currentNicheContext =
+      selectedNicheContext || (await getExistingNicheResearchContext(pidNiche));
+    const existingSupplierIdentities = [
+      ...(currentNicheContext?.suppliers || []),
+    ];
 
     if (
       action === 'approve_supplier' ||
@@ -1856,10 +2091,21 @@ export async function PATCH(request: NextRequest) {
       }
 
       if (action === 'approve_supplier') {
+        if (
+          supplierMatchesExisting(
+            draft.suppliers[supplierIndex],
+            existingSupplierIdentities,
+          )
+        ) {
+          return NextResponse.json(
+            { success: false, error: 'This supplier is already linked to the selected category.' },
+            { status: 409 },
+          );
+        }
         await publishSupplierDraft(draft.suppliers[supplierIndex], pidNiche);
       }
       if (action === 'unapprove_supplier') {
-        await unpublishSupplierDraft(draft.suppliers[supplierIndex]);
+        await unpublishSupplierDraft(draft.suppliers[supplierIndex], pidNiche);
       }
 
       draft.suppliers[supplierIndex] = {
@@ -1875,8 +2121,19 @@ export async function PATCH(request: NextRequest) {
     } else {
       for (let index = 0; index < (draft.suppliers || []).length; index += 1) {
         const supplier = draft.suppliers[index];
-        if (supplier.reviewStatus === 'rejected') continue;
+        if (supplier.reviewStatus === 'approved' || supplier.reviewStatus === 'rejected') {
+          continue;
+        }
+        if (supplierMatchesExisting(supplier, existingSupplierIdentities)) {
+          draft.suppliers[index] = {
+            ...supplier,
+            reviewStatus: 'rejected',
+            reviewedAt: new Date().toISOString(),
+          };
+          continue;
+        }
         await publishSupplierDraft(supplier, pidNiche);
+        existingSupplierIdentities.push(supplier);
         draft.suppliers[index] = {
           ...supplier,
           reviewStatus: 'approved',
@@ -1930,6 +2187,13 @@ export async function PATCH(request: NextRequest) {
       );
     } else {
       await updateLinkedSearchRequest(pidJob, 'awaiting_approval');
+    }
+
+    if (
+      job.targetNicheId &&
+      (nextStatus === 'approved' || nextStatus === 'partially_approved')
+    ) {
+      await mergeAndRemoveAdditionalResearchJob(job, draft);
     }
 
     const [jobs, searchRequests] = await Promise.all([

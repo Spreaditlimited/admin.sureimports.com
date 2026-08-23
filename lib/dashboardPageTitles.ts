@@ -10,6 +10,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/blog/edit": "Edit Blog Post",
   "/dashboard/blog/publishers": "Blog Publishers",
   "/dashboard/blog/view": "Blog Posts",
+  "/dashboard/body-camera-enquiries": "Body Camera Enquiries",
   "/dashboard/buy-phones-laptops": "Buy Phones & Laptops",
   "/dashboard/buy-phones-laptops/add-category": "Add Device Category",
   "/dashboard/buy-phones-laptops/add-devices": "Add Devices",

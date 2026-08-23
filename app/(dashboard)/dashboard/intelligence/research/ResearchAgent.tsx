@@ -56,6 +56,7 @@ type DraftJson = {
 type ResearchJob = {
   pidJob: string;
   nicheName: string;
+  targetNicheId?: string | null;
   targetSupplierCount: number;
   status: string;
   requestNotes: string | null;
@@ -75,6 +76,13 @@ type ResearchJob = {
   imageOriginalName: string | null;
   imageMimeType: string | null;
   imageUploadedAt: string | null;
+};
+
+type SupplierCategoryOption = {
+  pidNiche: string;
+  name: string;
+  slug: string;
+  suppliers: Array<{ pidSupplier: string }>;
 };
 
 type SearchRequest = {
@@ -100,6 +108,126 @@ type ResearchConfirmation = {
   job: ResearchJob;
   action: 'stop' | 'restart' | 'delete';
 };
+
+function SearchableCategoryPicker({
+  categories,
+  value,
+  disabled,
+  onChange,
+}: {
+  categories: SupplierCategoryOption[];
+  value: string;
+  disabled: boolean;
+  onChange: (pidNiche: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selected = categories.find((category) => category.pidNiche === value);
+  const filteredCategories = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return categories;
+    return categories.filter((category) =>
+      category.name.toLowerCase().includes(normalizedQuery),
+    );
+  }, [categories, query]);
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative mt-2">
+      <button
+        type="button"
+        onClick={() => {
+          if (!disabled) {
+            setQuery('');
+            setOpen((current) => !current);
+          }
+        }}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-input bg-background px-4 py-3 text-left text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+      >
+        <span className={selected ? '' : 'text-muted-foreground'}>
+          {disabled
+            ? 'Loading categories...'
+            : selected
+              ? `${selected.name} (${selected.suppliers.length} verified supplier${selected.suppliers.length === 1 ? '' : 's'})`
+              : 'Select a published category'}
+        </span>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+
+      {open ? (
+        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
+          <div className="border-b border-border p-2">
+            <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') setOpen(false);
+                }}
+                placeholder="Search published categories..."
+                aria-label="Search published categories"
+                className="w-full bg-transparent py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
+          <div role="listbox" className="max-h-72 overflow-y-auto p-1.5">
+            {filteredCategories.length ? (
+              filteredCategories.map((category) => {
+                const isSelected = category.pidNiche === value;
+                return (
+                  <button
+                    key={category.pidNiche}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      onChange(category.pidNiche);
+                      setOpen(false);
+                      setQuery('');
+                    }}
+                    className="flex w-full items-center justify-between gap-4 rounded-md px-3 py-2.5 text-left transition hover:bg-muted"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-foreground">
+                        {category.name}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {category.suppliers.length} verified supplier
+                        {category.suppliers.length === 1 ? '' : 's'}
+                      </span>
+                    </span>
+                    {isSelected ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                    ) : null}
+                  </button>
+                );
+              })
+            ) : (
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No published category matches “{query.trim()}”.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function sortResearchJobs(jobs: ResearchJob[]) {
   return [...jobs].sort(
@@ -249,6 +377,12 @@ function progressMessage(actionKey: string | null, pidJob: string) {
 export default function IntelligenceResearchAgent() {
   const [jobs, setJobs] = useState<ResearchJob[]>([]);
   const [searchRequests, setSearchRequests] = useState<SearchRequest[]>([]);
+  const [researchMode, setResearchMode] = useState<'new' | 'existing'>('new');
+  const [supplierCategories, setSupplierCategories] = useState<
+    SupplierCategoryOption[]
+  >([]);
+  const [targetNicheId, setTargetNicheId] = useState('');
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [nicheName, setNicheName] = useState('');
   const [targetSupplierCount, setTargetSupplierCount] = useState(3);
   const [requestNotes, setRequestNotes] = useState('');
@@ -287,6 +421,12 @@ export default function IntelligenceResearchAgent() {
           request.status === 'awaiting_admin' && !request.relatedPidJob,
       ),
     [searchRequests],
+  );
+  const selectedSupplierCategory = useMemo(
+    () =>
+      supplierCategories.find((category) => category.pidNiche === targetNicheId) ||
+      null,
+    [supplierCategories, targetNicheId],
   );
 
   const activeResearchCount = useMemo(
@@ -328,8 +468,27 @@ export default function IntelligenceResearchAgent() {
     }
   };
 
+  const loadSupplierCategories = async () => {
+    setCategoriesLoading(true);
+    try {
+      const response = await fetch('/api/intelligence/categories', {
+        cache: 'no-store',
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to load supplier categories.');
+      }
+      setSupplierCategories(data.data || []);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to load supplier categories.');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadJobs();
+    loadSupplierCategories();
   }, []);
 
   useEffect(() => {
@@ -371,7 +530,11 @@ export default function IntelligenceResearchAgent() {
   };
 
   const runResearch = async () => {
-    if (!nicheName.trim() && !imageFile) {
+    if (researchMode === 'existing' && !targetNicheId) {
+      toast.error('Select an existing product category first.');
+      return;
+    }
+    if (researchMode === 'new' && !nicheName.trim() && !imageFile) {
       toast.error('Enter a niche name or upload a product image first.');
       return;
     }
@@ -383,6 +546,9 @@ export default function IntelligenceResearchAgent() {
       formData.append('nicheName', nicheName);
       formData.append('targetSupplierCount', String(targetSupplierCount));
       formData.append('requestNotes', requestNotes);
+      if (researchMode === 'existing') {
+        formData.append('targetNicheId', targetNicheId);
+      }
       if (imageFile) {
         formData.append('image', imageFile);
       }
@@ -397,7 +563,7 @@ export default function IntelligenceResearchAgent() {
       }
       setJobs(sortResearchJobs(data.data || []));
       setSearchRequests(data.searchRequests || []);
-      setNicheName('');
+      if (researchMode === 'new') setNicheName('');
       setRequestNotes('');
       setImageFile(null);
       if (data.pidJob) {
@@ -490,6 +656,13 @@ export default function IntelligenceResearchAgent() {
       }
       setJobs(sortResearchJobs(data.data || []));
       setSearchRequests(data.searchRequests || []);
+      if (
+        action === 'approve' ||
+        action === 'approve_supplier' ||
+        action === 'unapprove_supplier'
+      ) {
+        await loadSupplierCategories();
+      }
       toast.success(
         action === 'approve'
           ? 'Research approved and published.'
@@ -572,27 +745,72 @@ export default function IntelligenceResearchAgent() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_180px]">
-          <label className="block">
+        <div className="mt-6 inline-flex rounded-lg border border-border bg-muted/40 p-1">
+          <button
+            type="button"
+            onClick={() => setResearchMode('new')}
+            className={`rounded-md px-4 py-2 text-xs font-bold transition ${
+              researchMode === 'new'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            New category
+          </button>
+          <button
+            type="button"
+            onClick={() => setResearchMode('existing')}
+            className={`rounded-md px-4 py-2 text-xs font-bold transition ${
+              researchMode === 'existing'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Add to existing category
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_180px]">
+          <div className="block">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Niche / product category
+              {researchMode === 'existing'
+                ? 'Existing product category'
+                : 'Niche / product category'}
             </span>
-            <input
-              value={nicheName}
-              onChange={(event) => setNicheName(event.target.value)}
-              placeholder="Example: Commercial hydraulic salon chairs"
-              className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring"
-            />
-          </label>
+            {researchMode === 'existing' ? (
+              <SearchableCategoryPicker
+                categories={supplierCategories}
+                value={targetNicheId}
+                disabled={categoriesLoading}
+                onChange={setTargetNicheId}
+              />
+            ) : (
+              <input
+                value={nicheName}
+                onChange={(event) => setNicheName(event.target.value)}
+                placeholder="Example: Commercial hydraulic salon chairs"
+                className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring"
+              />
+            )}
+            {researchMode === 'existing' && selectedSupplierCategory ? (
+              <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">
+                After your approval, the new verified suppliers will be appended to
+                the existing {selectedSupplierCategory.suppliers.length}-supplier
+                list. Existing suppliers will be excluded from the research.
+              </span>
+            ) : null}
+          </div>
           <label className="block">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Suppliers
+              {researchMode === 'existing' ? 'Additional suppliers' : 'Suppliers'}
             </span>
             <select
               value={targetSupplierCount}
               onChange={(event) => setTargetSupplierCount(Number(event.target.value))}
               className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring"
             >
+              <option value={1}>1 supplier</option>
+              <option value={2}>2 suppliers</option>
               <option value={3}>3 suppliers</option>
               <option value={4}>4 suppliers</option>
               <option value={5}>5 suppliers</option>
@@ -677,11 +895,19 @@ export default function IntelligenceResearchAgent() {
           <button
             type="button"
             onClick={runResearch}
-            disabled={running}
+            disabled={
+              running ||
+              (researchMode === 'existing' &&
+                (categoriesLoading || !targetNicheId))
+            }
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {running ? 'Submitting...' : 'Generate research draft'}
+            {running
+              ? 'Submitting...'
+              : researchMode === 'existing'
+                ? 'Research additional suppliers'
+                : 'Generate research draft'}
           </button>
         </div>
         {running ? (
@@ -1234,6 +1460,11 @@ function ResearchJobCard({
                 <span className="rounded-full border border-border bg-background px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {job.sourceSearchRequestId ? 'User Job' : 'Admin Job'}
                 </span>
+                {job.targetNicheId ? (
+                  <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+                    Additional suppliers
+                  </span>
+                ) : null}
                 <span className="font-mono text-[10px] font-bold text-muted-foreground">
                   {job.pidJob}
                 </span>
@@ -1242,7 +1473,11 @@ function ResearchJobCard({
                 {draft?.nicheName || job.nicheName}
               </h3>
               <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                <span>{counts.total} suppliers</span>
+                <span>
+                  {job.targetNicheId
+                    ? `${counts.total} of ${job.targetSupplierCount} additional suppliers found`
+                    : `${counts.total} suppliers`}
+                </span>
                 <span>{counts.approved} approved</span>
                 <span>{counts.rejected} rejected</span>
                 <span>{counts.pending} pending</span>
