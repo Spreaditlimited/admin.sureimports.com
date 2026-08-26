@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BadgeDollarSign, Landmark, Ship, UserCog } from 'lucide-react';
+import { BadgeDollarSign, Landmark, MessageCircle, Ship, UserCog } from 'lucide-react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken } from '@/lib/jwt';
@@ -19,6 +19,7 @@ export default async function SettingsPage() {
 
   const sections = [
     { title: 'Admin Management', description: 'Manage administrators, access levels and permissions.', href: '/dashboard/admin/view', icon: UserCog },
+    { title: 'Public WhatsApp Contacts', description: 'Update the WhatsApp numbers displayed by the floating contact button on public websites.', href: '/dashboard/admin/whatsapp', icon: MessageCircle },
     { title: 'Shipping Plans', description: 'Configure shipping plans, units and destination pricing.', href: '/dashboard/shipping-plans/add', icon: Ship },
     { title: 'Exchange & Rates', description: 'Manage exchange rates, service charges and VAT.', href: '/dashboard/exchange-rates', icon: BadgeDollarSign },
     { title: 'Bank Accounts', description: 'Manage the bank accounts shown on customer invoices.', href: '/dashboard/invoicing/bank-accounts', icon: Landmark },

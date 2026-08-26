@@ -4,7 +4,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/dashboard/admin/add": "Add Admin",
   "/dashboard/admin/view": "Manage Admins",
-  "/dashboard/admin/whatsapp": "Admin WhatsApp",
+  "/dashboard/admin/whatsapp": "Public WhatsApp Contacts",
   "/dashboard/blog/categories": "Blog Categories",
   "/dashboard/blog/create": "Create Blog Post",
   "/dashboard/blog/edit": "Edit Blog Post",

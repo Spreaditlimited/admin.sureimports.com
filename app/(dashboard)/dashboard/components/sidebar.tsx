@@ -219,6 +219,10 @@ const systemSettings: MenuItem[] = [
     submenu: [
       { title: "Settings Overview", path: "/dashboard/settings" },
       { title: "Manage Admins", path: "/dashboard/admin/view" },
+      {
+        title: "Public WhatsApp Contacts",
+        path: "/dashboard/admin/whatsapp",
+      },
       { title: "Shipping Plans", path: "/dashboard/shipping-plans/add" },
       { title: "Exchange Rates", path: "/dashboard/exchange-rates" },
       { title: "Service Charge & VAT", path: "/dashboard/service-charges" },

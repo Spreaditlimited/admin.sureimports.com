@@ -5,10 +5,11 @@ export default function AdminWhatsAppPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-1 px-1">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Admin WhatsApp
+          Public WhatsApp Contacts
         </h1>
         <p className="text-sm text-muted-foreground">
-          Manage the WhatsApp contacts displayed on the customer-facing floating chat button.
+          Manage the contacts displayed by the floating WhatsApp button across
+          Sure Imports and LineScout public pages.
         </p>
       </div>
 
