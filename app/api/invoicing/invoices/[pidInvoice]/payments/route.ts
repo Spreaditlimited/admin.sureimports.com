@@ -26,6 +26,7 @@ export async function POST(
     const { pidInvoice } = await params;
     const body = await request.json();
     const { amount, paymentMethod, reference, note, paidAt } = body;
+    const ignorePendingClaims = body?.ignorePendingClaims === true;
     const paymentReference =
       typeof reference === 'string' && reference.trim()
         ? reference.trim()
@@ -51,6 +52,37 @@ export async function POST(
         { statusx: 'ERROR', message: `Cannot record payment for invoice in ${invoice.status} status` },
         { status: 400 },
       );
+    }
+
+    if (!ignorePendingClaims) {
+      const pendingClaims = await prisma.invoice_payment_claims.findMany({
+        where: {
+          pidInvoice,
+          status: 'PENDING_CONFIRMATION',
+        },
+        orderBy: { claimedAt: 'asc' },
+        select: {
+          pidClaim: true,
+          claimedAmount: true,
+          currency: true,
+          paymentReference: true,
+          note: true,
+          claimedAt: true,
+          status: true,
+        },
+      });
+
+      if (pendingClaims.length > 0) {
+        return NextResponse.json(
+          {
+            statusx: 'PENDING_PAYMENT_CLAIM',
+            code: 'PENDING_PAYMENT_CLAIM',
+            message: 'A pending payment claim exists for this invoice. Confirm the claim or explicitly record a separate payment.',
+            data: { paymentClaims: pendingClaims },
+          },
+          { status: 409 },
+        );
+      }
     }
 
     const amountNum = Number(amount);
@@ -149,18 +181,20 @@ export async function POST(
         },
       });
 
-      const matchingClaim = await tx.invoice_payment_claims.findFirst({
-        where: {
-          pidInvoice,
-          status: 'PENDING_CONFIRMATION',
-          claimedAmount: toMoneyInput(amountNum),
-          ...(paymentReference
-            ? { paymentReference }
-            : {}),
-        },
-        orderBy: { claimedAt: 'asc' },
-        select: { pidClaim: true },
-      });
+      const matchingClaim = ignorePendingClaims
+        ? null
+        : await tx.invoice_payment_claims.findFirst({
+            where: {
+              pidInvoice,
+              status: 'PENDING_CONFIRMATION',
+              claimedAmount: toMoneyInput(amountNum),
+              ...(paymentReference
+                ? { paymentReference }
+                : {}),
+            },
+            orderBy: { claimedAt: 'asc' },
+            select: { pidClaim: true },
+          });
 
       let approvedPaymentClaimPid: string | null = null;
       if (matchingClaim) {

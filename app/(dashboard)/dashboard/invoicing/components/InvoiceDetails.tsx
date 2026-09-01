@@ -16,8 +16,21 @@ import {
   RefreshCw,
   PlusCircle,
   Mail,
-  Download
+  Download,
+  AlertCircle,
+  CheckCircle2,
+  X,
 } from 'lucide-react';
+
+interface PaymentClaim {
+  pidClaim: string;
+  claimedAmount: string;
+  currency: string;
+  paymentReference: string | null;
+  note: string | null;
+  claimedAt: string;
+  status: string;
+}
 
 interface InvoiceData {
   pidInvoice: string;
@@ -42,6 +55,7 @@ interface InvoiceData {
   quotation: { pidQuotation: string; quotationNumber: string; customerName: string; status: string } | null;
   items: Array<{ pidInvoiceItem: string; description: string; quantity: string; unitPrice: string; lineTotal: string }>;
   payments: Array<{ pidInvoicePayment: string; amount: string; paymentMethod: string; reference: string | null; paidAt: string }>;
+  paymentClaims: PaymentClaim[];
   receipts: Array<{ pidReceipt: string; receiptNumber: string; amount: string; deliveryStatus: string }>;
 }
 
@@ -55,6 +69,28 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('BANK_TRANSFER');
   const [paymentRef, setPaymentRef] = useState('');
+  const [claimPromptOpen, setClaimPromptOpen] = useState(false);
+  const [confirmingClaimPid, setConfirmingClaimPid] = useState('');
+
+  const pendingClaims = data?.paymentClaims || [];
+
+  useEffect(() => {
+    if (!claimPromptOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !recording && !confirmingClaimPid) {
+        setClaimPromptOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [claimPromptOpen, confirmingClaimPid, recording]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -108,19 +144,31 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
     }
   };
 
-  const recordPayment = async () => {
-    if (!paymentAmount) return toast.error("Enter payment amount");
+  const submitManualPayment = async (ignorePendingClaims = false) => {
     setRecording(true);
     try {
       const res = await fetch(`/api/invoicing/invoices/${encodeURIComponent(pidInvoice)}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Number(paymentAmount), paymentMethod, reference: paymentRef || null }),
+        body: JSON.stringify({
+          amount: Number(paymentAmount),
+          paymentMethod,
+          reference: paymentRef || null,
+          ignorePendingClaims,
+        }),
       });
       const json = await res.json();
+      if (res.status === 409 && json?.code === 'PENDING_PAYMENT_CLAIM') {
+        setData((current) => current
+          ? { ...current, paymentClaims: json?.data?.paymentClaims || current.paymentClaims }
+          : current);
+        setClaimPromptOpen(true);
+        return;
+      }
       if (!res.ok) throw new Error(json?.message || 'Failed to record payment');
       setPaymentAmount('');
       setPaymentRef('');
+      setClaimPromptOpen(false);
       toast.success(
         json?.data?.approvedPaymentClaimPid
           ? 'Payment recorded and matching claim approved'
@@ -131,6 +179,36 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
       toast.error(e instanceof Error ? e.message : 'Failed to record payment');
     } finally {
       setRecording(false);
+    }
+  };
+
+  const recordPayment = async () => {
+    if (pendingClaims.length > 0) {
+      setClaimPromptOpen(true);
+      return;
+    }
+    if (!paymentAmount) return toast.error('Enter payment amount');
+    await submitManualPayment();
+  };
+
+  const confirmPaymentClaim = async (pidClaim: string) => {
+    setConfirmingClaimPid(pidClaim);
+    try {
+      const res = await fetch(
+        `/api/invoicing/payment-claims/${encodeURIComponent(pidClaim)}/approve`,
+        { method: 'POST' },
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || 'Failed to confirm payment claim');
+      setPaymentAmount('');
+      setPaymentRef('');
+      setClaimPromptOpen(false);
+      toast.success('Payment claim confirmed and payment recorded');
+      await fetchData();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to confirm payment claim');
+    } finally {
+      setConfirmingClaimPid('');
     }
   };
 
@@ -310,6 +388,23 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
              </h3>
           </div>
           <div className="p-6 space-y-4">
+            {pendingClaims.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setClaimPromptOpen(true)}
+                className="flex w-full items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10"
+              >
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold text-foreground">
+                    {pendingClaims.length === 1 ? 'Payment claim awaiting confirmation' : `${pendingClaims.length} payment claims awaiting confirmation`}
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                    Review the customer&apos;s claim before recording another payment for this invoice.
+                  </span>
+                </span>
+              </button>
+            ) : null}
             <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Payment Amount ({data.currency})</label>
                 <input value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} type="number" placeholder="0.00" className="w-full px-4 py-2.5 border border-input rounded-md bg-background text-sm font-bold focus:ring-2 focus:ring-ring" />
@@ -337,7 +432,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
                 className="w-full py-3 bg-primary text-primary-foreground rounded-md text-sm font-bold hover:bg-primary/90 transition-all shadow-sm flex items-center justify-center gap-2"
             >
               {recording ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-              Save Transaction
+              {pendingClaims.length > 0 ? 'Review Payment Claim' : 'Save Transaction'}
             </button>
           </div>
         </div>
@@ -431,6 +526,116 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
             </div>
         </div>
       </div>
+
+      {claimPromptOpen && pendingClaims.length > 0 ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="payment-claim-title"
+          aria-describedby="payment-claim-description"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !recording && !confirmingClaimPid) {
+              setClaimPromptOpen(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-xl overflow-hidden rounded-xl border border-border bg-card shadow-soft animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-start justify-between gap-4 border-b border-border p-6">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 id="payment-claim-title" className="text-xl font-bold tracking-tight text-foreground">
+                    Confirm the customer&apos;s payment claim
+                  </h3>
+                  <p id="payment-claim-description" className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Confirming a claim records the payment, updates the invoice and generates its receipt as one transaction.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Close payment claim prompt"
+                disabled={recording || Boolean(confirmingClaimPid)}
+                onClick={() => setClaimPromptOpen(false)}
+                className="rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="max-h-[55vh] space-y-3 overflow-y-auto p-6">
+              {pendingClaims.map((claim) => {
+                const amountMatches = paymentAmount
+                  ? Math.abs(Number(paymentAmount) - Number(claim.claimedAmount)) < 0.001
+                  : false;
+                const confirming = confirmingClaimPid === claim.pidClaim;
+
+                return (
+                  <div key={claim.pidClaim} className="rounded-lg border border-border bg-muted/20 p-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-lg font-bold text-foreground">
+                            {claim.currency} {Number(claim.claimedAmount).toLocaleString()}
+                          </span>
+                          {amountMatches ? (
+                            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                              Matches entered amount
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="break-all text-xs font-medium text-muted-foreground">
+                          Reference: <span className="font-mono text-foreground">{claim.paymentReference || 'Not provided'}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Submitted {new Date(claim.claimedAt).toLocaleString()}
+                        </p>
+                        {claim.note ? <p className="pt-1 text-xs text-muted-foreground">{claim.note}</p> : null}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={recording || Boolean(confirmingClaimPid)}
+                        onClick={() => confirmPaymentClaim(claim.pidClaim)}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {confirming ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                        {confirming ? 'Confirming...' : 'Confirm this claim'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-border bg-muted/20 p-6">
+              <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+                Only record a separate payment when the transaction you entered is not represented by any claim above.
+              </p>
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  disabled={recording || Boolean(confirmingClaimPid)}
+                  onClick={() => setClaimPromptOpen(false)}
+                  className="rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!paymentAmount || recording || Boolean(confirmingClaimPid)}
+                  onClick={() => submitManualPayment(true)}
+                  className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {recording ? 'Recording...' : 'Record separate payment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
     </div>
   );

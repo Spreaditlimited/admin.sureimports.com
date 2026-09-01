@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {
+  createOrGetInvoiceAccessToken,
   createUniqueReceiptNumber,
   derivePaymentStatus,
   ensureInvoicingCoreTables,
@@ -10,6 +11,9 @@ import {
   unauthorized,
 } from '../../../_lib/invoicing';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
+import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
+import { sendReceiptNotification } from '@/lib/notifications/invoicing';
+import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
 
 export async function POST(
   _request: NextRequest,
@@ -147,6 +151,44 @@ export async function POST(
 
       return { payment, updatedInvoice, receipt, updatedClaim };
     });
+
+    if (claim.invoice.customerEmail) {
+      const businessName = await getUserBusinessName(claim.invoice.pidUser);
+      const customerName = appendBusinessName(
+        claim.invoice.customerName || 'Customer',
+        businessName,
+      ) || claim.invoice.customerName || 'Customer';
+      const token = await createOrGetInvoiceAccessToken({
+        pidInvoice: claim.pidInvoice,
+        createdByPidUser: admin.pidUser,
+      });
+      const customerBaseUrl = getCustomerInvoiceBaseUrl();
+      const receiptLink = `${customerBaseUrl}/receipt/${result.receipt.pidReceipt}?accessToken=${encodeURIComponent(token.accessToken)}`;
+
+      const sent = await sendReceiptNotification({
+        toEmail: claim.invoice.customerEmail,
+        customerName,
+        receiptNumber: result.receipt.receiptNumber,
+        invoiceNumber: claim.invoice.invoiceNumber,
+        currency: claim.currency,
+        amountReceived: amountNum,
+        totalPaid: newPaid,
+        balanceAfter: newBalance,
+        paymentMethod: 'CUSTOMER_CLAIM',
+        paymentReference: claim.paymentReference || null,
+        paidAt: result.payment.paidAt,
+        receiptLink,
+      })
+        .then(() => true)
+        .catch(() => false);
+
+      if (sent) {
+        await prisma.receipts.update({
+          where: { pidReceipt: result.receipt.pidReceipt },
+          data: { deliveryStatus: 'SENT', sentAt: new Date() },
+        });
+      }
+    }
 
     return NextResponse.json({ statusx: 'SUCCESS', data: result });
   } catch (error: any) {

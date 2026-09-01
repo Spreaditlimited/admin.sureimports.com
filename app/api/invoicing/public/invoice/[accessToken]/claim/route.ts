@@ -47,6 +47,33 @@ export async function POST(
       }
     }
 
+    const paymentReference = body?.paymentReference ? String(body.paymentReference).trim() : null;
+    const recentClaimThreshold = new Date(Date.now() - 5 * 60 * 1000);
+    const duplicateClaim = await prisma.invoice_payment_claims.findFirst({
+      where: {
+        pidInvoice: token.invoice.pidInvoice,
+        status: 'PENDING_CONFIRMATION',
+        claimedAmount: toMoneyInput(claimedAmount),
+        ...(paymentReference
+          ? { paymentReference }
+          : { paymentReference: null, claimedAt: { gte: recentClaimThreshold } }),
+      },
+      orderBy: { claimedAt: 'desc' },
+      select: { pidClaim: true, claimedAt: true },
+    });
+
+    if (duplicateClaim) {
+      return NextResponse.json(
+        {
+          statusx: 'DUPLICATE_PAYMENT_CLAIM',
+          code: 'DUPLICATE_PAYMENT_CLAIM',
+          message: 'This payment claim has already been submitted and is awaiting confirmation.',
+          data: duplicateClaim,
+        },
+        { status: 409 },
+      );
+    }
+
     const claim = await prisma.invoice_payment_claims.create({
       data: {
         pidClaim: generatePid('IVC'),
@@ -56,7 +83,7 @@ export async function POST(
         currency: token.invoice.currency,
         selectedBankAccountId,
         selectedBankAccountJson,
-        paymentReference: body?.paymentReference ? String(body.paymentReference).trim() : null,
+        paymentReference,
         note: body?.note ? String(body.note).trim() : null,
         status: 'PENDING_CONFIRMATION',
       },

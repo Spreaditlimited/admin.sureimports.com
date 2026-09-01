@@ -47,6 +47,19 @@ export async function GET(
         payments: {
           orderBy: { paidAt: 'desc' },
         },
+        paymentClaims: {
+          where: { status: 'PENDING_CONFIRMATION' },
+          orderBy: { claimedAt: 'asc' },
+          select: {
+            pidClaim: true,
+            claimedAmount: true,
+            currency: true,
+            paymentReference: true,
+            note: true,
+            claimedAt: true,
+            status: true,
+          },
+        },
         receipts: {
           orderBy: { issuedAt: 'desc' },
         },
