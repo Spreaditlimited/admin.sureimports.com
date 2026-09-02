@@ -478,26 +478,26 @@ model payoutrequest {
 }
 
 model products {
-  id              Int       @id @default(autoincrement())
-  pidProduct      String    @unique()
-  pidOrder        String
-  pidUser         String?
-  productName     String?
-  productLink     String?
-  productCategory String?
-  productPrice    Float?
-  productWeight   Float?
+  id                     Int       @id @default(autoincrement())
+  pidProduct             String    @unique()
+  pidOrder               String
+  pidUser                String?
+  productName            String?
+  productLink            String?
+  productCategory        String?
+  productPrice           Float?
+  productWeight          Float?
   shippingMeasurePerUnit Float?
-  productQuantity Float?
-  productInfo     String?
-  productStatus   String?
-  pidAdmin        String?
-  ext1            String?
-  ext2            String?
-  xStatus         String?
-  createdAt       DateTime? @default(now())
-  updatedAt       DateTime?
-  orders          orders    @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
+  productQuantity        Float?
+  productInfo            String?
+  productStatus          String?
+  pidAdmin               String?
+  ext1                   String?
+  ext2                   String?
+  xStatus                String?
+  createdAt              DateTime? @default(now())
+  updatedAt              DateTime?
+  orders                 orders    @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
 }
 
 model store {
@@ -751,21 +751,121 @@ model shipping_only {
 }
 
 model verify_supplier {
-  id                Int       @id @default(autoincrement())
-  pidVerifySupplier String    @unique()
-  pidUser           String?
-  supplierName      String?
-  supplierPhone     String?
-  supplierAddress   String?
-  supplierProduct   String?
-  supplierDetails   String?
-  supplierWebsite   String?
-  status            String?
-  xStatus           String?
-  ext1              String?
-  ext2              String?
-  createdAt         DateTime? @default(now())
-  updatedAt         DateTime?
+  id                        Int                              @id @default(autoincrement())
+  pidVerifySupplier         String                           @unique()
+  pidUser                   String?
+  userEmail                 String?                          @db.VarChar(255)
+  customerName              String?                          @db.VarChar(240)
+  supplierName              String?
+  supplierNameChinese       String?                          @db.VarChar(255)
+  registrationNumber        String?                          @db.VarChar(120)
+  supplierPhone             String?
+  supplierEmail             String?                          @db.VarChar(255)
+  supplierWechat            String?                          @db.VarChar(160)
+  supplierAddress           String?
+  supplierAddressChinese    String?                          @db.Text
+  supplierProduct           String?
+  supplierDetails           String?
+  supplierWebsite           String?
+  marketplaceUrls           Json?
+  verificationType          String                           @default("ONLINE") @db.VarChar(40)
+  billingCountry            String?                          @db.VarChar(120)
+  status                    String?
+  transportQuoteStatus      String?                          @db.VarChar(40)
+  transportEstimateCnyFen   Int?
+  transportFeeNgnKobo       Int?
+  transportFeeUsdCents      Int?
+  transportDistanceMeters   Int?
+  transportDurationSeconds  Int?
+  transportEstimateSource   String?                          @db.VarChar(80)
+  travelEstimateJson        Json?
+  recommendedTravelMode     String?                          @db.VarChar(40)
+  travelLodgingNights       Int?
+  travelEstimateGeneratedAt DateTime?
+  supplierLatitude          Decimal?                         @db.Decimal(10, 7)
+  supplierLongitude         Decimal?                         @db.Decimal(10, 7)
+  quoteExpiresAt            DateTime?
+  assignedTo                String?                          @db.VarChar(191)
+  customerMessage           String?                          @db.Text
+  adminNotes                String?                          @db.Text
+  reportOutcome             String?                          @db.VarChar(60)
+  reportSummary             String?                          @db.LongText
+  reportUrl                 String?                          @db.VarChar(1000)
+  termsVersion              String?                          @db.VarChar(40)
+  submittedAt               DateTime?
+  completedAt               DateTime?
+  xStatus                   String?
+  ext1                      String?
+  ext2                      String?
+  createdAt                 DateTime?                        @default(now())
+  updatedAt                 DateTime?
+  payments                  supplier_verification_payments[]
+  events                    supplier_verification_events[]
+
+  @@index([pidUser, status])
+  @@index([status, createdAt])
+  @@index([verificationType, status])
+}
+
+model supplier_verification_settings {
+  id                       Int      @id @default(autoincrement())
+  settingKey               String   @unique @db.VarChar(80)
+  feeNgnKobo               Int
+  feeUsdCents              Int
+  officeAddressChinese     String?  @db.Text
+  officeLatitude           Decimal? @db.Decimal(10, 7)
+  officeLongitude          Decimal? @db.Decimal(10, 7)
+  onlineEnabled            Boolean  @default(true)
+  physicalEnabled          Boolean  @default(true)
+  quoteValidityDays        Int      @default(7)
+  onlineTurnaroundDays     Int      @default(3)
+  physicalTurnaroundDays   Int      @default(5)
+  defaultLodgingCnyFen     Int      @default(20000)
+  travelContingencyPercent Int      @default(10)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @default(now()) @updatedAt
+}
+
+model supplier_verification_payments {
+  id                       Int             @id @default(autoincrement())
+  pidPayment               String          @unique @db.VarChar(80)
+  requestId                String          @db.VarChar(191)
+  paymentProvider          String          @db.VarChar(40)
+  paymentPurpose           String          @default("VERIFICATION") @db.VarChar(40)
+  providerReference        String?         @unique @db.VarChar(191)
+  providerCaptureReference String?         @db.VarChar(191)
+  authorizationUrl         String?         @db.VarChar(2000)
+  amountMinor              Int
+  currency                 String          @db.VarChar(10)
+  serviceFeeMinor          Int
+  transportFeeMinor        Int             @default(0)
+  status                   String          @default("pending") @db.VarChar(40)
+  providerEventId          String?         @unique @db.VarChar(191)
+  paidAt                   DateTime?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @default(now()) @updatedAt
+  request                  verify_supplier @relation(fields: [requestId], references: [pidVerifySupplier], onDelete: Cascade)
+
+  @@index([requestId, status])
+  @@index([requestId, paymentPurpose, status], map: "svp_request_purpose_status_idx")
+  @@index([status, createdAt])
+}
+
+model supplier_verification_events {
+  id         Int             @id @default(autoincrement())
+  pidEvent   String          @unique @db.VarChar(80)
+  requestId  String          @db.VarChar(191)
+  eventType  String          @db.VarChar(60)
+  fromStatus String?         @db.VarChar(40)
+  toStatus   String?         @db.VarChar(40)
+  message    String?         @db.Text
+  visibility String          @default("CUSTOMER") @db.VarChar(20)
+  actorId    String?         @db.VarChar(191)
+  actorEmail String?         @db.VarChar(255)
+  createdAt  DateTime        @default(now())
+  request    verify_supplier @relation(fields: [requestId], references: [pidVerifySupplier], onDelete: Cascade)
+
+  @@index([requestId, createdAt])
 }
 
 model affiliates {

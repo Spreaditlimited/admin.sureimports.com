@@ -71,6 +71,12 @@ const features: MenuItem[] = [
     serviceKey: "corporate_gifts",
   },
   {
+    title: "Supplier Verification",
+    icon: ShieldCheck,
+    path: "/dashboard/verify-supplier",
+    serviceKey: "verify_supplier",
+  },
+  {
     title: "Supplier Intel",
     icon: ShieldCheck,
     path: "/dashboard/intelligence/reviews",
