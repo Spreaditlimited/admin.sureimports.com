@@ -234,3 +234,18 @@
 .grecaptcha-badge {
   visibility: hidden !important;
 }
+
+@media (min-width: 640px) {
+  .procurement-assistance-panel form > button {
+    width: max-content;
+    justify-self: end;
+    padding-inline: 1.5rem;
+  }
+
+  .procurement-assistance-panel .space-y-5 > button {
+    display: block;
+    width: max-content;
+    margin-left: auto;
+    padding-inline: 1.5rem;
+  }
+}

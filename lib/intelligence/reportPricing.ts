@@ -1,8 +1,8 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from "@/lib/prisma";
 
-export const REPORT_PRICING_KEY = 'manufacturer_reports';
-export const DEFAULT_REPORT_PRICE_NAIRA = 50_000;
-export const DEFAULT_REPORT_PRICE_USD_CENTS = 5_000;
+export const REPORT_PRICING_KEY = "manufacturer_reports";
+export const DEFAULT_REPORT_PRICE_NAIRA = 20_000;
+export const DEFAULT_REPORT_PRICE_USD_CENTS = 2_000;
 
 export type ReportPricing = {
   priceNaira: number;
@@ -39,10 +39,12 @@ export async function getReportPricing(): Promise<ReportPricing> {
     WHERE settingKey = ${REPORT_PRICING_KEY}
     LIMIT 1
   `;
-  return rows[0] || {
-    priceNaira: DEFAULT_REPORT_PRICE_NAIRA,
-    priceUsdCents: DEFAULT_REPORT_PRICE_USD_CENTS,
-  };
+  return (
+    rows[0] || {
+      priceNaira: DEFAULT_REPORT_PRICE_NAIRA,
+      priceUsdCents: DEFAULT_REPORT_PRICE_USD_CENTS,
+    }
+  );
 }
 
 export async function updateReportPricing(pricing: ReportPricing) {

@@ -7,30 +7,10 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("search")?.trim().slice(0, 160) || "";
   const searchTerms = search.toLowerCase().split(/\s+/).filter(Boolean);
 
-  const savedStatuses = ["saved", "bank-pending-saved-orders"];
-  if (savedStatuses.includes(status)) {
-    const orphanOrders = await prisma.orders.findMany({
-      where: {
-        status,
-        products: { none: {} },
-      },
-      select: { pidOrder: true },
-    });
-
-    if (orphanOrders.length > 0) {
-      await prisma.orders.deleteMany({
-        where: {
-          pidOrder: { in: orphanOrders.map((row) => row.pidOrder) },
-        },
-      });
-    }
-  }
-
   const orderALL = await prisma.orders.findMany({
     take: search ? 100 : 50,
     where: {
       status,
-      products: { some: {} },
       ...(searchTerms.length
         ? {
             AND: searchTerms.map((term) => ({

@@ -1,5 +1,6 @@
 import CounterBoxProcurement from "./CounterBoxProcurement"
 import OrdersBoxProcurement from "./OrdersBoxProcurement"
+import ProcurementAssistancePanel from "./ProcurementAssistancePanel"
 
 interface StatCardProps {
   title: string
@@ -29,6 +30,8 @@ export function ProcurementContent() {
       <div>
         <CounterBoxProcurement />
       </div>
+
+      <ProcurementAssistancePanel />
 
       <div>
         <OrdersBoxProcurement />

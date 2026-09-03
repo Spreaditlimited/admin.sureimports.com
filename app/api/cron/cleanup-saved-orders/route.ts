@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import xMail from '@/lib/email/xMail2';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
-const DEFAULT_EXPIRY_DAYS = 7;
+const DEFAULT_EXPIRY_DAYS = 14;
 
 function getCutoffDate(expiryDays: number) {
   const cutoff = new Date();

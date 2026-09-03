@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { CreditCard, FileText, RefreshCw, Save } from 'lucide-react';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { CreditCard, FileText, RefreshCw, Save } from "lucide-react";
+import { toast } from "sonner";
 
 type PlanSetting = {
-  planKey: 'starter' | 'pro';
+  planKey: "starter" | "pro";
   name: string;
   priceNaira: number;
   paystackPlanCode: string | null;
@@ -20,18 +20,18 @@ type ReportPricing = {
 
 const emptyPlans: PlanSetting[] = [
   {
-    planKey: 'starter',
-    name: 'Starter Database',
+    planKey: "starter",
+    name: "Starter Database",
     priceNaira: 10000,
-    paystackPlanCode: '',
+    paystackPlanCode: "",
     monthlySearchCredits: 1,
     extraCreditPriceNaira: 5000,
   },
   {
-    planKey: 'pro',
-    name: 'Pro Review Support',
+    planKey: "pro",
+    name: "Pro Review Support",
     priceNaira: 25000,
-    paystackPlanCode: '',
+    paystackPlanCode: "",
     monthlySearchCredits: 3,
     extraCreditPriceNaira: 5000,
   },
@@ -40,10 +40,10 @@ const emptyPlans: PlanSetting[] = [
 export default function IntelligencePlanSettingsForm() {
   const [plans, setPlans] = useState<PlanSetting[]>(emptyPlans);
   const [reportPricing, setReportPricing] = useState<ReportPricing>({
-    priceNaira: 50000,
-    priceUsdCents: 5000,
+    priceNaira: 20000,
+    priceUsdCents: 2000,
   });
-  const [reportPriceUsd, setReportPriceUsd] = useState('50.00');
+  const [reportPriceUsd, setReportPriceUsd] = useState("20.00");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -53,21 +53,21 @@ export default function IntelligencePlanSettingsForm() {
     async function loadSettings() {
       setLoading(true);
       try {
-        const response = await fetch('/api/intelligence/settings', {
-          cache: 'no-store',
+        const response = await fetch("/api/intelligence/settings", {
+          cache: "no-store",
         });
         const data = await response.json();
-        if (!response.ok || data?.statusx !== 'SUCCESS') {
-          throw new Error(data?.message || 'Failed to load pricing settings.');
+        if (!response.ok || data?.statusx !== "SUCCESS") {
+          throw new Error(data?.message || "Failed to load pricing settings.");
         }
 
         if (mounted && Array.isArray(data.data)) {
           setPlans(
             data.data.map((plan: PlanSetting) => ({
               planKey: plan.planKey,
-              name: plan.name || '',
+              name: plan.name || "",
               priceNaira: Number(plan.priceNaira || 0),
-              paystackPlanCode: plan.paystackPlanCode || '',
+              paystackPlanCode: plan.paystackPlanCode || "",
               monthlySearchCredits: Number(plan.monthlySearchCredits || 0),
               extraCreditPriceNaira: Number(plan.extraCreditPriceNaira || 0),
             })),
@@ -83,7 +83,7 @@ export default function IntelligencePlanSettingsForm() {
           }
         }
       } catch (error: any) {
-        toast.error(error.message || 'Failed to load pricing settings.');
+        toast.error(error.message || "Failed to load pricing settings.");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -96,8 +96,8 @@ export default function IntelligencePlanSettingsForm() {
   }, []);
 
   const updatePlan = (
-    planKey: PlanSetting['planKey'],
-    field: keyof Omit<PlanSetting, 'planKey'>,
+    planKey: PlanSetting["planKey"],
+    field: keyof Omit<PlanSetting, "planKey">,
     value: string,
   ) => {
     setPlans((current) =>
@@ -106,9 +106,9 @@ export default function IntelligencePlanSettingsForm() {
           ? {
               ...plan,
               [field]:
-                field === 'priceNaira' ||
-                field === 'monthlySearchCredits' ||
-                field === 'extraCreditPriceNaira'
+                field === "priceNaira" ||
+                field === "monthlySearchCredits" ||
+                field === "extraCreditPriceNaira"
                   ? Number(value || 0)
                   : value,
             }
@@ -120,9 +120,9 @@ export default function IntelligencePlanSettingsForm() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/api/intelligence/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/intelligence/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plans,
           reportPricing: {
@@ -132,8 +132,8 @@ export default function IntelligencePlanSettingsForm() {
         }),
       });
       const data = await response.json();
-      if (!response.ok || data?.statusx !== 'SUCCESS') {
-        throw new Error(data?.message || 'Failed to save pricing settings.');
+      if (!response.ok || data?.statusx !== "SUCCESS") {
+        throw new Error(data?.message || "Failed to save pricing settings.");
       }
       if (data.reportPricing) {
         setReportPricing(data.reportPricing);
@@ -141,9 +141,11 @@ export default function IntelligencePlanSettingsForm() {
           (Number(data.reportPricing.priceUsdCents || 0) / 100).toFixed(2),
         );
       }
-      toast.success('Supplier Intelligence pricing updated across all reports.');
+      toast.success(
+        "Supplier Intelligence pricing updated across all reports.",
+      );
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save pricing settings.');
+      toast.error(error.message || "Failed to save pricing settings.");
     } finally {
       setSaving(false);
     }
@@ -165,7 +167,8 @@ export default function IntelligencePlanSettingsForm() {
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               This is the central price for every Supplier Intelligence report.
-              Saving it updates existing products and becomes the default for new reports.
+              Saving it updates existing products and becomes the default for
+              new reports.
             </p>
           </div>
         </div>
@@ -234,7 +237,9 @@ export default function IntelligencePlanSettingsForm() {
                 <input
                   value={plan.name}
                   disabled={loading}
-                  onChange={(event) => updatePlan(plan.planKey, 'name', event.target.value)}
+                  onChange={(event) =>
+                    updatePlan(plan.planKey, "name", event.target.value)
+                  }
                   className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                 />
               </label>
@@ -251,7 +256,11 @@ export default function IntelligencePlanSettingsForm() {
                     step={1}
                     disabled={loading}
                     onChange={(event) =>
-                      updatePlan(plan.planKey, 'monthlySearchCredits', event.target.value)
+                      updatePlan(
+                        plan.planKey,
+                        "monthlySearchCredits",
+                        event.target.value,
+                      )
                     }
                     className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                   />
@@ -271,7 +280,11 @@ export default function IntelligencePlanSettingsForm() {
                     step={500}
                     disabled={loading}
                     onChange={(event) =>
-                      updatePlan(plan.planKey, 'extraCreditPriceNaira', event.target.value)
+                      updatePlan(
+                        plan.planKey,
+                        "extraCreditPriceNaira",
+                        event.target.value,
+                      )
                     }
                     className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                   />
@@ -291,7 +304,9 @@ export default function IntelligencePlanSettingsForm() {
                   min={1000}
                   step={500}
                   disabled={loading}
-                  onChange={(event) => updatePlan(plan.planKey, 'priceNaira', event.target.value)}
+                  onChange={(event) =>
+                    updatePlan(plan.planKey, "priceNaira", event.target.value)
+                  }
                   className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                 />
               </label>
@@ -301,16 +316,21 @@ export default function IntelligencePlanSettingsForm() {
                   Paystack Plan Code
                 </span>
                 <input
-                  value={plan.paystackPlanCode || ''}
+                  value={plan.paystackPlanCode || ""}
                   disabled={loading}
                   onChange={(event) =>
-                    updatePlan(plan.planKey, 'paystackPlanCode', event.target.value)
+                    updatePlan(
+                      plan.planKey,
+                      "paystackPlanCode",
+                      event.target.value,
+                    )
                   }
                   placeholder="PLN_xxxxxxxxx"
                   className="mt-2 w-full rounded-md border border-input bg-background px-4 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                 />
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  Create or update this recurring plan in Paystack with the same monthly amount.
+                  Create or update this recurring plan in Paystack with the same
+                  monthly amount.
                 </p>
               </label>
             </div>

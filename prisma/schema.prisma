@@ -588,6 +588,9 @@ model orders {
   pidAdmin                  String?
   pidAdminLast              String?
   claimedAt                 DateTime?
+  mergedIntoOrderId         String?    @db.VarChar(191)
+  mergedAt                  DateTime?
+  assistanceRevision        Int        @default(0)
   status                    String?
   ext1                      String?
   ext2                      String?
@@ -596,6 +599,85 @@ model orders {
   updatedAt                 DateTime?
   products                  products[]
   user                      users      @relation(fields: [pidUser], references: [pidUser])
+}
+
+model procurement_assistance_cases {
+  id                   Int       @id @default(autoincrement())
+  pidCase              String    @unique @db.VarChar(80)
+  pidUser              String    @db.VarChar(191)
+  status               String    @default("ACTIVE") @db.VarChar(40)
+  supportNote          String?   @db.Text
+  canCreateOrder       Boolean   @default(false)
+  canEditOrder         Boolean   @default(true)
+  canManageProducts    Boolean   @default(true)
+  canMergeOrders       Boolean   @default(false)
+  consentVersion       String    @default("2026-09-03") @db.VarChar(40)
+  assignedAdminPidUser String?   @db.VarChar(191)
+  assignedAdminName    String?   @db.VarChar(191)
+  authorizedAt         DateTime  @default(now())
+  expiresAt            DateTime
+  claimedAt            DateTime?
+  revokedAt            DateTime?
+  releasedAt           DateTime?
+  resolutionNote       String?   @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @default(now()) @updatedAt
+
+  @@index([pidUser, status])
+  @@index([status, expiresAt])
+  @@index([assignedAdminPidUser, status])
+}
+
+model procurement_assistance_case_orders {
+  id        Int      @id @default(autoincrement())
+  pidCase   String   @db.VarChar(80)
+  pidOrder  String   @db.VarChar(191)
+  createdAt DateTime @default(now())
+
+  @@unique([pidCase, pidOrder])
+  @@index([pidOrder])
+}
+
+model procurement_assistance_events {
+  id          Int      @id @default(autoincrement())
+  pidEvent    String   @unique @db.VarChar(80)
+  pidCase     String   @db.VarChar(80)
+  pidOrder    String?  @db.VarChar(191)
+  actorType   String   @db.VarChar(20)
+  actorPid    String   @db.VarChar(191)
+  eventType   String   @db.VarChar(60)
+  detailsJson Json?
+  createdAt   DateTime @default(now())
+
+  @@index([pidCase, createdAt])
+  @@index([pidOrder, createdAt])
+}
+
+model procurement_order_merges {
+  id                Int      @id @default(autoincrement())
+  pidMerge          String   @unique @db.VarChar(80)
+  pidUser           String   @db.VarChar(191)
+  targetOrderId     String   @db.VarChar(191)
+  actorType         String   @db.VarChar(20)
+  actorPid          String   @db.VarChar(191)
+  assistanceCaseId  String?  @db.VarChar(80)
+  idempotencyKey    String   @unique @db.VarChar(100)
+  movedProductCount Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  @@index([pidUser, createdAt])
+  @@index([targetOrderId])
+}
+
+model procurement_order_merge_sources {
+  id            Int      @id @default(autoincrement())
+  pidMerge      String   @db.VarChar(80)
+  sourceOrderId String   @unique @db.VarChar(191)
+  productCount  Int      @default(0)
+  snapshotJson  Json?
+  createdAt     DateTime @default(now())
+
+  @@index([pidMerge])
 }
 
 model payments {
