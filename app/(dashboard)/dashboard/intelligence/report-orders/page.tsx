@@ -63,15 +63,27 @@ export default async function ReportOrdersPage({
   const params = searchParams ? await searchParams : {};
   const status = one(params.status);
   const query = one(params.q).trim().slice(0, 160);
+  const searchTerms = query.toLowerCase().split(/\s+/).filter(Boolean);
   const where = {
     ...(status ? { status } : {}),
-    ...(query
+    ...(searchTerms.length
       ? {
-          OR: [
-            { pidOrder: { contains: query } },
-            { email: { contains: query } },
-            { providerReference: { contains: query } },
-          ],
+          AND: searchTerms.map((term) => ({
+            OR: [
+              { pidOrder: { contains: term } },
+              { pidUser: { contains: term } },
+              { email: { contains: term } },
+              { firstName: { contains: term } },
+              { lastName: { contains: term } },
+              { billingCountry: { contains: term } },
+              { paymentProvider: { contains: term } },
+              { providerReference: { contains: term } },
+              { providerCaptureReference: { contains: term } },
+              { reportId: { contains: term } },
+              { versionId: { contains: term } },
+              { fulfillmentError: { contains: term } },
+            ],
+          })),
         }
       : {}),
   };
@@ -172,7 +184,7 @@ export default async function ReportOrdersPage({
           <input
             name="q"
             defaultValue={query}
-            placeholder="Order ID, customer email or payment reference"
+            placeholder="Search order, customer, country, report or payment reference…"
             className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30"
           />
         </label>

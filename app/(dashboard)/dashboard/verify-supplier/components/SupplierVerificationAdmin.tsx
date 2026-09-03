@@ -20,6 +20,7 @@ import {
   TrainFront,
 } from "lucide-react";
 import { toast } from "sonner";
+import { matchesServiceOrderSearch } from "@/lib/serviceOrderSearch";
 import {
   publishSupplierVerificationReport,
   quoteSupplierTransport,
@@ -103,17 +104,29 @@ export default function SupplierVerificationAdmin({
     () =>
       initialRequests.filter((item) => {
         const matchesStatus = status === "ALL" || item.status === status;
-        const haystack = [
-          item.pidVerifySupplier,
-          item.supplierName,
-          item.supplierNameChinese,
-          item.registrationNumber,
-          item.userEmail,
-          item.customerName,
-        ]
-          .join(" ")
-          .toLowerCase();
-        return matchesStatus && haystack.includes(query.toLowerCase());
+        return (
+          matchesStatus &&
+          matchesServiceOrderSearch(query, [
+            item.pidVerifySupplier,
+            item.pidUser,
+            item.userEmail,
+            item.customerName,
+            item.supplierName,
+            item.supplierNameChinese,
+            item.registrationNumber,
+            item.supplierPhone,
+            item.supplierEmail,
+            item.supplierWechat,
+            item.supplierAddress,
+            item.supplierAddressChinese,
+            item.supplierProduct,
+            item.supplierWebsite,
+            item.billingCountry,
+            item.verificationType,
+            item.status,
+            item.transportQuoteStatus,
+          ])
+        );
       }),
     [initialRequests, query, status],
   );
@@ -323,7 +336,7 @@ export default function SupplierVerificationAdmin({
               aria-label="Search verifications"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search request, customer or supplier"
+              placeholder="Search request, customer, supplier, phone, address or product…"
               className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
             />
           </label>
@@ -528,8 +541,14 @@ function AutomatedTravelResearch({
                     {option.duration}
                   </p>
                   <dl className="mt-3 space-y-1 text-xs text-muted-foreground">
-                    <CostLine label="Return fare" value={option.intercityFareCny} />
-                    <CostLine label="Local transfers" value={option.localTransfersCny} />
+                    <CostLine
+                      label="Return fare"
+                      value={option.intercityFareCny}
+                    />
+                    <CostLine
+                      label="Local transfers"
+                      value={option.localTransfersCny}
+                    />
                     <div className="flex justify-between gap-3">
                       <dt>Hotel</dt>
                       <dd>
@@ -537,7 +556,10 @@ function AutomatedTravelResearch({
                         {option.lodgingRateCny.toLocaleString()}
                       </dd>
                     </div>
-                    <CostLine label="Contingency" value={option.contingencyCny} />
+                    <CostLine
+                      label="Contingency"
+                      value={option.contingencyCny}
+                    />
                   </dl>
                   <p className="mt-3 text-xs leading-5 text-muted-foreground">
                     {option.notes}
@@ -755,9 +777,9 @@ function RequestCard({
               OpenAI research credits.
             </div>
           ) : null}
-      {item.verificationType === "PHYSICAL" &&
-      verificationPaymentPaid(item) &&
-      ["PENDING", "READY"].includes(item.transportQuoteStatus || "") ? (
+          {item.verificationType === "PHYSICAL" &&
+          verificationPaymentPaid(item) &&
+          ["PENDING", "READY"].includes(item.transportQuoteStatus || "") ? (
             <Panel
               title="Travel & lodging plan"
               subtitle={`${estimate}${item.transportDistanceMeters ? ` · ${(item.transportDistanceMeters / 1000).toFixed(1)} km one way` : ""}`}
