@@ -12,19 +12,35 @@ export async function PUT(request: Request) {
     const formData = await request.formData();
         const serviceCharge = formData.get('serviceCharge');
         const vat = formData.get('vat');
+        const procurementMinimumOrderNgn = formData.get(
+          'procurementMinimumOrderNgn',
+        );
 
-        const values = [serviceCharge, vat];
+        const values = [serviceCharge, vat, procurementMinimumOrderNgn];
         if (values.some((value) => typeof value !== 'string' || value.trim() === '')) {
           return NextResponse.json(
-            { statusx: 'INVALID_INPUT', message: 'Service charge and VAT are required.' },
+            { statusx: 'INVALID_INPUT', message: 'All settings are required.' },
             { status: 400 },
           );
         }
 
         const parsedValues = values.map(Number);
-        if (parsedValues.some((value) => !Number.isFinite(value) || value < 0)) {
+        const [serviceChargeValue, vatValue, minimumOrderValue] = parsedValues;
+        if (
+          !Number.isFinite(serviceChargeValue) ||
+          serviceChargeValue < 0 ||
+          !Number.isFinite(vatValue) ||
+          vatValue < 0 ||
+          !Number.isInteger(minimumOrderValue) ||
+          minimumOrderValue < 0 ||
+          minimumOrderValue > 100000000
+        ) {
           return NextResponse.json(
-            { statusx: 'INVALID_INPUT', message: 'Service charge and VAT must be valid non-negative percentages.' },
+            {
+              statusx: 'INVALID_INPUT',
+              message:
+                'Enter valid non-negative percentages and a whole-number procurement minimum.',
+            },
             { status: 400 },
           );
         }
@@ -36,11 +52,12 @@ export async function PUT(request: Request) {
               data: { 
                 service_charge: String(serviceCharge),
                 vat: String(vat),
+                procurementMinimumOrderNgn: minimumOrderValue,
               },  
             });
 
             return NextResponse.json(
-              { statusx: 'SUCCESS', message: 'Service Charge & VAT has been updated successfully!' },
+              { statusx: 'SUCCESS', message: 'Financial settings updated successfully.' },
               { status: 200 },
             );  
 

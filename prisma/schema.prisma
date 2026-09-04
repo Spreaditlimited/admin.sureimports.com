@@ -1094,6 +1094,7 @@ model exchange_rate {
   exYuanToDollar            String?
   exNairaToYuan             String?
   quotationSeaRateNgnPerCbm String?   @default("500000")
+  procurementMinimumOrderNgn Int       @default(50000)
   status                    String
   ext1                      String?
   ext2                      String?

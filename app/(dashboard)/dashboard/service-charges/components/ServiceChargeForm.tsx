@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { 
   Save, 
@@ -10,24 +9,26 @@ import {
   Info,
   BadgePercent,
   Settings2,
-  Receipt
+  Receipt,
+  Banknote
 } from 'lucide-react';
-import { useAuth } from '@/lib/AuthContext';
 
 interface ServiceRateProps {
     rates: {
         service_charge: number;
         vat: number;
+        procurementMinimumOrderNgn: number;
     }
 }
 
 const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
-    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
 
     // Form State prefilled from DB
     const [serviceCharge, setServiceCharge] = useState<number>(rates?.service_charge || 0);
     const [vat, setVat] = useState<number>(rates?.vat || 0);
+    const [procurementMinimumOrderNgn, setProcurementMinimumOrderNgn] =
+        useState<number>(rates?.procurementMinimumOrderNgn ?? 50000);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -37,6 +38,10 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
         const formData = new FormData();
         formData.append('serviceCharge', serviceCharge.toString());
         formData.append('vat', vat.toString());
+        formData.append(
+            'procurementMinimumOrderNgn',
+            procurementMinimumOrderNgn.toString(),
+        );
 
         try {
             const res = await fetch('/api/crud/service-charges/update', {
@@ -46,7 +51,7 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
 
             const data = await res.json();
             if (data.statusx === 'SUCCESS') {
-                toast.success('Global charges and VAT updated successfully');
+                toast.success('Charges and procurement minimum updated successfully');
             } else {
                 toast.error(data.message || 'Synchronization failed');
             }
@@ -112,6 +117,29 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
                                 </div>
                                 <p className="text-[10px] text-muted-foreground italic">Governed by regional tax regulations on total invoice value.</p>
                             </div>
+
+                            {/* Nigeria procurement minimum */}
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <Banknote className="w-3.5 h-3.5" /> Buy from Chinese Websites minimum (₦)
+                                </label>
+                                <div className="relative max-w-md">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">₦</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100000000"
+                                        step="1000"
+                                        value={procurementMinimumOrderNgn}
+                                        onChange={(e) => setProcurementMinimumOrderNgn(Number(e.target.value))}
+                                        required
+                                        className="w-full px-4 py-3 pl-9 text-lg border border-input rounded-md bg-background text-foreground font-bold font-mono focus:ring-2 focus:ring-ring transition-all"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-muted-foreground italic">
+                                    Nigeria-bound saved orders below this amount cannot proceed to payment.
+                                </p>
+                            </div>
                         </div>
 
                         {/* Critical Advisory Box */}
@@ -120,7 +148,7 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
                             <div className="space-y-1">
                                 <p className="text-xs font-bold text-amber-700 uppercase">System-Wide Impact</p>
                                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                    Modifying these values affects the final checkout cost for <span className="font-bold text-foreground">every transaction</span>. Ensure these percentages align with your current operational overhead and legal tax obligations.
+                                    Changes take effect immediately. The percentages affect transaction costs, while the procurement minimum controls when Nigeria-bound saved orders can proceed to payment.
                                 </p>
                             </div>
                         </div>
@@ -138,7 +166,7 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            {isLoading ? 'Updating Ledger...' : 'Commit Surcharge Changes'}
+                            {isLoading ? 'Saving settings...' : 'Save settings'}
                         </button>
                     </div>
                 </div>

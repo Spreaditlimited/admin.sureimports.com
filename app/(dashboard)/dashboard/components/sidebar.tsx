@@ -231,7 +231,7 @@ const systemSettings: MenuItem[] = [
       },
       { title: "Shipping Plans", path: "/dashboard/shipping-plans/add" },
       { title: "Exchange Rates", path: "/dashboard/exchange-rates" },
-      { title: "Service Charge & VAT", path: "/dashboard/service-charges" },
+      { title: "Charges & Procurement", path: "/dashboard/service-charges" },
       { title: "Bank Accounts", path: "/dashboard/invoicing/bank-accounts" },
     ],
   },

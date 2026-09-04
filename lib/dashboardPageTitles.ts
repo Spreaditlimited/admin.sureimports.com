@@ -45,7 +45,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/procurement": "Procurement",
   "/dashboard/profile": "Profile",
   "/dashboard/refunds": "Refunds",
-  "/dashboard/service-charges": "Service Charge & VAT",
+  "/dashboard/service-charges": "Charges & Procurement",
   "/dashboard/social-studio": "Social Studio",
   "/dashboard/settings": "Settings",
   "/dashboard/shipping-only": "Shipping Only",

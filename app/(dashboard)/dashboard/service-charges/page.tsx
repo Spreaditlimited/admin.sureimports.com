@@ -19,6 +19,8 @@ export default async function DashboardPage() {
   const rates = {
     service_charge: Number(rateRecord?.service_charge ?? 0),
     vat: Number(rateRecord?.vat ?? 0),
+    procurementMinimumOrderNgn:
+      rateRecord?.procurementMinimumOrderNgn ?? 50000,
   };
 
   return (
@@ -27,10 +29,10 @@ export default async function DashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-1 px-1">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Service Charges
+          Service Charges & Procurement
         </h1>
         <p className="text-sm text-muted-foreground">
-          Configure global platform fees, procurement surcharges, and tax percentages.
+          Configure platform fees, tax percentages, and the minimum value for Nigeria-bound procurement orders.
         </p>
       </div>
 
