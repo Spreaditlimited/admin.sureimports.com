@@ -48,6 +48,7 @@ export async function GET() {
         },
         data: {
           status: "EXPIRED",
+          activeRequestKey: null,
           assignedAdminPidUser: null,
           assignedAdminName: null,
           claimedAt: null,

@@ -55,7 +55,7 @@ const features: MenuItem[] = [
   {
     title: "Procurement",
     icon: ShoppingCart,
-    path: "/dashboard/procurement?status=pending",
+    path: "/dashboard/procurement?status=saved",
     serviceKey: "procurement",
   },
   {

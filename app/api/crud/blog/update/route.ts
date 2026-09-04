@@ -7,6 +7,7 @@ import { generateSlug } from '@/app/utils/slugGenerator';
 import { destroyCloudinaryAsset } from '@/lib/cloudinary/destroy';
 import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
 import { BLOG_IMAGE_FOLDER, normalizeBlogImagePublicId } from '@/lib/blogImage';
+import { findBlogPublicationIssues } from '@/lib/blogPublicationValidation';
 
 const prisma = new PrismaClient();
 
@@ -54,6 +55,31 @@ export async function PUT(request: Request) {
         },
         { status: 404 }
       );
+    }
+
+    const blogSlug = blogTitle !== existingBlog.blogTitle
+      ? generateSlug(blogTitle)
+      : existingBlog.blogSlug;
+    if (blogPublished) {
+      const publicationIssues = await findBlogPublicationIssues({
+        prisma,
+        html: blogContent,
+        publishAt: existingBlog.createdAt || new Date(),
+        currentSlug: blogSlug,
+      });
+      if (publicationIssues.length) {
+        return NextResponse.json(
+          {
+            responsex: {
+              message: publicationIssues.join(' '),
+              status: 'PUBLICATION_VALIDATION_ERROR',
+            },
+            successx: false,
+            issues: publicationIssues,
+          },
+          { status: 400 },
+        );
+      }
     }
 
     // Handle image upload if new file is provided
@@ -107,11 +133,6 @@ export async function PUT(request: Request) {
         );
       }
     }
-
-    // Generate new slug if title changed
-    const blogSlug = blogTitle !== existingBlog.blogTitle 
-      ? generateSlug(blogTitle) 
-      : existingBlog.blogSlug;
 
     // Update blog post
     const updatedBlog = await prisma.blog.update({

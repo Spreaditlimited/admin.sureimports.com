@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { generateSlug } from '@/app/utils/slugGenerator';
 import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
 import { BLOG_IMAGE_FOLDER } from '@/lib/blogImage';
+import { findBlogPublicationIssues } from '@/lib/blogPublicationValidation';
 
 const prisma = new PrismaClient();
 
@@ -36,6 +37,29 @@ export async function POST(request: Request) {
         },
         { status: 400 }
       );
+    }
+
+    const blogSlug = generateSlug(blogTitle);
+    if (blogPublished) {
+      const publicationIssues = await findBlogPublicationIssues({
+        prisma,
+        html: blogContent,
+        publishAt: new Date(),
+        currentSlug: blogSlug,
+      });
+      if (publicationIssues.length) {
+        return NextResponse.json(
+          {
+            responsex: {
+              message: publicationIssues.join(' '),
+              status: 'PUBLICATION_VALIDATION_ERROR',
+            },
+            successx: false,
+            issues: publicationIssues,
+          },
+          { status: 400 },
+        );
+      }
     }
 
     // Get file from form
@@ -91,9 +115,6 @@ export async function POST(request: Request) {
         );
       }
     }
-
-    // Generate slug
-    const blogSlug = generateSlug(blogTitle);
 
     // Create blog post in database
     const blog = await prisma.blog.create({

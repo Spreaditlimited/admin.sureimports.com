@@ -9,6 +9,10 @@ import {
   procurementOrderId,
 } from "@/lib/procurementAssistance";
 import { normalizeProductUrl } from "@/lib/productUrl";
+import {
+  sendAssistanceClaimedEmail,
+  sendAssistanceReleasedEmail,
+} from "@/lib/procurementAssistanceEmails";
 
 export async function PATCH(
   request: Request,
@@ -23,40 +27,85 @@ export async function PATCH(
       const admin = await prisma.admin.findUnique({
         where: { pidUser: access.admin.pidUser },
       });
-      const claimed = await prisma.procurement_assistance_cases.updateMany({
-        where: {
-          pidCase,
-          status: "ACTIVE",
-          expiresAt: { gt: new Date() },
-          OR: [
-            { assignedAdminPidUser: null },
-            { assignedAdminPidUser: access.admin.pidUser },
-          ],
-        },
-        data: {
-          assignedAdminPidUser: access.admin.pidUser,
-          assignedAdminName:
-            [admin?.userFirstname, admin?.userLastname]
-              .filter(Boolean)
-              .join(" ") || admin?.userEmail,
-          claimedAt: new Date(),
-        },
+      const adminName =
+        [admin?.userFirstname, admin?.userLastname]
+          .filter(Boolean)
+          .join(" ") || admin?.userEmail;
+      const claimed = await prisma.$transaction(async (tx) => {
+        const result = await tx.procurement_assistance_cases.updateMany({
+          where: {
+            pidCase,
+            status: "ACTIVE",
+            expiresAt: { gt: new Date() },
+            assignedAdminPidUser: null,
+          },
+          data: {
+            assignedAdminPidUser: access.admin.pidUser,
+            assignedAdminName: adminName,
+            claimedAt: new Date(),
+          },
+        });
+        if (!result.count) return false;
+        await tx.procurement_assistance_events.create({
+          data: {
+            pidEvent: assistanceId("PE"),
+            pidCase,
+            actorType: "ADMIN",
+            actorPid: access.admin.pidUser,
+            eventType: "CLAIMED",
+          },
+        });
+        return true;
       });
-      if (!claimed.count)
+      if (!claimed) {
+        const existing = await prisma.procurement_assistance_cases.findFirst({
+          where: {
+            pidCase,
+            status: "ACTIVE",
+            expiresAt: { gt: new Date() },
+            assignedAdminPidUser: access.admin.pidUser,
+          },
+          select: { pidCase: true },
+        });
+        if (existing) return NextResponse.json({ statusx: "SUCCESS" });
         throw new Error(
           "Authorization expired, was revoked, or another admin already claimed it.",
         );
-      await prisma.procurement_assistance_events.create({
-        data: {
-          pidEvent: assistanceId("PE"),
-          pidCase,
-          actorType: "ADMIN",
-          actorPid: access.admin.pidUser,
-          eventType: "CLAIMED",
-        },
+      }
+      const assistance = await prisma.procurement_assistance_cases.findUnique({
+        where: { pidCase },
+        select: { pidUser: true },
       });
+      const customer = assistance
+        ? await prisma.users.findUnique({
+            where: { pidUser: assistance.pidUser },
+            select: { userFirstname: true, userEmail: true },
+          })
+        : null;
+      if (customer) {
+        await sendAssistanceClaimedEmail({
+          email: customer.userEmail,
+          firstName: customer.userFirstname,
+          adminFirstName:
+            admin?.userFirstname?.trim() || "A Sure Imports admin",
+        });
+      }
     } else if (body.action === "release") {
-      await getActiveAssistance(pidCase, access.admin.pidUser, "canEditOrder");
+      const assistance = await getActiveAssistance(
+        pidCase,
+        access.admin.pidUser,
+        "canEditOrder",
+      );
+      const [customer, admin] = await Promise.all([
+        prisma.users.findUnique({
+          where: { pidUser: assistance.pidUser },
+          select: { userFirstname: true, userEmail: true },
+        }),
+        prisma.admin.findUnique({
+          where: { pidUser: access.admin.pidUser },
+          select: { userFirstname: true },
+        }),
+      ]);
       const createdOrderEvents =
         await prisma.procurement_assistance_events.findMany({
           where: {
@@ -69,11 +118,17 @@ export async function PATCH(
       const createdOrderIds = createdOrderEvents.flatMap((event) =>
         event.pidOrder ? [event.pidOrder] : [],
       );
-      await prisma.$transaction([
-        prisma.procurement_assistance_cases.update({
-          where: { pidCase },
+      await prisma.$transaction(async (tx) => {
+        const released = await tx.procurement_assistance_cases.updateMany({
+          where: {
+            pidCase,
+            status: "ACTIVE",
+            assignedAdminPidUser: access.admin.pidUser,
+            expiresAt: { gt: new Date() },
+          },
           data: {
             status: "RELEASED",
+            activeRequestKey: null,
             releasedAt: new Date(),
             resolutionNote:
               String(body.resolutionNote || "").slice(0, 3000) || null,
@@ -81,20 +136,21 @@ export async function PATCH(
             assignedAdminName: null,
             claimedAt: null,
           },
-        }),
-        ...(createdOrderIds.length
-          ? [
-              prisma.orders.updateMany({
-                where: {
-                  pidOrder: { in: createdOrderIds },
-                  status: "saved",
-                  pidAdmin: access.admin.pidUser,
-                },
-                data: { pidAdmin: null, claimedAt: null },
-              }),
-            ]
-          : []),
-        prisma.procurement_assistance_events.create({
+        });
+        if (!released.count) {
+          throw new Error("This order help request is no longer active.");
+        }
+        if (createdOrderIds.length) {
+          await tx.orders.updateMany({
+            where: {
+              pidOrder: { in: createdOrderIds },
+              status: "saved",
+              pidAdmin: access.admin.pidUser,
+            },
+            data: { pidAdmin: null, claimedAt: null },
+          });
+        }
+        await tx.procurement_assistance_events.create({
           data: {
             pidEvent: assistanceId("PE"),
             pidCase,
@@ -102,8 +158,16 @@ export async function PATCH(
             actorPid: access.admin.pidUser,
             eventType: "RELEASED",
           },
-        }),
-      ]);
+        });
+      });
+      if (customer) {
+        await sendAssistanceReleasedEmail({
+          email: customer.userEmail,
+          firstName: customer.userFirstname,
+          adminFirstName:
+            admin?.userFirstname?.trim() || "A Sure Imports admin",
+        });
+      }
     } else if (body.action === "updateOrder") {
       const item = await getActiveAssistance(
         pidCase,

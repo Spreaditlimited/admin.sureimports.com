@@ -162,7 +162,7 @@ export default function OrdersBoxProcurement() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery.trim());
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const status = useSearchParams().get("status") || "none";
+  const status = useSearchParams().get("status") || "saved";
   const { user } = useAuth();
   const canRunCleanup =
     user?.userStatus === "superadmin" || user?.userStatus === "L1";
@@ -198,8 +198,6 @@ export default function OrdersBoxProcurement() {
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-    // fetchOrders intentionally follows the selected status filter.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, deferredSearchQuery]);
 
   useEffect(() => {

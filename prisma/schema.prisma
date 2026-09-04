@@ -605,6 +605,7 @@ model procurement_assistance_cases {
   id                   Int       @id @default(autoincrement())
   pidCase              String    @unique @db.VarChar(80)
   pidUser              String    @db.VarChar(191)
+  activeRequestKey     String?   @unique @db.VarChar(191)
   status               String    @default("ACTIVE") @db.VarChar(40)
   supportNote          String?   @db.Text
   canCreateOrder       Boolean   @default(false)
