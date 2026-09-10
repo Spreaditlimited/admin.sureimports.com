@@ -6,6 +6,9 @@ import TableLayout from "./components/TableLayout";
 
 
 
+
+
+
 type TableData = {
   id: number;
   categoryName: string;
@@ -40,4 +43,3 @@ export default async function DashboardPage() {
       </DashboardLayout>
   )
 }
-

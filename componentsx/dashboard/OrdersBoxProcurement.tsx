@@ -147,9 +147,9 @@ const ComponentsAccordionsBasic = () => {
                         (datax: any, index: number) => {
                         return (
                         
-                            <div className="mb-5">
+                            <div className="mb-5" key={datax.pidOrder || index}>
                             <div className="space-y-2 font-semibold">
-                                <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]" key={index + 1}>
+                                <div className="rounded border border-[#d3d3d3] dark:border-[#1b2e4b]">
                                     <button type="button" className={`flex w-full items-center p-4 text-white-dark dark:bg-[#1b2e4b] ${active === `${index+1}` ? '!text-primary' : ''}`} onClick={() => togglePara(`${index+1}`)}>
                                         <b className='text-xl'>#{index + 1} : {datax.orderName}</b>&nbsp; | ORDER ID: {datax.pidOrder} 
                                         

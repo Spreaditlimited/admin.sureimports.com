@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/app/api/invoicing/_lib/invoicing";
 import { prisma } from "@/lib/prisma";
+import { reverseAffiliateConversions } from "@/lib/affiliate/reversals";
 
 const PAGE_PATH = "/dashboard/intelligence/report-orders";
 
@@ -121,6 +122,14 @@ export async function updateReportOrderAction(formData: FormData) {
       },
     }),
   ]);
+
+  if (action === "confirm_refund") {
+    await reverseAffiliateConversions({
+      externalOrderReference: `supplier-report:${pidOrder}`,
+      reason: reason || `Supplier Report order ${pidOrder} was refunded.`,
+      reversalReference: `admin-refund:${pidOrder}`,
+    });
+  }
 
   revalidatePath(PAGE_PATH);
 }

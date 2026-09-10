@@ -232,7 +232,7 @@ function formatDate(value?: Date | null) {
 function typeLabel(value: string) {
   if (value === "low_ctr") return "Low CTR"
   if (value === "ranking_push") return "Ranking Push"
-  return value.replace(/_/g, " ")
+  return value.replace(/_/g, " ");
 }
 
 function ctaLabel(value?: string | null) {
@@ -385,11 +385,12 @@ async function getSeoOpportunities(input: {
   }
 }
 
-export default async function SeoOpportunitiesPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ status?: string; type?: string; pageType?: string; draft?: string; draftError?: string }>
-}) {
+export default async function SeoOpportunitiesPage(
+  props: {
+    searchParams?: Promise<{ status?: string; type?: string; pageType?: string; draft?: string; draftError?: string }>
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireSuperAdminPageAccess()
 
   const resolvedSearchParams = searchParams ? await searchParams : {}
@@ -712,11 +713,11 @@ export default async function SeoOpportunitiesPage({
                     </aside>
                   </div>
                 </article>
-              )
+              );
             })}
           </div>
         )}
       </section>
     </main>
-  )
+  );
 }

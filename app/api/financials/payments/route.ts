@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
     const [legacyPayments, invoicePayments, pendingClaims] = await Promise.all([
       prisma.payments.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 500,
       }),
       prisma.invoice_payments.findMany({
         orderBy: { paidAt: 'desc' },
@@ -76,7 +75,6 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        take: 500,
       }),
       prisma.invoice_payment_claims.findMany({
         where: { status: 'PENDING_CONFIRMATION' },
@@ -103,7 +101,6 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        take: 500,
       }),
     ]);
     const legacyUserIds = Array.from(new Set(legacyPayments.map((p) => p.pidUser).filter(Boolean)));

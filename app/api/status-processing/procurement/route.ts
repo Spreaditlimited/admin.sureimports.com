@@ -8,6 +8,8 @@ import { NextResponse } from 'next/server';
 import { generateSlug } from '@/utils/slugGenerator';
 import xMail from '@/lib/email/xMail2';
 import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
+import { reconcileManualProcurementBankPayment } from '@/lib/procurement/manualBankPayment';
+import { reverseAffiliateConversions } from '@/lib/affiliate/reversals';
 
 const prisma = new PrismaClient();
 
@@ -262,34 +264,46 @@ export async function POST(request: Request) {
 
 
 
-  //SEND GENERAL MESSAGE
-  const messagex = await prisma.messages.create({
-    data: {
-      pidMessage: pidMessage,
-      pidOrder: pidOrder,
-      pidFrom: 'hello@sureimports.com',
-      pidTo: user?.userEmail,
-      fullName: user?.userFirstname,
-      messageTitle: 'Admin Message: '+newStatus.toUpperCase(),
-      messageContent: message,
-      messageStatus:    'unread',
-      createdAt:       new Date(),
-      updatedAt:       new Date(),
-    },
-  });
-
-
-    //UPDATE SERVICE STATUS 
-    const updatex = await prisma.orders.update({
-      where: {  
-                pidUser: pidUser, 
-                pidOrder: pidOrder 
-             },
+  const updatex = await prisma.$transaction(async (tx) => {
+    await tx.messages.create({
       data: {
-        status: newStatus,
+        pidMessage,
+        pidOrder,
+        pidFrom: 'hello@sureimports.com',
+        pidTo: user.userEmail,
+        fullName: user.userFirstname,
+        messageTitle: 'Admin Message: ' + newStatus.toUpperCase(),
+        messageContent: message,
+        messageStatus: 'unread',
+        createdAt: new Date(),
         updatedAt: new Date(),
       },
     });
+
+    const updatedOrder = await tx.orders.update({
+      where: { pidUser, pidOrder },
+      data: { status: newStatus, updatedAt: new Date() },
+    });
+
+    await reconcileManualProcurementBankPayment(tx, {
+      pidOrder,
+      currentStatus: recordStatus,
+      newStatus,
+      pidUser,
+      customerName: `${user.userFirstname || ''} ${user.userLastname || ''}`.trim(),
+      customerEmail: user.userEmail,
+    });
+
+    return updatedOrder;
+  });
+
+  if (newStatus === 'cancelled') {
+    await reverseAffiliateConversions({
+      externalOrderReference: `procurement:${pidOrder}`,
+      reason: `Procurement order ${pidOrder} was cancelled by an administrator.`,
+      reversalReference: `admin-cancellation:${pidOrder}`,
+    });
+  }
 
     if (newStatus !== 'revert_to_approved') {
       await Promise.allSettled([

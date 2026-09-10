@@ -17,6 +17,28 @@ const SUCCESS_PAYMENT_STATUSES = [
   'SUCCESS',
 ]
 
+function finite(value: unknown, fallback = 0) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function amountInNaira(
+  amount: number,
+  currency: string | null,
+  ngnPerUsd: number,
+  cnyPerUsd: number,
+) {
+  switch (String(currency || 'NGN').trim().toUpperCase()) {
+    case 'USD':
+      return amount * ngnPerUsd
+    case 'CNY':
+    case 'RMB':
+      return (amount / cnyPerUsd) * ngnPerUsd
+    default:
+      return amount
+  }
+}
+
 export async function GET() {
   try {
     // Fetch all stats in parallel for better performance
@@ -28,7 +50,10 @@ export async function GET() {
       totalProducts,
       storeProducts,
       totalServices,
-      totalPayments,
+      legacyPayments,
+      invoicePayments,
+      pendingInvoiceClaims,
+      exchangeRate,
       pendingPaySupplier,
       totalAffiliates,
       totalMessages,
@@ -73,14 +98,29 @@ export async function GET() {
         prisma.pay_supplier.count(),
       ]).then(counts => counts.reduce((a, b) => a + b, 0)),
 
-      // Total successful payments
-      prisma.payments.count({
-        where: {
-          paymentStatus: {
-            in: SUCCESS_PAYMENT_STATUSES,
-          },
+      // Use the same sources and deduplication rule as the Financials screen.
+      prisma.payments.findMany({
+        select: {
+          txID: true,
+          paymentStatus: true,
+          amount: true,
+          currency: true,
         },
       }),
+
+      prisma.invoice_payments.findMany({
+        select: {
+          pidInvoicePayment: true,
+          amount: true,
+          currency: true,
+        },
+      }),
+
+      prisma.invoice_payment_claims.count({
+        where: { status: 'PENDING_CONFIRMATION' },
+      }),
+
+      prisma.exchange_rate.findUnique({ where: { id: 1 } }),
 
       // Pending pay supplier requests
       prisma.pay_supplier.count({
@@ -88,7 +128,7 @@ export async function GET() {
       }),
 
       // Total affiliates
-      prisma.affiliates.count(),
+      prisma.affiliate_accounts.count(),
 
       // Total messages
       prisma.messages.count(),
@@ -110,17 +150,33 @@ export async function GET() {
       }),
     ])
 
-    // Calculate total revenue from successful payments
-    const totalRevenue = await prisma.payments.aggregate({
-      _sum: {
-        amount: true,
-      },
-      where: {
-        paymentStatus: {
-          in: SUCCESS_PAYMENT_STATUSES,
-        },
-      },
-    })
+    const mirroredInvoicePaymentIds = new Set(
+      legacyPayments.map((payment) => payment.txID).filter(Boolean),
+    )
+    const independentInvoicePayments = invoicePayments.filter(
+      (payment) => !mirroredInvoicePaymentIds.has(payment.pidInvoicePayment),
+    )
+    const completedLegacyPayments = legacyPayments.filter((payment) =>
+      SUCCESS_PAYMENT_STATUSES.includes(String(payment.paymentStatus || '').trim()),
+    )
+    const completedPayments = [
+      ...completedLegacyPayments,
+      ...independentInvoicePayments,
+    ]
+    const ngnPerUsd = finite(exchangeRate?.exNairaToDollar)
+    const cnyPerUsd = finite(exchangeRate?.exYuanToDollar)
+    if (ngnPerUsd <= 0 || cnyPerUsd <= 0) {
+      throw new Error('Exchange-rate configuration is invalid.')
+    }
+    const completedPaymentCount = completedPayments.length
+    const pendingPaymentCount =
+      legacyPayments.length - completedLegacyPayments.length + pendingInvoiceClaims
+    const totalPayments = completedPaymentCount + pendingPaymentCount
+    const totalRevenue = completedPayments.reduce(
+      (total, payment) =>
+        total + amountInNaira(finite(payment.amount), payment.currency, ngnPerUsd, cnyPerUsd),
+      0,
+    )
 
     // Recent orders (last 30 days)
     const thirtyDaysAgo = new Date()
@@ -143,6 +199,8 @@ export async function GET() {
       storeProducts,
       totalServices,
       totalPayments,
+      completedPayments: completedPaymentCount,
+      pendingPayments: pendingPaymentCount,
       pendingPaySupplier,
       totalAffiliates,
       totalMessages,
@@ -150,7 +208,7 @@ export async function GET() {
       totalStoreProducts,
       totalPaySmallSmall,
       completedPaySmallSmall,
-      totalRevenue: totalRevenue._sum.amount || 0,
+      totalRevenue,
       recentOrders,
     }
 

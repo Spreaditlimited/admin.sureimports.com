@@ -38,6 +38,8 @@ interface DashboardStats {
   storeProducts: number
   totalServices: number
   totalPayments: number
+  completedPayments: number
+  pendingPayments: number
   pendingPaySupplier: number
   totalAffiliates: number
   totalMessages: number
@@ -83,13 +85,13 @@ export function DashboardContent() {
           <StatCard
             title="Total Revenue"
             value={`₦${(stats?.totalRevenue || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            subtitle="Successful Payments"
+            subtitle="Completed payments, converted to naira"
             isLoading={isLoading}
           />
           <StatCard
             title="Total Payments"
             value={stats?.totalPayments || 0}
-            subtitle="All Transactions"
+            subtitle={`${stats?.completedPayments || 0} completed · ${stats?.pendingPayments || 0} pending`}
             isLoading={isLoading}
           />
         </div>
@@ -105,7 +107,7 @@ export function DashboardContent() {
         <StatCard
           title="Active Customers"
           value={stats?.activeCustomers || 0}
-          subtitle="Currently Active Customers"
+          subtitle="Verified Customers"
           isLoading={isLoading}
         />
         <StatCard

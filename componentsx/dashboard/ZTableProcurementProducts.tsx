@@ -77,18 +77,6 @@ function MoreOrders({ products }: MoreOrdersProps) {
   const router = useRouter();
   const path = usePathname();
 
-  //LOADERS FOR ORDERS AND PRODUCTS LOADING
-  if (!products) return <Loader />;
-  if (products.length === 0) {
-    return (
-      <div className="m-7 flex border-spacing-1 items-center justify-center p-7 font-bold">
-        <div className="rounded border-2 border-dotted border-gray-500 p-4">
-          <p className="text-center text-gray-500">No products available</p>
-        </div>
-      </div>
-    ); //CHECK IF RECORD IS EMPBY
-  }
-
   // const searchParams = useSearchParams();
   // // const status = searchParams.get('statusx');
   // const [param1, setParam1] = useState(
@@ -139,7 +127,7 @@ function MoreOrders({ products }: MoreOrdersProps) {
   const [isDisabled, setIsDisabled] = useState(false);
   const [isDisabled2, setIsDisabled2] = useState(false);
   const [getAllProducts, setGetAllProducts] = useState<ProductData[]>([]);
-  const [pidOrder, setPidOrder] = useState<string>(products[0].pidOrder);
+  const [pidOrder, setPidOrder] = useState<string>(products[0]?.pidOrder ?? '');
   const [productsTotalPrice, setProductsTotalPrice] = useState<number>(0);
   const [productsTotalCount, setProductsTotalCount] = useState<number>(0);
   const [currencyType, setCurrencyType] = useState<string>('');
@@ -343,10 +331,22 @@ function MoreOrders({ products }: MoreOrdersProps) {
 
   //FETCH PRODUCT DATA TOTAL COST & TOTAL WEIGHT
   useEffect(() => {
+    if (!products?.length) return;
     getExchangeRates();
     fetchProcuremetnProductData();
     getProducts();
   }, [estimatedShippingCost]);
+
+  if (!products) return <Loader />;
+  if (products.length === 0) {
+    return (
+      <div className="m-7 flex border-spacing-1 items-center justify-center p-7 font-bold">
+        <div className="rounded border-2 border-dotted border-gray-500 p-4">
+          <p className="text-center text-gray-500">No products available</p>
+        </div>
+      </div>
+    );
+  }
 
   // PAYABLE AMOUNT TO BE CHARGED BY PAYMENT PROCESSOR
   const payableAmount =

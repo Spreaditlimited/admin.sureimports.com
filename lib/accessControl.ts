@@ -42,6 +42,8 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/store-sales", serviceKey: "store_mgt" },
   { prefix: "/dashboard/customer-accounts", serviceKey: "customer_accounts" },
   { prefix: "/dashboard/refunds", serviceKey: "payout_requests" },
+  { prefix: "/dashboard/affiliate-program", serviceKey: "payout_requests" },
+  { prefix: "/dashboard/affiliate-payouts", serviceKey: "payout_requests" },
   { prefix: "/dashboard/payout-requests", serviceKey: "payout_requests" },
   { prefix: "/dashboard/invoicing", serviceKey: "invoicing" },
   { prefix: "/dashboard/admin", serviceKey: "admin_mgt" },

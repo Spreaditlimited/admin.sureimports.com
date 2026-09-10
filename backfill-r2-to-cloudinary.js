@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 const { PrismaClient } = require('@prisma/client');
 const { v2: cloudinary } = require('cloudinary');
 const crypto = require('crypto');

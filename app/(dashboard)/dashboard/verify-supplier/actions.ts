@@ -7,6 +7,7 @@ import { z } from "zod";
 import xMail from "@/lib/email/xMail";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@/lib/prisma";
+import { reverseAffiliateConversions } from "@/lib/affiliate/reversals";
 
 const SETTINGS_KEY = "supplier_verification";
 const GUANGZHOU_OFFICE_ADDRESS = "广州市白云区机场路111号建发广场3FB3-1";
@@ -564,6 +565,13 @@ export async function updateSupplierVerification(input: unknown) {
       updatedAt: new Date(),
     },
   });
+  if (parsed.status === "CANCELLED") {
+    await reverseAffiliateConversions({
+      externalOrderReference: `supplier-verification:${parsed.requestId}`,
+      reason: `Supplier Verification request ${parsed.requestId} was cancelled by an administrator.`,
+      reversalReference: `admin-cancellation:${parsed.requestId}`,
+    });
+  }
   const message =
     parsed.message ||
     `Your Supplier Verification request is now ${parsed.status.toLowerCase().replaceAll("_", " ")}.`;

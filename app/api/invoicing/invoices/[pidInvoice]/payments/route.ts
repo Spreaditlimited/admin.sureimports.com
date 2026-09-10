@@ -127,7 +127,9 @@ export async function POST(
           payerEmail: invoice.customerEmail || null,
           txID: pidInvoicePayment,
           txRef: legacyTxRef,
-          paymentStatus: newStatus === 'PAID' ? 'PAID' : 'PENDING',
+          // This row represents money already received. The invoice may still
+          // be partially paid, but the individual transaction is completed.
+          paymentStatus: 'PAID',
           paymentType: paymentMethod,
           currency: invoice.currency,
           amount: amountNum,

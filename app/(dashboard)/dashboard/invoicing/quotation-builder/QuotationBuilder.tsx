@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Calculator,
   CheckCircle2,
+  ChevronDown,
+  Download,
+  ExternalLink,
   FileImage,
   FileText,
   Mail,
@@ -82,6 +86,83 @@ function Field({ label, children, hint }: { label: string; children: React.React
 }
 
 const inputClass = 'w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm font-medium text-foreground outline-none transition focus:ring-2 focus:ring-primary/30';
+
+function QuotationPdfMenu({ pidQuotation }: { pidQuotation: string }) {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const pdfUrl = `/api/invoicing/quotation-builder/${encodeURIComponent(pidQuotation)}/pdf`;
+
+  const toggleMenu = () => {
+    const button = buttonRef.current;
+    if (!button) return;
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 192;
+    const menuHeight = 92;
+    const gap = 6;
+    const left = Math.min(Math.max(8, rect.right - menuWidth), window.innerWidth - menuWidth - 8);
+    const top = rect.bottom + gap + menuHeight <= window.innerHeight
+      ? rect.bottom + gap
+      : Math.max(8, rect.top - menuHeight - gap);
+    setPosition({ top, left });
+    setOpen((current) => !current);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!buttonRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    const closeOnViewportChange = () => setOpen(false);
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', closeOnViewportChange);
+    window.addEventListener('scroll', closeOnViewportChange, true);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', closeOnViewportChange);
+      window.removeEventListener('scroll', closeOnViewportChange, true);
+    };
+  }, [open]);
+
+  return <>
+    <button
+      ref={buttonRef}
+      type="button"
+      aria-haspopup="menu"
+      aria-expanded={open}
+      onClick={toggleMenu}
+      className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted"
+    >
+      <FileText className="h-3.5 w-3.5" /> PDF <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+    </button>
+    {open && typeof document !== 'undefined' ? createPortal(
+      <div
+        ref={menuRef}
+        role="menu"
+        style={{ top: position.top, left: position.left }}
+        className="fixed z-[100] w-48 overflow-hidden rounded-xl border border-border bg-card p-1.5 text-left shadow-xl"
+      >
+        <a role="menuitem" target="_blank" rel="noreferrer" href={pdfUrl} onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold text-foreground hover:bg-muted focus:bg-muted focus:outline-none">
+          <ExternalLink className="h-3.5 w-3.5 text-primary" /> Open PDF
+        </a>
+        <a role="menuitem" href={`${pdfUrl}?download=1`} download onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold text-foreground hover:bg-muted focus:bg-muted focus:outline-none">
+          <Download className="h-3.5 w-3.5 text-primary" /> Download PDF
+        </a>
+      </div>,
+      document.body,
+    ) : null}
+  </>;
+}
 
 export default function QuotationBuilder({ linkedRequestId = '' }: { linkedRequestId?: string }) {
   const [files, setFiles] = useState<File[]>([]);
@@ -362,7 +443,7 @@ export default function QuotationBuilder({ linkedRequestId = '' }: { linkedReque
 
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="border-b border-border bg-muted/20 px-6 py-4"><h2 className="text-sm font-black uppercase tracking-wider">Recent quotations</h2></div>
-      {!history.length ? <div className="p-8 text-center text-sm text-muted-foreground">No generated quotations yet.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground"><tr><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Created</th><th className="px-5 py-3">Invoice</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody>{history.map((row) => <tr key={row.pidQuotation} className="border-t border-border"><td className="px-5 py-4 font-bold">{row.quotationNumber}{row.linkedRequestId ? <span className="mt-1 block text-[10px] font-medium text-muted-foreground">Sourcing: {row.linkedRequestId}</span> : null}</td><td className="px-5 py-4"><strong className="block">{row.customerName}</strong><span className="text-xs text-muted-foreground">{row.user?.userEmail || 'Customer account not linked'}</span></td><td className="px-5 py-4 text-muted-foreground"><span className="block">{new Date(row.createdAt).toLocaleString('en-NG')}</span>{row.lastSentAt ? <span className="text-[10px]">Sent {row.sendCount} time{row.sendCount === 1 ? '' : 's'}</span> : null}</td><td className="px-5 py-4">{row.invoices?.length ? row.invoices.map((invoice) => <a key={invoice.pidInvoice} href={`/dashboard/invoicing/${invoice.pidInvoice}`} className="block font-bold text-primary hover:underline">{invoice.invoiceNumber}</a>) : <span className="text-xs text-muted-foreground">Not invoiced</span>}</td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2"><a target="_blank" rel="noreferrer" href={`/api/invoicing/quotation-builder/${encodeURIComponent(row.pidQuotation)}/pdf`} className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted"><FileText className="h-3.5 w-3.5" /> Open PDF</a><button type="button" disabled={!row.pidUser || sendingPid === row.pidQuotation} onClick={() => sendQuotation(row.pidQuotation)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{sendingPid === row.pidQuotation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Email</button>{!row.invoices?.length ? <a href={`/dashboard/invoicing/create?pidQuotation=${encodeURIComponent(row.pidQuotation)}${row.linkedRequestId ? `&linkedRequestId=${encodeURIComponent(row.linkedRequestId)}` : ''}`} className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted">Create invoice</a> : null}</div></td></tr>)}</tbody></table></div>}
+      {!history.length ? <div className="p-8 text-center text-sm text-muted-foreground">No generated quotations yet.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground"><tr><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Created</th><th className="px-5 py-3">Invoice</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody>{history.map((row) => <tr key={row.pidQuotation} className="border-t border-border"><td className="px-5 py-4 font-bold">{row.quotationNumber}{row.linkedRequestId ? <span className="mt-1 block text-[10px] font-medium text-muted-foreground">Sourcing: {row.linkedRequestId}</span> : null}</td><td className="px-5 py-4"><strong className="block">{row.customerName}</strong><span className="text-xs text-muted-foreground">{row.user?.userEmail || 'Customer account not linked'}</span></td><td className="px-5 py-4 text-muted-foreground"><span className="block">{new Date(row.createdAt).toLocaleString('en-NG')}</span>{row.lastSentAt ? <span className="text-[10px]">Sent {row.sendCount} time{row.sendCount === 1 ? '' : 's'}</span> : null}</td><td className="px-5 py-4">{row.invoices?.length ? row.invoices.map((invoice) => <a key={invoice.pidInvoice} href={`/dashboard/invoicing/${invoice.pidInvoice}`} className="block font-bold text-primary hover:underline">{invoice.invoiceNumber}</a>) : <span className="text-xs text-muted-foreground">Not invoiced</span>}</td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2"><QuotationPdfMenu pidQuotation={row.pidQuotation} /><button type="button" disabled={!row.pidUser || sendingPid === row.pidQuotation} onClick={() => sendQuotation(row.pidQuotation)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{sendingPid === row.pidQuotation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Email</button>{!row.invoices?.length ? <a href={`/dashboard/invoicing/create?pidQuotation=${encodeURIComponent(row.pidQuotation)}${row.linkedRequestId ? `&linkedRequestId=${encodeURIComponent(row.linkedRequestId)}` : ''}`} className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted">Create invoice</a> : null}</div></td></tr>)}</tbody></table></div>}
     </section>
   </div>;
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -18,7 +19,7 @@ import { LinkDialog } from './LinkDialog';
 import { ImageDialog } from './ImageDialog';
 import { YouTubeDialog } from './YouTubeDialog';
 import { TableMenu } from './TableMenu';
-import Table from '@tiptap/extension-table';
+import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
@@ -196,7 +197,6 @@ export const BlogEditor = ({
       {/* Bubble Menu for quick formatting */}
       <BubbleMenu
         editor={editor}
-        tippyOptions={{ duration: 100 }}
         className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-1 p-1"
       >
         <button
@@ -266,7 +266,6 @@ export const BlogEditor = ({
       {/* Floating Menu for empty lines */}
       <FloatingMenu
         editor={editor}
-        tippyOptions={{ duration: 100 }}
         className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-1 p-1"
       >
         <button

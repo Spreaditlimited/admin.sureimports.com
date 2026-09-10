@@ -47,7 +47,7 @@ function shortUrl(value?: string | null) {
   if (!value) return "Direct / None"
   try {
     const url = new URL(value)
-    return url.hostname.replace(/^www\./, "")
+    return url.hostname.replace(/^www\./, "");
   } catch {
     return value
   }
@@ -143,11 +143,12 @@ function BarList({
   )
 }
 
-export default async function MarketingPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ range?: string }>
-}) {
+export default async function MarketingPage(
+  props: {
+    searchParams?: Promise<{ range?: string }>
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireSuperAdminPageAccess()
 
   const resolvedSearchParams = searchParams ? await searchParams : {}

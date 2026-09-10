@@ -116,11 +116,12 @@ function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || '' : value || '';
 }
 
-export default async function BodyCameraEnquiriesPage({
-  searchParams,
-}: {
-  searchParams?: Promise<EnquirySearchParams>;
-}) {
+export default async function BodyCameraEnquiriesPage(
+  props: {
+    searchParams?: Promise<EnquirySearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const access = await getBodyCameraAdminAccess();
   if (!access) redirect('/auth/login');
   if (!access.canView) redirect('/dashboard');

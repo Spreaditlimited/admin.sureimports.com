@@ -93,11 +93,12 @@ const REVIEW_STATUSES = [
   "closed",
 ] as const;
 
-export default async function IntelligenceReviewRequestsAdminPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ q?: string | string[]; status?: string | string[] }>;
-}) {
+export default async function IntelligenceReviewRequestsAdminPage(
+  props: {
+    searchParams?: Promise<{ q?: string | string[]; status?: string | string[] }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const params = searchParams ? await searchParams : {};
   const first = (value: string | string[] | undefined) =>
     String(Array.isArray(value) ? value[0] || "" : value || "").trim();

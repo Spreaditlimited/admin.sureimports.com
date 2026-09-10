@@ -50,14 +50,15 @@ function statusClass(status: string) {
   return "border-slate-500/30 bg-slate-500/10 text-slate-700 dark:text-slate-300";
 }
 
-export default async function ReportOrdersPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{
-    status?: string | string[];
-    q?: string | string[];
-  }>;
-}) {
+export default async function ReportOrdersPage(
+  props: {
+    searchParams?: Promise<{
+      status?: string | string[];
+      q?: string | string[];
+    }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const admin = await requireAdmin();
   if (!admin) redirect("/auth/login");
   const params = searchParams ? await searchParams : {};

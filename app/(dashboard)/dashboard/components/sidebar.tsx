@@ -149,6 +149,16 @@ const customerAccounts: MenuItem[] = [
 
 const customerPayouts: MenuItem[] = [
   {
+    title: "Affiliate Program",
+    icon: HandCoins,
+    path: "/dashboard/affiliate-program",
+    serviceKey: "payout_requests",
+    submenu: [
+      { title: "Configuration", path: "/dashboard/affiliate-program" },
+      { title: "Payouts & Commissions", path: "/dashboard/affiliate-payouts" },
+    ],
+  },
+  {
     title: "Refunds",
     icon: Wallet,
     path: "/dashboard/refunds",

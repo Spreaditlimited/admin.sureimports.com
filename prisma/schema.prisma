@@ -951,37 +951,6 @@ model supplier_verification_events {
   @@index([requestId, createdAt])
 }
 
-model affiliates {
-  id                  Int       @id @default(autoincrement())
-  pidUser             String    @unique()
-  username            String?
-  password            String?
-  cid_status          String?
-  login_status        String?
-  login_key           String?
-  login_stamp         String?
-  first_name          String?
-  last_name           String?
-  gender              String?
-  dob_day             String?
-  dob_month           String?
-  dob_year            String?
-  email               String?
-  phone               String?
-  address             String?
-  bank_name           String?
-  bank_account_number String?
-  bank_account_name   String?
-  affiliate_id        String?
-  payout_request      String?
-  status              String?
-  xStatus             String?
-  ext1                String?
-  ext2                String?
-  createdAt           DateTime? @default(now())
-  updatedAt           DateTime?
-}
-
 model payment_records {
   id                   Int       @id @default(autoincrement())
   pidPayment           String    @unique()
@@ -1080,27 +1049,27 @@ model messages {
 }
 
 model exchange_rate {
-  id                        Int       @id @default(autoincrement())
-  settings_name             String?
-  currency_name1            String?
-  currency_sign1            String?
-  currency_name2            String?
-  currency_sign2            String?
-  currency_name3            String?
-  currency_sign3            String?
-  service_charge            String?
-  vat                       String?
-  exNairaToDollar           String?
-  exYuanToDollar            String?
-  exNairaToYuan             String?
-  quotationSeaRateNgnPerCbm String?   @default("500000")
+  id                         Int       @id @default(autoincrement())
+  settings_name              String?
+  currency_name1             String?
+  currency_sign1             String?
+  currency_name2             String?
+  currency_sign2             String?
+  currency_name3             String?
+  currency_sign3             String?
+  service_charge             String?
+  vat                        String?
+  exNairaToDollar            String?
+  exYuanToDollar             String?
+  exNairaToYuan              String?
+  quotationSeaRateNgnPerCbm  String?   @default("500000")
   procurementMinimumOrderNgn Int       @default(50000)
-  status                    String
-  ext1                      String?
-  ext2                      String?
-  xStatus                   String?
-  createdAt                 DateTime? @default(now())
-  updatedAt                 DateTime?
+  status                     String
+  ext1                       String?
+  ext2                       String?
+  xStatus                    String?
+  createdAt                  DateTime? @default(now())
+  updatedAt                  DateTime?
 }
 
 model quotation_builder_documents {
@@ -1453,6 +1422,290 @@ enum PayStatus {
   STARTED
   COMPLETED
   CANCELLED
+}
+
+model affiliate_waitlist_entries {
+  id              Int      @id @default(autoincrement())
+  pidWaitlist     String   @unique @db.VarChar(80)
+  emailHash       String   @unique @db.Char(64)
+  nameCiphertext  String   @db.Text
+  emailCiphertext String   @db.Text
+  phoneCiphertext String   @db.Text
+  country         String   @db.VarChar(100)
+  ipHash          String?  @db.Char(64)
+  consentVersion  String   @db.VarChar(80)
+  status          String   @default("WAITING") @db.VarChar(24)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([ipHash, createdAt])
+}
+
+model affiliate_accounts {
+  id                  Int                             @id @default(autoincrement())
+  pidAffiliate        String                          @unique @db.VarChar(80)
+  emailHash           String                          @unique @db.Char(64)
+  emailCiphertext     String                          @db.Text
+  firstNameCiphertext String                          @db.Text
+  lastNameCiphertext  String                          @db.Text
+  phoneCiphertext     String                          @db.Text
+  country             String                          @db.VarChar(100)
+  passwordHash        String                          @db.VarChar(255)
+  referralCode        String                          @unique @db.VarChar(24)
+  status              String                          @default("PENDING_VERIFICATION") @db.VarChar(32)
+  emailVerifiedAt     DateTime?
+  termsAcceptedAt     DateTime
+  consentVersion      String                          @db.VarChar(80)
+  lastLoginAt         DateTime?
+  createdAt           DateTime                        @default(now())
+  updatedAt           DateTime                        @updatedAt
+  sessions            affiliate_sessions[]
+  authTokens          affiliate_auth_tokens[]
+  referrals           affiliate_referrals[]
+  conversions         affiliate_conversions[]
+  payoutAccounts      affiliate_payout_accounts[]
+  payouts             affiliate_payouts[]
+  payoutOtps          affiliate_payout_account_otps[]
+
+  @@index([status, createdAt])
+}
+
+model affiliate_sessions {
+  id            Int                @id @default(autoincrement())
+  pidSession    String             @unique @db.VarChar(80)
+  affiliateId   Int
+  tokenHash     String             @unique @db.Char(64)
+  expiresAt     DateTime
+  lastSeenAt    DateTime           @default(now())
+  ipHash        String?            @db.Char(64)
+  userAgentHash String?            @db.Char(64)
+  revokedAt     DateTime?
+  createdAt     DateTime           @default(now())
+  affiliate     affiliate_accounts @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateId, expiresAt])
+  @@index([expiresAt, revokedAt])
+}
+
+model affiliate_auth_tokens {
+  id          Int                @id @default(autoincrement())
+  pidToken    String             @unique @db.VarChar(80)
+  affiliateId Int
+  purpose     String             @db.VarChar(32)
+  tokenHash   String             @unique @db.Char(64)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  affiliate   affiliate_accounts @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateId, purpose, createdAt])
+  @@index([expiresAt, consumedAt])
+}
+
+model affiliate_auth_limits {
+  id            Int       @id @default(autoincrement())
+  keyHash       String    @db.Char(64)
+  action        String    @db.VarChar(40)
+  windowStarted DateTime  @default(now())
+  count         Int       @default(1)
+  blockedUntil  DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([keyHash, action])
+  @@index([blockedUntil])
+}
+
+model affiliate_program_services {
+  id                  Int                                  @id @default(autoincrement())
+  pidService          String                               @unique @db.VarChar(80)
+  serviceKey          String                               @unique @db.VarChar(80)
+  displayName         String                               @db.VarChar(140)
+  description         String?                              @db.Text
+  commissionType      String                               @db.VarChar(24)
+  percentageRate      Decimal?                             @db.Decimal(7, 4)
+  eligibleAmountBasis String                               @db.VarChar(40)
+  recurring           Boolean                              @default(false)
+  approvalMode        String                               @default("MANUAL") @db.VarChar(24)
+  reviewPeriodDays    Int                                  @default(14)
+  exclusionNotes      String?                              @db.Text
+  active              Boolean                              @default(true)
+  sortOrder           Int                                  @default(0)
+  createdAt           DateTime                             @default(now())
+  updatedAt           DateTime                             @updatedAt
+  currencyRates       affiliate_service_commission_rates[]
+  conversions         affiliate_conversions[]
+
+  @@index([active, sortOrder])
+}
+
+model affiliate_service_commission_rates {
+  id             Int                        @id @default(autoincrement())
+  serviceId      Int
+  currency       String                     @db.Char(3)
+  fixedAmount    Decimal?                   @db.Decimal(18, 2)
+  percentageRate Decimal?                   @db.Decimal(7, 4)
+  active         Boolean                    @default(true)
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  service        affiliate_program_services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, currency])
+  @@index([currency, active])
+}
+
+model affiliate_referrals {
+  id                Int                     @id @default(autoincrement())
+  pidReferral       String                  @unique @db.VarChar(80)
+  affiliateId       Int
+  visitorHash       String                  @db.Char(64)
+  landingPath       String                  @db.VarChar(500)
+  source            String?                 @db.VarChar(255)
+  customerReference String?                 @unique @db.VarChar(191)
+  firstTouchAt      DateTime                @default(now())
+  lastTouchAt       DateTime                @default(now())
+  claimedAt         DateTime?
+  convertedAt       DateTime?
+  affiliate         affiliate_accounts      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  conversions       affiliate_conversions[]
+
+  @@index([affiliateId, firstTouchAt])
+  @@index([visitorHash, lastTouchAt])
+}
+
+model affiliate_conversions {
+  id                       Int                        @id @default(autoincrement())
+  pidConversion            String                     @unique @db.VarChar(80)
+  affiliateId              Int
+  serviceId                Int
+  referralId               Int?
+  externalOrderReference   String                     @db.VarChar(120)
+  externalPaymentReference String?                    @unique @db.VarChar(160)
+  paymentCurrency          String                     @db.Char(3)
+  grossAmount              Decimal                    @db.Decimal(18, 2)
+  eligibleAmount           Decimal                    @db.Decimal(18, 2)
+  commissionCurrency       String                     @db.Char(3)
+  commissionAmount         Decimal                    @db.Decimal(18, 2)
+  status                   String                     @default("PENDING") @db.VarChar(24)
+  releaseMode              String                     @default("MANUAL") @db.VarChar(24)
+  releaseAt                DateTime?
+  approvedAt               DateTime?
+  availableAt              DateTime?
+  voidedAt                 DateTime?
+  reversedFromStatus       String?                    @db.VarChar(24)
+  reversalReason           String?                    @db.Text
+  reversalReference        String?                    @db.VarChar(160)
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  affiliate                affiliate_accounts         @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  service                  affiliate_program_services @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  referral                 affiliate_referrals?       @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  payoutItem               affiliate_payout_items?
+
+  @@unique([externalOrderReference, serviceId])
+  @@index([affiliateId, status, createdAt])
+  @@index([serviceId, createdAt])
+  @@index([status, releaseAt])
+}
+
+model affiliate_payout_accounts {
+  id                 Int                 @id @default(autoincrement())
+  pidPayoutAccount   String              @unique @db.VarChar(80)
+  affiliateId        Int
+  provider           String              @db.VarChar(24)
+  currency           String              @db.Char(3)
+  detailsCiphertext  String              @db.Text
+  recipientReference String?             @db.VarChar(180)
+  status             String              @default("PENDING") @db.VarChar(24)
+  isDefault          Boolean             @default(false)
+  verifiedAt         DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  affiliate          affiliate_accounts  @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  payouts            affiliate_payouts[]
+
+  @@unique([affiliateId, provider, currency])
+  @@index([affiliateId, isDefault])
+}
+
+model affiliate_payout_account_otps {
+  id          Int                @id @default(autoincrement())
+  pidOtp      String             @unique @db.VarChar(80)
+  affiliateId Int
+  provider    String             @db.VarChar(24)
+  currency    String             @db.Char(3)
+  targetHash  String             @db.Char(64)
+  otpHash     String             @db.Char(64)
+  status      String             @default("PENDING") @db.VarChar(24)
+  attempts    Int                @default(0)
+  maxAttempts Int                @default(5)
+  expiresAt   DateTime
+  verifiedAt  DateTime?
+  consumedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  affiliate   affiliate_accounts @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateId, provider, currency, status], map: "apao_aff_provider_currency_status_idx")
+  @@index([expiresAt, status], map: "apao_expires_status_idx")
+}
+
+model affiliate_payouts {
+  id                Int                        @id @default(autoincrement())
+  pidPayout         String                     @unique @db.VarChar(80)
+  affiliateId       Int
+  payoutAccountId   Int?
+  provider          String                     @db.VarChar(24)
+  currency          String                     @db.Char(3)
+  amount            Decimal                    @db.Decimal(18, 2)
+  status            String                     @default("REQUESTED") @db.VarChar(24)
+  externalReference String?                    @unique @db.VarChar(180)
+  providerStatus    String?                    @db.VarChar(80)
+  approvedAt        DateTime?
+  approvedBy        String?                    @db.VarChar(191)
+  lastCheckedAt     DateTime?
+  attemptCount      Int                        @default(0)
+  requestedAt       DateTime                   @default(now())
+  processedAt       DateTime?
+  failedAt          DateTime?
+  failureReason     String?                    @db.VarChar(500)
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  affiliate         affiliate_accounts         @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  payoutAccount     affiliate_payout_accounts? @relation(fields: [payoutAccountId], references: [id], onDelete: SetNull)
+  items             affiliate_payout_items[]
+
+  @@index([affiliateId, status, requestedAt])
+}
+
+model affiliate_payout_items {
+  id           Int                   @id @default(autoincrement())
+  payoutId     Int
+  conversionId Int                   @unique
+  amount       Decimal               @db.Decimal(18, 2)
+  createdAt    DateTime              @default(now())
+  payout       affiliate_payouts     @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  conversion   affiliate_conversions @relation(fields: [conversionId], references: [id], onDelete: Restrict)
+
+  @@index([payoutId])
+}
+
+model affiliate_email_events {
+  id            Int       @id @default(autoincrement())
+  pidEvent      String    @unique @db.VarChar(80)
+  eventKey      String    @unique @db.VarChar(191)
+  eventType     String    @db.VarChar(80)
+  recipientHash String    @db.Char(64)
+  status        String    @default("PENDING") @db.VarChar(24)
+  attempts      Int       @default(1)
+  lockedAt      DateTime?
+  sentAt        DateTime?
+  lastError     String?   @db.VarChar(500)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([recipientHash, createdAt])
 }
 
 model buy_products {
@@ -1886,41 +2139,43 @@ model intelligence_report_versions {
 }
 
 model intelligence_report_orders {
-  id                       Int       @id @default(autoincrement())
-  pidOrder                 String    @unique() @db.VarChar(80)
-  reportId                 String    @db.VarChar(80)
-  versionId                String    @db.VarChar(80)
-  pidUser                  String?   @db.VarChar(191)
-  email                    String    @db.VarChar(255)
-  firstName                String?   @db.VarChar(120)
-  lastName                 String?   @db.VarChar(120)
-  billingCountry           String?   @db.VarChar(120)
-  paymentProvider          String    @db.VarChar(40)
-  providerReference        String?   @unique() @db.VarChar(160)
-  status                   String    @default("pending") @db.VarChar(40)
-  amountMinor              Int
-  currency                 String    @db.VarChar(10)
-  downloadToken            String    @unique() @db.VarChar(160)
-  downloadTokenExpiresAt   DateTime?
-  downloadCount            Int       @default(0)
-  paidAt                   DateTime?
-  fulfilledAt              DateTime?
-  fulfillmentClaimedAt     DateTime?
-  fulfillmentAttempts      Int       @default(0)
-  lastFulfillmentAttemptAt DateTime?
-  fulfillmentError         String?   @db.Text
-  providerCaptureReference String?   @unique() @db.VarChar(160)
-  refundedAt               DateTime?
-  revokedAt                DateTime?
-  revocationReason         String?   @db.VarChar(500)
-  lastProviderEvent        String?   @db.VarChar(160)
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @default(now())
+  id                         Int       @id @default(autoincrement())
+  pidOrder                   String    @unique() @db.VarChar(80)
+  reportId                   String    @db.VarChar(80)
+  versionId                  String    @db.VarChar(80)
+  pidUser                    String?   @db.VarChar(191)
+  affiliateReferralReference String?   @db.VarChar(80)
+  email                      String    @db.VarChar(255)
+  firstName                  String?   @db.VarChar(120)
+  lastName                   String?   @db.VarChar(120)
+  billingCountry             String?   @db.VarChar(120)
+  paymentProvider            String    @db.VarChar(40)
+  providerReference          String?   @unique() @db.VarChar(160)
+  status                     String    @default("pending") @db.VarChar(40)
+  amountMinor                Int
+  currency                   String    @db.VarChar(10)
+  downloadToken              String    @unique() @db.VarChar(160)
+  downloadTokenExpiresAt     DateTime?
+  downloadCount              Int       @default(0)
+  paidAt                     DateTime?
+  fulfilledAt                DateTime?
+  fulfillmentClaimedAt       DateTime?
+  fulfillmentAttempts        Int       @default(0)
+  lastFulfillmentAttemptAt   DateTime?
+  fulfillmentError           String?   @db.Text
+  providerCaptureReference   String?   @unique() @db.VarChar(160)
+  refundedAt                 DateTime?
+  revokedAt                  DateTime?
+  revocationReason           String?   @db.VarChar(500)
+  lastProviderEvent          String?   @db.VarChar(160)
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @default(now())
 
   @@index([reportId, status])
   @@index([versionId])
   @@index([pidUser, status])
   @@index([email, status])
+  @@index([affiliateReferralReference], map: "intelligence_report_orders_affiliateReferralReference_idx")
   @@index([status, fulfilledAt, lastFulfillmentAttemptAt], map: "iro_fulfillment_queue_idx")
 }
 

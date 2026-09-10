@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BadgeDollarSign, Landmark, MessageCircle, Ship, UserCog } from 'lucide-react';
+import { BadgeDollarSign, HandCoins, Landmark, MessageCircle, Ship, UserCog } from 'lucide-react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken } from '@/lib/jwt';
@@ -23,6 +23,7 @@ export default async function SettingsPage() {
     { title: 'Shipping Plans', description: 'Configure shipping plans, units and destination pricing.', href: '/dashboard/shipping-plans/add', icon: Ship },
     { title: 'Exchange & Rates', description: 'Manage exchange rates, service charges and VAT.', href: '/dashboard/exchange-rates', icon: BadgeDollarSign },
     { title: 'Bank Accounts', description: 'Manage the bank accounts shown on customer invoices.', href: '/dashboard/invoicing/bank-accounts', icon: Landmark },
+    { title: 'Affiliate Programme', description: 'Manage eligible services, commission rules, currencies and recurring rewards.', href: '/dashboard/affiliate-program', icon: HandCoins },
   ];
   return (
     <div className="space-y-6">

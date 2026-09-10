@@ -14,7 +14,7 @@ import { headers } from 'next/headers';
 export async function logout() {
   console.log('Logging out...');
   
-  const headersInstance = headers();
+  const headersInstance = await headers();
   
   // Set cookies to expire
    (await headersInstance).append('Set-Cookie', 'Authorization=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly;');

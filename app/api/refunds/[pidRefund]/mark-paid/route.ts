@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminServiceAccess } from "@/app/api/_lib/adminAccess";
 import sendRefundPaidEmail from "@/lib/email/sendRefundPaidEmail";
+import {
+  affiliateOrderReferenceForRefund,
+  reverseAffiliateConversions,
+} from "@/lib/affiliate/reversals";
 
 const REFUNDS_SERVICE_KEY = "payout_requests";
 
@@ -97,6 +101,18 @@ export async function POST(
         updatedAt: paidAt,
       },
     });
+
+    const affiliateOrderReference = affiliateOrderReferenceForRefund(
+      updatedRefund.serviceType,
+      updatedRefund.pidOrder,
+    );
+    if (affiliateOrderReference) {
+      await reverseAffiliateConversions({
+        externalOrderReference: affiliateOrderReference,
+        reason: `Refund ${updatedRefund.pidRefund} was confirmed as paid.`,
+        reversalReference: updatedRefund.pidRefund,
+      });
+    }
 
     let emailSent = false;
     if (user?.userEmail) {

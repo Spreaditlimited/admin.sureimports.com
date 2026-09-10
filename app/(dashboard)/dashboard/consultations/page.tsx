@@ -150,11 +150,12 @@ function normalizeView(value: string | string[] | undefined): ConsultationView {
   return "upcoming";
 }
 
-export default async function ConsultationsAdminPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ view?: string | string[]; q?: string | string[] }>;
-}) {
+export default async function ConsultationsAdminPage(
+  props: {
+    searchParams?: Promise<{ view?: string | string[]; q?: string | string[] }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const adminAccess = await getConsultationsAdminAccess();
   if (!adminAccess) redirect("/auth/login");

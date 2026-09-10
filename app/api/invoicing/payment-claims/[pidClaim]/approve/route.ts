@@ -73,7 +73,9 @@ export async function POST(
           payerEmail: claim.invoice.customerEmail || null,
           txID: pidInvoicePayment,
           txRef: claim.paymentReference || pidInvoicePayment,
-          paymentStatus: newStatus === 'PAID' ? 'PAID' : 'PENDING',
+          // An approved claim is a completed payment even when a balance
+          // remains on the invoice itself.
+          paymentStatus: 'PAID',
           paymentType: 'CUSTOMER_CLAIM',
           currency: claim.currency,
           amount: amountNum,

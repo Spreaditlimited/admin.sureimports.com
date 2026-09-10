@@ -201,7 +201,7 @@ function JsonList({ items }: { items: unknown }) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function FieldPreview({
@@ -262,26 +262,26 @@ function articleWordCount(content: string | null | undefined) {
     .replace(/&amp;/gi, " & ")
     .replace(/&#\d+;|&#x[\da-f]+;|&[a-z]+;/gi, " ")
 
-  return text.match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu)?.length || 0
+  return text.match(/[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*/gu)?.length || 0;
 }
 
-export default async function SeoChangeReviewPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ pidChange: string }>
-  searchParams?: Promise<{
-    applied?: string
-    rejected?: string
-    error?: string
-    linkReview?: string
-    rewriteDiscarded?: string
-    rewrite?: string
-  }>
-}) {
+export default async function SeoChangeReviewPage(
+  props: {
+    params: Promise<{ pidChange: string }>
+    searchParams?: Promise<{
+      applied?: string
+      rejected?: string
+      error?: string
+      linkReview?: string
+      rewriteDiscarded?: string
+      rewrite?: string
+    }>
+  }
+) {
+  const searchParams = await props.searchParams;
   await requireSuperAdminPageAccess()
 
-  const { pidChange } = await params
+  const { pidChange } = await props.params
   const resolvedSearchParams = searchParams ? await searchParams : {}
   const change = await getSeoChangeReview(pidChange)
   if (!change) notFound()
@@ -741,5 +741,5 @@ export default async function SeoChangeReviewPage({
         </aside>
       </section>
     </main>
-  )
+  );
 }

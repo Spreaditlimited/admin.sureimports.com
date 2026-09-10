@@ -18,25 +18,8 @@ const nextConfig = {
         },
       ];
     },
-  // typescript: {
-  //   // !! WARN !!
-  //   // Dangerously allow production builds to successfully complete even if
-  //   // your project has type errors.
-  //   // !! WARN !!
-  //   ignoreBuildErrors: true,
-  // },
     reactStrictMode: true,
-    // swcMinify is removed in Next.js 15 (SWC is now the default minifier)
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
-    // Server Actions are stable in Next.js 15, no experimental flag needed
-    // experimental: {
-    //     serverActions: true,
-    // },
-
-
-      images: {
+    images: {
         //domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com'],
         remotePatterns: [
           {
@@ -46,7 +29,7 @@ const nextConfig = {
             pathname: '/**',
           },
         ],
-      },
+    },
 };
 
 module.exports = nextConfig;
