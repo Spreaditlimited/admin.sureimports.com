@@ -14,6 +14,8 @@ import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
 import { sendReceiptNotification } from '@/lib/notifications/invoicing';
 import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
+import { recordPaidShippingCommission } from '@/lib/affiliate/shippingCommissions';
+import { sendAffiliateAccountNotification } from '@/lib/affiliate/emailNotifications';
 
 export async function POST(
   _request: NextRequest,
@@ -22,7 +24,6 @@ export async function POST(
   try {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
-    await ensureInvoicingCoreTables();
 
     const { pidClaim } = await params;
 
@@ -115,6 +116,10 @@ export async function POST(
         }
       }
 
+      const affiliateCommission = newStatus === 'PAID'
+        ? await recordPaidShippingCommission(tx, { pidInvoice: claim.pidInvoice, grossAmount: updatedInvoice.grandTotal })
+        : null;
+
       const receipt = await tx.receipts.create({
         data: {
           pidReceipt: generatePid('RCT'),
@@ -151,8 +156,24 @@ export async function POST(
         },
       });
 
-      return { payment, updatedInvoice, receipt, updatedClaim };
+      return { payment, updatedInvoice, receipt, updatedClaim, affiliateCommission };
     });
+
+    if (result.affiliateCommission) {
+      const entry = result.affiliateCommission;
+      await sendAffiliateAccountNotification({
+        affiliateId: entry.snapshot.affiliateId,
+        eventKey: `commission:recorded:${entry.conversion.pidConversion}`,
+        eventType: 'COMMISSION_RECORDED',
+        subject: 'A shipping commission was recorded', title: 'Ship with Us commission recorded',
+        message: 'A shipping request you own has been fully paid. Your unit-based commission is now pending review.',
+        facts: [
+          { label: 'Invoice', value: claim.invoice.invoiceNumber },
+          { label: 'Quantity', value: `${Number(entry.snapshot.eligibleQuantity)} ${entry.snapshot.billingUnit}` },
+          { label: 'Commission', value: `${entry.snapshot.commissionCurrency} ${Number(entry.snapshot.commissionAmount).toLocaleString()}` },
+        ], actionLabel: 'View commission ledger', actionPath: '/dashboard/earnings',
+      });
+    }
 
     if (claim.invoice.customerEmail) {
       const businessName = await getUserBusinessName(claim.invoice.pidUser);

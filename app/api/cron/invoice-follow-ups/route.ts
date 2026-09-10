@@ -83,7 +83,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    await ensureInvoicingCoreTables();
     await syncOverdueInvoices();
 
     const { searchParams } = new URL(request.url);

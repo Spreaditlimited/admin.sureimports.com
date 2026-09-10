@@ -7,7 +7,6 @@ export async function POST(
   { params }: { params: Promise<{ accessToken: string }> },
 ) {
   try {
-    await ensureInvoicingCoreTables();
     const { accessToken } = await params;
     const body = await request.json();
 

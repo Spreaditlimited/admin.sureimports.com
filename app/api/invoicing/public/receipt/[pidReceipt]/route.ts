@@ -7,7 +7,6 @@ export async function GET(
   { params }: { params: Promise<{ pidReceipt: string }> },
 ) {
   try {
-    await ensureInvoicingCoreTables();
     const { pidReceipt } = await params;
     const accessToken = request.nextUrl.searchParams.get('accessToken') || '';
 

@@ -14,6 +14,8 @@ import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl'
 import { sendReceiptNotification } from '@/lib/notifications/invoicing';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
+import { recordPaidShippingCommission } from '@/lib/affiliate/shippingCommissions';
+import { sendAffiliateAccountNotification } from '@/lib/affiliate/emailNotifications';
 
 export async function POST(
   request: NextRequest,
@@ -169,6 +171,10 @@ export async function POST(
         }
       }
 
+      const affiliateCommission = newStatus === 'PAID'
+        ? await recordPaidShippingCommission(tx, { pidInvoice, grossAmount: updatedInvoice.grandTotal })
+        : null;
+
       const receipt = await tx.receipts.create({
         data: {
           pidReceipt: generatePid('RCT'),
@@ -253,8 +259,27 @@ export async function POST(
         },
       });
 
-      return { payment, updatedInvoice, receipt, approvedPaymentClaimPid };
+      return { payment, updatedInvoice, receipt, approvedPaymentClaimPid, affiliateCommission };
     });
+
+    if (result.affiliateCommission) {
+      const entry = result.affiliateCommission;
+      await sendAffiliateAccountNotification({
+        affiliateId: entry.snapshot.affiliateId,
+        eventKey: `commission:recorded:${entry.conversion.pidConversion}`,
+        eventType: 'COMMISSION_RECORDED',
+        subject: 'A shipping commission was recorded',
+        title: 'Ship with Us commission recorded',
+        message: 'A shipping request you own has been fully paid. Your unit-based commission is now pending review.',
+        facts: [
+          { label: 'Invoice', value: invoice.invoiceNumber },
+          { label: 'Quantity', value: `${Number(entry.snapshot.eligibleQuantity)} ${entry.snapshot.billingUnit}` },
+          { label: 'Rate', value: `${entry.snapshot.commissionCurrency} ${Number(entry.snapshot.unitRate)} / ${entry.snapshot.billingUnit}` },
+          { label: 'Commission', value: `${entry.snapshot.commissionCurrency} ${Number(entry.snapshot.commissionAmount).toLocaleString()}` },
+        ],
+        actionLabel: 'View commission ledger', actionPath: '/dashboard/earnings',
+      });
+    }
 
     const customerEmail = invoice.customerEmail;
     if (customerEmail) {

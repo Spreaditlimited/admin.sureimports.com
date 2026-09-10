@@ -13,7 +13,6 @@ export async function POST(
   try {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
-    await ensureInvoicingCoreTables();
 
     const { pidInvoice } = await params;
 

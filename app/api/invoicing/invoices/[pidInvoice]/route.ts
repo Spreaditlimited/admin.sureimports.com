@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import {
   canAdminAccessInvoiceCreatedBy,
@@ -13,6 +14,22 @@ import {
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 import { getUserBusinessName } from '@/lib/userBusinessName';
 import { resolveInvoiceCustomerIdentity } from '@/lib/invoicing/invoiceCustomer';
+import { reverseAffiliateConversions } from '@/lib/affiliate/reversals';
+import { recordPaidShippingCommission } from '@/lib/affiliate/shippingCommissions';
+import { sendAffiliateAccountNotification } from '@/lib/affiliate/emailNotifications';
+
+async function recordCommissionForPaidInvoice(pidInvoice: string, invoiceNumber: string, grandTotal: Prisma.Decimal) {
+  const entry = await prisma.$transaction((tx) => recordPaidShippingCommission(tx, { pidInvoice, grossAmount: grandTotal }));
+  if (!entry) return;
+  await sendAffiliateAccountNotification({
+    affiliateId: entry.snapshot.affiliateId,
+    eventKey: `commission:recorded:${entry.conversion.pidConversion}`,
+    eventType: 'COMMISSION_RECORDED', subject: 'A shipping commission was recorded', title: 'Ship with Us commission recorded',
+    message: 'A shipping request you own has been fully paid. Your unit-based commission is now pending review.',
+    facts: [{ label: 'Invoice', value: invoiceNumber }, { label: 'Quantity', value: `${Number(entry.snapshot.eligibleQuantity)} ${entry.snapshot.billingUnit}` }, { label: 'Commission', value: `${entry.snapshot.commissionCurrency} ${Number(entry.snapshot.commissionAmount).toLocaleString()}` }],
+    actionLabel: 'View commission ledger', actionPath: '/dashboard/earnings',
+  });
+}
 
 function canEditInvoiceFinancials(status: string) {
   return ['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'OVERDUE'].includes(
@@ -90,6 +107,9 @@ export async function GET(
             customerName: true,
             status: true,
           },
+        },
+        affiliateCommission: {
+          include: { affiliate: { select: { referralCode: true } } },
         },
       },
     });
@@ -291,10 +311,21 @@ export async function PATCH(
       });
 
       const updated = await prisma.invoices.findUnique({ where: { pidInvoice }, include: { items: true } });
+      if (updated?.status === 'PAID' && existing.status !== 'PAID') await recordCommissionForPaidInvoice(pidInvoice, existing.invoiceNumber, updated.grandTotal);
       return NextResponse.json({ statusx: 'SUCCESS', data: updated });
     }
 
     const updated = await prisma.invoices.update({ where: { pidInvoice }, data });
+
+    if (body.status === 'CANCELLED') {
+      await prisma.invoice_affiliate_commission_snapshots.updateMany({ where: { pidInvoice }, data: { status: 'VOIDED' } });
+      await reverseAffiliateConversions({
+        externalOrderReference: `shipping-invoice:${pidInvoice}`,
+        reason: `Invoice ${existing.invoiceNumber} was cancelled.`,
+        reversalReference: `invoice-cancelled:${pidInvoice}`,
+      });
+    }
+    if (updated.status === 'PAID' && existing.status !== 'PAID') await recordCommissionForPaidInvoice(pidInvoice, existing.invoiceNumber, updated.grandTotal);
 
     await writeAuditLog({
       pidInvoice,

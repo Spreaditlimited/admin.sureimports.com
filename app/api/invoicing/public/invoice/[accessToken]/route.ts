@@ -10,7 +10,6 @@ export async function GET(
   { params }: { params: Promise<{ accessToken: string }> },
 ) {
   try {
-    await ensureInvoicingCoreTables();
     const { accessToken } = await params;
 
     const token = await prisma.invoice_access_tokens.findUnique({

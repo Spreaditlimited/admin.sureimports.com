@@ -55,6 +55,7 @@ interface CreateInvoiceFormProps {
 
 interface InvoiceEditPayload {
   status?: string | null;
+  currency?: string | null;
   user?: {
     pidUser?: string;
     userFirstname?: string | null;
@@ -116,6 +117,9 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
   const [dueAt, setDueAt] = useState('');
   const [discountTotal, setDiscountTotal] = useState(0);
   const [taxTotal, setTaxTotal] = useState(0);
+  const [currency, setCurrency] = useState('NGN');
+  const [shippingCommissionQuantity, setShippingCommissionQuantity] = useState('');
+  const [shippingCommissionInfo, setShippingCommissionInfo] = useState<{ ownerReferralCode: string; sourceType: string; billingUnit: string; destinationCountry: string; shippingMode: string } | null>(null);
   const [items, setItems] = useState<ItemRow[]>([{ description: '', quantity: 1, unitPrice: 0 }]);
   const [invoiceStatus, setInvoiceStatus] = useState('');
   const [pidQuotation, setPidQuotation] = useState('');
@@ -175,6 +179,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
       setDueAt(invoice.dueAt ? new Date(invoice.dueAt).toISOString().slice(0, 10) : '');
       setDiscountTotal(Number(invoice.discountTotal || 0));
       setTaxTotal(Number(invoice.taxTotal || 0));
+      setCurrency(String(invoice.currency || 'NGN').toUpperCase());
       setItems(
         Array.isArray(invoice.items) && invoice.items.length > 0
           ? invoice.items.map((item) => ({
@@ -256,6 +261,7 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
       if (!res.ok || !data?.data?.request) return;
 
       const shippingOnly = data.data.request;
+      const commission = data.data.commission;
       const matched = (data.data.matchedUsers || []) as Customer[];
       if (matched.length > 0) {
         const customer = matched[0];
@@ -272,10 +278,15 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
         const prefix = `Shipping Only Request: ${shippingOnly.pidShippingOnly}\nShipping Name: ${shippingOnly.shippingName || 'N/A'}\nDestination: ${shippingOnly.shippingTo || 'N/A'}\nWeight: ${shippingOnly.grossWeight || 'N/A'}`;
         return prev ? `${prefix}\n\n${prev}` : prefix;
       });
+      if (commission) {
+        setShippingCommissionInfo(commission);
+        setShippingCommissionQuantity(String(commission.estimatedQuantity || ''));
+        setCurrency(commission.billingUnit === 'CBM' && String(commission.destinationCountry).toLowerCase() === 'nigeria' ? 'NGN' : 'USD');
+      }
       setItems([
         {
           description: `Shipping Service (${shippingOnly.shippingName || shippingOnly.pidShippingOnly})`,
-          quantity: 1,
+          quantity: commission?.estimatedQuantity || 1,
           unitPrice: 0,
         },
       ]);
@@ -389,6 +400,8 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
             pidQuotation: pidQuotation || null,
             discountTotal,
             taxTotal,
+            currency,
+            shippingCommissionQuantity: linkedShippingOnlyId ? shippingCommissionQuantity : undefined,
             items,
           };
 
@@ -544,6 +557,15 @@ export default function CreateInvoiceForm({ pidInvoice }: CreateInvoiceFormProps
         </div>
         <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Invoice currency</label>
+                  <select value={currency} onChange={(e) => setCurrency(e.target.value)} disabled={isEditMode} className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring"><option value="NGN">NGN — Nigerian Naira</option><option value="USD">USD — US Dollar</option></select>
+                </div>
+                {shippingCommissionInfo ? <div className="rounded-lg border border-indigo-500/25 bg-indigo-500/5 p-4 space-y-3">
+                  <div><p className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Affiliate-owned shipment</p><p className="mt-1 text-xs text-muted-foreground">Owner {shippingCommissionInfo.ownerReferralCode} · {shippingCommissionInfo.sourceType.replaceAll('_', ' ').toLowerCase()} · {shippingCommissionInfo.shippingMode} to {shippingCommissionInfo.destinationCountry}</p></div>
+                  <label className="grid gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Final billable quantity ({shippingCommissionInfo.billingUnit})<input type="number" min="0.0001" step="0.0001" value={shippingCommissionQuantity} onChange={(e) => setShippingCommissionQuantity(e.target.value)} required className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground normal-case" /></label>
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">This value and the configured {currency} per-{shippingCommissionInfo.billingUnit} rate will be locked when the invoice is created.</p>
+                </div> : null}
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <Calendar className="w-3 h-3" /> Due Date

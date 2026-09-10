@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 const CURRENCIES = ['NGN', 'USD'] as const;
 type Currency = (typeof CURRENCIES)[number];
-type CommissionType = 'FIXED' | 'PERCENTAGE';
+type CommissionType = 'FIXED' | 'PERCENTAGE' | 'PER_UNIT';
 type ApprovalMode = 'MANUAL' | 'AUTOMATIC';
 type NormalizedRate = { currency: Currency; fixedAmount: Prisma.Decimal | null; active: boolean };
 
@@ -15,6 +15,7 @@ type RateInput = {
   fixedAmount?: unknown;
   active?: unknown;
 };
+type UnitRateInput = { currency?: unknown; billingUnit?: unknown; destinationCountry?: unknown; shippingMode?: unknown; unitRate?: unknown; active?: unknown };
 
 export type AffiliateProgramServiceInput = {
   serviceKey?: unknown;
@@ -30,6 +31,7 @@ export type AffiliateProgramServiceInput = {
   active?: unknown;
   sortOrder?: unknown;
   rates?: unknown;
+  unitRates?: unknown;
 };
 
 function clean(value: unknown, max: number) {
@@ -65,7 +67,7 @@ function normalizeInput(input: AffiliateProgramServiceInput, creating: boolean) 
     throw new Error('Service key must contain at least three letters, numbers, or underscores.');
   }
   if (displayName.length < 2) throw new Error('Display name is required.');
-  if (!['FIXED', 'PERCENTAGE'].includes(commissionType)) throw new Error('Select a valid commission type.');
+  if (!['FIXED', 'PERCENTAGE', 'PER_UNIT'].includes(commissionType)) throw new Error('Select a valid commission type.');
   if (!eligibleAmountBasis) throw new Error('Eligible amount basis is required.');
   if (!['MANUAL', 'AUTOMATIC'].includes(approvalMode)) throw new Error('Select a valid commission release mode.');
   if (!Number.isFinite(reviewPeriodDays) || reviewPeriodDays < 0 || reviewPeriodDays > 365) {
@@ -90,6 +92,19 @@ function normalizeInput(input: AffiliateProgramServiceInput, creating: boolean) 
   if (commissionType === 'FIXED' && active && !rates.some((rate) => rate.active)) {
     throw new Error('An active fixed commission service needs at least one active currency rate.');
   }
+  const unitRates = (Array.isArray(input.unitRates) ? input.unitRates as UnitRateInput[] : []).map((rate, index) => {
+    const currency = clean(rate.currency, 3).toUpperCase() as Currency;
+    const billingUnit = clean(rate.billingUnit, 16).toUpperCase();
+    const destinationCountry = clean(rate.destinationCountry, 100).toUpperCase() || '*';
+    const shippingMode = clean(rate.shippingMode, 24).toUpperCase() || '*';
+    if (!CURRENCIES.includes(currency)) throw new Error(`Unit rate ${index + 1} has an invalid currency.`);
+    if (!['KG', 'CBM'].includes(billingUnit)) throw new Error(`Unit rate ${index + 1} must use KG or CBM.`);
+    if (!['*', 'AIR', 'SEA'].includes(shippingMode)) throw new Error(`Unit rate ${index + 1} has an invalid shipping mode.`);
+    return { currency, billingUnit, destinationCountry, shippingMode, unitRate: decimal(rate.unitRate, `Unit rate ${index + 1}`, 1_000_000_000), active: boolean(rate.active, true) };
+  });
+  const scopes = new Set(unitRates.map((rate) => `${rate.currency}:${rate.billingUnit}:${rate.destinationCountry}:${rate.shippingMode}`));
+  if (scopes.size !== unitRates.length) throw new Error('Unit commission scopes must be unique.');
+  if (commissionType === 'PER_UNIT' && active && !unitRates.some((rate) => rate.active)) throw new Error('An active per-unit service needs at least one active unit rate.');
 
   return {
     serviceKey,
@@ -104,7 +119,7 @@ function normalizeInput(input: AffiliateProgramServiceInput, creating: boolean) 
     exclusionNotes,
     active,
     sortOrder,
-    rates,
+    rates, unitRates,
   };
 }
 
@@ -130,6 +145,7 @@ function serializeService(service: Awaited<ReturnType<typeof serviceRecord>>) {
       fixedAmount: rate.fixedAmount ? Number(rate.fixedAmount) : null,
       active: rate.active,
     })),
+    unitRates: service.unitRates.map((rate) => ({ currency: rate.currency, billingUnit: rate.billingUnit, destinationCountry: rate.destinationCountry, shippingMode: rate.shippingMode, unitRate: Number(rate.unitRate), active: rate.active })),
   };
 }
 
@@ -138,6 +154,7 @@ function serviceRecord(pidService: string) {
     where: { pidService },
     include: {
       currencyRates: { orderBy: { currency: 'asc' } },
+      unitRates: { orderBy: [{ currency: 'asc' }, { billingUnit: 'asc' }, { destinationCountry: 'asc' }] },
       _count: { select: { conversions: true } },
     },
   });
@@ -148,6 +165,7 @@ export async function listAffiliateProgramServices() {
     orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }],
     include: {
       currencyRates: { orderBy: { currency: 'asc' } },
+      unitRates: { orderBy: [{ currency: 'asc' }, { billingUnit: 'asc' }, { destinationCountry: 'asc' }] },
       _count: { select: { conversions: true } },
     },
   });
@@ -155,7 +173,7 @@ export async function listAffiliateProgramServices() {
 }
 
 async function syncRates(tx: Prisma.TransactionClient, serviceId: number, commissionType: CommissionType, rates: ReturnType<typeof normalizeInput>['rates']) {
-  if (commissionType === 'PERCENTAGE') {
+  if (commissionType !== 'FIXED') {
     await tx.affiliate_service_commission_rates.updateMany({ where: { serviceId }, data: { active: false } });
     return;
   }
@@ -171,6 +189,12 @@ async function syncRates(tx: Prisma.TransactionClient, serviceId: number, commis
       update: { fixedAmount: rate.fixedAmount, percentageRate: null, active: rate.active },
     });
   }
+}
+
+async function syncUnitRates(tx: Prisma.TransactionClient, serviceId: number, commissionType: CommissionType, rates: ReturnType<typeof normalizeInput>['unitRates']) {
+  await tx.affiliate_service_unit_rates.deleteMany({ where: { serviceId } });
+  if (commissionType !== 'PER_UNIT' || !rates.length) return;
+  await tx.affiliate_service_unit_rates.createMany({ data: rates.map((rate) => ({ serviceId, ...rate })) });
 }
 
 export async function createAffiliateProgramService(input: AffiliateProgramServiceInput, actor: string) {
@@ -196,6 +220,7 @@ export async function createAffiliateProgramService(input: AffiliateProgramServi
         },
       });
       await syncRates(tx, service.id, normalized.commissionType, normalized.rates);
+      await syncUnitRates(tx, service.id, normalized.commissionType, normalized.unitRates);
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -229,6 +254,7 @@ export async function updateAffiliateProgramService(pidService: string, input: A
       },
     });
     await syncRates(tx, existing.id, normalized.commissionType, normalized.rates);
+    await syncUnitRates(tx, existing.id, normalized.commissionType, normalized.unitRates);
   });
   console.info('[affiliate-program] service updated', { pidService, actor });
   return serializeService(await serviceRecord(pidService));

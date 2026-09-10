@@ -18,6 +18,7 @@ import {
   parseInvoiceLinkedRequestId,
 } from '@/lib/invoiceLinkedService';
 import { getUserBusinessName, getUserBusinessNameMap } from '@/lib/userBusinessName';
+import { createShippingCommissionSnapshot } from '@/lib/affiliate/shippingCommissions';
 
 function buildCustomerDisplayName(contactName?: string | null, businessName?: string | null, fallbackName?: string | null) {
   const normalizedContact = String(contactName || '').trim();
@@ -33,7 +34,6 @@ export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
-    await ensureInvoicingCoreTables();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || '';
@@ -189,7 +189,6 @@ export async function POST(request: NextRequest) {
   try {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
-    await ensureInvoicingCoreTables();
 
     const body = await request.json();
     const {
@@ -212,6 +211,7 @@ export async function POST(request: NextRequest) {
       items = [],
       discountTotal = 0,
       taxTotal = 0,
+      shippingCommissionQuantity,
     } = body;
 
     if (!pidUser) {
@@ -318,8 +318,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const created = await prisma.invoices.create({
-      data: {
+    const invoiceCurrency = String(currency || '').trim().toUpperCase();
+    if (!['NGN', 'USD'].includes(invoiceCurrency)) {
+      return NextResponse.json({ statusx: 'ERROR', message: 'Invoice currency must be NGN or USD.' }, { status: 400 });
+    }
+    if (linkedShippingOnlyId) {
+      const linkedShippingRequest = await prisma.shipping_only.findUnique({
+        where: { pidShippingOnly: String(linkedShippingOnlyId) },
+        select: { pidUser: true, affiliateAttribution: { select: { id: true } } },
+      });
+      if (!linkedShippingRequest || linkedShippingRequest.pidUser !== pidUser) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'The shipping request and invoice customer do not match.' }, { status: 400 });
+      }
+      const commissionQuantity = Number(shippingCommissionQuantity);
+      if (linkedShippingRequest.affiliateAttribution && (!Number.isFinite(commissionQuantity) || commissionQuantity <= 0)) {
+        return NextResponse.json({ statusx: 'ERROR', message: 'Enter the final billable shipping quantity before creating this affiliate-owned invoice.' }, { status: 400 });
+      }
+    }
+
+    const created = await prisma.$transaction(async (tx) => {
+      const invoice = await tx.invoices.create({ data: {
         pidInvoice,
         invoiceNumber,
         pidUser,
@@ -329,7 +347,7 @@ export async function POST(request: NextRequest) {
         customerEmail,
         customerPhone,
         customerAddress,
-        currency,
+        currency: invoiceCurrency,
         subtotal: toMoneyInput(subtotalNum),
         discountTotal: toMoneyInput(discount),
         taxTotal: toMoneyInput(tax),
@@ -353,6 +371,16 @@ export async function POST(request: NextRequest) {
       include: {
         items: true,
       },
+      });
+      if (linkedShippingOnlyId) {
+        await createShippingCommissionSnapshot(tx, {
+          pidInvoice: invoice.pidInvoice,
+          pidShippingOnly: String(linkedShippingOnlyId),
+          currency: invoiceCurrency,
+          eligibleQuantity: shippingCommissionQuantity,
+        });
+      }
+      return invoice;
     });
 
     await writeAuditLog({

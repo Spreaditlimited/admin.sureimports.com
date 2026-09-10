@@ -137,5 +137,6 @@ export function affiliateOrderReferenceForRefund(serviceType: string | null | un
   if (service === 'SHOP' || service === 'PHONES_AND_LAPTOPS') return `shop:${order}`;
   if (service === 'SUPPLIER_REPORTS') return `supplier-report:${order}`;
   if (service === 'SUPPLIER_VERIFICATION') return `supplier-verification:${order}`;
+  if (service === 'SHIP_WITH_US' || service === 'SHIPPING_ONLY') return `shipping-invoice:${order}`;
   return null;
 }

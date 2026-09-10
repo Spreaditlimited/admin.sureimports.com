@@ -811,8 +811,8 @@ model pay_supplier {
 }
 
 model shipping_only {
-  id                      Int       @id @default(autoincrement())
-  pidShippingOnly         String    @unique()
+  id                      Int                            @id @default(autoincrement())
+  pidShippingOnly         String                         @unique()
   pidUser                 String?
   whatsappNumber          String?
   shippingName            String?
@@ -829,8 +829,9 @@ model shipping_only {
   xStatus                 String?
   ext1                    String?
   ext2                    String?
-  createdAt               DateTime? @default(now())
+  createdAt               DateTime?                      @default(now())
   updatedAt               DateTime?
+  affiliateAttribution    shipping_request_attributions?
 }
 
 model verify_supplier {
@@ -1443,30 +1444,33 @@ model affiliate_waitlist_entries {
 }
 
 model affiliate_accounts {
-  id                  Int                             @id @default(autoincrement())
-  pidAffiliate        String                          @unique @db.VarChar(80)
-  emailHash           String                          @unique @db.Char(64)
-  emailCiphertext     String                          @db.Text
-  firstNameCiphertext String                          @db.Text
-  lastNameCiphertext  String                          @db.Text
-  phoneCiphertext     String                          @db.Text
-  country             String                          @db.VarChar(100)
-  passwordHash        String                          @db.VarChar(255)
-  referralCode        String                          @unique @db.VarChar(24)
-  status              String                          @default("PENDING_VERIFICATION") @db.VarChar(32)
-  emailVerifiedAt     DateTime?
-  termsAcceptedAt     DateTime
-  consentVersion      String                          @db.VarChar(80)
-  lastLoginAt         DateTime?
-  createdAt           DateTime                        @default(now())
-  updatedAt           DateTime                        @updatedAt
-  sessions            affiliate_sessions[]
-  authTokens          affiliate_auth_tokens[]
-  referrals           affiliate_referrals[]
-  conversions         affiliate_conversions[]
-  payoutAccounts      affiliate_payout_accounts[]
-  payouts             affiliate_payouts[]
-  payoutOtps          affiliate_payout_account_otps[]
+  id                   Int                                      @id @default(autoincrement())
+  pidAffiliate         String                                   @unique @db.VarChar(80)
+  emailHash            String                                   @unique @db.Char(64)
+  emailCiphertext      String                                   @db.Text
+  firstNameCiphertext  String                                   @db.Text
+  lastNameCiphertext   String                                   @db.Text
+  phoneCiphertext      String                                   @db.Text
+  country              String                                   @db.VarChar(100)
+  passwordHash         String                                   @db.VarChar(255)
+  referralCode         String                                   @unique @db.VarChar(24)
+  status               String                                   @default("PENDING_VERIFICATION") @db.VarChar(32)
+  emailVerifiedAt      DateTime?
+  termsAcceptedAt      DateTime
+  consentVersion       String                                   @db.VarChar(80)
+  lastLoginAt          DateTime?
+  createdAt            DateTime                                 @default(now())
+  updatedAt            DateTime                                 @updatedAt
+  sessions             affiliate_sessions[]
+  authTokens           affiliate_auth_tokens[]
+  referrals            affiliate_referrals[]
+  conversions          affiliate_conversions[]
+  payoutAccounts       affiliate_payout_accounts[]
+  payouts              affiliate_payouts[]
+  payoutOtps           affiliate_payout_account_otps[]
+  apiCredentials       affiliate_api_credentials[]
+  shippingAttributions shipping_request_attributions[]
+  invoiceSnapshots     invoice_affiliate_commission_snapshots[]
 
   @@index([status, createdAt])
 }
@@ -1517,26 +1521,45 @@ model affiliate_auth_limits {
 }
 
 model affiliate_program_services {
-  id                  Int                                  @id @default(autoincrement())
-  pidService          String                               @unique @db.VarChar(80)
-  serviceKey          String                               @unique @db.VarChar(80)
-  displayName         String                               @db.VarChar(140)
-  description         String?                              @db.Text
-  commissionType      String                               @db.VarChar(24)
-  percentageRate      Decimal?                             @db.Decimal(7, 4)
-  eligibleAmountBasis String                               @db.VarChar(40)
-  recurring           Boolean                              @default(false)
-  approvalMode        String                               @default("MANUAL") @db.VarChar(24)
-  reviewPeriodDays    Int                                  @default(14)
-  exclusionNotes      String?                              @db.Text
-  active              Boolean                              @default(true)
-  sortOrder           Int                                  @default(0)
-  createdAt           DateTime                             @default(now())
-  updatedAt           DateTime                             @updatedAt
+  id                  Int                                      @id @default(autoincrement())
+  pidService          String                                   @unique @db.VarChar(80)
+  serviceKey          String                                   @unique @db.VarChar(80)
+  displayName         String                                   @db.VarChar(140)
+  description         String?                                  @db.Text
+  commissionType      String                                   @db.VarChar(24)
+  percentageRate      Decimal?                                 @db.Decimal(7, 4)
+  eligibleAmountBasis String                                   @db.VarChar(40)
+  recurring           Boolean                                  @default(false)
+  approvalMode        String                                   @default("MANUAL") @db.VarChar(24)
+  reviewPeriodDays    Int                                      @default(14)
+  exclusionNotes      String?                                  @db.Text
+  active              Boolean                                  @default(true)
+  sortOrder           Int                                      @default(0)
+  createdAt           DateTime                                 @default(now())
+  updatedAt           DateTime                                 @updatedAt
   currencyRates       affiliate_service_commission_rates[]
+  unitRates           affiliate_service_unit_rates[]
   conversions         affiliate_conversions[]
+  invoiceSnapshots    invoice_affiliate_commission_snapshots[]
 
   @@index([active, sortOrder])
+}
+
+model affiliate_service_unit_rates {
+  id                 Int                        @id @default(autoincrement())
+  serviceId          Int
+  currency           String                     @db.Char(3)
+  billingUnit        String                     @db.VarChar(16)
+  destinationCountry String                     @default("*") @db.VarChar(100)
+  shippingMode       String                     @default("*") @db.VarChar(24)
+  unitRate           Decimal                    @db.Decimal(18, 4)
+  active             Boolean                    @default(true)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  service            affiliate_program_services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, currency, billingUnit, destinationCountry, shippingMode], map: "affiliate_unit_rate_scope_key")
+  @@index([serviceId, currency, billingUnit, active], map: "affiliate_unit_rate_lookup_idx")
 }
 
 model affiliate_service_commission_rates {
@@ -1555,57 +1578,153 @@ model affiliate_service_commission_rates {
 }
 
 model affiliate_referrals {
-  id                Int                     @id @default(autoincrement())
-  pidReferral       String                  @unique @db.VarChar(80)
-  affiliateId       Int
-  visitorHash       String                  @db.Char(64)
-  landingPath       String                  @db.VarChar(500)
-  source            String?                 @db.VarChar(255)
-  customerReference String?                 @unique @db.VarChar(191)
-  firstTouchAt      DateTime                @default(now())
-  lastTouchAt       DateTime                @default(now())
-  claimedAt         DateTime?
-  convertedAt       DateTime?
-  affiliate         affiliate_accounts      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
-  conversions       affiliate_conversions[]
+  id                   Int                                      @id @default(autoincrement())
+  pidReferral          String                                   @unique @db.VarChar(80)
+  affiliateId          Int
+  visitorHash          String                                   @db.Char(64)
+  landingPath          String                                   @db.VarChar(500)
+  source               String?                                  @db.VarChar(255)
+  customerReference    String?                                  @unique @db.VarChar(191)
+  firstTouchAt         DateTime                                 @default(now())
+  lastTouchAt          DateTime                                 @default(now())
+  claimedAt            DateTime?
+  convertedAt          DateTime?
+  affiliate            affiliate_accounts                       @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  conversions          affiliate_conversions[]
+  shippingAttributions shipping_request_attributions[]
+  invoiceSnapshots     invoice_affiliate_commission_snapshots[]
 
   @@index([affiliateId, firstTouchAt])
   @@index([visitorHash, lastTouchAt])
 }
 
 model affiliate_conversions {
-  id                       Int                        @id @default(autoincrement())
-  pidConversion            String                     @unique @db.VarChar(80)
+  id                       Int                                     @id @default(autoincrement())
+  pidConversion            String                                  @unique @db.VarChar(80)
   affiliateId              Int
   serviceId                Int
   referralId               Int?
-  externalOrderReference   String                     @db.VarChar(120)
-  externalPaymentReference String?                    @unique @db.VarChar(160)
-  paymentCurrency          String                     @db.Char(3)
-  grossAmount              Decimal                    @db.Decimal(18, 2)
-  eligibleAmount           Decimal                    @db.Decimal(18, 2)
-  commissionCurrency       String                     @db.Char(3)
-  commissionAmount         Decimal                    @db.Decimal(18, 2)
-  status                   String                     @default("PENDING") @db.VarChar(24)
-  releaseMode              String                     @default("MANUAL") @db.VarChar(24)
+  externalOrderReference   String                                  @db.VarChar(120)
+  externalPaymentReference String?                                 @unique @db.VarChar(160)
+  paymentCurrency          String                                  @db.Char(3)
+  grossAmount              Decimal                                 @db.Decimal(18, 2)
+  eligibleAmount           Decimal                                 @db.Decimal(18, 2)
+  commissionCurrency       String                                  @db.Char(3)
+  commissionAmount         Decimal                                 @db.Decimal(18, 2)
+  commissionBasisUnit      String?                                 @db.VarChar(16)
+  commissionBasisQuantity  Decimal?                                @db.Decimal(18, 4)
+  commissionRate           Decimal?                                @db.Decimal(18, 4)
+  status                   String                                  @default("PENDING") @db.VarChar(24)
+  releaseMode              String                                  @default("MANUAL") @db.VarChar(24)
   releaseAt                DateTime?
   approvedAt               DateTime?
   availableAt              DateTime?
   voidedAt                 DateTime?
-  reversedFromStatus       String?                    @db.VarChar(24)
-  reversalReason           String?                    @db.Text
-  reversalReference        String?                    @db.VarChar(160)
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @updatedAt
-  affiliate                affiliate_accounts         @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
-  service                  affiliate_program_services @relation(fields: [serviceId], references: [id], onDelete: Restrict)
-  referral                 affiliate_referrals?       @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  reversedFromStatus       String?                                 @db.VarChar(24)
+  reversalReason           String?                                 @db.Text
+  reversalReference        String?                                 @db.VarChar(160)
+  createdAt                DateTime                                @default(now())
+  updatedAt                DateTime                                @updatedAt
+  affiliate                affiliate_accounts                      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  service                  affiliate_program_services              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  referral                 affiliate_referrals?                    @relation(fields: [referralId], references: [id], onDelete: SetNull)
   payoutItem               affiliate_payout_items?
+  invoiceSnapshot          invoice_affiliate_commission_snapshots?
 
   @@unique([externalOrderReference, serviceId])
   @@index([affiliateId, status, createdAt])
   @@index([serviceId, createdAt])
   @@index([status, releaseAt])
+}
+
+model affiliate_api_credentials {
+  id               Int                             @id @default(autoincrement())
+  pidCredential    String                          @unique @db.VarChar(80)
+  affiliateId      Int
+  name             String                          @db.VarChar(120)
+  keyPrefix        String                          @db.VarChar(24)
+  keyHash          String                          @unique @db.Char(64)
+  scopes           String                          @default("shipping:write") @db.VarChar(255)
+  active           Boolean                         @default(true)
+  expiresAt        DateTime?
+  lastUsedAt       DateTime?
+  createdByPidUser String?                         @db.VarChar(80)
+  revokedAt        DateTime?
+  createdAt        DateTime                        @default(now())
+  updatedAt        DateTime                        @updatedAt
+  affiliate        affiliate_accounts              @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  idempotency      affiliate_api_idempotency[]
+  shippingRequests shipping_request_attributions[]
+
+  @@index([affiliateId, active])
+  @@index([keyPrefix, active])
+}
+
+model affiliate_api_idempotency {
+  id             Int                       @id @default(autoincrement())
+  credentialId   Int
+  idempotencyKey String                    @db.VarChar(120)
+  requestHash    String                    @db.Char(64)
+  responseStatus Int
+  responseBody   String                    @db.LongText
+  createdAt      DateTime                  @default(now())
+  expiresAt      DateTime
+  credential     affiliate_api_credentials @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+
+  @@unique([credentialId, idempotencyKey], map: "affiliate_api_idempotency_credential_key")
+  @@index([expiresAt])
+}
+
+model shipping_request_attributions {
+  id               Int                                      @id @default(autoincrement())
+  pidAttribution   String                                   @unique @db.VarChar(80)
+  pidShippingOnly  String                                   @unique @db.VarChar(191)
+  affiliateId      Int
+  referralId       Int?
+  apiCredentialId  Int?
+  sourceType       String                                   @db.VarChar(32)
+  sourceReference  String?                                  @db.VarChar(191)
+  lockedAt         DateTime                                 @default(now())
+  createdAt        DateTime                                 @default(now())
+  affiliate        affiliate_accounts                       @relation(fields: [affiliateId], references: [id], onDelete: Restrict)
+  referral         affiliate_referrals?                     @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  apiCredential    affiliate_api_credentials?               @relation(fields: [apiCredentialId], references: [id], onDelete: SetNull)
+  shippingRequest  shipping_only                            @relation(fields: [pidShippingOnly], references: [pidShippingOnly], onDelete: Cascade)
+  invoiceSnapshots invoice_affiliate_commission_snapshots[]
+
+  @@unique([affiliateId, sourceType, sourceReference], map: "shipping_attribution_partner_reference_key")
+  @@index([affiliateId, createdAt])
+  @@index([referralId])
+  @@index([apiCredentialId])
+}
+
+model invoice_affiliate_commission_snapshots {
+  id                    Int                           @id @default(autoincrement())
+  pidSnapshot           String                        @unique @db.VarChar(80)
+  pidInvoice            String                        @unique @db.VarChar(191)
+  shippingAttributionId Int
+  affiliateId           Int
+  referralId            Int?
+  serviceId             Int
+  billingUnit           String                        @db.VarChar(16)
+  eligibleQuantity      Decimal                       @db.Decimal(18, 4)
+  commissionCurrency    String                        @db.Char(3)
+  unitRate              Decimal                       @db.Decimal(18, 4)
+  commissionAmount      Decimal                       @db.Decimal(18, 2)
+  sourceType            String                        @db.VarChar(32)
+  status                String                        @default("EXPECTED") @db.VarChar(24)
+  conversionId          Int?                          @unique
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  invoice               invoices                      @relation(fields: [pidInvoice], references: [pidInvoice], onDelete: Cascade)
+  shippingAttribution   shipping_request_attributions @relation(fields: [shippingAttributionId], references: [id], onDelete: Restrict)
+  affiliate             affiliate_accounts            @relation(fields: [affiliateId], references: [id], onDelete: Restrict)
+  referral              affiliate_referrals?          @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  service               affiliate_program_services    @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  conversion            affiliate_conversions?        @relation(fields: [conversionId], references: [id], onDelete: SetNull)
+
+  @@index([affiliateId, status])
+  @@index([shippingAttributionId])
 }
 
 model affiliate_payout_accounts {
@@ -1863,38 +1982,38 @@ model invoice_settings {
 }
 
 model invoices {
-  id                   Int                          @id @default(autoincrement())
-  pidInvoice           String                       @unique()
-  invoiceNumber        String                       @unique()
+  id                   Int                                     @id @default(autoincrement())
+  pidInvoice           String                                  @unique()
+  invoiceNumber        String                                  @unique()
   pidUser              String
   customerName         String?
   customerBusinessName String?
   customerContactName  String?
   customerEmail        String?
   customerPhone        String?
-  customerAddress      String?                      @db.LongText
-  currency             String                       @default("NGN")
-  subtotal             Decimal                      @db.Decimal(18, 2)
-  discountTotal        Decimal                      @default(0) @db.Decimal(18, 2)
-  taxTotal             Decimal                      @default(0) @db.Decimal(18, 2)
-  grandTotal           Decimal                      @db.Decimal(18, 2)
-  amountPaid           Decimal                      @default(0) @db.Decimal(18, 2)
-  balanceDue           Decimal                      @db.Decimal(18, 2)
-  status               String                       @default("DRAFT")
+  customerAddress      String?                                 @db.LongText
+  currency             String                                  @default("NGN")
+  subtotal             Decimal                                 @db.Decimal(18, 2)
+  discountTotal        Decimal                                 @default(0) @db.Decimal(18, 2)
+  taxTotal             Decimal                                 @default(0) @db.Decimal(18, 2)
+  grandTotal           Decimal                                 @db.Decimal(18, 2)
+  amountPaid           Decimal                                 @default(0) @db.Decimal(18, 2)
+  balanceDue           Decimal                                 @db.Decimal(18, 2)
+  status               String                                  @default("DRAFT")
   issuedAt             DateTime?
   dueAt                DateTime?
   paidAt               DateTime?
-  headerSnapshot       String?                      @db.LongText
-  footerSnapshot       String?                      @db.LongText
-  customerNotes        String?                      @db.LongText
-  notes                String?                      @db.LongText
+  headerSnapshot       String?                                 @db.LongText
+  footerSnapshot       String?                                 @db.LongText
+  customerNotes        String?                                 @db.LongText
+  notes                String?                                 @db.LongText
   linkedRequestId      String?
-  pidQuotation         String?                      @db.VarChar(80)
+  pidQuotation         String?                                 @db.VarChar(80)
   createdByPidUser     String?
   updatedByPidUser     String?
-  createdAt            DateTime                     @default(now())
-  updatedAt            DateTime                     @updatedAt
-  user                 users                        @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
+  createdAt            DateTime                                @default(now())
+  updatedAt            DateTime                                @updatedAt
+  user                 users                                   @relation(fields: [pidUser], references: [pidUser], onDelete: Restrict)
   items                invoice_items[]
   payments             invoice_payments[]
   receipts             receipts[]
@@ -1902,7 +2021,8 @@ model invoices {
   accessTokens         invoice_access_tokens[]
   paymentClaims        invoice_payment_claims[]
   followUps            invoice_follow_ups[]
-  quotation            quotation_builder_documents? @relation(fields: [pidQuotation], references: [pidQuotation], onDelete: SetNull)
+  quotation            quotation_builder_documents?            @relation(fields: [pidQuotation], references: [pidQuotation], onDelete: SetNull)
+  affiliateCommission  invoice_affiliate_commission_snapshots?
 
   @@index([pidUser])
   @@index([status])

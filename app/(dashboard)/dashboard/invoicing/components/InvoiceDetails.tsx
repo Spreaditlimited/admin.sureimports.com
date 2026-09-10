@@ -53,6 +53,7 @@ interface InvoiceData {
   customerNotes: string | null;
   notes: string | null;
   quotation: { pidQuotation: string; quotationNumber: string; customerName: string; status: string } | null;
+  affiliateCommission: { billingUnit: string; eligibleQuantity: string; commissionCurrency: string; unitRate: string; commissionAmount: string; sourceType: string; status: string; affiliate: { referralCode: string } } | null;
   items: Array<{ pidInvoiceItem: string; description: string; quantity: string; unitPrice: string; lineTotal: string }>;
   payments: Array<{ pidInvoicePayment: string; amount: string; paymentMethod: string; reference: string | null; paidAt: string }>;
   paymentClaims: PaymentClaim[];
@@ -245,6 +246,7 @@ export default function InvoiceDetails({ pidInvoice }: { pidInvoice: string }) {
 
   return (
     <div className="space-y-6 pb-20">
+      {data.affiliateCommission ? <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 p-5"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Affiliate commission snapshot</span><h3 className="mt-2 font-bold">Owned by {data.affiliateCommission.affiliate.referralCode}</h3><p className="mt-1 text-xs text-muted-foreground">{data.affiliateCommission.sourceType.replaceAll('_', ' ').toLowerCase()} · {Number(data.affiliateCommission.eligibleQuantity)} {data.affiliateCommission.billingUnit} × {data.affiliateCommission.commissionCurrency} {Number(data.affiliateCommission.unitRate).toLocaleString()}</p></div><div className="sm:text-right"><span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Expected commission</span><strong className="mt-1 block text-xl">{data.affiliateCommission.commissionCurrency} {Number(data.affiliateCommission.commissionAmount).toLocaleString()}</strong><small className="text-[10px] uppercase text-muted-foreground">{data.affiliateCommission.status}</small></div></div></div> : null}
       
       {/* 1. Hero Summary Card */}
       <div className="bg-card border border-border shadow-soft rounded-xl overflow-hidden">

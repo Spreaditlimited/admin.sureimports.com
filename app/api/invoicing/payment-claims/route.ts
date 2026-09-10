@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdmin();
     if (!admin) return unauthorized();
-    await ensureInvoicingCoreTables();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || '';
