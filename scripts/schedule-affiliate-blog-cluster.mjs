@@ -10,7 +10,7 @@ const SYNC_CONTENT = process.argv.includes('--sync-content');
 const SITE = 'https://www.sureimports.com';
 const AFFILIATE = 'https://affiliate.sureimports.com';
 const IMAGE_ROOT = process.env.AFFILIATE_BLOG_IMAGE_ROOT || path.resolve(process.cwd(), '../sureimports.com/public/blog-affiliate-images');
-const VERIFIED_ON = '10 September 2026';
+const VERIFIED_ON = '11 September 2026';
 
 const esc = (value) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const paragraphs = (items) => items.map((item) => `<p>${item}</p>`).join('\n');
@@ -30,6 +30,7 @@ const ratesTable = () => table(
     ['Supplier Intelligence', '10% recurring', 'Eligible subscription payments', '14 days'],
     ['Supplier Verification', '₦10,000 or US$10', 'One eligible paid verification', '14 days'],
     ['Ship with Us', 'US$0.50/kg, ₦750/kg, or ₦10,000/CBM', 'Final eligible billed weight or volume', '14 days'],
+    ['LineScout Sourcing', '10% / 2%', 'Eligible commitment fee / eligible product or sourcing project payment', '14 days'],
   ],
 );
 
@@ -47,8 +48,8 @@ const articles = [
     title: 'Sure Imports Affiliate Program: Earn From Import and Shipping Referrals',
     slug: 'sure-imports-affiliate-program-earn-from-import-and-shipping-referrals',
     focusKeyword: 'Sure Imports affiliate program',
-    keywords: ['Sure Imports affiliate program', 'import affiliate program Nigeria', 'shipping affiliate program Nigeria', 'logistics affiliate program', 'affiliate marketing Nigeria'],
-    description: 'Learn how the Sure Imports affiliate program works, eligible services, current commission rates, tracking, payouts and practical promotion strategies.',
+    keywords: ['Sure Imports affiliate program', 'LineScout affiliate program', 'import affiliate program Nigeria', 'shipping affiliate program Nigeria', 'sourcing affiliate program'],
+    description: 'Learn how the Sure Imports affiliate program covers importing, shipping and LineScout sourcing, with current rates, tracking and payout guidance.',
     image: 'sure-imports-affiliate-program.png',
     publishAt: null,
     featured: true,
@@ -62,19 +63,19 @@ const articles = [
       sections: [
         { heading: 'What the Sure Imports affiliate program is', body: paragraphs([
           'An affiliate receives trackable programme links for eligible Sure Imports services. When a referred customer follows the appropriate journey and later completes the qualifying paid transaction, the system can attribute that outcome to the affiliate. Eligible commission then enters a review period before it becomes available under the programme rules.',
-          'The programme covers more than a single product category. Its current portfolio spans assisted buying, supplier research, device procurement, recurring supplier intelligence, supplier verification and freight. This breadth is useful because import audiences rarely have only one problem. A trader might first need supplier evidence, then payment or purchasing help, then shipment execution.',
+          'The programme covers more than a single product category. Its current portfolio spans assisted buying, supplier research, device procurement, recurring supplier intelligence, supplier verification, freight and LineScout sourcing. This breadth is useful because import audiences rarely have only one problem. A business owner might first need a machine, bulk product or white-label sourcing project, then shipment execution.',
           'Joining does not make an affiliate an employee, freight carrier, customs broker, supplier, or official representative with authority to make promises on behalf of Sure Imports. Affiliates introduce customers and explain published services accurately. Sure Imports remains responsible for accepting, pricing and delivering the underlying service.',
         ])},
         { heading: 'Who the programme is built for', body: paragraphs([
           'The programme can fit import educators, YouTube and TikTok creators, newsletter publishers, bloggers, WhatsApp or Telegram community administrators, procurement consultants, business associations, software platforms and agencies whose customers already ask about China purchasing or shipping. Audience relevance matters more than raw follower count.',
-          'A niche operator with 500 business owners who trust their recommendations may create more eligible outcomes than an entertainment page with a much larger but unrelated audience. Before applying, identify the recurring questions people already bring to you: how to pay a Chinese seller, whether a supplier is genuine, how much freight may cost, or how to move cargo to Nigeria.',
+          'A niche operator with 500 business owners who trust their recommendations may create more eligible outcomes than an entertainment page with a much larger but unrelated audience. Before applying, identify the recurring questions people already bring to you: how to pay a Chinese seller, whether a supplier is genuine, how to source a production machine or white-label product, how much freight may cost, or how to move cargo to Nigeria.',
         ]) + list([
           '<strong>Creators:</strong> publish demonstrations, comparisons, checklists and case-led education.',
           '<strong>Consultants and agents:</strong> refer needs that fall outside their own scope without pretending to deliver the Sure Imports service.',
           '<strong>Communities:</strong> place the right service link beside genuinely helpful answers and resources.',
           '<strong>Businesses and platforms:</strong> use the developer workspace and API contract where programmatic shipping-request creation suits their customer journey.',
         ])},
-        { heading: 'The six eligible service routes', body: sub('Buy From Chinese Websites', paragraphs([
+        { heading: 'The seven eligible service routes', body: sub('Buy From Chinese Websites', paragraphs([
           'This route is for customers who have product links from supported Chinese websites and need Sure Imports to help complete the purchase. Commission is based on the eligible product cost, not the entire invoice. Shipping, duties, handling, penalties and other non-product charges are excluded from the percentage basis.',
         ])) + sub('Supplier Reports', paragraphs([
           'A supplier report gives a buyer structured information for a sourcing decision. The affiliate earns the configured fixed amount when an eligible referred report is paid and survives review. A search, form start or unpaid request is not enough.',
@@ -86,11 +87,15 @@ const articles = [
           'This service helps customers investigate a supplier before committing more capital. It uses a fixed commission for an eligible paid verification. Factory-visit transport and other expressly excluded charges do not increase the affiliate commission.',
         ])) + sub('Ship with Us', paragraphs([
           'Ship with Us lets affiliates introduce customers who already have goods to move. The configured commission depends on the shipment billing unit and currency. Weight-based routes can pay per final eligible kilogram, while qualifying sea freight to Nigeria can pay per final eligible cubic metre.',
+        ])) + sub('LineScout Sourcing', paragraphs([
+          'LineScout is the Sure Imports sourcing workspace for individuals and small businesses that need machinery, bulk finished products or white-label products. Affiliates receive a dedicated LineScout referral link in the dashboard. The configured commission is 10% of an eligible commitment fee, excluding applicable fees, and 2% of the eligible product or sourcing-project payment, excluding shipping and processing fees.',
+          `Shipping remains a separate Ship with Us commission based on final eligible billed KG or CBM. Banks, large companies, institutions, government bodies, NGOs and other organisations with formal procurement requirements should use <a href="${SITE}/corporate-sourcing">Sure Imports Corporate Sourcing</a>, not LineScout.`,
         ]))},
         { heading: 'How attribution works from link to commission', body: paragraphs([
           'Attribution begins when a potential customer uses an affiliate’s tracked route or when an authorised business integration creates a shipping request under that affiliate’s API credentials. The system stores the relevant ownership data so that a later eligible transaction can be connected to the referring partner.',
           'A tracked visit is evidence of a referral interaction, not a commission. The customer must complete the service-specific qualifying event. For shipping, an early quantity is only an estimate. Commission is calculated from the final eligible billed weight or volume after the linked invoice is fully paid, using the configured rate and currency.',
           'API-created shipping requests have explicit affiliate ownership. That ownership is attached to the accepted request and is not silently replaced by another affiliate. Request-level ownership is separate from the customer’s general affiliate relationship, which helps businesses create requests for their customers without rewriting unrelated account history.',
+          `For LineScout, use the dedicated referral URL displayed in the affiliate dashboard. It sends the prospect into the LineScout account journey and preserves the referral relationship when validly claimed. Affiliates should copy that personalised link rather than inventing a referral parameter on a public LineScout URL.`,
         ])},
         { heading: 'Pending, approved, available and reversed are different states', body: paragraphs([
           'A useful affiliate dashboard must show more than a headline balance. Sure Imports separates the operational stages so partners can understand what has been recorded, what remains under review and what can be paid. A newly generated commission normally begins in a pending or review state. The current configured review period is 14 days for the eligible services listed above.',
@@ -99,6 +104,7 @@ const articles = [
         { heading: 'How to promote the programme without damaging trust', body: paragraphs([
           'Start with the user’s question, not with your link. Explain the decision, show the cost components people commonly overlook, identify who a service is suitable for, and state what information the customer should prepare. Then disclose that you may earn a commission and place the link where it naturally helps the reader act.',
           'Good content can rank in search because it resolves a specific intent: shipping from China to Nigeria, checking a Chinese supplier, buying from 1688 or Alibaba, or importing a laptop. One accurate guide can keep attracting qualified readers long after publication. Messaging communities can also work, but repeated unsolicited posts are more likely to create complaints than customers.',
+          'LineScout creates additional high-intent topics: how to write a machine specification, how to compare production-line quotations, how to source bulk finished goods, how to choose packaging for a white-label product, and what information a sourcing brief must contain. These subjects help prospects prepare for a real project instead of sending vague enquiries.',
         ]) + list([
           'Use the exact service-specific link from the affiliate dashboard.',
           'Place a clear affiliate disclosure near the recommendation.',
@@ -112,7 +118,7 @@ const articles = [
           ['Week 3', 'Distribute with context', 'Newsletter, video, community answer and follow-up', 'Attributed requests'],
           ['Week 4', 'Review and improve', 'Update weak calls to action and answer objections', 'Eligible paid outcomes'],
         ]) + paragraphs([
-          'Do not begin by covering every service. Select the route closest to your audience’s present demand. An import education channel may start with Buy From Chinese Websites or Supplier Verification. A logistics platform may start with Ship with Us and the API. A device community may begin with Phones and Laptops.',
+          'Do not begin by covering every service. Select the route closest to your audience’s present demand. An import education channel may start with Buy From Chinese Websites or Supplier Verification. A manufacturing or private-label community may start with LineScout. A logistics platform may start with Ship with Us and the API. A device community may begin with Phones and Laptops.',
           'After the first month, use dashboard evidence to expand. If people click but do not create requests, the content may be too broad or the call to action unclear. If requests start but rarely become eligible transactions, improve qualification and expectation setting rather than generating more low-intent traffic.',
         ])},
         { heading: 'Business integrations and the shipping API', body: paragraphs([
@@ -136,6 +142,7 @@ const articles = [
         ['Do I earn when someone clicks my link?', 'No. A click or registration alone does not earn commission. The referred customer must complete the qualifying paid event for an eligible service.'],
         ['Can a business become an affiliate?', 'Yes. Businesses can participate and can use the developer workspace and shipping API where programmatic request creation fits their customer journey.'],
         ['Is Ship with Us included?', 'Yes. Eligible shipments can generate commission according to the configured billing unit, route, rate and currency shown in the affiliate system.'],
+        ['Can I earn from LineScout sourcing?', 'Yes. LineScout is an eligible affiliate service for machine, bulk-product and white-label sourcing. The current configuration pays 10% of an eligible commitment fee and 2% of the eligible product or sourcing-project payment. Shipping is commissioned separately under Ship with Us.'],
         ['Are Supplier Intelligence commissions recurring?', 'The configured model is recurring on eligible subscription payments. Each payment must qualify, and reversals, refunds or cancellations can affect commission.'],
         ['Where can I see the latest rates?', `Use the affiliate dashboard after signing in. The table in this article was verified on ${VERIFIED_ON}, but dashboard configuration is authoritative.`],
       ],
@@ -500,7 +507,7 @@ function validateArticles() {
     const meaningfulKeywordTerms = article.focusKeyword.toLowerCase().split(/\s+/).filter((term) => term.length > 3);
     if (!meaningfulKeywordTerms.every((term) => article.title.toLowerCase().includes(term))) issues.push(`${article.slug}: title does not reflect focus keyword`);
     if (/[—–]/.test(article.content) || /[—–]/.test(article.title)) issues.push(`${article.slug}: contains an em or en dash`);
-    if (/linescout\.sureimports\.com/i.test(article.content)) issues.push(`${article.slug}: contains a LineScout link`);
+    if (/established organisations[^<]{0,240}linescout\.sureimports\.com/i.test(article.content) || /formal procurement[^<]{0,240}linescout\.sureimports\.com/i.test(article.content)) issues.push(`${article.slug}: routes a corporate audience to LineScout`);
   }
   for (const article of articles) {
     const articleTime = article.publishAt ? new Date(article.publishAt).getTime() : Date.now();
@@ -555,6 +562,15 @@ async function main() {
           ...JSON.parse(bySlug.get(article.slug).blogExt2 || '{}'),
           metaTitle: seoTitleFor(article),
           seoTitle: seoTitleFor(article),
+          metaDescription: article.description,
+          focusKeyword: article.focusKeyword,
+          keywords: article.keywords,
+          canonicalUrl: `${SITE}/blog/${article.slug}`,
+          ogTitle: article.title,
+          ogDescription: article.description,
+          twitterTitle: article.title,
+          twitterDescription: article.description,
+          tags: article.keywords,
         }),
         updatedAt: new Date(),
       },
