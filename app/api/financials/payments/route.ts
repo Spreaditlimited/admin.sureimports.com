@@ -2,18 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
 
-const LEGACY_COMPLETED = new Set(['PAID', 'paid', 'SUCCESS', 'successful', 'success']);
+function legacyStatus(value: string | null): FinancialPaymentRow['status'] {
+  const status = String(value || '').trim().toUpperCase();
+  if (status === 'PAID' || status === 'SUCCESS' || status === 'SUCCESSFUL' || status === 'COMPLETED') return 'COMPLETED';
+  if (status === 'FAILED') return 'FAILED';
+  if (status === 'REFUNDED') return 'REFUNDED';
+  if (status === 'REVERSED') return 'REVERSED';
+  if (status === 'DISPUTED') return 'DISPUTED';
+  if (status === 'CHARGEBACK') return 'CHARGEBACK';
+  if (status === 'CANCELLED' || status === 'CANCELED') return 'CANCELLED';
+  return 'PENDING';
+}
 
 type FinancialPaymentRow = {
   id: string;
-  source: 'legacy_payments' | 'invoice_payments' | 'invoice_payment_claims';
-  status: 'PENDING' | 'COMPLETED';
+  source: 'legacy_payments' | 'invoice_payments' | 'invoice_payment_claims' | 'payment_ledger';
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'REVERSED' | 'DISPUTED' | 'CHARGEBACK' | 'CANCELLED';
   amount: number;
   currency: string;
   paymentMethod: string;
   reference: string;
   serviceName: string;
-  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'OTHER';
+  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'LINESCOUT' | 'OTHER';
   links: Array<{ label: string; href: string }>;
   customer: {
     pidUser: string;
@@ -23,6 +33,18 @@ type FinancialPaymentRow = {
   };
   createdAt: string;
 };
+
+function ledgerStatus(value: string): FinancialPaymentRow['status'] {
+  const status = value.trim().toUpperCase();
+  if (status === 'COMPLETED') return 'COMPLETED';
+  if (status === 'FAILED') return 'FAILED';
+  if (status === 'REFUNDED') return 'REFUNDED';
+  if (status === 'REVERSED') return 'REVERSED';
+  if (status === 'DISPUTED') return 'DISPUTED';
+  if (status === 'CHARGEBACK') return 'CHARGEBACK';
+  if (status === 'CANCELLED' || status === 'CANCELED') return 'CANCELLED';
+  return 'PENDING';
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,7 +70,7 @@ export async function GET(request: NextRequest) {
       if (endDate) toDate = new Date(`${endDate}T23:59:59.999Z`);
     }
 
-    const [legacyPayments, invoicePayments, pendingClaims] = await Promise.all([
+    const [legacyPayments, invoicePayments, pendingClaims, centralLedger] = await Promise.all([
       prisma.payments.findMany({
         orderBy: { createdAt: 'desc' },
       }),
@@ -102,6 +124,10 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
+      prisma.payment_ledger_entries.findMany({
+        where: { sourceSystem: 'LINESCOUT' },
+        orderBy: { occurredAt: 'desc' },
+      }),
     ]);
     const legacyUserIds = Array.from(new Set(legacyPayments.map((p) => p.pidUser).filter(Boolean)));
     const legacyServiceIds = Array.from(
@@ -143,7 +169,7 @@ export async function GET(request: NextRequest) {
     const paySupplierByPid = new Map(legacyPaySupplierRequests.map((request) => [request.pidPaySupplier, request]));
 
     const legacyRows: FinancialPaymentRow[] = legacyPayments.map((row) => {
-      const status = LEGACY_COMPLETED.has((row.paymentStatus || '').trim()) ? 'COMPLETED' : 'PENDING';
+      const status = legacyStatus(row.paymentStatus);
       const user = usersByPid.get(row.pidUser);
       const userName = [user?.userFirstname, user?.userLastname].filter(Boolean).join(' ').trim();
       const linkedInvoice = row.serviceID ? invoiceByPid.get(row.serviceID) : null;
@@ -280,7 +306,27 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const allRows = [...legacyRows, ...invoiceRows, ...pendingClaimRows];
+    const ledgerRows: FinancialPaymentRow[] = centralLedger.map((row) => ({
+      id: row.pidLedgerEntry,
+      source: 'payment_ledger',
+      status: ledgerStatus(row.status),
+      amount: Number(row.originalAmount),
+      currency: row.originalCurrency,
+      paymentMethod: row.provider || 'UNKNOWN',
+      reference: row.providerReference || row.sourcePaymentId,
+      serviceName: row.purpose === 'SHIPPING_PAYMENT' ? 'LineScout Shipping' : row.purpose === 'COMMITMENT_FEE' ? 'LineScout Commitment Fee' : 'LineScout Project Payment',
+      serviceType: 'LINESCOUT',
+      links: [],
+      customer: {
+        pidUser: row.customerReference || 'N/A',
+        name: 'LineScout customer',
+        email: 'Protected in LineScout',
+        phone: 'Protected in LineScout',
+      },
+      createdAt: row.occurredAt.toISOString(),
+    }));
+
+    const allRows = [...legacyRows, ...invoiceRows, ...pendingClaimRows, ...ledgerRows];
     const rows = allRows
       .filter((row) => {
         const ts = new Date(row.createdAt).getTime();

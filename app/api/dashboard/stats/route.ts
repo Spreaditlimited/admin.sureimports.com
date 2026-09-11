@@ -17,6 +17,13 @@ const SUCCESS_PAYMENT_STATUSES = [
   'SUCCESS',
 ]
 
+const PENDING_PAYMENT_STATUSES = new Set([
+  'PENDING',
+  'PENDING_CONFIRMATION',
+  'INITIATED',
+  'PROCESSING',
+])
+
 function finite(value: unknown, fallback = 0) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
@@ -61,6 +68,7 @@ export async function GET() {
       totalStoreProducts,
       totalPaySmallSmall,
       completedPaySmallSmall,
+      lineScoutLedger,
     ] = await Promise.all([
       // Total customers
       prisma.users.count(),
@@ -148,6 +156,11 @@ export async function GET() {
       prisma.paysmallsmall.count({
         where: { status: 'COMPLETED' }
       }),
+
+      prisma.payment_ledger_entries.findMany({
+        where: { sourceSystem: 'LINESCOUT' },
+        select: { status: true, originalAmount: true, originalCurrency: true, settlementAmount: true, settlementCurrency: true },
+      }),
     ])
 
     const mirroredInvoicePaymentIds = new Set(
@@ -159,24 +172,33 @@ export async function GET() {
     const completedLegacyPayments = legacyPayments.filter((payment) =>
       SUCCESS_PAYMENT_STATUSES.includes(String(payment.paymentStatus || '').trim()),
     )
+    const pendingLegacyPayments = legacyPayments.filter((payment) =>
+      PENDING_PAYMENT_STATUSES.has(String(payment.paymentStatus || '').trim().toUpperCase()),
+    )
     const completedPayments = [
       ...completedLegacyPayments,
       ...independentInvoicePayments,
     ]
+    const completedLineScoutPayments = lineScoutLedger.filter((payment) => payment.status === 'COMPLETED')
+    const pendingLineScoutPayments = lineScoutLedger.filter((payment) => payment.status === 'PENDING')
     const ngnPerUsd = finite(exchangeRate?.exNairaToDollar)
     const cnyPerUsd = finite(exchangeRate?.exYuanToDollar)
     if (ngnPerUsd <= 0 || cnyPerUsd <= 0) {
       throw new Error('Exchange-rate configuration is invalid.')
     }
-    const completedPaymentCount = completedPayments.length
+    const completedPaymentCount = completedPayments.length + completedLineScoutPayments.length
     const pendingPaymentCount =
-      legacyPayments.length - completedLegacyPayments.length + pendingInvoiceClaims
+      pendingLegacyPayments.length + pendingInvoiceClaims + pendingLineScoutPayments.length
     const totalPayments = completedPaymentCount + pendingPaymentCount
     const totalRevenue = completedPayments.reduce(
       (total, payment) =>
         total + amountInNaira(finite(payment.amount), payment.currency, ngnPerUsd, cnyPerUsd),
       0,
-    )
+    ) + completedLineScoutPayments.reduce((total, payment) => {
+      if (payment.settlementCurrency === 'NGN' && payment.settlementAmount) return total + finite(payment.settlementAmount)
+      if (payment.settlementCurrency === 'USD' && payment.settlementAmount) return total + finite(payment.settlementAmount) * ngnPerUsd
+      return total + amountInNaira(finite(payment.originalAmount), payment.originalCurrency, ngnPerUsd, cnyPerUsd)
+    }, 0)
 
     // Recent orders (last 30 days)
     const thirtyDaysAgo = new Date()

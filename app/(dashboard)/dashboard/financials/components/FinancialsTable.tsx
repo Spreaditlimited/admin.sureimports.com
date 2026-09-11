@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState } from 'react';
 
 type Row = {
   id: string;
-  source: 'legacy_payments' | 'invoice_payments' | 'invoice_payment_claims';
-  status: 'PENDING' | 'COMPLETED';
+  source: 'legacy_payments' | 'invoice_payments' | 'invoice_payment_claims' | 'payment_ledger';
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'REVERSED' | 'DISPUTED' | 'CHARGEBACK' | 'CANCELLED';
   amount: number;
   currency: string;
   paymentMethod: string;
   reference: string;
   serviceName: string;
-  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'OTHER';
+  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'LINESCOUT' | 'OTHER';
   links: Array<{ label: string; href: string }>;
   customer: {
     pidUser: string;
@@ -67,6 +67,7 @@ export default function FinancialsTable() {
       legacy_payments: 'Legacy',
       invoice_payments: 'Invoice',
       invoice_payment_claims: 'Invoice Claim',
+      payment_ledger: 'LineScout',
     }),
     [],
   );

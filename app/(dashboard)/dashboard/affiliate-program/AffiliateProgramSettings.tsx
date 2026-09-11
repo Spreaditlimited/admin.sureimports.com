@@ -6,12 +6,13 @@ import { Check, ChevronDown, ChevronUp, Plus, RefreshCw, ShieldCheck } from 'luc
 
 type Rate = { currency: string; fixedAmount: number | null; active: boolean };
 type UnitRate = { currency: string; billingUnit: string; destinationCountry: string; shippingMode: string; unitRate: number; active: boolean };
+type EventRule = { eventKey: string; displayName: string; description: string | null; percentageRate: number | null; eligibleAmountBasis: string; active: boolean; sortOrder: number };
 export type ProgramService = {
   pidService: string; serviceKey: string; displayName: string; description: string | null;
   commissionType: string; percentageRate: number | null; eligibleAmountBasis: string;
   recurring: boolean; approvalMode: string; reviewPeriodDays: number;
   exclusionNotes: string | null; active: boolean; sortOrder: number;
-  conversionCount: number; updatedAt: string; rates: Rate[]; unitRates: UnitRate[];
+  conversionCount: number; updatedAt: string; rates: Rate[]; unitRates: UnitRate[]; eventRules: EventRule[];
 };
 
 const money = (amount: number, currency: string) => new Intl.NumberFormat(currency === 'NGN' ? 'en-NG' : 'en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(amount);
@@ -32,6 +33,7 @@ function ServiceEditor({ service, onDone }: { service?: ProgramService; onDone: 
     { currency: 'NGN', billingUnit: 'KG', destinationCountry: '*', shippingMode: '*', unitRate: 750, active: true },
     { currency: 'NGN', billingUnit: 'CBM', destinationCountry: 'NIGERIA', shippingMode: '*', unitRate: 10000, active: true },
   ]);
+  const [eventRules, setEventRules] = useState<EventRule[]>(service?.eventRules || []);
   const [error, setError] = useState('');
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -44,6 +46,7 @@ function ServiceEditor({ service, onDone }: { service?: ProgramService; onDone: 
       exclusionNotes: form.get('exclusionNotes'), active, sortOrder: form.get('sortOrder'),
       rates: [{ currency: 'NGN', fixedAmount: form.get('ngnAmount'), active: ngnActive }, { currency: 'USD', fixedAmount: form.get('usdAmount'), active: usdActive }],
       unitRates,
+      eventRules,
     };
     try {
       const url = service ? `/api/affiliate-program/services/${encodeURIComponent(service.pidService)}` : '/api/affiliate-program/services';
@@ -68,6 +71,7 @@ function ServiceEditor({ service, onDone }: { service?: ProgramService; onDone: 
         <RateField currency="NGN" active={ngnActive} setActive={setNgnActive} defaultAmount={rateFor(service, 'NGN')?.fixedAmount} />
         <RateField currency="USD" active={usdActive} setActive={setUsdActive} defaultAmount={rateFor(service, 'USD')?.fixedAmount} />
       </> : <UnitRateEditor rates={unitRates} onChange={setUnitRates} />}
+      {(eventRules.length > 0 || service?.serviceKey === 'LINESCOUT_SOURCING') ? <EventRuleEditor rules={eventRules} onChange={setEventRules} /> : null}
       <label className="grid gap-2 text-xs font-bold"><span>Display order</span><input name="sortOrder" type="number" min="0" max="10000" step="1" defaultValue={service?.sortOrder ?? 0} className={field} /></label>
       <fieldset className="grid gap-2"><legend className="mb-2 text-xs font-bold">Commission release</legend><div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"><button type="button" onClick={() => setApprovalMode('MANUAL')} className={`rounded-md px-3 py-2.5 text-xs font-bold ${approvalMode === 'MANUAL' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}>Manual review</button><button type="button" onClick={() => setApprovalMode('AUTOMATIC')} className={`rounded-md px-3 py-2.5 text-xs font-bold ${approvalMode === 'AUTOMATIC' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}>Automatic</button></div></fieldset>
       <label className="grid gap-2 text-xs font-bold"><span>Review period (days)</span><input name="reviewPeriodDays" type="number" min="0" max="365" step="1" defaultValue={service?.reviewPeriodDays ?? 14} required className={field} /><small className="font-medium leading-relaxed text-muted-foreground">Automatic commissions become available after this many complete days. Manual review is never auto-released.</small></label>
@@ -79,6 +83,16 @@ function ServiceEditor({ service, onDone }: { service?: ProgramService; onDone: 
       <div className="ml-auto flex gap-2"><button type="button" onClick={onDone} className="rounded-lg border border-border px-4 py-2.5 text-xs font-bold">Cancel</button><button disabled={busy} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50">{busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{busy ? 'Saving…' : 'Save service'}</button></div>
     </div>
   </form>;
+}
+
+function EventRuleEditor({ rules, onChange }: { rules: EventRule[]; onChange: (rules: EventRule[]) => void }) {
+  const update = (index: number, change: Partial<EventRule>) => onChange(rules.map((rule, current) => current === index ? { ...rule, ...change } : rule));
+  return <div className="grid gap-3 lg:col-span-2"><div><span className="text-xs font-bold">Earning events</span><p className="mt-1 text-xs text-muted-foreground">LineScout sourcing events use their own percentage. Shipping remains under Ship With Us.</p></div>{rules.map((rule, index) => <div key={rule.eventKey} className="grid gap-3 rounded-lg border border-border bg-background p-4 md:grid-cols-[1fr_1fr_140px_auto]">
+    <label className="grid gap-2 text-xs font-bold"><span>Event</span><input value={rule.displayName} onChange={(event) => update(index, { displayName: event.target.value })} className={field} /></label>
+    <label className="grid gap-2 text-xs font-bold"><span>Eligible amount basis</span><input value={rule.eligibleAmountBasis} onChange={(event) => update(index, { eligibleAmountBasis: event.target.value.toUpperCase() })} className={`${field} font-mono text-xs`} /></label>
+    <label className="grid gap-2 text-xs font-bold"><span>Commission</span><div className="relative"><input type="number" min="0.0001" max="100" step="0.0001" value={rule.percentageRate ?? ''} onChange={(event) => update(index, { percentageRate: Number(event.target.value) })} className={`${field} w-full pr-8`} /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span></div></label>
+    <label className="flex items-end gap-2 pb-3 text-xs font-bold"><input type="checkbox" checked={rule.active} onChange={(event) => update(index, { active: event.target.checked })} className="h-4 w-4 accent-primary" />Active</label>
+  </div>)}</div>;
 }
 
 function UnitRateEditor({ rates, onChange }: { rates: UnitRate[]; onChange: (rates: UnitRate[]) => void }) {
@@ -106,7 +120,7 @@ export function AffiliateProgramSettings({ services, canEdit }: { services: Prog
     {creating ? <section className="overflow-visible rounded-xl border border-primary/30 bg-card shadow-sm"><header className="flex items-center gap-3 p-5"><span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary"><Plus className="h-4 w-4" /></span><div><h3 className="font-black">New eligible service</h3><p className="text-xs text-muted-foreground">Create the stable key and commission rules used by payment integrations.</p></div></header><ServiceEditor onDone={() => setCreating(false)} /></section> : null}
     <div className="space-y-3">{services.map((service) => {
       const expanded = editing === service.pidService;
-      const commission = service.commissionType === 'PERCENTAGE' ? `${service.percentageRate}%${service.recurring ? ' on purchase and renewals' : ''}` : service.commissionType === 'PER_UNIT' ? service.unitRates.filter((rate) => rate.active).map((rate) => `${rate.currency} ${rate.unitRate}/${rate.billingUnit}`).join(' · ') || 'No active unit rate' : service.rates.filter((rate) => rate.active && rate.fixedAmount).map((rate) => money(rate.fixedAmount!, rate.currency)).join(' · ') || 'No active rate';
+      const commission = service.eventRules?.length ? service.eventRules.filter((rule) => rule.active).map((rule) => `${rule.displayName} ${rule.percentageRate}%`).join(' · ') : service.commissionType === 'PERCENTAGE' ? `${service.percentageRate}%${service.recurring ? ' on purchase and renewals' : ''}` : service.commissionType === 'PER_UNIT' ? service.unitRates.filter((rate) => rate.active).map((rate) => `${rate.currency} ${rate.unitRate}/${rate.billingUnit}`).join(' · ') || 'No active unit rate' : service.rates.filter((rate) => rate.active && rate.fixedAmount).map((rate) => money(rate.fixedAmount!, rate.currency)).join(' · ') || 'No active rate';
       const releasePolicy = service.approvalMode === 'AUTOMATIC' ? `Auto-release after ${service.reviewPeriodDays} day${service.reviewPeriodDays === 1 ? '' : 's'}` : 'Manual review';
       return <section key={service.pidService} className={`overflow-visible rounded-xl border bg-card shadow-sm ${service.active ? 'border-border' : 'border-border opacity-75'}`}><button type="button" onClick={() => canEdit && setEditing(expanded ? '' : service.pidService)} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-5 p-5 text-left sm:grid-cols-[minmax(220px,1.1fr)_minmax(190px,.8fr)_auto]"><div className="min-w-0"><div className="flex items-center gap-2"><h3 className="truncate font-black">{service.displayName}</h3><span className={`rounded-md px-2 py-1 text-[9px] font-black uppercase ${service.active ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'}`}>{service.active ? 'Active' : 'Inactive'}</span></div><p className="mt-1 font-mono text-[10px] text-muted-foreground">{service.serviceKey}</p></div><div className="hidden min-w-0 sm:block"><strong className="text-sm">{commission}</strong><p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">{service.eligibleAmountBasis.replaceAll('_', ' ')} · {releasePolicy}</p></div>{canEdit ? expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ShieldCheck className="h-4 w-4 text-muted-foreground" />}</button>{expanded ? <ServiceEditor service={service} onDone={() => setEditing('')} /> : null}</section>;
     })}</div>

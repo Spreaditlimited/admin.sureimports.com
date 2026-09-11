@@ -16,6 +16,7 @@ type RateInput = {
   active?: unknown;
 };
 type UnitRateInput = { currency?: unknown; billingUnit?: unknown; destinationCountry?: unknown; shippingMode?: unknown; unitRate?: unknown; active?: unknown };
+type EventRuleInput = { eventKey?: unknown; displayName?: unknown; description?: unknown; percentageRate?: unknown; eligibleAmountBasis?: unknown; active?: unknown; sortOrder?: unknown };
 
 export type AffiliateProgramServiceInput = {
   serviceKey?: unknown;
@@ -32,6 +33,7 @@ export type AffiliateProgramServiceInput = {
   sortOrder?: unknown;
   rates?: unknown;
   unitRates?: unknown;
+  eventRules?: unknown;
 };
 
 function clean(value: unknown, max: number) {
@@ -106,6 +108,26 @@ function normalizeInput(input: AffiliateProgramServiceInput, creating: boolean) 
   if (scopes.size !== unitRates.length) throw new Error('Unit commission scopes must be unique.');
   if (commissionType === 'PER_UNIT' && active && !unitRates.some((rate) => rate.active)) throw new Error('An active per-unit service needs at least one active unit rate.');
 
+  const eventRules = (Array.isArray(input.eventRules) ? input.eventRules as EventRuleInput[] : []).map((rule, index) => {
+    const eventKey = clean(rule.eventKey, 80).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const eventDisplayName = clean(rule.displayName, 140);
+    const eligibleAmountBasis = clean(rule.eligibleAmountBasis, 40).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (!/^[A-Z][A-Z0-9_]{2,79}$/.test(eventKey)) throw new Error(`Earning event ${index + 1} needs a valid key.`);
+    if (!eventDisplayName) throw new Error(`Earning event ${index + 1} needs a display name.`);
+    if (!eligibleAmountBasis) throw new Error(`Earning event ${index + 1} needs an eligible amount basis.`);
+    return {
+      eventKey,
+      displayName: eventDisplayName,
+      description: clean(rule.description, 4000) || null,
+      commissionType: 'PERCENTAGE' as const,
+      percentageRate: decimal(rule.percentageRate, `Earning event ${index + 1} percentage`, 100),
+      eligibleAmountBasis,
+      active: boolean(rule.active, true),
+      sortOrder: Math.max(0, Math.min(10000, Math.trunc(Number(rule.sortOrder) || index * 10))),
+    };
+  });
+  if (new Set(eventRules.map((rule) => rule.eventKey)).size !== eventRules.length) throw new Error('Earning event keys must be unique.');
+
   return {
     serviceKey,
     displayName,
@@ -119,7 +141,7 @@ function normalizeInput(input: AffiliateProgramServiceInput, creating: boolean) 
     exclusionNotes,
     active,
     sortOrder,
-    rates, unitRates,
+    rates, unitRates, eventRules,
   };
 }
 
@@ -146,6 +168,7 @@ function serializeService(service: Awaited<ReturnType<typeof serviceRecord>>) {
       active: rate.active,
     })),
     unitRates: service.unitRates.map((rate) => ({ currency: rate.currency, billingUnit: rate.billingUnit, destinationCountry: rate.destinationCountry, shippingMode: rate.shippingMode, unitRate: Number(rate.unitRate), active: rate.active })),
+    eventRules: service.eventRules.map((rule) => ({ pidEventRule: rule.pidEventRule, eventKey: rule.eventKey, displayName: rule.displayName, description: rule.description, commissionType: rule.commissionType, percentageRate: rule.percentageRate ? Number(rule.percentageRate) : null, eligibleAmountBasis: rule.eligibleAmountBasis, active: rule.active, sortOrder: rule.sortOrder })),
   };
 }
 
@@ -155,6 +178,7 @@ function serviceRecord(pidService: string) {
     include: {
       currencyRates: { orderBy: { currency: 'asc' } },
       unitRates: { orderBy: [{ currency: 'asc' }, { billingUnit: 'asc' }, { destinationCountry: 'asc' }] },
+      eventRules: { orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }] },
       _count: { select: { conversions: true } },
     },
   });
@@ -166,6 +190,7 @@ export async function listAffiliateProgramServices() {
     include: {
       currencyRates: { orderBy: { currency: 'asc' } },
       unitRates: { orderBy: [{ currency: 'asc' }, { billingUnit: 'asc' }, { destinationCountry: 'asc' }] },
+      eventRules: { orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }] },
       _count: { select: { conversions: true } },
     },
   });
@@ -197,6 +222,18 @@ async function syncUnitRates(tx: Prisma.TransactionClient, serviceId: number, co
   await tx.affiliate_service_unit_rates.createMany({ data: rates.map((rate) => ({ serviceId, ...rate })) });
 }
 
+async function syncEventRules(tx: Prisma.TransactionClient, serviceId: number, rules: ReturnType<typeof normalizeInput>['eventRules']) {
+  const supplied = rules.map((rule) => rule.eventKey);
+  await tx.affiliate_service_event_rules.deleteMany({ where: { serviceId, eventKey: { notIn: supplied } } });
+  for (const rule of rules) {
+    await tx.affiliate_service_event_rules.upsert({
+      where: { serviceId_eventKey: { serviceId, eventKey: rule.eventKey } },
+      create: { pidEventRule: `afevt_${randomBytes(18).toString('base64url')}`, serviceId, ...rule },
+      update: rule,
+    });
+  }
+}
+
 export async function createAffiliateProgramService(input: AffiliateProgramServiceInput, actor: string) {
   const normalized = normalizeInput(input, true);
   const pidService = `afsvc_${randomBytes(18).toString('base64url')}`;
@@ -221,6 +258,7 @@ export async function createAffiliateProgramService(input: AffiliateProgramServi
       });
       await syncRates(tx, service.id, normalized.commissionType, normalized.rates);
       await syncUnitRates(tx, service.id, normalized.commissionType, normalized.unitRates);
+      await syncEventRules(tx, service.id, normalized.eventRules);
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -255,6 +293,7 @@ export async function updateAffiliateProgramService(pidService: string, input: A
     });
     await syncRates(tx, existing.id, normalized.commissionType, normalized.rates);
     await syncUnitRates(tx, existing.id, normalized.commissionType, normalized.unitRates);
+    await syncEventRules(tx, existing.id, normalized.eventRules);
   });
   console.info('[affiliate-program] service updated', { pidService, actor });
   return serializeService(await serviceRecord(pidService));

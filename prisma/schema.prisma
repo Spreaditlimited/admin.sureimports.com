@@ -1471,6 +1471,8 @@ model affiliate_accounts {
   apiCredentials       affiliate_api_credentials[]
   shippingAttributions shipping_request_attributions[]
   invoiceSnapshots     invoice_affiliate_commission_snapshots[]
+  externalIdentities   affiliate_external_identities[]
+  referralAliases      affiliate_referral_code_aliases[]
 
   @@index([status, createdAt])
 }
@@ -1541,8 +1543,56 @@ model affiliate_program_services {
   unitRates           affiliate_service_unit_rates[]
   conversions         affiliate_conversions[]
   invoiceSnapshots    invoice_affiliate_commission_snapshots[]
+  eventRules          affiliate_service_event_rules[]
 
   @@index([active, sortOrder])
+}
+
+model affiliate_service_event_rules {
+  id                  Int                        @id @default(autoincrement())
+  pidEventRule        String                     @unique @db.VarChar(80)
+  serviceId           Int
+  eventKey            String                     @db.VarChar(80)
+  displayName         String                     @db.VarChar(140)
+  description         String?                    @db.Text
+  commissionType      String                     @default("PERCENTAGE") @db.VarChar(24)
+  percentageRate      Decimal?                   @db.Decimal(7, 4)
+  eligibleAmountBasis String                     @default("PRODUCT_OR_SERVICE_AMOUNT") @db.VarChar(40)
+  active              Boolean                    @default(true)
+  sortOrder           Int                        @default(0)
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  service             affiliate_program_services @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, eventKey], map: "affiliate_service_event_rule_key")
+  @@index([serviceId, active, sortOrder])
+}
+
+model affiliate_external_identities {
+  id                 Int                @id @default(autoincrement())
+  pidIdentity        String             @unique @db.VarChar(80)
+  affiliateId        Int
+  sourceSystem       String             @db.VarChar(40)
+  externalAffiliateId String            @db.VarChar(120)
+  createdAt          DateTime           @default(now())
+  affiliate          affiliate_accounts @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceSystem, externalAffiliateId], map: "affiliate_external_identity_key")
+  @@index([affiliateId, sourceSystem])
+}
+
+model affiliate_referral_code_aliases {
+  id           Int                @id @default(autoincrement())
+  pidAlias     String             @unique @db.VarChar(80)
+  affiliateId  Int
+  sourceSystem String             @db.VarChar(40)
+  aliasCode    String             @db.VarChar(40)
+  active       Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  affiliate    affiliate_accounts @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceSystem, aliasCode], map: "affiliate_referral_alias_key")
+  @@index([affiliateId, active])
 }
 
 model affiliate_service_unit_rates {
@@ -1623,6 +1673,9 @@ model affiliate_conversions {
   reversedFromStatus       String?                                 @db.VarChar(24)
   reversalReason           String?                                 @db.Text
   reversalReference        String?                                 @db.VarChar(160)
+  sourceSystem             String                                  @default("SURE_IMPORTS") @db.VarChar(40)
+  sourceEventKey           String?                                 @db.VarChar(80)
+  paymentLedgerEntryId     Int?                                    @unique
   createdAt                DateTime                                @default(now())
   updatedAt                DateTime                                @updatedAt
   affiliate                affiliate_accounts                      @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
@@ -1630,11 +1683,71 @@ model affiliate_conversions {
   referral                 affiliate_referrals?                    @relation(fields: [referralId], references: [id], onDelete: SetNull)
   payoutItem               affiliate_payout_items?
   invoiceSnapshot          invoice_affiliate_commission_snapshots?
+  paymentLedgerEntry       payment_ledger_entries?                 @relation(fields: [paymentLedgerEntryId], references: [id], onDelete: SetNull)
 
   @@unique([externalOrderReference, serviceId])
   @@index([affiliateId, status, createdAt])
   @@index([serviceId, createdAt])
   @@index([status, releaseAt])
+}
+
+model payment_ledger_entries {
+  id                       Int                    @id @default(autoincrement())
+  pidLedgerEntry           String                 @unique @db.VarChar(80)
+  sourceSystem             String                 @db.VarChar(40)
+  sourcePaymentType        String                 @db.VarChar(80)
+  sourcePaymentId          String                 @db.VarChar(160)
+  sourceOrderReference     String?                @db.VarChar(160)
+  customerReference        String?                @db.VarChar(191)
+  purpose                  String                 @db.VarChar(80)
+  provider                 String?                @db.VarChar(40)
+  providerReference        String?                @db.VarChar(191)
+  status                   String                 @db.VarChar(24)
+  originalCurrency         String                 @db.Char(3)
+  originalAmount           Decimal                @db.Decimal(18, 2)
+  eligibleAmount           Decimal                @db.Decimal(18, 2)
+  settlementCurrency       String?                @db.Char(3)
+  settlementAmount         Decimal?               @db.Decimal(18, 2)
+  fxRate                   Decimal?               @db.Decimal(18, 8)
+  fxSource                 String?                @db.VarChar(80)
+  fxCapturedAt             DateTime?
+  billingUnit              String?                @db.VarChar(16)
+  eligibleQuantity         Decimal?               @db.Decimal(18, 4)
+  destinationCountry       String?                @db.VarChar(100)
+  shippingMode             String?                @db.VarChar(24)
+  occurredAt               DateTime
+  metadataJson             String?                @db.LongText
+  processingStatus         String                 @default("PENDING") @db.VarChar(24)
+  processingError          String?                @db.VarChar(1000)
+  processedAt              DateTime?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  events                   payment_ledger_events[]
+  conversion               affiliate_conversions?
+
+  @@unique([sourceSystem, sourcePaymentType, sourcePaymentId], map: "payment_ledger_source_key")
+  @@index([status, occurredAt])
+  @@index([customerReference, occurredAt])
+  @@index([providerReference])
+  @@index([processingStatus, updatedAt])
+}
+
+model payment_ledger_events {
+  id               Int                     @id @default(autoincrement())
+  pidLedgerEvent   String                  @unique @db.VarChar(80)
+  externalEventId  String                  @unique @db.VarChar(191)
+  ledgerEntryId    Int?
+  sourceSystem     String                  @db.VarChar(40)
+  eventType        String                  @db.VarChar(40)
+  payloadHash      String                  @db.Char(64)
+  payloadJson      String                  @db.LongText
+  receivedAt       DateTime                @default(now())
+  processedAt      DateTime?
+  processingError  String?                 @db.VarChar(1000)
+  ledgerEntry      payment_ledger_entries? @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
+
+  @@index([sourceSystem, receivedAt])
+  @@index([ledgerEntryId])
 }
 
 model affiliate_api_credentials {
