@@ -1,3 +1,4 @@
+import { adminAgreement } from './agreement';
 import "server-only";
 import { randomUUID, createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -50,9 +51,13 @@ export type QueueItem = {
 };
 export async function reviewQueue(page = 1) {
   const offset = (page - 1) * 25;
-  return prisma.$queryRaw<
-    QueueItem[]
-  >`SELECT p.id, p.legalName, p.registrationNumber, p.status AS businessStatus, k.status, k.revision, k.submittedAt FROM procurement_partners p INNER JOIN procurement_partner_kyc k ON k.partnerId = p.id WHERE k.status IN ('SUBMITTED', 'VERIFIED', 'REJECTED') ORDER BY (k.status = 'SUBMITTED') DESC, k.submittedAt DESC, p.id LIMIT 25 OFFSET ${offset}`;
+  const rows = await prisma.$queryRaw<
+    (QueueItem & { reviewCiphertext: string | null })[]
+  >`SELECT p.id, p.legalName, p.registrationNumber, p.status AS businessStatus, k.status, k.revision, k.submittedAt, k.reviewCiphertext FROM procurement_partners p INNER JOIN procurement_partner_kyc k ON k.partnerId = p.id WHERE k.status IN ('SUBMITTED', 'VERIFIED', 'REJECTED') OR (k.status = 'DRAFT' AND k.submittedAt IS NOT NULL) ORDER BY (p.status = 'PENDING' AND k.status = 'SUBMITTED') DESC, k.submittedAt DESC, p.id LIMIT 25 OFFSET ${offset}`;
+  return Promise.all(rows.map(async ({ reviewCiphertext, ...row }) => {
+    const review = reviewCiphertext ? JSON.parse(decryptKyc(Buffer.from(reviewCiphertext, 'base64'), row.id).toString('utf8')) : {};
+    return { ...row, agreementStatus: (await adminAgreement(row.id)).status, businessFitDecision: typeof review.businessFit?.decision === 'string' ? review.businessFit.decision : null };
+  }));
 }
 type CaseRow = QueueItem & {
   detailsCiphertext: string | null;
@@ -75,11 +80,15 @@ export async function reviewCase(id: string, actorPid: string) {
         )
       : null;
   const { detailsCiphertext, reviewCiphertext, ...safe } = row;
+  const agreement = await adminAgreement(id);
+  const notifications = await prisma.$queryRaw<Array<{ action: string; emailStatus: string; emailAttempts: number; emailSentAt: Date | null; emailFailureCode: string | null; createdAt: Date }>>`SELECT action, emailStatus, emailAttempts, emailSentAt, emailFailureCode, createdAt FROM procurement_partner_kyc_events WHERE partnerId=${id} AND emailStatus <> 'NONE' ORDER BY createdAt DESC LIMIT 5`;
   return {
     ...safe,
     details: decode(detailsCiphertext),
     review: decode(reviewCiphertext),
     documents,
+    notifications,
+    agreement,
   };
 }
 export async function decideReview(
@@ -94,6 +103,7 @@ export async function decideReview(
       422,
     );
   const body = parsed.data;
+  const notificationId = randomUUID();
   const note = { ...body, actorPid, reviewedAt: new Date().toISOString() };
   const encrypted = encryptKyc(Buffer.from(JSON.stringify(note)), id).toString(
     "base64",
@@ -110,11 +120,12 @@ export async function decideReview(
       );
     const status = reviewTarget(rows[0].status, body.decision);
     const previous = rows[0].reviewCiphertext ? JSON.parse(decryptKyc(Buffer.from(rows[0].reviewCiphertext, 'base64'), id).toString('utf8')) : {};
-    const combined = encryptKyc(Buffer.from(JSON.stringify({ ...note, businessFit: previous.businessFit })), id).toString('base64');
+    const combined = encryptKyc(Buffer.from(JSON.stringify({ ...note, businessFit: previous.businessFit, automaticFit: previous.automaticFit })), id).toString('base64');
     await tx.$executeRaw`UPDATE procurement_partner_kyc SET status = ${status}, reviewCiphertext = ${combined}, revision = revision + 1, updatedAt = NOW(3) WHERE partnerId = ${id}`;
-    await tx.$executeRaw`INSERT INTO procurement_partner_kyc_events (id, partnerId, actorPid, action, detailsCiphertext, createdAt, emailStatus) VALUES (${randomUUID()}, ${id}, ${actorPid}, ${"ADMIN_" + body.decision}, ${encrypted}, NOW(3), 'QUEUED')`;
+    await tx.$executeRaw`INSERT INTO procurement_partner_kyc_events (id, partnerId, actorPid, action, detailsCiphertext, createdAt, emailStatus) VALUES (${notificationId}, ${id}, ${actorPid}, ${"ADMIN_" + body.decision}, ${encrypted}, NOW(3), 'QUEUED')`;
     // Deliberately never update partner approval, storefront publication or collection here.
   });
+  return notificationId;
 }
 export async function downloadReviewDocument(
   id: string,

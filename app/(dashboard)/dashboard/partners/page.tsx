@@ -20,11 +20,9 @@ export default async function PartnerReviewPage({
       <div className="flex flex-col gap-4 px-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Partner Applications</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Review business registration, ownership and identity evidence. KYC acceptance does not enable payments.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Manage business-fit reviews, verification and final partner approval.</p>
         </div>
-        {rows.length > 0 && <div className="shrink-0 rounded-md border border-border bg-muted/50 px-4 py-2 shadow-sm">
-          <span className="text-sm font-semibold text-foreground">{rows.length} Applications on This Page</span>
-        </div>}
+        <Link className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted" href="/dashboard/partners/domains">Partner domains</Link>
       </div>
       <ReviewWorkspace
         rows={rows.map((row) => ({
@@ -32,7 +30,6 @@ export default async function PartnerReviewPage({
           submittedAt: row.submittedAt?.toISOString() || null,
         }))}
       />
-      <Link className="inline-flex rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium" href="/dashboard/partners/domains">Manage partner domains</Link>
       {(page > 1 || rows.length > 0) && (
         <nav
           aria-label="Review queue pages"

@@ -6,8 +6,10 @@ import {
   reviewError,
   ReviewError,
 } from "@/lib/partners/review";
+import { schedulePartnerNotification } from '@/lib/partners/notifications';
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 type Context = { params: Promise<{ id: string }> };
 export async function GET(_request: Request, context: Context) {
   try {
@@ -46,10 +48,11 @@ export async function POST(request: Request, context: Context) {
     } catch {
       throw new ReviewError("Invalid JSON.");
     }
-    await decideReview((await context.params).id, admin.pidUser, body);
+    const notificationId = await decideReview((await context.params).id, admin.pidUser, body);
+    schedulePartnerNotification(notificationId);
     return reviewResponse({
       message:
-        "Review recorded. Business activation and payments remain disabled.",
+        "Verification decision saved and an email update is queued. Final business approval remains a separate step.",
     });
   } catch (error) {
     return reviewError(error);

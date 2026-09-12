@@ -563,6 +563,7 @@ model orders {
   orderTotalCost            String?
   orderWeight               String?
   shippingPricingVersion    Int?
+  productPricingVersion     Int?
   shippingMeasurementUnit   String?
   shippingRateSnapshot      Float?
   shippingRateCurrency      String?

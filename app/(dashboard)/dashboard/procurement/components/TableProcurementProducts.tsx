@@ -79,6 +79,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   const [exNairaToDollar, setExNairaToDollar] = useState<number>(0);
   const [exYuanToDollar, setExYuanToDollar] = useState<number>(0);
+  const [directRmbToNgn, setDirectRmbToNgn] = useState(false);
   const [exNairaToYuan, setExNairaToYuan] = useState<number>(0);
 
   const [serviceCharge, setServiceCharge] = useState<number>(0);
@@ -152,6 +153,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         setExNairaToDollar(replaceNullWithZero(data.exNairaToDollar));
         setExYuanToDollar(replaceNullWithZero(data.exYuanToDollar));
         setExNairaToYuan(replaceNullWithZero(data.exNairaToYuan));
+        setDirectRmbToNgn(Boolean(data.directRmbToNgn));
 
         setServiceCharge(replaceNullWithZero(data.serviceCharge));
         setServiceChargeValue(replaceNullWithZero(data.serviceChargeValue));
@@ -375,7 +377,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             {currencyType == 'CNY' && (
               <>
                 <span className="font-bold text-primary text-xl">
-                  ¥{(((productsTotalPrice as number) / 1) * exYuanToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Yuan
+                  ¥{((productsTotalPrice as number) * (directRmbToNgn && exNairaToYuan > 0 ? exNairaToDollar / exNairaToYuan : exYuanToDollar)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Yuan
                 </span>
                 <span className="text-foreground font-medium"> | </span>
                 <span className="font-semibold text-foreground">
@@ -463,6 +465,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             </p>
             <div className="pt-3 border-t border-border mt-3 space-y-1">
               <p className="font-medium text-foreground mb-2">Exchange Rates:</p>
+              {destinationCountry === 'Nigeria' && exNairaToYuan > 0 && <p>1 RMB = <span className="font-semibold text-foreground">₦{Number(exNairaToYuan).toLocaleString('en-NG')}</span></p>}
               {currencyType == 'CNY' && <p>$1 USD = <span className="font-semibold text-foreground">¥{exYuanToDollar} Yuan</span></p>}
               {destinationCountry == 'Nigeria' && <p>$1 USD = <span className="font-semibold text-foreground">₦{exNairaToDollar} Naira</span></p>}
             </div>
@@ -482,7 +485,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
           {currencyType == 'CNY' && (
             <>
               <span className="text-2xl font-bold text-primary">
-                ¥{((grandTotalCost as number) * exYuanToDollar).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Yuan
+                ¥{((grandTotalCost as number) * (directRmbToNgn && exNairaToYuan > 0 ? exNairaToDollar / exNairaToYuan : exYuanToDollar)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Yuan
               </span>
               <span className="text-muted-foreground"> | </span>
               <span className="text-xl font-bold text-foreground">

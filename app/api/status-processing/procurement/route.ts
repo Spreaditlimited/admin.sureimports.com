@@ -496,6 +496,7 @@ export async function POST(request: Request) {
                       exchangeRate1: preserveServerSnapshot ? undefined : exchangeRate1,
                       exchangeRate2: preserveServerSnapshot ? undefined : exchangeRate2,
                       exchangeRate3: preserveServerSnapshot ? undefined : exchangeRate3,
+                      productPricingVersion: recordStatus === 'on-hold' ? 2 : undefined,
                       orderWeight: preserveServerSnapshot ? undefined : actualWeight,
                       shippingCost1: preserveServerSnapshot ? undefined : actualDomesticShippingCost,
                       updatedAt: new Date(),

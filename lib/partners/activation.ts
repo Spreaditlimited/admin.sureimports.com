@@ -1,4 +1,5 @@
 import 'server-only';
+import { adminAgreement } from './agreement';
 import { createHmac, hkdfSync, randomUUID } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { encryptKyc, decryptKyc } from './kyc-crypto';
@@ -9,6 +10,7 @@ export async function activatePartner(partnerId: string, actorPid: string, input
   const parsed = activationSchema.safeParse(input);
   if (!parsed.success) throw new ReviewError('Confirm the agreement and provide its reference and current revision.', 422);
   if (!PARTNER_ACTIVATION_ROLLOUT_READY) throw new ReviewError('Activation is disabled until membership protection is deployed and verified.', 409);
+  const notificationId = randomUUID();
   const master = Buffer.from(process.env.AFFILIATE_SECURITY_KEY || '', 'base64');
   if (master.length !== 32) throw new Error('Membership identity key unavailable.');
   await prisma.$transaction(async tx => {
@@ -21,6 +23,8 @@ export async function activatePartner(partnerId: string, actorPid: string, input
     const reason = activationBlockReason(partner, PARTNER_ACTIVATION_ROLLOUT_READY);
     if (reason) throw new ReviewError(reason, 409);
     if (partner.revision !== parsed.data.revision) throw new ReviewError('The application changed. Reload it before activation.', 409);
+    const agreement = await adminAgreement(partnerId, tx);
+    if (agreement.status !== 'AWAITING_CONFIRMATION' || !agreement.receipt || agreement.receipt.reference !== parsed.data.agreementReference) throw new ReviewError('Awaiting Agreement Acceptance by Business. The current agreement must be accepted before final confirmation.', 409);
     const owners = await tx.$queryRaw<Array<{ userEmail: string }>>`SELECT userEmail FROM users WHERE pidUser = ${partner.ownerPidUser} FOR UPDATE`;
     if (!owners[0]) throw new ReviewError('The owner account is unavailable.', 409);
     const email = owners[0].userEmail.trim().toLowerCase();
@@ -33,9 +37,10 @@ export async function activatePartner(partnerId: string, actorPid: string, input
     const affiliates = await tx.$queryRaw<Array<{ id: number }>>`SELECT id FROM affiliate_accounts WHERE emailHash = ${emailHash} LIMIT 1 FOR UPDATE`;
     if (affiliates.length) throw new ReviewError('The owner has an affiliate account. Membership transfer requires a separate reviewed process.', 409);
     const evidence = encryptKyc(Buffer.from(JSON.stringify({ agreementReference: parsed.data.agreementReference, actorPid, activatedAt: new Date().toISOString() })), partnerId).toString('base64');
-    await tx.$executeRaw`UPDATE procurement_partners SET status = 'ACTIVE', approvedAt = NOW(3), updatedAt = NOW(3), liveCollectionEnabled = false WHERE id = ${partnerId}`;
+    await tx.$executeRaw`UPDATE procurement_partners SET status = 'ACTIVE', approvedAt = NOW(3), updatedAt = NOW(3), liveCollectionEnabled = true, settlementPolicy = 'EARNINGS_WALLET' WHERE id = ${partnerId}`;
     await tx.$executeRaw`UPDATE procurement_partner_storefronts SET published = false, updatedAt = NOW(3) WHERE partnerId = ${partnerId}`;
     await tx.$executeRaw`UPDATE procurement_partner_kyc SET revision = revision + 1, updatedAt = NOW(3) WHERE partnerId = ${partnerId}`;
-    await tx.$executeRaw`INSERT INTO procurement_partner_kyc_events (id, partnerId, actorPid, action, detailsCiphertext, emailStatus, createdAt) VALUES (${randomUUID()}, ${partnerId}, ${actorPid}, 'BUSINESS_ACTIVATED', ${evidence}, 'QUEUED', NOW(3))`;
+    await tx.$executeRaw`INSERT INTO procurement_partner_kyc_events (id, partnerId, actorPid, action, detailsCiphertext, emailStatus, createdAt) VALUES (${notificationId}, ${partnerId}, ${actorPid}, 'BUSINESS_ACTIVATED', ${evidence}, 'QUEUED', NOW(3))`;
   });
+  return notificationId;
 }

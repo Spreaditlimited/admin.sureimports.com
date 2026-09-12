@@ -1,7 +1,9 @@
 import { decideBusinessFit } from '@/lib/partners/business-fit';
+import { schedulePartnerNotification } from '@/lib/partners/notifications';
 import { requirePartnerReviewer, reviewResponse, reviewError, ReviewError } from '@/lib/partners/review';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 120;
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     if (request.headers.get('origin') !== new URL(request.url).origin) throw new ReviewError('Invalid request origin.', 403);
@@ -11,7 +13,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const chunks: Uint8Array[] = []; let size = 0;
     while (true) { const { done, value } = await reader.read(); if (done) break; size += value.length; if (size > 16384) { await reader.cancel(); throw new ReviewError('Assessment is too large.', 413); } chunks.push(value); }
     let input: unknown; try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new ReviewError('Invalid JSON.', 422); }
-    await decideBusinessFit((await context.params).id, admin.pidUser, input);
-    return reviewResponse({ message: 'Business-fit decision saved. KYC, activation and payments are unchanged.' });
+    const { decision, notificationId } = await decideBusinessFit((await context.params).id, admin.pidUser, input);
+    schedulePartnerNotification(notificationId);
+    return reviewResponse({ message: decision === 'REQUEST_CHANGES' ? 'Clarification requested. The application is reopened for corrections and an email is queued. The business remains unapproved.' : decision === 'NOT_READY' ? 'Business-fit decision saved and an email is queued. The business remains unapproved.' : 'Step 1 approved. An email update is queued. Next: complete business verification, then final approval. The business is not yet activated.' });
   } catch (error) { return reviewError(error); }
 }

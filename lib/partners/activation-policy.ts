@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
-// Enable only after deployed admission/import/email-change paths are verified.
-export const PARTNER_ACTIVATION_ROLLOUT_READY = false;
+// Affiliate signup reserves membership transactionally (deployed in c8a528b).
+// Activation still checks KYC, business fit, agreement, country, membership and
+// existing affiliate accounts under row locks. This flag is not a bypass.
+export const PARTNER_ACTIVATION_ROLLOUT_READY = true;
 export const activationSchema = z.object({
   revision: z.number().int().nonnegative(),
-  agreementReference: z.string().trim().min(5).max(500),
+  agreementReference: z.string().trim().regex(/^AGR-[a-f0-9-]{36}$/i, 'The business must accept the current agreement first.'),
   agreementReviewed: z.literal(true),
 }).strict();
 

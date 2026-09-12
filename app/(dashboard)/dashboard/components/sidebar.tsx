@@ -148,6 +148,7 @@ const customerAccounts: MenuItem[] = [
 ];
 
 const customerPayouts: MenuItem[] = [
+  { title: "Partner Wallets", icon: Wallet, path: "/dashboard/partners/wallet" },
   { title: "Partner Applications", icon: HandCoins, path: "/dashboard/partners" },
   {
     title: "Affiliate Program",
@@ -267,7 +268,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     canAccess(item.serviceKey),
   );
   const visibleCustomerPayouts = customerPayouts.filter((item) =>
-    item.path === "/dashboard/partners" ? isSuperAdmin : canAccess(item.serviceKey),
+    item.path.startsWith("/dashboard/partners") ? isSuperAdmin : canAccess(item.serviceKey),
   );
   const visibleFinancials = financials.filter((item) =>
     canAccess(item.serviceKey),

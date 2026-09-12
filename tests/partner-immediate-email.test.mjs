@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
+import {readFile} from 'node:fs/promises';
+const f={event:null,messages:[],fail:false,after:[]};globalThis.__immediateMail=f;
+let gate=Promise.resolve();
+const query=async(strings,...values)=>{const sql=strings.join('?');if(sql.includes('JOIN users'))return[{userEmail:'synthetic@example.invalid'}];assert.equal(values[0],'fixture');return f.event?[{...f.event}]:[];};
+const execute=async(strings,...values)=>{const sql=strings.join('?');if(sql.includes("SET emailStatus='SENDING'")){Object.assign(f.event,{emailStatus:'SENDING',emailLockedAt:values[0],emailAttempts:values[1]});}else if(sql.includes("SET emailStatus='SENT'")){assert.match(sql,/AND emailAttempts=\? AND emailLockedAt=\?/);f.event.emailStatus='SENT';}else if(sql.includes("emailFailureCode='DELIVERY_FAILED'")){f.event.emailStatus=values[0];f.event.emailNextAttemptAt=values[1];f.event.emailLockedAt=null;}return 1;};
+f.db={$queryRaw:query,$executeRaw:execute,$transaction:async fn=>{const previous=gate;let release;gate=new Promise(r=>release=r);await previous;try{return await fn({$queryRaw:query,$executeRaw:execute})}finally{release()}}};
+f.transport={sendMail:async message=>{if(f.fail)throw Error('Synthetic transport failure');f.messages.push(message);return{accepted:['synthetic@example.invalid']}}};
+const inline=s=>({url:'data:text/javascript,'+encodeURIComponent(s),shortCircuit:true});
+const hooks=registerHooks({resolve(s,c,n){if(s==='server-only')return inline('export {};');if(s==='@/lib/prisma')return inline('export const prisma=globalThis.__immediateMail.db');if(s==='@/lib/email/config/nodemailerConfig')return inline('export default globalThis.__immediateMail.transport');if(s==='@/lib/email/temp/mailTemplate2')return inline('export default props=>JSON.stringify(props)');if(s==='next/server')return inline('export const after=cb=>globalThis.__immediateMail.after.push(cb)');if(['./email-policy','./email-delivery'].includes(s))return n(s+'.ts',c);return n(s,c)}});
+const {deliverPartnerEmails}=await import('../lib/partners/email-delivery.ts');const {schedulePartnerNotification}=await import('../lib/partners/notifications.ts');hooks.deregister();
+const previousEmail=process.env.SMTP_EMAIL,previousPassword=process.env.SMTP_PASSWORD;process.env.SMTP_EMAIL='sender@example.invalid';process.env.SMTP_PASSWORD='synthetic';
+test.after(()=>{for(const [key,value]of[['SMTP_EMAIL',previousEmail],['SMTP_PASSWORD',previousPassword]]){if(value===undefined)delete process.env[key];else process.env[key]=value}});
+const reset=()=>{f.event={id:'fixture',partnerId:'partner',action:'BUSINESS_FIT_APPROVED',emailStatus:'QUEUED',emailAttempts:0,emailLockedAt:null,emailNextAttemptAt:null};f.messages=[];f.fail=false;f.after=[];};
+test('post-response delivery is scoped, duplicate-safe and does not expose internal review data',async()=>{
+ reset();schedulePartnerNotification('fixture');assert.equal(f.messages.length,0);assert.equal(f.after.length,1);await f.after[0]();assert.equal(f.messages.length,1);assert.equal(f.event.emailStatus,'SENT');assert.match(f.messages[0].text,/not final business approval/);assert.match(f.messages[0].text,/partner.sureimports.com\/partners\/dashboard#verification/);assert.equal(f.messages[0].messageId,'<partner-kyc-fixture@sureimports.com>');await deliverPartnerEmails('fixture');assert.equal(f.messages.length,1);
+ reset();await Promise.all([deliverPartnerEmails('fixture'),deliverPartnerEmails('fixture')]);assert.equal(f.messages.length,1);
+});
+test('transport failure leaves a durable retry and cannot undo the review',async()=>{reset();f.fail=true;assert.equal((await deliverPartnerEmails('fixture')).failed,1);assert.equal(f.event.emailStatus,'QUEUED');assert.ok(f.event.emailNextAttemptAt>new Date());assert.equal((await deliverPartnerEmails('fixture')).failed,0);assert.equal(f.event.emailAttempts,1);await assert.rejects(deliverPartnerEmails(''));});
+test('immediate and scheduled notification content stays identical',async()=>{assert.equal((await readFile(new URL('../lib/partners/email-policy.ts',import.meta.url),'utf8')).trim(),(await readFile(new URL('../../partner.sureimports.com/lib/partners/email-policy.ts',import.meta.url),'utf8')).trim());});

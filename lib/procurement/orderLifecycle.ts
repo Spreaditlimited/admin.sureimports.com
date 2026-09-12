@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { procurementProductValue } from './productPricing';
 
 const EDITABLE_ESTIMATE_STATUSES = new Set(['saved', 'on-hold']);
 
@@ -75,12 +76,10 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
       total + finite(product.productQuantity) * finite(product.productPrice),
     0,
   );
-  const productsTotalUsd =
-    order.currencyType === 'CNY'
-      ? productsTotalRaw / cnyPerUsd
-      : order.currencyType === 'NGN'
-        ? productsTotalRaw / ngnPerUsd
-        : productsTotalRaw;
+  const ngnPerCny = useLatestEstimate ? finite(financial.exNairaToYuan) : finite(order.exchangeRate3);
+  const productPricingVersion = useLatestEstimate ? 2 : order.productPricingVersion ?? 1;
+  const productValue = procurementProductValue(productsTotalRaw, order.currencyType || 'USD', country?.countryName || '', { ngnPerUsd, cnyPerUsd, ngnPerCny }, productPricingVersion);
+  const productsTotalUsd = productValue.usd;
   const totalMeasurement = products.reduce(
     (total, product) =>
       total +
@@ -178,6 +177,7 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
     actualTotalShippingCostUsd,
     costDifferenceUsd:
       actualTotalShippingCostUsd - estimatedShippingCostUsd,
-    rates: { ngnPerUsd, cnyPerUsd, ngnPerCny: finite(order.exchangeRate3, finite(financial.exNairaToYuan)) },
+    directRmbToNgn: productValue.direct,
+    rates: { ngnPerUsd, cnyPerUsd, ngnPerCny },
   };
 }
