@@ -12,6 +12,9 @@ export async function recordProcurementAffiliateConversion(
     eligibleAmount: number;
   },
 ) {
+  // Partner procurement has its own product-cost share; never stack affiliate earnings.
+  const [partnerOrder] = await tx.$queryRaw<Array<{ pidOrder: string }>>`SELECT pidOrder FROM procurement_partner_orders WHERE pidOrder = ${input.pidOrder} LIMIT 1`;
+  if (partnerOrder) return;
   const currency = input.paymentCurrency.trim().toUpperCase();
   if (!['NGN', 'USD'].includes(currency) || input.eligibleAmount <= 0) return;
 

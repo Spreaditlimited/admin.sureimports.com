@@ -43,6 +43,7 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/customer-accounts", serviceKey: "customer_accounts" },
   { prefix: "/dashboard/refunds", serviceKey: "payout_requests" },
   { prefix: "/dashboard/affiliate-program", serviceKey: "payout_requests" },
+  { prefix: "/dashboard/affiliates", serviceKey: "payout_requests" },
   { prefix: "/dashboard/affiliate-payouts", serviceKey: "payout_requests" },
   { prefix: "/dashboard/payout-requests", serviceKey: "payout_requests" },
   { prefix: "/dashboard/invoicing", serviceKey: "invoicing" },
@@ -59,7 +60,7 @@ export function isSuperAdminStatus(status?: string | null) {
   return status === "superadmin" || status === "L1";
 }
 
-export const SUPER_ADMIN_ONLY_ROUTE_PREFIXES = ["/dashboard/marketing"] as const;
+export const SUPER_ADMIN_ONLY_ROUTE_PREFIXES = ["/dashboard/marketing", "/dashboard/partners"] as const;
 
 export function isSuperAdminOnlyPath(pathname: string) {
   return SUPER_ADMIN_ONLY_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));

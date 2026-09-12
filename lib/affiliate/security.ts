@@ -34,3 +34,7 @@ export function decryptAffiliateValue(value: string) {
 export function affiliateFingerprint(value: string) {
   return createHmac('sha256', keyFor('affiliate-notification-recipient-v1')).update(value).digest('hex');
 }
+
+export function affiliateEmailHash(email: string) {
+  return createHmac('sha256', keyFor('affiliate-email-v1')).update(email.trim().toLowerCase()).digest('hex');
+}

@@ -2,6 +2,9 @@ const DASHBOARD_TITLE_SUFFIX = "Sure Imports Admin";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
+  "/dashboard/affiliates": "Affiliates",
+  "/dashboard/partners": "Partner Applications",
+  "/dashboard/partners/requests": "Partner Procurement Requests",
   "/dashboard/admin/add": "Add Admin",
   "/dashboard/admin/view": "Manage Admins",
   "/dashboard/admin/whatsapp": "Public WhatsApp Contacts",

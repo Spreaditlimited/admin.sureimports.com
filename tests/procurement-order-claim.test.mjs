@@ -20,9 +20,13 @@ test('claiming is authenticated, limited to pending orders, and atomic', () => {
 });
 
 test('pending-order UI shows claimant identity and timestamp', () => {
-  assert.match(orderListSource, /Claim Order/);
-  assert.match(orderListSource, /Claimed by \{datax\.claimedByAdmin\.adminName\}/);
-  assert.match(orderListSource, /formatClaimedAt\(datax\.claimedByAdmin\.claimedAt\)/);
+  assert.match(orderListSource, /Claim order/);
+  assert.match(orderListSource, /Claimed by \{order\.claimedByAdmin\.adminName\}/);
+  assert.match(orderListSource, /formatClaimedAt\(order\.claimedByAdmin\.claimedAt\)/);
+  assert.match(orderListSource, /selectedOrder\.claimedByAdmin\.adminName/);
+  assert.match(orderListSource, /formatClaimedAt\(\s*selectedOrder\.claimedByAdmin\.claimedAt/);
+  assert.match(orderListSource, /claimOrder\(selectedOrder\.pidOrder\)/);
+  assert.match(orderListSource, /status === "pending"/);
   assert.doesNotMatch(orderListSource, /hidden rounded-md border border-primary\/20/);
-  assert.match(orderListSource, /min-w-0 flex-1 rounded-md border border-primary\/20/);
+  assert.match(orderListSource, /max-w-full rounded-lg border border-primary\/20/);
 });
