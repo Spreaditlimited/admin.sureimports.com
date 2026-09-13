@@ -5,67 +5,67 @@
 @layer base {
   :root {
     /* Modern Functional Minimalism - Light Mode */
-    --background: 36 55% 97.2%; /* Warm off-white canvas with subtle orange tint */
-    --foreground: 222.2 84% 4.9%; /* Sharp slate text */
+    --background: 220.00 50.00% 97.65%; /* Cool neutral canvas */
+    --foreground: 219.43 42.17% 16.27%; /* Sharp slate text */
     
-    --card: 0 0% 100%; /* Pure white cards */
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0.00 0.00% 100.00%; /* Pure white cards */
+    --card-foreground: 219.43 42.17% 16.27%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0.00 0.00% 100.00%;
+    --popover-foreground: 219.43 42.17% 16.27%;
     
-    /* Monochrome interaction treatment in light mode */
-    --primary: 0 0% 5%;
-    --primary-foreground: 0 0% 100%;
+    /* Sure Imports purple interactions */
+    --primary: 243.41 39.64% 43.53%;
+    --primary-foreground: 0.00 0.00% 100.00%;
     
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 246.00 45.45% 95.69%;
+    --secondary-foreground: 243.41 39.64% 43.53%;
     
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 217.50 40.00% 96.08%;
+    --muted-foreground: 217.89 18.81% 39.61%;
     
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 250.00 50.00% 95.29%;
+    --accent-foreground: 243.41 39.64% 43.53%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     
-    --border: 214.3 31.8% 91.4%; /* Subtle borders */
-    --input: 214.3 31.8% 91.4%;
-    --ring: 0 0% 5%;
+    --border: 216.92 30.23% 91.57%; /* Subtle borders */
+    --input: 217.89 31.15% 88.04%;
+    --ring: 243.41 39.64% 43.53%;
     --radius: 0.5rem;
   }
 
   .dark {
     /* Neutral charcoal surfaces with indigo reserved for interaction */
-    --background: 0 0% 6%; /* Charcoal-black canvas */
-    --foreground: 0 0% 96%;
+    --background: 225.00 11.11% 7.06%; /* Charcoal-black canvas */
+    --foreground: 228.00 23.81% 95.88%;
     
-    --card: 0 0% 9%; /* Slightly elevated charcoal surface */
-    --card-foreground: 0 0% 96%;
+    --card: 225.00 13.79% 11.37%; /* Slightly elevated charcoal surface */
+    --card-foreground: 228.00 23.81% 95.88%;
     
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 96%;
+    --popover: 228.00 13.51% 14.51%;
+    --popover-foreground: 228.00 23.81% 95.88%;
     
-    /* Monochrome interaction treatment in dark mode */
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 7%;
+    /* Accessible lavender interactions */
+    --primary: 246.92 79.59% 80.78%;
+    --primary-foreground: 250.00 36.36% 12.94%;
     
-    --secondary: 0 0% 13%;
-    --secondary-foreground: 0 0% 96%;
+    --secondary: 245.00 14.63% 16.08%;
+    --secondary-foreground: 245.63 100.00% 87.45%;
     
-    --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 64%;
+    --muted: 226.67 12.33% 14.31%;
+    --muted-foreground: 224.21 13.10% 71.57%;
     
-    --accent: 0 0% 14%;
-    --accent-foreground: 0 0% 96%;
+    --accent: 252.00 21.28% 18.43%;
+    --accent-foreground: 245.63 100.00% 87.45%;
     
     --destructive: 0 84.2% 65%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 0 0% 18%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 100%;
+    --border: 227.14 12.73% 21.57%;
+    --input: 225.00 11.59% 27.06%;
+    --ring: 246.92 79.59% 80.78%;
   }
 }
 
@@ -249,3 +249,14 @@
     padding-inline: 1.5rem;
   }
 }
+
+/* Shared admin component polish. Semantic status colours remain unchanged. */
+.admin-theme-surface { font-size:14px; line-height:1.55; }
+.admin-theme-surface :is(h1,h2,h3) { letter-spacing:-.025em; }
+.admin-theme-surface .shadow-soft { box-shadow:0 2px 4px rgb(24 36 59 / 2%),0 10px 24px rgb(24 36 59 / 4%); }
+.dark .admin-theme-surface .shadow-soft { box-shadow:0 1px 0 rgb(255 255 255 / 3%) inset,0 8px 24px rgb(0 0 0 / 16%); }
+.admin-theme-surface :is(input,textarea) { transition:border-color 150ms,box-shadow 150ms; }
+.admin-theme-surface :is(input,textarea):focus-visible { outline:2px solid hsl(var(--ring));outline-offset:2px; }
+.admin-theme-surface table th { font-weight:600; }
+.admin-theme-surface table td { line-height:1.6; }
+[role="dialog"][data-state="open"] { background:hsl(var(--card)); border-color:hsl(var(--border)); border-radius:12px; }

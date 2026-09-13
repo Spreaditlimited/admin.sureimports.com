@@ -176,7 +176,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         
         {/* Header Area */}
-        <header className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm z-10">
+        <header className="flex items-center justify-between p-4 border-b border-border bg-card z-10">
           
           {/* Search Bar */}
           <div className="flex items-center w-full pl-12 md:pl-0 max-w-[230px] sm:max-w-sm md:max-w-md" ref={searchRef}>

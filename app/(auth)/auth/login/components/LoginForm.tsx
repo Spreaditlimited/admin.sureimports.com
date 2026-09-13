@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "@/app/context/AuthContext"
 import Script from "next/script"
+import Image from "next/image"
+import { Eye, EyeOff } from "lucide-react"
+import styles from "./login.module.css"
 
 declare global {
   interface Window {
@@ -69,16 +72,15 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
-        <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Welcome back. Please sign in to your account.
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-card py-8 px-4 shadow-soft border border-border sm:rounded-lg sm:px-10">
+    <main className={styles.layout}>
+      <aside className={styles.story}>
+        <Image src="/assets/images/auth/bkg.jpg" alt="" fill sizes="50vw" priority className={styles.photo} />
+        <a href="https://www.sureimports.com" className={styles.storyLogo}><Image src="/assets/images/logo-white.png" width={180} height={30} alt="Sure Imports" /></a>
+        <div className={styles.storyCopy}><span>SURE IMPORTS OPERATIONS</span><h2>Great service.<br />Every order.<br />Every day.</h2><p>One workspace for the team behind procurement, shipping and customer support.</p></div>
+      </aside>
+      <section className={styles.workspace}><div className={styles.inner}>
+        <a href="https://www.sureimports.com" className={styles.mobileLogo}><Image className={styles.lightLogo} src="/assets/images/logo.png" width={180} height={30} alt="Sure Imports" /><Image className={styles.darkLogo} src="/assets/images/logo-white.png" width={180} height={30} alt="Sure Imports" /></a>
+        <header><span className={styles.eyebrow}>TEAM WORKSPACE</span><h1>Welcome back.</h1><p>Sign in to manage Sure Imports operations.</p></header>
           <form className="space-y-6" onSubmit={handleSubmit}>
             {siteKey && !isLocalhost && (
               <Script
@@ -128,35 +130,12 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
                   aria-pressed={showPassword}
                   className="absolute inset-y-0 right-2 my-auto h-8 px-2 rounded text-xs font-medium text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-muted-foreground">
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background rounded-sm"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
-
-            {error && <div className="text-sm text-red-500">{error}</div>}
+            {error && <div role="alert" className="text-sm text-destructive">{error}</div>}
 
             {!isLocalhost && (
               <p className="text-[11px] leading-relaxed text-muted-foreground">
@@ -192,8 +171,9 @@ export default function LoginForm({ siteKey }: LoginFormProps) {
               </button>
             </div>
           </form>
+        <p className={styles.help}>Need access? Contact your account administrator.</p>
         </div>
-      </div>
+      </section>
     </main>
   )
 }

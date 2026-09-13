@@ -1,0 +1,27 @@
+.layout { min-height:100svh; display:grid; grid-template-columns:1fr 1fr; background:hsl(var(--background)); color:hsl(var(--foreground)); }
+.story { position:relative; min-height:100svh; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:120px 56px 72px; background:#15171c; color:#fff; }
+.photo { object-fit:cover; filter:grayscale(1); opacity:.3; }
+.story::after { content:''; position:absolute; inset:0; background:linear-gradient(160deg,#19152d66,#101114dd); }
+.storyLogo { position:absolute; z-index:1; top:40px; left:40px; }
+.storyLogo img,.mobileLogo img { width:180px; height:auto; object-fit:contain; }
+.storyCopy { position:relative; z-index:1; max-width:440px; text-align:center; }
+.storyCopy > span,.eyebrow { font-size:11px; font-weight:700; letter-spacing:.14em; }
+.storyCopy > span { color:#c5bfff; }
+.storyCopy h2 { margin:24px 0; font-size:clamp(36px,4vw,60px); line-height:1.08; letter-spacing:-.045em; font-weight:650; }
+.storyCopy p { color:#d5d7e0; font-size:17px; line-height:1.7; }
+.workspace { display:flex; align-items:center; justify-content:center; padding:64px 40px; }
+.inner { width:100%; max-width:430px; }
+.inner header { margin-bottom:32px; }
+.eyebrow { color:hsl(var(--primary)); }
+.inner h1 { font-size:36px; line-height:1.15; letter-spacing:-.04em; font-weight:650; margin:12px 0; }
+.inner header p,.help { color:hsl(var(--muted-foreground)); font-size:15px; line-height:1.65; }
+.inner input:not([type="checkbox"]) { height:50px; border-radius:8px; background:hsl(var(--card)); padding-inline:14px; font-size:15px; }
+.inner input[type="password"],.inner input[autocomplete="current-password"] { padding-right:52px; }
+.inner button[type="submit"] { height:50px; border-radius:8px; font-size:15px; font-weight:600; }
+.help { margin-top:28px; font-size:13px; }
+.mobileLogo { display:none; }
+.darkLogo { display:none; }
+:global(.dark) .darkLogo { display:block; }
+:global(.dark) .lightLogo { display:none; }
+@media(max-width:1023px) { .layout { display:block; } .story { display:none; } .workspace { min-height:100svh; padding:40px 24px; } .mobileLogo { display:block; margin-bottom:48px; } }
+@media(prefers-reduced-motion:reduce) { .inner * { transition:none; } }
