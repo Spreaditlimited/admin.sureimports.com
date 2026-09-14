@@ -1,3 +1,6 @@
+import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
+import { partnerOperationalTransition } from '@/lib/partners/operational-transition';
+import { AdjustmentError } from '@/lib/partners/adjustments';
 // app/api/upload/route.ts
 import { PrismaClient } from '@prisma/client';
 import { random } from 'lodash';
@@ -16,8 +19,12 @@ const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
 
+  const access = await requireAdminServiceAccess('procurement','edit');
+  if (!access.ok) return access.response;
+  if (request.headers.get('origin') !== new URL(request.url).origin || request.headers.get('sec-fetch-site') === 'cross-site') return NextResponse.json({message:'Refresh your dashboard and try again.'},{status:403});
   //GET FORM DATA
   const formData = await request.formData();
+  try { const result = await partnerOperationalTransition(formData,access.admin.pidUser); if(result) return NextResponse.json(result); } catch(error) { return NextResponse.json({statusx:'ACTION_FAILED',message:error instanceof AdjustmentError?error.message:'Unable to update this order. Refresh before trying again.'},{status:error instanceof AdjustmentError?error.status:503}); }
   const pidUser = formData.get('pidUser') as string;
   const pidOrder = formData.get('pidOrder') as string;
   const currentStatus = formData.get('currentStatus') as string;

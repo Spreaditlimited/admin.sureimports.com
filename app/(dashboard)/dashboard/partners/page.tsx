@@ -22,7 +22,7 @@ export default async function PartnerReviewPage({
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Partner Applications</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage business-fit reviews, verification and final partner approval.</p>
         </div>
-        <Link className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted" href="/dashboard/partners/domains">Partner domains</Link>
+        <div className="flex flex-wrap gap-3"><Link className="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted" href="/dashboard/partners/countries">Country settings</Link><Link className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted" href="/dashboard/partners/domains">Partner domains</Link></div>
       </div>
       <ReviewWorkspace
         rows={rows.map((row) => ({

@@ -13,6 +13,7 @@ import {
   sendInvoiceFollowUpNotification,
 } from '@/lib/notifications/invoicing';
 import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
+import { reconcileInvoicePayPalPayments } from '@/lib/invoicing/paypalReconciliation';
 
 const FIRST_FOLLOW_UP_HOURS = 24;
 const REPEAT_FOLLOW_UP_HOURS = 48;
@@ -84,6 +85,7 @@ export async function GET(request: NextRequest) {
 
   try {
     await syncOverdueInvoices();
+    await reconcileInvoicePayPalPayments();
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(Math.max(Number(searchParams.get('limit') || DEFAULT_LIMIT), 1), 250);

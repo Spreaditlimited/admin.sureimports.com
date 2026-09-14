@@ -106,6 +106,11 @@ export async function POST(
     const receiptNumber = await createUniqueReceiptNumber();
 
     const result = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM invoices WHERE pidInvoice = ${pidInvoice} FOR UPDATE`;
+      const currentInvoice = await tx.invoices.findUniqueOrThrow({ where: { pidInvoice } });
+      if (currentInvoice.updatedAt.getTime() !== invoice.updatedAt.getTime()) {
+        throw new Error('The invoice changed while recording payment. Refresh the invoice and check its payments before retrying.');
+      }
       const payment = await tx.invoice_payments.create({
         data: {
           pidInvoicePayment,

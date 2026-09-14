@@ -14,6 +14,7 @@ export default async function DashboardPage() {
   });
 
   const rates = {
+    exGbpPerUsd: Number((await db.$queryRaw<{ exGbpPerUsd: string | null }[]>`SELECT exGbpPerUsd FROM exchange_rate WHERE id = 1`)[0]?.exGbpPerUsd ?? 0),
     exNairaToDollar: Number(rateRecord?.exNairaToDollar ?? 0),
     exYuanToDollar: Number(rateRecord?.exYuanToDollar ?? 0),
     exNairaToYuan: Number(rateRecord?.exNairaToYuan ?? 0),

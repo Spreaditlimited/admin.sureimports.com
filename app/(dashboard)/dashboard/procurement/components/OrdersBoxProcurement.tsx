@@ -1,4 +1,5 @@
 "use client";
+import OrderAdjustmentPanel from '@/components/OrderAdjustmentPanel';
 
 import React, { useDeferredValue, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -613,6 +614,7 @@ export default function OrdersBoxProcurement() {
                   </div>
                 </section>
 
+                <OrderAdjustmentPanel role="admin" endpoint={`/api/procurement/${encodeURIComponent(selectedOrder.pidOrder)}/adjustments`} />
                 <TableProcurementProducts
                   key={selectedOrder.pidOrder}
                   pidOrder={selectedOrder.pidOrder}

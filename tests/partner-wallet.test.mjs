@@ -38,7 +38,7 @@ const db={
  $transaction(fn){const run=queue.then(async()=>{const before=structuredClone(state);try{return await fn(db);}catch(e){state=before;throw e;}});queue=run.catch(()=>{});return run;}
 };
 globalThis.__walletDb=db;
-const hook=registerHooks({resolve(s,c,n){if(s==='server-only')return{url:'data:text/javascript,export{}',shortCircuit:true};if(s==='@/lib/prisma')return{url:'data:text/javascript,export const prisma=globalThis.__walletDb',shortCircuit:true};if(s.startsWith('.')&&!s.endsWith('.ts'))return n(new URL(s+'.ts',c.parentURL).href,c);return n(s,c);}});
+const hook=registerHooks({resolve(s,c,n){if(s==='./adjustments')return{url:'data:text/javascript,export const assertOrderFinanciallyClear=async()=>{};export const assertPartnerFinanciallyClear=async()=>{};',shortCircuit:true};if(s==='./external-refund-review')return{url:'data:text/javascript,export const assertExternalRefundsRecorded=async()=>{};',shortCircuit:true};if(s==='server-only')return{url:'data:text/javascript,export{}',shortCircuit:true};if(s==='@/lib/prisma')return{url:'data:text/javascript,export const prisma=globalThis.__walletDb',shortCircuit:true};if(s.startsWith('.')&&!s.endsWith('.ts'))return n(new URL(s+'.ts',c.parentURL).href,c);return n(s,c);}});
 const wallet=await import('../lib/partners/wallet.ts');hook.deregister();
 globalThis.fetch=async(url,options)=>{
  const path=new URL(url).pathname;

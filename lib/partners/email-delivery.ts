@@ -29,11 +29,11 @@ export async function deliverPartnerEmails(eventId: string) {
     const [owner] = await prisma.$queryRaw<Array<{ userEmail: string }>>`SELECT u.userEmail FROM procurement_partners p JOIN users u ON u.pidUser=p.ownerPidUser WHERE p.id=${event.partnerId} LIMIT 1`;
     if (!owner) throw new Error('Notification owner unavailable.');
     const { subject, message } = partnerEmailContent(event.action);
-    const href = `${(process.env.PARTNER_APP_URL || 'https://partner.sureimports.com').replace(/\/$/, '')}/partners/dashboard#${event.action.startsWith('WALLET_') ? 'earnings' : 'verification'}`;
-    const html = mailTemplate({ zTitle: subject, zBodyTitle: subject, zBody1: message, zBody2: 'For your privacy, read the full review in your account. Do not send identity documents by email.', zButtonTitle: event.action.startsWith('WALLET_') ? 'View your wallet' : 'View your application', zButtonLink: href }) as string;
+    const href = `${(process.env.PARTNER_APP_URL || 'https://partner.sureimports.com').replace(/\/$/, '')}/partners/dashboard#${event.action.startsWith('ORDER_') ? 'orders' : event.action.startsWith('WALLET_') ? 'earnings' : 'verification'}`;
+    const html = mailTemplate({ zTitle: subject, zBodyTitle: subject, zBody1: message, zBody2: 'For your privacy, read the full review in your account. Do not send identity documents by email.', zButtonTitle: event.action.startsWith('ORDER_') ? 'View your orders' : event.action.startsWith('WALLET_') ? 'View your wallet' : 'View your application', zButtonLink: href }) as string;
     const info = await transporter.sendMail({
       from: `"Sure Imports" <${process.env.SMTP_EMAIL}>`, to: owner.userEmail, subject, html,
-      text: `${subject}\n\n${message}\n\nView your application: ${href}\n\nDo not send identity documents by email.`,
+      text: `${subject}\n\n${message}\n\nOpen your account: ${href}\n\n${event.action.startsWith('ORDER_') ? 'Contact support if you need help with this order change.' : 'Do not send identity documents by email.'}`,
       messageId: `<partner-kyc-${event.id}@sureimports.com>`,
     });
     if (!info.accepted?.length) throw new Error('SMTP did not accept recipient.');

@@ -1,3 +1,4 @@
+import { assertRefundsReconciled, assertNoUnreservedRefundDeductions } from '@/lib/refunds/payout-guard';
 import 'server-only';
 
 import { after } from 'next/server';
@@ -220,11 +221,21 @@ export async function executeAffiliatePayout(pidPayout: string, actor: string) {
     await settlePayout(payout.id, 'FAILED', 'ACCOUNT_MISMATCH', null, 'Payout destination does not match the payout currency.');
     throw new Error('Payout destination does not match the payout currency.');
   }
+  try {
+    await prisma.$transaction(async tx => {
+      await assertRefundsReconciled(tx, payout.affiliateId, payout.currency);
+      await assertNoUnreservedRefundDeductions(tx, payout.affiliateId, payout.currency);
+    });
+  } catch {
+    await settlePayout(payout.id, 'FAILED', 'REFUND_REVIEW_REQUIRED', null, 'Refund deductions require reconciliation before this payout can be sent.');
+    throw new Error('Refund deductions require review. Reconcile the refunds, then cancel and recreate this payout with the updated balance. No payout was submitted by this attempt.');
+  }
+  const [refundAdjustments] = await prisma.$queryRaw<{amount:string|null}[]>`SELECT SUM(amount) amount FROM affiliate_refund_adjustments WHERE payoutId=${payout.id}`;
   const reservedTotal = payout.items.reduce(
     (total, item) => total + Number(item.conversion.commissionAmount),
     0,
   );
-  const payoutAmount = Number(payout.amount);
+  const payoutAmount = Number(payout.amount) + Number(refundAdjustments?.amount || 0);
   if (
     payout.items.length === 0 ||
     payout.items.some((item) => item.conversion.status !== 'RESERVED') ||
@@ -379,6 +390,7 @@ export async function cancelAffiliatePayout(pidPayout: string, actor: string) {
       where: { id: { in: payout.items.map((item) => item.conversionId) }, status: 'RESERVED' },
       data: { status: 'AVAILABLE' },
     });
+    await tx.$executeRaw`UPDATE affiliate_refund_adjustments SET payoutId=NULL WHERE payoutId=${payout.id}`;
     await tx.affiliate_payout_items.deleteMany({ where: { payoutId: payout.id } });
     return tx.affiliate_payouts.update({
       where: { id: payout.id },

@@ -19,6 +19,7 @@ export default async function DashboardPage() {
   const rates = {
     service_charge: Number(rateRecord?.service_charge ?? 0),
     vat: Number(rateRecord?.vat ?? 0),
+    procurementVatForeign: Number((await db.$queryRaw<{ procurementVatForeign: string }[]>`SELECT procurementVatForeign FROM exchange_rate WHERE id = 1`)[0]?.procurementVatForeign ?? 20),
     procurementMinimumOrderNgn:
       rateRecord?.procurementMinimumOrderNgn ?? 50000,
   };

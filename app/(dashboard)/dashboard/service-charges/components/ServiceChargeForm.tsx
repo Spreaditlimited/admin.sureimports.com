@@ -17,6 +17,7 @@ interface ServiceRateProps {
     rates: {
         service_charge: number;
         vat: number;
+        procurementVatForeign: number;
         procurementMinimumOrderNgn: number;
     }
 }
@@ -27,6 +28,7 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
     // Form State prefilled from DB
     const [serviceCharge, setServiceCharge] = useState<number>(rates?.service_charge || 0);
     const [vat, setVat] = useState<number>(rates?.vat || 0);
+    const [foreignVat, setForeignVat] = useState<number>(rates.procurementVatForeign ?? 20);
     const [procurementMinimumOrderNgn, setProcurementMinimumOrderNgn] =
         useState<number>(rates?.procurementMinimumOrderNgn ?? 50000);
 
@@ -38,6 +40,7 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
         const formData = new FormData();
         formData.append('serviceCharge', serviceCharge.toString());
         formData.append('vat', vat.toString());
+        formData.append('procurementVatForeign', foreignVat.toString());
         formData.append(
             'procurementMinimumOrderNgn',
             procurementMinimumOrderNgn.toString(),
@@ -102,7 +105,7 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
                             {/* VAT Percentage */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                                    <BadgePercent className="w-3.5 h-3.5" /> Value Added Tax (VAT %)
+                                    <BadgePercent className="w-3.5 h-3.5" /> Nigeria VAT on service charge (%)
                                 </label>
                                 <div className="relative">
                                     <input
@@ -115,7 +118,13 @@ const ServiceChargeForm: React.FC<ServiceRateProps> = ({ rates }) => {
                                     />
                                     <Percent className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 </div>
-                                <p className="text-[10px] text-muted-foreground italic">Governed by regional tax regulations on total invoice value.</p>
+                                <p className="text-sm text-muted-foreground">Nigeria-bound procurement: VAT applies only to the service charge, not product cost or shipping.</p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label htmlFor="foreign-vat" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Non-Nigeria VAT on service charge (%)</label>
+                                <input id="foreign-vat" type="number" min="0" max="100" step="0.01" required value={foreignVat} onChange={(e) => setForeignVat(Number(e.target.value))} className="w-full px-4 py-3 text-lg border border-input rounded-md bg-background text-foreground font-bold font-mono focus:ring-2 focus:ring-ring" />
+                                <p className="text-sm text-muted-foreground">For destinations outside Nigeria. Default: 20% of the service charge. The same rate applies to PayPal and bank transfer.</p>
                             </div>
 
                             {/* Nigeria procurement minimum */}

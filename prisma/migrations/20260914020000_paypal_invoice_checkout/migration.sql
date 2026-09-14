@@ -1,0 +1,20 @@
+CREATE TABLE `paypal_invoice_checkouts` (
+  `id` VARCHAR(64) NOT NULL,
+  `stageKey` VARCHAR(64) NOT NULL,
+  `pidInvoice` VARCHAR(191) NOT NULL,
+  `environment` VARCHAR(8) NOT NULL,
+  `currency` VARCHAR(3) NOT NULL,
+  `amountMinor` BIGINT NOT NULL,
+  `invoiceUpdatedAt` DATETIME(3) NOT NULL,
+  `providerReference` VARCHAR(64) NULL,
+  `captureReference` VARCHAR(64) NULL,
+  `status` VARCHAR(24) NOT NULL DEFAULT 'PENDING',
+  `lastCheckedAt` DATETIME(3) NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`id`), UNIQUE KEY `paypal_invoice_stage_key` (`stageKey`),
+  UNIQUE KEY `paypal_invoice_provider_key` (`providerReference`),
+  UNIQUE KEY `paypal_invoice_capture_key` (`captureReference`),
+  KEY `paypal_invoice_reconcile` (`status`, `lastCheckedAt`),
+  KEY `paypal_invoice_invoice` (`pidInvoice`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

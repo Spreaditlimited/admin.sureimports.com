@@ -109,6 +109,12 @@ export async function decideReview(
     "base64",
   );
   await prisma.$transaction(async (tx) => {
+    const policies=await tx.$queryRaw<Array<{policyJson:string}>>`SELECT policyJson FROM partner_application_country_policy WHERE partnerId=${id}`;
+    if(body.decision==='VERIFIED' && !policies[0])throw new ReviewError('Country verification policy is missing. Resolve the policy before approving.',409);
+    if(body.decision==='VERIFIED' && policies[0]) {
+      const policy=JSON.parse(policies[0].policyJson);
+      if(policy.verificationProfile==='UK_STANDARD' && (!body.checkedAddressEvidence || (policy.requireIdentityMeeting && !body.checkedIdentityMeeting) || (policy.requireOwnNamePayout && !body.checkedOwnNamePayout))) throw new ReviewError('Confirm current address evidence, the manual identity/video check and the own-name payout account before approving this applicant.',422);
+    }
     const rows = await tx.$queryRaw<
       Array<{ status: string; revision: number; reviewCiphertext: string | null }>
     >`SELECT status, revision, reviewCiphertext FROM procurement_partner_kyc WHERE partnerId = ${id} FOR UPDATE`;

@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/AuthContext';
 interface ExchangeRateProps {
     rates: {
         exNairaToDollar: number;
+        exGbpPerUsd: number;
         exYuanToDollar: number;
         exNairaToYuan: number;
         quotationSeaRateNgnPerCbm: number;
@@ -26,6 +27,7 @@ interface ExchangeRateProps {
 const ExchangeRatesForm: React.FC<ExchangeRateProps> = ({ rates }) => {
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const [gbpPerUsd, setGbpPerUsd] = useState(rates.exGbpPerUsd ? String(rates.exGbpPerUsd) : '');
 
     // Form State
     const [nairaToDollar, setExNairaToDollar] = useState<number>(rates.exNairaToDollar);
@@ -39,6 +41,7 @@ const ExchangeRatesForm: React.FC<ExchangeRateProps> = ({ rates }) => {
         toast.info('Synchronizing global currency ledger...');
 
         const formData = new FormData();
+        formData.append('gbpPerUsd', gbpPerUsd);
         formData.append('nairaToDollar', nairaToDollar.toString());
         formData.append('yuanToDollar', yuanToDollar.toString());
         formData.append('nairaToYuan', nairaToYuan.toString());
@@ -66,6 +69,11 @@ const ExchangeRatesForm: React.FC<ExchangeRateProps> = ({ rates }) => {
     return (
         <div className="space-y-6 max-w-4xl">
             <form onSubmit={handleSubmit} className="space-y-6">
+                <section className="rounded-xl border border-border bg-card p-6 space-y-3">
+                    <label htmlFor="gbp-per-usd" className="block text-sm font-semibold text-foreground">GBP per US$1 — UK bank transfers</label>
+                    <input id="gbp-per-usd" type="number" min="0.000001" step="0.000001" value={gbpPerUsd} onChange={(e) => setGbpPerUsd(e.target.value)} placeholder="Not configured" className="w-full max-w-sm rounded-md border border-input bg-background px-4 py-3 text-foreground" />
+                    <p className="text-sm text-muted-foreground">Multiply the USD order amount by this rate to calculate the GBP bank transfer. Leave blank to disable GBP bank transfers; PayPal is unaffected.</p>
+                </section>
                 
                 {/* 1. Conversion Matrix Card */}
                 <div className="bg-card border border-border rounded-xl shadow-soft overflow-hidden">

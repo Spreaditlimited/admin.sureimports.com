@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
+import { readRefundDestination } from '@/lib/refunds/destination';
+
 const REFUNDS_SERVICE_KEY = 'refunds';
 
 function parseAmount(value?: string | null) {
@@ -16,8 +18,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const searchParams = request.nextUrl.searchParams;
-    const page = Number.parseInt(searchParams.get('page') || '1', 10);
-    const limit = Number.parseInt(searchParams.get('limit') || '10', 10);
+    const page = Math.max(1, Math.min(100000, Number.parseInt(searchParams.get('page') || '1', 10) || 1));
+    const limit = Math.max(1, Math.min(100, Number.parseInt(searchParams.get('limit') || '10', 10) || 10));
     const skip = (page - 1) * limit;
     const search = searchParams.get('search')?.trim() || '';
     const status = searchParams.get('status')?.trim() || '';
@@ -87,21 +89,33 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
+    const foreignIds = refunds.map(r => r.pidRefund);
+    const settlements = foreignIds.length ? await prisma.$queryRaw<Array<Record<string, any>>>`SELECT * FROM refund_settlements WHERE refundId IN (${Prisma.join(foreignIds)})` : [];
+    const providerLegs = foreignIds.length ? await prisma.$queryRaw<Array<{ id: string; refundId: string; currency: string; amount: string; status: string; providerReference: string | null; firstAttemptAt: Date | null }>>`SELECT id,refundId,currency,amount,status,providerReference,firstAttemptAt FROM refund_provider_legs WHERE refundId IN (${Prisma.join(foreignIds)}) ORDER BY id` : [];
+    const settlementMap = new Map(settlements.map(s => {
+      const { destinationCiphertext, ...safe } = s;
+      return [s.refundId, { ...safe, destination: s.method === 'BANK' ? readRefundDestination(destinationCiphertext, s.refundId) : {} }];
+    }));
     const userMap = new Map(users.map((user) => [user.pidUser, user]));
     const data = refunds.map((refund) => ({
       ...refund,
+      settlement: settlementMap.get(refund.pidRefund) || null,
+      providerLegs: providerLegs.filter(leg => leg.refundId === refund.pidRefund),
       currency: refund.currency || 'UNSPECIFIED',
       customer: refund.pidUser ? userMap.get(refund.pidUser) || null : null,
     }));
 
+    const settlementSummary = await prisma.$queryRaw<Array<{ settlementCurrency: string; method: string; settledAmount: string; outstandingAmount: string; count: bigint }>>`SELECT settlementCurrency,method,SUM(CASE WHEN status='SETTLED' THEN settlementAmount ELSE 0 END) settledAmount,SUM(CASE WHEN status<>'SETTLED' THEN settlementAmount ELSE 0 END) outstandingAmount,COUNT(*) count FROM (SELECT settlementCurrency,method,settlementAmount,status FROM refund_settlements UNION ALL SELECT currency settlementCurrency,CONCAT('PARTNER_',provider) method,amountMinor/100 settlementAmount,status FROM partner_adjustment_refunds WHERE status<>'SUPERSEDED') combined GROUP BY settlementCurrency,method ORDER BY settlementCurrency,method`;
+    const externalReviews = await prisma.$queryRaw<Array<{ id: string; detailsJson: string; createdAt: Date }>>`SELECT e.id,e.detailsJson,e.createdAt FROM refund_events e WHERE e.eventType='EXTERNAL_PAYPAL_REFUND' AND NOT EXISTS (SELECT 1 FROM refund_events resolved WHERE resolved.id=CONCAT('RESOLVED:',e.id)) ORDER BY e.createdAt DESC LIMIT 100`;
     const totalsByCurrency = allForTotal.reduce<Record<string, number>>((totals, item) => {
       const currency = (item.currency || 'UNSPECIFIED').toUpperCase();
-      totals[currency] = (totals[currency] || 0) + parseAmount(item.amount);
+      totals[currency] = (totals[currency] || 0) + Math.round(parseAmount(item.amount) * 100) / 100;
       return totals;
     }, {});
 
     return NextResponse.json({
       statusx: 'SUCCESS',
+      externalReviews: externalReviews.map(row => ({ id: row.id, createdAt: row.createdAt, ...JSON.parse(row.detailsJson) })),
       data,
       totalCount,
       totalPages: Math.ceil(totalCount / limit),
@@ -109,6 +123,7 @@ export async function GET(request: NextRequest) {
       perPage: limit,
       totalAmount: totalsByCurrency.NGN || 0,
       totalsByCurrency,
+      settlementSummary: settlementSummary.map(row => ({ ...row, count: Number(row.count), settledAmount: Number(row.settledAmount), outstandingAmount: Number(row.outstandingAmount) })),
       serviceTypes: serviceTypes.map((item) => item.serviceType).filter(Boolean),
     });
   } catch (error: unknown) {

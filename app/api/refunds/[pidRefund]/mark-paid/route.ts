@@ -1,159 +1,47 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { requireAdminServiceAccess } from "@/app/api/_lib/adminAccess";
-import sendRefundPaidEmail from "@/lib/email/sendRefundPaidEmail";
-import {
-  affiliateOrderReferenceForRefund,
-  reverseAffiliateConversions,
-} from "@/lib/affiliate/reversals";
+import { prepareFailedPayPalRetry } from '@/lib/refunds/retry-paypal';
+import { linkExternalPayPalRefund } from '@/lib/refunds/external-paypal';
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
+import { confirmForeignBankRefund } from '@/lib/refunds/settle-bank';
+import { processOriginalPayPalRefund, checkOriginalPayPalRefund } from '@/lib/refunds/paypal-settlement';
+import { reopenLegacyRefundRequest } from '@/lib/refunds/reopen-request';
 
-const REFUNDS_SERVICE_KEY = "refunds";
-
-function parseAmount(value?: string | null) {
-  const amount = Number.parseFloat(String(value || "0"));
-  return Number.isFinite(amount) ? amount : 0;
-}
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ pidRefund: string }> },
-) {
-  const access = await requireAdminServiceAccess(REFUNDS_SERVICE_KEY, "edit");
+export async function POST(request: NextRequest, { params }: { params: Promise<{ pidRefund: string }> }) {
+  const access = await requireAdminServiceAccess('refunds', 'edit');
   if (!access.ok) return access.response;
-
+  if (request.headers.get('origin') !== request.nextUrl.origin || request.headers.get('sec-fetch-site') === 'cross-site') return NextResponse.json({ message: 'Invalid origin.' }, { status: 403 });
   try {
     const { pidRefund } = await params;
-    const body = await request.json().catch(() => ({}));
-    const reference =
-      typeof body?.reference === "string" ? body.reference.trim() : "";
-    const note = typeof body?.note === "string" ? body.note.trim() : "";
-
-    if (!pidRefund) {
-      return NextResponse.json(
-        { statusx: "FAILED", message: "pidRefund is required" },
-        { status: 400 },
-      );
+    const text = await request.text();
+    if (text.length > 4000) return NextResponse.json({ message: 'Request too large.' }, { status: 413 });
+    const body = JSON.parse(text);
+    if (body.action === 'LINK_EXTERNAL_PAYPAL') {
+      if (body.confirmed !== true) return NextResponse.json({ message: 'Confirm that this is the existing refund for this PayPal payment.' }, { status: 400 });
+      const result = await linkExternalPayPalRefund(String(body.providerReference || '').trim(), pidRefund, access.admin.pidUser);
+      return NextResponse.json({ statusx: 'SUCCESS', ...result });
     }
-
-    const refund = await prisma.refund_records.findUnique({
-      where: { pidRefund },
-    });
-
-    if (!refund) {
-      return NextResponse.json(
-        { statusx: "FAILED", message: "Refund record not found" },
-        { status: 404 },
-      );
+    if (body.action === 'PREPARE_PAYPAL_RETRY') return NextResponse.json(await prepareFailedPayPalRetry(pidRefund, String(body.legId || ''), access.admin.pidUser));
+    if (body.action === 'CHECK_PAYPAL') {
+      const providerReference = String(body.providerReference || '').trim();
+      const result = await checkOriginalPayPalRefund(pidRefund, access.admin.pidUser, providerReference ? { legId: String(body.legId || ''), providerReference } : undefined);
+      return NextResponse.json({ statusx: 'SUCCESS', message: result.status === 'SETTLED' ? 'PayPal confirmed the refund as completed.' : 'PayPal status checked. The refund is not yet confirmed complete; no new refund request was sent.', ...result });
     }
-
-    const refundStatus = String(refund.refundStatus || "").toLowerCase();
-    if (["paid", "refunded"].includes(refundStatus)) {
-      return NextResponse.json(
-        { statusx: "FAILED", message: "Refund is already marked as refunded" },
-        { status: 400 },
-      );
+    if (body.action === 'REOPEN_LEGACY') {
+      const result = await reopenLegacyRefundRequest(pidRefund, access.admin.pidUser, body.confirmedUnpaid === true);
+      return NextResponse.json({ statusx: 'SUCCESS', ...result });
     }
-    if (refundStatus !== "requested") {
-      return NextResponse.json(
-        {
-          statusx: "FAILED",
-          message: "Only requested bank refunds can be marked as refunded",
-        },
-        { status: 409 },
-      );
+    const refund = await prisma.refund_records.findUnique({ where: { pidRefund } });
+    if (!refund) return NextResponse.json({ message: 'Refund not found.' }, { status: 404 });
+    if (refund.refundStatus !== 'requested') return NextResponse.json({ message: 'This refund is not awaiting settlement. Refresh its status.' }, { status: 409 });
+    if (body.method === 'PAYPAL') {
+      if (body.confirmed !== true) return NextResponse.json({ message: 'Confirm that this refund should be sent to the original payment method.' }, { status: 400 });
+      await processOriginalPayPalRefund(pidRefund, access.admin.pidUser);
+      return NextResponse.json({ statusx: 'SUCCESS', message: 'PayPal processing checked. Refresh to see the confirmed settlement status.' });
     }
-    if (String(refund.currency || "").toUpperCase() !== "NGN") {
-      return NextResponse.json(
-        {
-          statusx: "FAILED",
-          message:
-            "This refund is not recorded in Naira. Correct its currency before settlement.",
-        },
-        { status: 409 },
-      );
-    }
-
-    const user = refund.pidUser
-      ? await prisma.users.findUnique({
-          where: { pidUser: refund.pidUser },
-          select: {
-            userEmail: true,
-            userFirstname: true,
-            userLastname: true,
-          },
-        })
-      : null;
-
-    const paidAt = new Date();
-    const settlementMeta = JSON.stringify({
-      reference: reference || refund.ext1 || refund.pidRefund,
-      note,
-      markedPaidBy: access.admin.pidUser,
-      paidAt: paidAt.toISOString(),
-    });
-
-    const updatedRefund = await prisma.refund_records.update({
-      where: { pidRefund },
-      data: {
-        refundStatus: "refunded",
-        ext2: settlementMeta,
-        xStatus: "REFUNDED",
-        updatedAt: paidAt,
-      },
-    });
-
-    const affiliateOrderReference = affiliateOrderReferenceForRefund(
-      updatedRefund.serviceType,
-      updatedRefund.pidOrder,
-    );
-    if (affiliateOrderReference) {
-      await reverseAffiliateConversions({
-        externalOrderReference: affiliateOrderReference,
-        reason: `Refund ${updatedRefund.pidRefund} was confirmed as paid.`,
-        reversalReference: updatedRefund.pidRefund,
-      });
-    }
-
-    let emailSent = false;
-    if (user?.userEmail) {
-      const userName =
-        `${user.userFirstname || ""} ${user.userLastname || ""}`.trim() ||
-        "Customer";
-
-      emailSent = await sendRefundPaidEmail({
-        userEmail: user.userEmail,
-        userName,
-        pidRefund: updatedRefund.pidRefund,
-        pidOrder: updatedRefund.pidOrder,
-        amount: parseAmount(updatedRefund.amount),
-        currency: updatedRefund.currency,
-        serviceType: updatedRefund.serviceType,
-        reference: reference || updatedRefund.ext1 || updatedRefund.pidRefund,
-        paidAt: paidAt.toLocaleString("en-NG", {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }),
-      });
-    }
-
-    return NextResponse.json({
-      statusx: "SUCCESS",
-      message: emailSent
-        ? "Refund marked as refunded and customer notification sent."
-        : "Refund marked as refunded. Customer notification could not be sent.",
-      data: updatedRefund,
-      emailSent,
-    });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error marking refund paid:", error);
-    return NextResponse.json(
-      {
-        statusx: "ERROR",
-        message: "Failed to mark refund as paid",
-        error: message,
-      },
-      { status: 500 },
-    );
+    const settled = await confirmForeignBankRefund({ refundId: pidRefund, reference: String(body.reference || '').trim(), adminId: access.admin.pidUser, confirmedAmount: String(body.confirmedAmount || ''), confirmedCurrency: String(body.confirmedCurrency || ''), destinationVerified: body.destinationVerified === true });
+    return NextResponse.json({ statusx: 'SUCCESS', message: 'Refund settlement recorded. Customer notification is queued.', ...settled });
+  } catch (error) {
+    return NextResponse.json({ statusx: 'FAILED', message: error instanceof Error ? error.message : 'Unable to confirm this refund. Refresh its status.' }, { status: 409 });
   }
 }

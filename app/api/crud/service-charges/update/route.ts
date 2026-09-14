@@ -12,6 +12,10 @@ export async function PUT(request: Request) {
     const formData = await request.formData();
         const serviceCharge = formData.get('serviceCharge');
         const vat = formData.get('vat');
+        const foreignVat = formData.get('procurementVatForeign');
+        if (typeof foreignVat !== 'string' || !foreignVat.trim() || !Number.isFinite(Number(foreignVat)) || Number(foreignVat) < 0 || Number(foreignVat) > 100) {
+          return NextResponse.json({ statusx: 'INVALID_INPUT', message: 'Non-Nigeria VAT must be between 0 and 100 percent.' }, { status: 400 });
+        }
         const procurementMinimumOrderNgn = formData.get(
           'procurementMinimumOrderNgn',
         );
@@ -31,6 +35,7 @@ export async function PUT(request: Request) {
           serviceChargeValue < 0 ||
           !Number.isFinite(vatValue) ||
           vatValue < 0 ||
+          vatValue > 100 ||
           !Number.isInteger(minimumOrderValue) ||
           minimumOrderValue < 0 ||
           minimumOrderValue > 100000000
@@ -47,13 +52,16 @@ export async function PUT(request: Request) {
 
         try {
             //UPDATE RECORD
-            await prisma.exchange_rate.update({
+            await prisma.$transaction(async (tx) => {
+            await tx.exchange_rate.update({
               where: { id: 1},  
               data: { 
                 service_charge: String(serviceCharge),
                 vat: String(vat),
                 procurementMinimumOrderNgn: minimumOrderValue,
               },  
+            });
+            await tx.$executeRaw`UPDATE exchange_rate SET procurementVatForeign = ${foreignVat} WHERE id = 1`;
             });
 
             return NextResponse.json(

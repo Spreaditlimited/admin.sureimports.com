@@ -29,7 +29,7 @@ export default async function AffiliatesPage({ searchParams }: {
     select: {
       id: true, firstNameCiphertext: true, lastNameCiphertext: true, emailCiphertext: true,
       country: true, referralCode: true, status: true, createdAt: true,
-      _count: { select: { referrals: true } },
+      _count: { select: { referrals: { where: { customerReference: { not: null } } } } },
     },
   });
   const href = (target: number) => `?${new URLSearchParams({ q: query, page: String(target) })}`;
@@ -38,7 +38,7 @@ export default async function AffiliatesPage({ searchParams }: {
   return <div className="space-y-6 pb-10">
     <header className="flex flex-col gap-4 px-1 sm:flex-row sm:items-center sm:justify-between">
       <div><h1 className="text-2xl font-bold tracking-tight text-foreground">Affiliates</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Registered affiliate accounts, referral codes and account status. Waitlist entries are not affiliates.</p></div>
+        <p className="mt-1 text-sm text-muted-foreground">Open an affiliate to explore referrals, customer payments, commissions and payouts. Waitlist entries are not affiliate accounts.</p></div>
       <span className="shrink-0 rounded-md border border-border bg-muted/50 px-4 py-2 text-sm font-semibold text-foreground">{total.toLocaleString('en-GB')} {query ? 'matching' : 'registered'} accounts</span>
     </header>
     <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -51,10 +51,10 @@ export default async function AffiliatesPage({ searchParams }: {
       </form>
       {accounts.length ? <div className="overflow-x-auto"><table className="w-full min-w-[800px] text-left text-sm">
         <thead className="border-b border-border bg-muted/40 text-muted-foreground"><tr>
-          {['Affiliate', 'Country', 'Referral code', 'Status', 'Referrals', 'Joined'].map(label => <th key={label} scope="col" className="px-5 py-4 font-semibold">{label}</th>)}
+          {['Affiliate', 'Country', 'Referral code', 'Status', 'Registered referrals', 'Joined'].map(label => <th key={label} scope="col" className="px-5 py-4 font-semibold">{label}</th>)}
         </tr></thead>
         <tbody className="divide-y divide-border">{accounts.map(account => <tr key={account.id} className="transition-colors hover:bg-muted/30">
-          <td className="px-5 py-4"><p className="font-semibold text-foreground">{decryptAffiliateValue(account.firstNameCiphertext)} {decryptAffiliateValue(account.lastNameCiphertext)}</p><p className="mt-1 text-muted-foreground">{decryptAffiliateValue(account.emailCiphertext)}</p></td>
+          <td className="px-5 py-4"><Link href={`/dashboard/affiliates/${account.id}`} className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{decryptAffiliateValue(account.firstNameCiphertext)} {decryptAffiliateValue(account.lastNameCiphertext)}</Link><p className="mt-1 text-muted-foreground">{decryptAffiliateValue(account.emailCiphertext)}</p></td>
           <td className="px-5 py-4 text-foreground">{account.country || '—'}</td>
           <td className="px-5 py-4"><code className="rounded bg-muted px-2 py-1 text-sm text-foreground">{account.referralCode}</code></td>
           <td className="px-5 py-4"><span className="inline-flex whitespace-nowrap rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-semibold text-foreground">{account.status.toLowerCase().replaceAll('_', ' ')}</span></td>

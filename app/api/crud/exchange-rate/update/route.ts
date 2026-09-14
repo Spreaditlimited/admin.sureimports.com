@@ -10,6 +10,8 @@ export async function PUT(request: Request) {
     if (!access.ok) return access.response;
 
     const formData = await request.formData();
+        const gbpPerUsd = String(formData.get('gbpPerUsd') ?? '').trim();
+        if (gbpPerUsd && (!Number.isFinite(Number(gbpPerUsd)) || Number(gbpPerUsd) <= 0)) return NextResponse.json({ statusx: 'INVALID_INPUT', message: 'GBP per USD must be greater than zero, or blank to disable GBP transfers.' }, { status: 400 });
         const nairaToDollar = formData.get('nairaToDollar');
         const yuanToDollar = formData.get('yuanToDollar');
         const nairaToYuan = formData.get('nairaToYuan');
@@ -33,7 +35,8 @@ export async function PUT(request: Request) {
 
         try {
             //UPDATE RECORD
-            await prisma.exchange_rate.update({
+            await prisma.$transaction(async (tx) => {
+            await tx.exchange_rate.update({
               where: { id: 1},  
               data: { 
                 exNairaToDollar: String(nairaToDollar),
@@ -41,6 +44,8 @@ export async function PUT(request: Request) {
                 exNairaToYuan: String(nairaToYuan),
                 quotationSeaRateNgnPerCbm: String(quotationSeaRateNgnPerCbm),
               },  
+            });
+            await tx.$executeRaw`UPDATE exchange_rate SET exGbpPerUsd = ${gbpPerUsd || null} WHERE id = 1`;
             });
 
             return NextResponse.json(

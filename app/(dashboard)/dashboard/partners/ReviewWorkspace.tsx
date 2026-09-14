@@ -37,6 +37,9 @@ type Person = {
   founder: boolean;
   ownershipPercent: number;
   idType: string;
+  dateOfBirth?: string;
+  idExpiresAt?: string;
+  addressEvidenceIssuedAt?: string;
 };
 type Case = Row & {
   agreement?: { status: string; current: boolean; paymentReady: boolean; receipt: {
@@ -44,6 +47,7 @@ type Case = Row & {
     offer: { version: string; hash: string; mode: string; sections: { title: string; text: string }[]; schedule: { businessName: string; registrationNumber: string; serviceChargeBps: number; partnerShareBps: number; pricingRevision: number } };
   } | null } | null;
   details: {
+    country?: string;
     businessType: string;
     companyEra: string;
     taxId?: string;
@@ -128,6 +132,9 @@ export default function ReviewWorkspace({ rows }: { rows: Row[] }) {
             decision: form.get("decision"),
             message: form.get("message"),
             evidenceReference: form.get("evidenceReference"),
+            checkedIdentityMeeting: form.get("checkedIdentityMeeting") === "on",
+            checkedOwnNamePayout: form.get("checkedOwnNamePayout") === "on",
+            checkedAddressEvidence: form.get("checkedAddressEvidence") === "on",
             checkedRegistration: form.has("checkedRegistration"),
             checkedIdentity: form.has("checkedIdentity"),
             checkedOwnership: form.has("checkedOwnership"),
@@ -274,6 +281,9 @@ export default function ReviewWorkspace({ rows }: { rows: Row[] }) {
                               {person.phone}
                               <br />
                               ID: {person.idType.replaceAll("_", " ")}
+                              {person.dateOfBirth ? <><br />Date of birth: {person.dateOfBirth}</> : null}
+                              {person.idExpiresAt ? <><br />ID expires: {person.idExpiresAt}</> : null}
+                              {person.addressEvidenceIssuedAt ? <><br />Address evidence issued: {person.addressEvidenceIssuedAt}</> : null}
                             </p>
                           </article>
                         ))}
@@ -300,7 +310,7 @@ export default function ReviewWorkspace({ rows }: { rows: Row[] }) {
                         key={doc.id}
                       >
                         <span className="min-w-0 break-words">
-                          {doc.slot.startsWith("identity:")
+                          {doc.slot.toUpperCase().startsWith("IDENTITY:")
                             ? `Identity: ${selected.details?.people.find((p) => p.id === doc.slot.slice(9))?.fullName || "Person"}`
                             : doc.slot.replaceAll("_", " ")}
                           <small className="block text-sm text-muted-foreground">
@@ -378,6 +388,9 @@ export default function ReviewWorkspace({ rows }: { rows: Row[] }) {
                           "Business registration independently checked",
                         ],
                         ["checkedIdentity", "Identity checks completed"],
+                        ["checkedIdentityMeeting", "Manual identity / video check completed (UK profile)"],
+                        ["checkedOwnNamePayout", "Payout account verified in applicant’s own name (UK profile)"],
+                        ["checkedAddressEvidence", "Current address evidence checked (UK profile)"],
                         ["checkedOwnership", "Ownership and authority checked"],
                       ].map(([name, label]) => (
                         <label key={name} className="flex items-start gap-3">
