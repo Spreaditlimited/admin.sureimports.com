@@ -7,7 +7,7 @@ import {
   reverseAffiliateConversions,
 } from "@/lib/affiliate/reversals";
 
-const REFUNDS_SERVICE_KEY = "payout_requests";
+const REFUNDS_SERVICE_KEY = "refunds";
 
 function parseAmount(value?: string | null) {
   const amount = Number.parseFloat(String(value || "0"));

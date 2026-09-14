@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { toast } from 'sonner';
+import { ADMIN_SERVICE_OPTIONS } from '@/lib/accessControl';
 import { 
   ShieldCheck, 
   User, 
@@ -17,27 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
-const SERVICE_OPTIONS = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'procurement', label: 'Procurement' },
-  { key: 'corporate_gifts', label: 'Corporate Sourcing' },
-  { key: 'pay_supplier', label: 'Pay Supplier' },
-  { key: 'shipping_only', label: 'Shipping Only' },
-  { key: 'system_settings', label: 'System Settings' },
-  { key: 'verify_supplier', label: 'Verify Supplier' },
-  { key: 'pay_small_small', label: 'Pay Small Small' },
-  { key: 'store_mgt', label: 'Store Mgt.' },
-  { key: 'customer_accounts', label: 'Customer Accounts' },
-  { key: 'payout_requests', label: 'Payout Requests' },
-  { key: 'invoicing', label: 'Invoicing' },
-  { key: 'admin_mgt', label: 'Admin Mgt.' },
-  { key: 'shipping_plans', label: 'Shipping Plans' },
-  { key: 'exchange_rates', label: 'Exchanges & Rates' },
-  { key: 'blog_management', label: 'Blog Management' },
-  { key: 'supplier_intelligence', label: 'Supplier Intelligence' },
-  { key: 'consultations', label: 'Consultations' },
-  { key: 'social_studio', label: 'Social Studio' },
-] as const;
+const SERVICE_OPTIONS = ADMIN_SERVICE_OPTIONS;
 
 const Page = () => {
     const { user } = useAuth();
@@ -226,6 +207,7 @@ const Page = () => {
                     </h3>
                 </div>
                 <div className="p-6">
+<p className="mb-4 text-sm text-muted-foreground">Selected features allow viewing and managing that area. Refunds must be selected separately from Payout Requests. Partner management (applications, wallets and country policies) and Marketing are reserved for super admins.</p>
                     <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 rounded-lg border border-dashed border-border transition-opacity ${authorizationLevel === 'L1' ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                         {SERVICE_OPTIONS.map((service) => (
                             <label key={service.key} className="flex items-center gap-3 p-3 bg-muted/30 border border-border rounded-md hover:bg-muted transition-colors cursor-pointer group">

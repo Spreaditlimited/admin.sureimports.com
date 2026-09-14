@@ -165,7 +165,7 @@ const customerPayouts: MenuItem[] = [
     title: "Refunds",
     icon: Wallet,
     path: "/dashboard/refunds",
-    serviceKey: "payout_requests",
+    serviceKey: "refunds",
   },
   {
     title: "Payout Requests",

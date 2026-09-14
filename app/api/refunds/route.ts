@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
-const REFUNDS_SERVICE_KEY = 'payout_requests';
+const REFUNDS_SERVICE_KEY = 'refunds';
 
 function parseAmount(value?: string | null) {
   const amount = Number.parseFloat(String(value || '0'));

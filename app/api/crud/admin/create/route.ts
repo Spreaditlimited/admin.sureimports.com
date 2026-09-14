@@ -1,29 +1,10 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { ALL_SERVICE_KEYS } from '@/lib/accessControl';
 import { ADMIN_SERVICE_KEY, requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
-const SERVICE_KEYS = new Set([
-  'dashboard',
-  'procurement',
-  'corporate_gifts',
-  'pay_supplier',
-  'shipping_only',
-  'verify_supplier',
-  'pay_small_small',
-  'store_mgt',
-  'customer_accounts',
-  'payout_requests',
-  'invoicing',
-  'admin_mgt',
-  'shipping_plans',
-  'exchange_rates',
-  'blog_management',
-  'supplier_intelligence',
-  'consultations',
-  'social_studio',
-  'system_settings',
-]);
+const SERVICE_KEYS = new Set<string>(ALL_SERVICE_KEYS);
 
 export async function POST(request: Request) {
   const access = await requireAdminServiceAccess(ADMIN_SERVICE_KEY, 'edit');

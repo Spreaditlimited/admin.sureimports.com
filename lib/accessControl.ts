@@ -9,6 +9,7 @@ export const ALL_SERVICE_KEYS = [
   "store_mgt",
   "customer_accounts",
   "payout_requests",
+  "refunds",
   "invoicing",
   "admin_mgt",
   "shipping_plans",
@@ -41,7 +42,7 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/store", serviceKey: "store_mgt" },
   { prefix: "/dashboard/store-sales", serviceKey: "store_mgt" },
   { prefix: "/dashboard/customer-accounts", serviceKey: "customer_accounts" },
-  { prefix: "/dashboard/refunds", serviceKey: "payout_requests" },
+  { prefix: "/dashboard/refunds", serviceKey: "refunds" },
   { prefix: "/dashboard/affiliate-program", serviceKey: "payout_requests" },
   { prefix: "/dashboard/affiliates", serviceKey: "payout_requests" },
   { prefix: "/dashboard/affiliate-payouts", serviceKey: "payout_requests" },
@@ -100,6 +101,7 @@ const SERVICE_DEFAULT_ROUTE_MAP: Record<ServiceKey, string> = {
   pay_small_small: "/dashboard/pay-small-small?status=SAVED",
   store_mgt: "/dashboard/store/view",
   customer_accounts: "/dashboard/customer-accounts/customers",
+  refunds: "/dashboard/refunds",
   payout_requests: "/dashboard/payout-requests/requests",
   invoicing: "/dashboard/invoicing",
   admin_mgt: "/dashboard/admin/view",
@@ -127,3 +129,27 @@ export function getFirstAllowedDashboardRoute(
 
   return null;
 }
+
+export const ADMIN_SERVICE_OPTIONS = [
+  { key: 'dashboard', label: 'Dashboard & Payments' },
+  { key: 'procurement', label: 'Procurement' },
+  { key: 'corporate_gifts', label: 'Corporate Sourcing' },
+  { key: 'pay_supplier', label: 'Pay Supplier' },
+  { key: 'shipping_only', label: 'Shipping Only' },
+  { key: 'system_settings', label: 'System Settings' },
+  { key: 'verify_supplier', label: 'Verify Supplier' },
+  { key: 'pay_small_small', label: 'Pay Small Small' },
+  { key: 'store_mgt', label: 'Store Mgt.' },
+  { key: 'customer_accounts', label: 'Customer Accounts' },
+  { key: 'refunds', label: 'Refunds' },
+  { key: 'payout_requests', label: 'Payout Requests & Affiliate Program (configuration, affiliates and commissions)' },
+  { key: 'invoicing', label: 'Invoicing' },
+  { key: 'admin_mgt', label: 'Admin Mgt.' },
+  { key: 'shipping_plans', label: 'Shipping Plans' },
+  { key: 'exchange_rates', label: 'Exchange Rates & Service Charges' },
+  { key: 'blog_management', label: 'Blog Management' },
+  { key: 'supplier_intelligence', label: 'Supplier Intelligence' },
+  { key: 'consultations', label: 'Consultations' },
+  { key: 'body_camera_solutions', label: 'Body Camera Solutions' },
+  { key: 'social_studio', label: 'Social Studio' },
+] as const satisfies ReadonlyArray<{ key: ServiceKey; label: string }>;

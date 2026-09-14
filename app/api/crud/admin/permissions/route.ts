@@ -1,29 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ALL_SERVICE_KEYS } from '@/lib/accessControl';
 import { ADMIN_SERVICE_KEY, requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
-const SERVICE_KEYS = new Set([
-  'dashboard',
-  'procurement',
-  'corporate_gifts',
-  'pay_supplier',
-  'shipping_only',
-  'verify_supplier',
-  'pay_small_small',
-  'store_mgt',
-  'customer_accounts',
-  'payout_requests',
-  'invoicing',
-  'admin_mgt',
-  'shipping_plans',
-  'exchange_rates',
-  'blog_management',
-  'supplier_intelligence',
-  'consultations',
-  'body_camera_solutions',
-  'social_studio',
-  'system_settings',
-]);
+const SERVICE_KEYS = new Set<string>(ALL_SERVICE_KEYS);
 
 function isPrismaMissingTableError(error: unknown) {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2021';
