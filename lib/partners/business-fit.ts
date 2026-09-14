@@ -23,7 +23,10 @@ export function fitScore(scores: z.infer<typeof fitSchema>['scores']) {
 }
 export async function decideBusinessFit(id: string, actorPid: string, input: unknown) {
   const parsed = fitSchema.safeParse(input);
-  if (!parsed.success) throw new ReviewError('Complete all scorecard fields, a decision reason and a valid 30–60 day pilot duration.', 422);
+  if (!parsed.success) {
+    if (parsed.error.issues.some(issue => issue.path[0] === 'scores')) throw new ReviewError('Each category rating must be a whole number from 0 to 5, not percentage points.', 422);
+    throw new ReviewError('Complete all scorecard fields, a decision reason and a valid 30–60 day pilot duration.', 422);
+  }
   const body = parsed.data; const total = fitScore(body.scores);
   const notificationId = randomUUID();
   if (body.decision === 'PILOT_APPROVED' && (!body.hardBlockersCleared || body.pilotTargets.length < 30 || (total < 75 && body.overrideReason.length < 30)))

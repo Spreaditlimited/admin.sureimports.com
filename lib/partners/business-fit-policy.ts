@@ -13,7 +13,8 @@ const score = z.number().int().min(0).max(5);
 export const fitScoresSchema = z.object({ audience: score, acquisition: score, operations: score, demand: score, understanding: score }).strict();
 export type FitScores = z.infer<typeof fitScoresSchema>;
 export function weightedFitScore(scores: FitScores) {
-  return fitCriteria.reduce((total, [key, , weight]) => total + scores[key] * weight / 5, 0);
+  const validated = fitScoresSchema.parse(scores);
+  return fitCriteria.reduce((total, [key, , weight]) => total + validated[key] * weight / 5, 0);
 }
 const explanation = z.object({
   reason: z.string().trim().min(10).max(800),

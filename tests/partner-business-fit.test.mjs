@@ -47,6 +47,9 @@ test.after(()=>{globalThis.fetch=originalFetch;if(originalKey===undefined)delete
 
 test('fixed weights and strict output bounds',()=>{
   assert.equal(weightedFitScore(output.scores),69);
+  assert.equal(weightedFitScore({audience:4,acquisition:0,operations:0,demand:0,understanding:0}),24);
+  for (const invalid of [-1,6,20,NaN,Infinity,2.5]) assert.throws(()=>weightedFitScore({...output.scores,audience:invalid}));
+  assert.throws(()=>weightedFitScore({audience:20,acquisition:20,operations:20,demand:10,understanding:10}));
   assert.equal(weightedFitScore({audience:5,acquisition:5,operations:5,demand:5,understanding:5}),100);
   assert.equal(automaticFitSchema.safeParse({...output,scores:{...output.scores,audience:6}}).success,false);
   assert.equal(automaticFitSchema.safeParse({...output,decision:'APPROVE'}).success,false);
