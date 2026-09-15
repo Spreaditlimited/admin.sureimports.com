@@ -390,7 +390,9 @@ export async function renderSupplierIntelligencePdf(
     .fontSize(9.5)
     .text("www.sureimports.com", 54, 747);
   doc.text("WhatsApp only: +234 803 764 9956", 54, 769);
-  doc.text("hello@sureimports.com", 54, 791);
+  // Keep cover contact details inside the printable area; otherwise PDFKit
+  // creates an extra page containing only this email address.
+  doc.text("hello@sureimports.com", 54, 783, { lineBreak: false });
 
   doc.addPage();
   addPageTitle(
@@ -532,6 +534,7 @@ export async function renderSupplierIntelligencePdf(
   );
   snapshot.suppliers.forEach((supplier, index) => {
     ensureSpace(doc, 55);
+    const rowY = doc.y;
     doc
       .fillColor(index % 2 === 0 ? "#f8fafc" : "#ffffff")
       .roundedRect(54, doc.y, 487, 45, 8)
@@ -540,21 +543,21 @@ export async function renderSupplierIntelligencePdf(
       .fillColor(ORANGE)
       .font("Helvetica-Bold")
       .fontSize(9)
-      .text(String(index + 1).padStart(2, "0"), 68, doc.y + 9, { width: 28 });
+      .text(String(index + 1).padStart(2, "0"), 68, rowY + 9, { width: 28 });
     doc
       .fillColor(NAVY)
       .font("Helvetica-Bold")
       .fontSize(10)
-      .text(supplier.supplierName, 104, doc.y, { width: 210 });
+      .text(supplier.supplierName, 104, rowY + 9, { width: 210 });
     doc
       .fillColor(MUTED)
       .font("Helvetica")
       .fontSize(8.5)
-      .text(supplier.countryRegion || "Location to confirm", 326, doc.y - 11, {
+      .text(supplier.countryRegion || "Location to confirm", 326, rowY + 9, {
         width: 195,
         align: "right",
       });
-    doc.y += 33;
+    doc.y = rowY + 55;
   });
 
   snapshot.suppliers.forEach((supplier, index) =>

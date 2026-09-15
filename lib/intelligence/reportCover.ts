@@ -115,7 +115,8 @@ function coverPrompt(snapshot: ReportCategorySnapshot, revisionNotes = "") {
     products.length
       ? `Show a coherent, realistic selection of these exact product types: ${products.join(", ")}.`
       : "Show a coherent, realistic selection of the products in this category.",
-    "Portrait composition in a 2:3 aspect ratio. Arrange the products across the middle and lower-middle of the frame, with generous clean negative space in the top 42 percent and bottom 18 percent for a professionally typeset cover overlay.",
+    "Landscape 3:2 product photograph. Choose just two or three representative products, not the entire catalogue. Keep all products fully visible in a compact centered horizontal arrangement, with dark empty margins on every edge. Prefer folded apparel to tall hanging garments. This photograph will be placed in a portrait report template; do not generate the template or any typography.",
+    "Use a seamless very dark midnight navy backdrop, no horizon line or pedestal. No lettering, borders or visible labels. Typography zones will be reserved by the layout renderer, not painted into this photograph.",
     "Use a deep midnight navy studio background, subtle architectural shadows, controlled warm amber rim lighting and restrained premium highlights. The visual must feel authoritative, commercially useful and consistent with an executive market-intelligence publication.",
     "Photorealistic materials, accurate product geometry, refined art direction, no people unless essential to show wearable products, and no scenery that distracts from the products.",
     "Do not include text, letters, numbers, logos, trademarks, watermarks, badges, borders or invented packaging labels. Do not imitate any named brand.",
@@ -143,7 +144,7 @@ async function generateCoverBuffer(
     body: JSON.stringify({
       model: process.env.OPENAI_REPORT_IMAGE_MODEL?.trim() || "gpt-image-2",
       prompt: coverPrompt(snapshot, revisionNotes),
-      size: "1024x1536",
+      size: "1536x1024",
       quality: "high",
       n: 1,
     }),
@@ -162,8 +163,14 @@ async function generateCoverBuffer(
   if (!base64) throw new Error("OpenAI did not return a report cover image.");
 
   const source = Buffer.from(base64, "base64");
-  return sharp(source)
-    .resize(1024, 1536, { fit: "cover", position: "centre" })
+  // Reserve typography zones deterministically instead of relying on a
+  // generative model to obey percentage coordinates. No subject is cropped.
+  const productImage = await sharp(source)
+    .resize(880, 480, { fit: "inside", withoutEnlargement: true })
+    .png().toBuffer();
+  const metadata = await sharp(productImage).metadata();
+  return sharp({ create: { width: 1024, height: 1536, channels: 3, background: "#071426" } })
+    .composite([{ input: productImage, left: Math.floor((1024 - metadata.width!) / 2), top: 704 }])
     .png({ compressionLevel: 8, adaptiveFiltering: true })
     .toBuffer();
 }

@@ -2501,6 +2501,25 @@ model intelligence_report_order_events {
   @@index([eventType, createdAt], map: "iroe_type_created_idx")
 }
 
+model intelligence_report_notifications {
+  notificationKey String @id @db.VarChar(64)
+  requestId String @db.VarChar(80)
+  reportSlug String @db.VarChar(180)
+  email String @db.VarChar(255)
+  query String @db.VarChar(180)
+  status String @default("pending") @db.VarChar(20)
+  attempts Int @default(0)
+  lockToken String? @db.VarChar(36)
+  lockedAt DateTime?
+  nextAttemptAt DateTime @default(now())
+  sentAt DateTime?
+  lastError String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  @@index([sentAt, nextAttemptAt], map: "report_notifications_due")
+  @@index([requestId], map: "report_notifications_request")
+}
+
 model intelligence_report_requests {
   id                   Int                                 @id @default(autoincrement())
   pidRequest           String                              @unique() @db.VarChar(80)

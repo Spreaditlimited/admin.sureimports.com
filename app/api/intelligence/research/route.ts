@@ -1240,7 +1240,9 @@ async function notifySearchRequestDecision(
     totalCount: number;
   },
 ) {
-  if (!request.email) return;
+  // Public votes are notified only after the paid report is published, not
+  // when its underlying supplier research is approved.
+  if (!request.email || request.pidUser === 'MARKET_DEMAND') return;
 
   if (status === 'approved') {
     const hasRejected =

@@ -287,6 +287,8 @@ export async function generateReportEdition(
   return version;
 }
 
+import { reconcileReportDemandNotifications } from './reportDemandNotifications';
+
 export async function publishReportEdition(
   pidReport: string,
   pidVersion: string,
@@ -343,6 +345,11 @@ export async function publishReportEdition(
     "completed",
     "Report and product page published successfully",
   );
+  // Publication remains successful if SMTP is unavailable. The durable queue
+  // is retried by the main site's existing report reconciliation schedule.
+  await reconcileReportDemandNotifications(report.slug).catch(error => {
+    console.error('Report voter notifications queued for reconciliation', error);
+  });
 
   return prisma.intelligence_report_products.findUnique({
     where: { pidReport },
