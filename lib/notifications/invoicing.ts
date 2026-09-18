@@ -103,6 +103,7 @@ This is a reminder that invoice ${input.invoiceNumber} still has an outstanding 
 Please use the button below to review the invoice and submit your payment details if you have already paid. If payment has already been confirmed, no further action is needed.`,
     xButtonTitle: 'View Invoice',
     xButtonLink: input.invoiceLink,
+    throwOnError: true,
   });
 }
 

@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 import {
   createOrGetInvoiceAccessToken,
-  ensureInvoicingCoreTables,
   generatePid,
   syncOverdueInvoices,
 } from '@/app/api/invoicing/_lib/invoicing';
@@ -15,13 +14,8 @@ import {
 import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
 import { reconcileInvoicePayPalPayments } from '@/lib/invoicing/paypalReconciliation';
 
-const FIRST_FOLLOW_UP_HOURS = 24;
-const REPEAT_FOLLOW_UP_HOURS = 48;
+import { FOLLOW_UP_INTERVAL_MS, nextInvoiceFollowUp } from '@/lib/invoicing/followUpPolicy';
 const DEFAULT_LIMIT = 100;
-
-function hoursAgo(hours: number) {
-  return new Date(Date.now() - hours * 60 * 60 * 1000);
-}
 
 function hasValidCronSecret(request: NextRequest) {
   const expected = process.env.CRON_SECRET;
@@ -32,42 +26,22 @@ function hasValidCronSecret(request: NextRequest) {
   return Boolean(token && token === expected);
 }
 
-async function getLastSentFollowUp(pidInvoice: string) {
-  const rows: any[] = await prisma.$queryRawUnsafe(
-    `
-      SELECT followUpNumber, sentAt
-      FROM invoice_follow_ups
-      WHERE pidInvoice = ?
-        AND status = 'SENT'
-      ORDER BY sentAt DESC
-      LIMIT 1
-    `,
-    pidInvoice,
-  );
-
-  return rows[0] || null;
-}
-
-async function recordFollowUp(input: {
-  pidInvoice: string;
-  followUpNumber: number;
-  subject: string;
-  status: 'SENT' | 'FAILED';
-  error?: string | null;
-}) {
-  await prisma.$executeRawUnsafe(
-    `
-      INSERT INTO invoice_follow_ups
-      (pidFollowUp, pidInvoice, followUpNumber, subject, status, error, sentAt, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, NOW(3), NOW(3))
-    `,
-    generatePid('IFU'),
-    input.pidInvoice,
-    input.followUpNumber,
-    input.subject,
-    input.status,
-    input.error || null,
-  );
+async function reserveFollowUp(pidInvoice: string) {
+  return prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT pidInvoice FROM invoices WHERE pidInvoice = ${pidInvoice} FOR UPDATE`;
+    const invoice = await tx.invoices.findUnique({ where: { pidInvoice }, include: {
+      user: true, followUps: true,
+      paymentClaims: { where: { status: 'PENDING_CONFIRMATION' }, select: { pidClaim: true } },
+    } });
+    if (!invoice?.customerEmail) return null;
+    const followUpNumber = nextInvoiceFollowUp({ ...invoice, pendingClaims: invoice.paymentClaims.length }, invoice.followUps);
+    if (!followUpNumber) return null;
+    const reservation = await tx.invoice_follow_ups.create({ data: {
+      pidFollowUp: generatePid('IFU'), pidInvoice, followUpNumber,
+      subject: getInvoiceFollowUpSubject(invoice.invoiceNumber, followUpNumber), status: 'SENDING',
+    } });
+    return { invoice, reservation, followUpNumber };
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -88,16 +62,32 @@ export async function GET(request: NextRequest) {
     await reconcileInvoicePayPalPayments();
 
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(Math.max(Number(searchParams.get('limit') || DEFAULT_LIMIT), 1), 250);
-    const firstFollowUpCutoff = hoursAgo(FIRST_FOLLOW_UP_HOURS);
-    const repeatFollowUpCutoff = hoursAgo(REPEAT_FOLLOW_UP_HOURS);
+    const requestedLimit = Number(searchParams.get('limit') || DEFAULT_LIMIT);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(Math.floor(requestedLimit), 1), 250) : DEFAULT_LIMIT;
+    const cutoff = new Date(Date.now() - FOLLOW_UP_INTERVAL_MS);
+    // Filter exhausted and recently reminded invoices before LIMIT so they cannot
+    // indefinitely block newer invoices from being processed.
+    const candidates = await prisma.$queryRaw<Array<{ pidInvoice: string }>>`
+      SELECT i.pidInvoice FROM invoices i
+      LEFT JOIN (
+        SELECT pidInvoice, COUNT(*) AS attempts, MAX(followUpNumber) AS sequence, MAX(sentAt) AS latest
+        FROM invoice_follow_ups WHERE status IN ('SENT', 'SENDING', 'UNCERTAIN') GROUP BY pidInvoice
+      ) f ON f.pidInvoice = i.pidInvoice
+      WHERE i.status = 'OVERDUE' AND i.balanceDue > 0 AND i.customerEmail IS NOT NULL
+        AND i.issuedAt IS NOT NULL AND i.dueAt <= ${cutoff}
+        AND COALESCE(f.attempts, 0) < 3 AND COALESCE(f.sequence, 0) < 3
+        AND (f.latest IS NULL OR f.latest <= ${cutoff})
+        AND NOT EXISTS (SELECT 1 FROM invoice_payment_claims c WHERE c.pidInvoice = i.pidInvoice AND c.status = 'PENDING_CONFIRMATION')
+      ORDER BY i.dueAt ASC, i.pidInvoice ASC LIMIT ${limit}
+    `;
 
     const invoices = await prisma.invoices.findMany({
       where: {
+        pidInvoice: { in: candidates.map(row => row.pidInvoice) },
         status: 'OVERDUE',
         balanceDue: { gt: 0 },
         customerEmail: { not: null },
-        issuedAt: { not: null, lte: firstFollowUpCutoff },
+        issuedAt: { not: null },
       },
       include: {
         user: true,
@@ -120,7 +110,14 @@ export async function GET(request: NextRequest) {
       failed: [] as Array<{ pidInvoice: string; error: string }>,
     };
 
-    for (const invoice of invoices) {
+    for (const candidate of invoices) {
+      const reserved = await reserveFollowUp(candidate.pidInvoice);
+      if (!reserved) {
+        results.skippedCount += 1;
+        results.skipped.push({ pidInvoice: candidate.pidInvoice, reason: 'Not eligible for another weekly reminder' });
+        continue;
+      }
+      const { invoice, reservation, followUpNumber } = reserved;
       if (!invoice.customerEmail) {
         results.skippedCount += 1;
         results.skipped.push({ pidInvoice: invoice.pidInvoice, reason: 'Missing customer email' });
@@ -132,16 +129,6 @@ export async function GET(request: NextRequest) {
         results.skipped.push({ pidInvoice: invoice.pidInvoice, reason: 'Payment claim pending confirmation' });
         continue;
       }
-
-      const lastFollowUp = await getLastSentFollowUp(invoice.pidInvoice);
-      if (lastFollowUp?.sentAt && new Date(lastFollowUp.sentAt) > repeatFollowUpCutoff) {
-        results.skippedCount += 1;
-        results.skipped.push({ pidInvoice: invoice.pidInvoice, reason: 'Follow-up already sent within 48 hours' });
-        continue;
-      }
-
-      const followUpNumber = Number(lastFollowUp?.followUpNumber || 0) + 1;
-      const subject = getInvoiceFollowUpSubject(invoice.invoiceNumber, followUpNumber);
 
       try {
         const token = await createOrGetInvoiceAccessToken({
@@ -165,21 +152,16 @@ export async function GET(request: NextRequest) {
           followUpNumber,
         });
 
-        await recordFollowUp({
-          pidInvoice: invoice.pidInvoice,
-          followUpNumber,
-          subject,
-          status: 'SENT',
+        await prisma.invoice_follow_ups.update({
+          where: { pidFollowUp: reservation.pidFollowUp },
+          data: { status: 'SENT', sentAt: new Date() },
         });
         results.sentCount += 1;
       } catch (error: any) {
         const message = error?.message || 'Unknown error';
-        await recordFollowUp({
-          pidInvoice: invoice.pidInvoice,
-          followUpNumber,
-          subject,
-          status: 'FAILED',
-          error: message,
+        await prisma.invoice_follow_ups.update({
+          where: { pidFollowUp: reservation.pidFollowUp },
+          data: { status: 'UNCERTAIN', error: message },
         }).catch(() => null);
         results.failedCount += 1;
         results.failed.push({ pidInvoice: invoice.pidInvoice, error: message });
