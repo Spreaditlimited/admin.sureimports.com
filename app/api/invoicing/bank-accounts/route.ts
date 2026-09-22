@@ -1,7 +1,24 @@
+import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generatePid } from '../_lib/invoicing';
 import { requireAdminServiceAccess, SYSTEM_SETTINGS_SERVICE_KEY } from '@/app/api/_lib/adminAccess';
+
+const fields = z.object({
+  accountName: z.string().trim().min(1, 'Enter the account name.').max(191),
+  accountNumber: z.string().trim().min(1, 'Enter the account number.').max(100),
+  bankName: z.string().trim().min(1, 'Enter the bank name.').max(191),
+  sortCode: z.string().trim().max(50).nullable().optional(),
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, 'Enter a three-letter currency code.'),
+  country: z.string().trim().max(100).nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+  displayOrder: z.number().int().min(0).max(10000).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
+});
+function parseAccount(value: unknown, update = false) {
+  const schema = update ? fields.partial().extend({ pidBankAccount: z.string().trim().min(1).max(191) }) : fields;
+  return schema.safeParse(value);
+}
 
 export async function GET() {
   try {
@@ -19,7 +36,7 @@ export async function GET() {
         `);
     return NextResponse.json({ statusx: 'SUCCESS', data: accounts });
   } catch (error: any) {
-    return NextResponse.json({ statusx: 'ERROR', message: 'Failed to fetch bank accounts', error: error.message }, { status: 500 });
+    return NextResponse.json({ statusx: 'ERROR', message: 'Failed to fetch bank accounts' }, { status: 500 });
   }
 }
 
@@ -29,7 +46,10 @@ export async function POST(request: NextRequest) {
     if (!access.ok) return access.response;
     const admin = access.admin;
 
-    const body = await request.json();
+    if (request.headers.get('origin') !== new URL(request.url).origin) return NextResponse.json({ statusx: 'ERROR', message: 'Please reload this page and try again.' }, { status: 403 });
+    const parsed = parseAccount(await request.json(), request.method === 'PATCH');
+    if (!parsed.success) return NextResponse.json({ statusx: 'ERROR', message: parsed.error.issues[0]?.message || 'Check the account details.' }, { status: 400 });
+    const body: any = parsed.data;
     const payload = {
       pidBankAccount: generatePid('IBA'),
       accountName: String(body?.accountName || '').trim(),
@@ -76,7 +96,7 @@ export async function POST(request: NextRequest) {
         })();
     return NextResponse.json({ statusx: 'SUCCESS', data: created }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ statusx: 'ERROR', message: 'Failed to create bank account', error: error.message }, { status: 500 });
+    return NextResponse.json({ statusx: 'ERROR', message: 'Failed to create bank account' }, { status: 500 });
   }
 }
 
@@ -86,12 +106,17 @@ export async function PATCH(request: NextRequest) {
     if (!access.ok) return access.response;
     const admin = access.admin;
 
-    const body = await request.json();
+    if (request.headers.get('origin') !== new URL(request.url).origin) return NextResponse.json({ statusx: 'ERROR', message: 'Please reload this page and try again.' }, { status: 403 });
+    const parsed = parseAccount(await request.json(), request.method === 'PATCH');
+    if (!parsed.success) return NextResponse.json({ statusx: 'ERROR', message: parsed.error.issues[0]?.message || 'Check the account details.' }, { status: 400 });
+    const body: any = parsed.data;
     const pidBankAccount = String(body?.pidBankAccount || '');
     if (!pidBankAccount) {
       return NextResponse.json({ statusx: 'ERROR', message: 'pidBankAccount is required' }, { status: 400 });
     }
 
+    const existing: any[] = await prisma.$queryRaw`SELECT pidBankAccount FROM invoice_bank_accounts WHERE pidBankAccount = ${pidBankAccount} LIMIT 1`;
+    if (!existing.length) return NextResponse.json({ statusx: 'ERROR', message: 'This bank account no longer exists. Refresh the list.' }, { status: 404 });
     const model = (prisma as any).invoice_bank_accounts;
     const updated = model
       ? await model.update({
@@ -137,6 +162,6 @@ export async function PATCH(request: NextRequest) {
         })();
     return NextResponse.json({ statusx: 'SUCCESS', data: updated });
   } catch (error: any) {
-    return NextResponse.json({ statusx: 'ERROR', message: 'Failed to update bank account', error: error.message }, { status: 500 });
+    return NextResponse.json({ statusx: 'ERROR', message: 'Failed to update bank account' }, { status: 500 });
   }
 }

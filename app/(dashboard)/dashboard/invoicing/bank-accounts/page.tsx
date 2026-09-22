@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Plus, CreditCard, Globe, Power, RefreshCw, Landmark } from 'lucide-react';
+import { Pencil, X, Loader2, Plus, CreditCard, Globe, Power, RefreshCw, Landmark } from 'lucide-react';
 
 export default function InvoiceBankAccountsPage() {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,36 +40,47 @@ export default function InvoiceBankAccountsPage() {
 
   useEffect(() => { load(); }, []);
 
-  const create = async () => {
-    if (!form.accountName || !form.accountNumber || !form.bankName) {
-        return toast.error("Please fill required fields");
-    }
-
-    const res = await fetch('/api/invoicing/bank-accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    const json = await res.json();
-    if (!res.ok) return toast.error(json?.message || 'Failed to add account');
-    
-    toast.success('Bank account successfully added');
+  const resetForm = () => {
+    setEditingId(null);
     setForm({ accountName: '', accountNumber: '', bankName: '', sortCode: '', currency: 'NGN', country: 'Nigeria' });
-    load();
   };
-
+  const edit = (account: any) => {
+    setEditingId(account.pidBankAccount);
+    setForm({ accountName: account.accountName || '', accountNumber: account.accountNumber || '', bankName: account.bankName || '', sortCode: account.sortCode || '', currency: account.currency || 'NGN', country: account.country || '' });
+    editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    editorRef.current?.querySelector('input')?.focus({ preventScroll: true });
+  };
+  const create = async () => {
+    if (saving) return;
+    if (!form.accountName.trim() || !form.accountNumber.trim() || !form.bankName.trim())
+      return toast.error('Enter the account name, account number and bank name.');
+    setSaving(true);
+    try {
+      const res = await fetch('/api/invoicing/bank-accounts', {
+        method: editingId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, ...(editingId ? { pidBankAccount: editingId } : {}) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || 'Could not save the bank account.');
+      toast.success(editingId ? 'Bank account updated successfully.' : 'Bank account added successfully.');
+      resetForm();
+      await load();
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not save the bank account.'); }
+    finally { setSaving(false); }
+  };
   const toggleStatus = async (pidBankAccount: string, current: string) => {
+    if (statusBusy) return;
     const status = current === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-    const res = await fetch('/api/invoicing/bank-accounts', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pidBankAccount, status }),
-    });
-    const json = await res.json();
-    if (!res.ok) return toast.error(json?.message || 'Failed to update account');
-    
-    toast.success(`Account marked as ${status.toLowerCase()}`);
-    load();
+    setStatusBusy(pidBankAccount);
+    try {
+      const res = await fetch('/api/invoicing/bank-accounts', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pidBankAccount, status }) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || 'Could not update this account.');
+      toast.success(`Account marked as ${status.toLowerCase()}.`);
+      await load();
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not update this account.'); }
+    finally { setStatusBusy(null); }
   };
 
   return (
@@ -92,17 +107,17 @@ export default function InvoiceBankAccountsPage() {
       )}
 
       {/* 2. Add Account Configuration Panel */}
-      <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+      <div ref={editorRef} className="scroll-mt-24 bg-card border border-border rounded-lg shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-border bg-muted/20">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                <Plus className="w-4 h-4 text-primary" /> Add New Bank Account
+                {editingId ? <Pencil className="w-4 h-4 text-primary" /> : <Plus className="w-4 h-4 text-primary" />} {editingId ? 'Edit Bank Account' : 'Add New Bank Account'}
             </h2>
         </div>
         
-        <div className="p-6 space-y-6">
+        <fieldset disabled={saving} className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Account Name</label>
+                    <label className="text-xs font-semibold tracking-wide text-muted-foreground">Account Name</label>
                     <input 
                         className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-ring transition-all" 
                         placeholder="e.g. Sure Imports Limited" 
@@ -111,7 +126,7 @@ export default function InvoiceBankAccountsPage() {
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Account Number</label>
+                    <label className="text-xs font-semibold tracking-wide text-muted-foreground">Account Number</label>
                     <input 
                         className="w-full px-3 py-2 text-sm font-mono tracking-widest border border-input rounded-md bg-background focus:ring-2 focus:ring-ring transition-all" 
                         placeholder="0000000000" 
@@ -120,7 +135,7 @@ export default function InvoiceBankAccountsPage() {
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Bank Name</label>
+                    <label className="text-xs font-semibold tracking-wide text-muted-foreground">Bank Name</label>
                     <input 
                         className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-ring transition-all" 
                         placeholder="e.g. Zenith Bank" 
@@ -129,7 +144,7 @@ export default function InvoiceBankAccountsPage() {
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sort Code (Optional)</label>
+                    <label className="text-xs font-semibold tracking-wide text-muted-foreground">Sort Code (Optional)</label>
                     <input 
                         className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-ring transition-all" 
                         placeholder="00-00-00" 
@@ -138,7 +153,7 @@ export default function InvoiceBankAccountsPage() {
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Currency</label>
+                    <label className="text-xs font-semibold tracking-wide text-muted-foreground">Currency</label>
                     <input 
                         className="w-full px-3 py-2 text-sm font-bold border border-input rounded-md bg-background focus:ring-2 focus:ring-ring transition-all" 
                         placeholder="NGN" 
@@ -147,7 +162,7 @@ export default function InvoiceBankAccountsPage() {
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Country</label>
+                    <label className="text-xs font-semibold tracking-wide text-muted-foreground">Country</label>
                     <input 
                         className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:ring-2 focus:ring-ring transition-all" 
                         placeholder="Nigeria" 
@@ -157,15 +172,16 @@ export default function InvoiceBankAccountsPage() {
                 </div>
             </div>
             
-            <div className="flex justify-end pt-2">
+            <div className="flex flex-wrap justify-end gap-3 pt-2">
+              {editingId && <button type="button" onClick={resetForm} className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-2.5 text-sm font-semibold"><X className="h-4 w-4" />Cancel editing</button>}
                 <button 
                     onClick={create} 
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-bold shadow-sm hover:bg-primary/90 transition-all focus:ring-2 focus:ring-ring"
                 >
-                    <Landmark className="w-4 h-4" /> Register Account
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Landmark className="w-4 h-4" />} {saving ? 'Saving…' : editingId ? 'Save changes' : 'Register account'}
                 </button>
             </div>
-        </div>
+        </fieldset>
       </div>
 
       {/* 3. Account List Grid */}
@@ -199,8 +215,10 @@ export default function InvoiceBankAccountsPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex justify-end">
+              <div className="pt-4 border-t border-border flex flex-wrap justify-end gap-3">
+                  <button type="button" disabled={saving || !!statusBusy} onClick={() => edit(it)} className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"><Pencil className="h-4 w-4" />Edit account</button>
                   <button 
+                    disabled={saving || !!statusBusy}
                     onClick={() => toggleStatus(it.pidBankAccount, it.status)} 
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold transition-all border focus:ring-2 focus:ring-ring ${
                         it.status === 'ACTIVE'
