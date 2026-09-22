@@ -43,8 +43,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Handle Initial Theme Load
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme")
-    setIsDark(savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches))
+    let savedTheme = "light"
+    try { savedTheme = localStorage.getItem("theme") || "light" } catch (_) {}
+    setIsDark(savedTheme === "dark")
   }, [])
 
   // Handle Click Outside for Dropdown
