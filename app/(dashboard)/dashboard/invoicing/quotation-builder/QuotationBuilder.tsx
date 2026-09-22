@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import DocumentPagination from '../components/DocumentPagination';
+import { useDocumentList } from '../components/useDocumentList';
 import { createPortal } from 'react-dom';
 import {
   Calculator,
@@ -169,7 +171,7 @@ export default function QuotationBuilder({ linkedRequestId = '' }: { linkedReque
   const [assets, setAssets] = useState<QuotationSourceAsset[]>([]);
   const [extraction, setExtraction] = useState<Extraction | null>(null);
   const [rates, setRates] = useState<QuotationRateSnapshot | null>(null);
-  const [history, setHistory] = useState<HistoryRow[]>([]);
+  const { items: history, search: historySearch, setSearch: setHistorySearch, setPage: setHistoryPage, pagination: historyPagination, loading: historyLoading, error: historyError, refresh: refreshHistory } = useDocumentList<HistoryRow>('/api/invoicing/quotation-builder');
   const [products, setProducts] = useState<QuoteProduct[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -193,14 +195,11 @@ export default function QuotationBuilder({ linkedRequestId = '' }: { linkedReque
   const loadData = async () => {
     setLoading(true);
     try {
-      const [configRes, historyRes] = await Promise.all([
-        fetch('/api/invoicing/quotation-builder/config', { cache: 'no-store' }),
-        fetch('/api/invoicing/quotation-builder', { cache: 'no-store' }),
-      ]);
-      const [configJson, historyJson] = await Promise.all([configRes.json(), historyRes.json()]);
+      const configRes = await fetch('/api/invoicing/quotation-builder/config', { cache: 'no-store' });
+      const configJson = await configRes.json();
       if (!configRes.ok || !configJson?.data) throw new Error(configJson?.message || 'Could not load quotation rates.');
       setRates(configJson.data);
-      setHistory(Array.isArray(historyJson?.data) ? historyJson.data : []);
+      refreshHistory();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not load quotation builder.');
     } finally {
@@ -442,8 +441,14 @@ export default function QuotationBuilder({ linkedRequestId = '' }: { linkedReque
     </section>
 
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="border-b border-border bg-muted/20 px-6 py-4"><h2 className="text-sm font-black uppercase tracking-wider">Recent quotations</h2></div>
-      {!history.length ? <div className="p-8 text-center text-sm text-muted-foreground">No generated quotations yet.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground"><tr><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Created</th><th className="px-5 py-3">Invoice</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody>{history.map((row) => <tr key={row.pidQuotation} className="border-t border-border"><td className="px-5 py-4 font-bold">{row.quotationNumber}{row.linkedRequestId ? <span className="mt-1 block text-[10px] font-medium text-muted-foreground">Sourcing: {row.linkedRequestId}</span> : null}</td><td className="px-5 py-4"><strong className="block">{row.customerName}</strong><span className="text-xs text-muted-foreground">{row.user?.userEmail || 'Customer account not linked'}</span></td><td className="px-5 py-4 text-muted-foreground"><span className="block">{new Date(row.createdAt).toLocaleString('en-NG')}</span>{row.lastSentAt ? <span className="text-[10px]">Sent {row.sendCount} time{row.sendCount === 1 ? '' : 's'}</span> : null}</td><td className="px-5 py-4">{row.invoices?.length ? row.invoices.map((invoice) => <a key={invoice.pidInvoice} href={`/dashboard/invoicing/${invoice.pidInvoice}`} className="block font-bold text-primary hover:underline">{invoice.invoiceNumber}</a>) : <span className="text-xs text-muted-foreground">Not invoiced</span>}</td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2"><QuotationPdfMenu pidQuotation={row.pidQuotation} /><button type="button" disabled={!row.pidUser || sendingPid === row.pidQuotation} onClick={() => sendQuotation(row.pidQuotation)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{sendingPid === row.pidQuotation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Email</button>{!row.invoices?.length ? <a href={`/dashboard/invoicing/create?pidQuotation=${encodeURIComponent(row.pidQuotation)}${row.linkedRequestId ? `&linkedRequestId=${encodeURIComponent(row.linkedRequestId)}` : ''}`} className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted">Create invoice</a> : null}</div></td></tr>)}</tbody></table></div>}
+      <div className="border-b border-border bg-muted/20 px-6 py-4"><h2 className="text-sm font-black uppercase tracking-wider">Saved quotations</h2></div>
+      <div className="space-y-3 border-b border-border p-5">
+        <div className="flex flex-col gap-3 sm:flex-row"><input aria-label="Search quotation contents" maxLength={300} className={inputClass} value={historySearch} onChange={e => setHistorySearch(e.target.value)} placeholder="Search products, specifications, notes, customer or reference…" /><button type="button" onClick={refreshHistory} className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-bold hover:bg-muted"><RefreshCw className={`h-4 w-4 ${historyLoading ? 'animate-spin' : ''}`} />Refresh</button></div>
+        <p className="text-sm text-muted-foreground">Search all saved quotations, including titles, product descriptions and notes. Use quotation marks for an exact phrase.</p>
+        {historyError ? <p role="alert" className="text-sm text-destructive">{historyError}</p> : null}
+      </div>
+      {historyLoading ? <div role="status" className="p-8 text-center text-sm text-muted-foreground">Loading quotations…</div> : !history.length ? <div className="p-8 text-center text-sm text-muted-foreground">No quotations match your search.</div> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-muted/20 text-[10px] uppercase tracking-wider text-muted-foreground"><tr><th className="px-5 py-3">Reference</th><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Created</th><th className="px-5 py-3">Invoice</th><th className="px-5 py-3 text-right">Actions</th></tr></thead><tbody>{history.map((row) => <tr key={row.pidQuotation} className="border-t border-border"><td className="px-5 py-4 font-bold">{row.quotationNumber}{row.linkedRequestId ? <span className="mt-1 block text-[10px] font-medium text-muted-foreground">Sourcing: {row.linkedRequestId}</span> : null}</td><td className="px-5 py-4"><strong className="block">{row.customerName}</strong><span className="text-xs text-muted-foreground">{row.user?.userEmail || 'Customer account not linked'}</span></td><td className="px-5 py-4 text-muted-foreground"><span className="block">{new Date(row.createdAt).toLocaleString('en-NG')}</span>{row.lastSentAt ? <span className="text-[10px]">Sent {row.sendCount} time{row.sendCount === 1 ? '' : 's'}</span> : null}</td><td className="px-5 py-4">{row.invoices?.length ? row.invoices.map((invoice) => <a key={invoice.pidInvoice} href={`/dashboard/invoicing/${invoice.pidInvoice}`} className="block font-bold text-primary hover:underline">{invoice.invoiceNumber}</a>) : <span className="text-xs text-muted-foreground">Not invoiced</span>}</td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2"><QuotationPdfMenu pidQuotation={row.pidQuotation} /><button type="button" disabled={!row.pidUser || sendingPid === row.pidQuotation} onClick={() => sendQuotation(row.pidQuotation)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{sendingPid === row.pidQuotation ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />} Email</button>{!row.invoices?.length ? <a href={`/dashboard/invoicing/create?pidQuotation=${encodeURIComponent(row.pidQuotation)}${row.linkedRequestId ? `&linkedRequestId=${encodeURIComponent(row.linkedRequestId)}` : ''}`} className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-muted">Create invoice</a> : null}</div></td></tr>)}</tbody></table></div>}
+      <DocumentPagination pagination={historyPagination} busy={historyLoading || Boolean(historyError)} onPage={setHistoryPage} />
     </section>
   </div>;
 }

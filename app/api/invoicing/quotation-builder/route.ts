@@ -1,3 +1,4 @@
+import { documentSearch, listPage } from '@/lib/invoicing/documentSearch';
 import crypto from 'node:crypto';
 
 import { NextResponse } from 'next/server';
@@ -100,12 +101,23 @@ function validateInput(body: any): QuoteBuildInput {
   return input;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const access = await requireAdminServiceAccess('invoicing', 'view');
   if (!access.ok) return access.response;
+  try {
+  const params = new URL(request.url).searchParams;
+  const { page, limit, skip } = listPage(params, 50);
+  const search = documentSearch('quotation', params.get('search') || '');
+  const [ids, counts] = await Promise.all([
+    prisma.$queryRawUnsafe<{ pidQuotation: string }[]>(
+      `SELECT pidQuotation FROM quotation_builder_documents WHERE ${search.sql} ORDER BY createdAt DESC, id DESC LIMIT ${limit} OFFSET ${skip}`, ...search.values),
+    prisma.$queryRawUnsafe<{ totalCount: bigint }[]>(
+      `SELECT COUNT(*) AS totalCount FROM quotation_builder_documents WHERE ${search.sql}`, ...search.values),
+  ]);
+  const totalCount = Number(counts[0]?.totalCount || 0);
   const records = await prisma.quotation_builder_documents.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 50,
+    where: { pidQuotation: { in: ids.map(row => row.pidQuotation) } },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     select: {
       pidQuotation: true,
       quotationNumber: true,
@@ -136,7 +148,11 @@ export async function GET() {
     select: { pidUser: true, userFirstname: true, userLastname: true, userEmail: true },
   }) : [];
   const userMap = new Map(users.map((user) => [user.pidUser, user]));
-  return NextResponse.json({ statusx: 'SUCCESS', data: records.map((record) => ({ ...record, user: record.pidUser ? userMap.get(record.pidUser) || null : null })) });
+  return NextResponse.json({ statusx: 'SUCCESS', pagination: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) }, data: records.map((record) => ({ ...record, user: record.pidUser ? userMap.get(record.pidUser) || null : null })) });
+  } catch (error) {
+    console.error('Could not list quotations', error);
+    return NextResponse.json({ statusx: 'ERROR', message: 'Could not load quotations. Please try again.' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

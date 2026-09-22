@@ -1,3 +1,4 @@
+import { documentSearch, listPage } from '@/lib/invoicing/documentSearch';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {
@@ -39,44 +40,12 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || '';
     const pidUser = searchParams.get('pidUser') || '';
     const search = searchParams.get('search') || '';
-    const page = Number(searchParams.get('page') || '1');
-    const limit = Number(searchParams.get('limit') || '20');
-
-    const skip = (Math.max(page, 1) - 1) * Math.max(limit, 1);
-    const take = Math.min(Math.max(limit, 1), 100);
+    const { page, limit: take, skip } = listPage(searchParams);
 
     await syncOverdueInvoices();
-    const model = (prisma as any).invoices;
     let items: any[] = [];
     let totalCount = 0;
-
-    if (model) {
-      const where: any = {};
-      if (status) where.status = status;
-      if (pidUser) where.pidUser = pidUser;
-      if (!isSuperAdmin(admin.userStatus)) {
-        const superAdminPidUsers = await getSuperAdminPidUsers();
-        where.createdByPidUser = { notIn: superAdminPidUsers };
-      }
-      if (search) {
-        where.OR = [
-          { invoiceNumber: { contains: search } },
-          { pidInvoice: { contains: search } },
-          { customerName: { contains: search } },
-          { customerEmail: { contains: search } },
-        ];
-      }
-
-      [items, totalCount] = await Promise.all([
-        model.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          skip,
-          take,
-        }),
-        model.count({ where }),
-      ]);
-    } else {
+    {
       const filters: string[] = [];
       const values: any[] = [];
       if (status) {
@@ -95,15 +64,13 @@ export async function GET(request: NextRequest) {
           values.push(...superAdminPidUsers);
         }
       }
-      if (search) {
-        filters.push('(invoiceNumber LIKE ? OR pidInvoice LIKE ? OR customerName LIKE ? OR customerEmail LIKE ?)');
-        const like = `%${search}%`;
-        values.push(like, like, like, like);
-      }
+      const deepSearch = documentSearch('invoice', search);
+      filters.push(deepSearch.sql);
+      values.push(...deepSearch.values);
       const whereSql = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
       const rows: any[] = await prisma.$queryRawUnsafe(
-        `SELECT * FROM invoices ${whereSql} ORDER BY createdAt DESC LIMIT ${take} OFFSET ${skip}`,
+        `SELECT * FROM invoices ${whereSql} ORDER BY createdAt DESC, id DESC LIMIT ${take} OFFSET ${skip}`,
         ...values,
       );
       const countRows: any[] = await prisma.$queryRawUnsafe(

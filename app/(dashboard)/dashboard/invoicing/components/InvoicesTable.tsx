@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import DocumentPagination from './DocumentPagination';
+import { useDocumentList } from './useDocumentList';
 import Link from 'next/link';
 import { 
   Eye, 
@@ -27,46 +29,15 @@ interface Invoice {
 }
 
 export default function InvoicesTable() {
-  const [items, setItems] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-
-  const fetchInvoices = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const params = new URLSearchParams();
-      if (search) params.set('search', search);
-      if (status) params.set('status', status);
-      const res = await fetch(`/api/invoicing/invoices?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || 'Failed to fetch invoices');
-      setItems(data.data || []);
-    } catch (e: unknown) {
-      setItems([]);
-      const message = e instanceof Error ? e.message : 'Failed to fetch invoices';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
+  const { items, loading, error, search, setSearch, setPage, pagination, refresh } = useDocumentList<Invoice>('/api/invoicing/invoices', status);
 
   const totals = useMemo(() => {
-    return items.reduce(
-      (acc, it) => {
-        acc.total += Number(it.grandTotal || 0);
-        acc.paid += Number(it.amountPaid || 0);
-        acc.balance += Number(it.balanceDue || 0);
-        return acc;
-      },
-      { total: 0, paid: 0, balance: 0 },
-    );
+    const currencies = [...new Set(items.map(item => item.currency))];
+    const sum = (field: 'grandTotal' | 'amountPaid' | 'balanceDue') => currencies.map(currency =>
+      currency + ' ' + items.filter(item => item.currency === currency).reduce((sum, item) => sum + Number(item[field] || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ).join(' · ') || '—';
+    return { total: sum('grandTotal'), paid: sum('amountPaid'), balance: sum('balanceDue') };
   }, [items]);
 
   const getStatusBadge = (status: string) => {
@@ -91,20 +62,20 @@ export default function InvoicesTable() {
       {/* 1. Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-card border border-border p-6 rounded-xl shadow-soft">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Receivables</p>
-          <p className="text-2xl font-bold text-foreground">₦{totals.total.toLocaleString()}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Invoice value · this page</p>
+          <p className="text-2xl font-bold text-foreground">{loading ? '—' : totals.total}</p>
         </div>
         <div className="bg-card border border-border p-6 rounded-xl shadow-soft">
           <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1 flex items-center gap-1.5">
-            <CheckCircle className="w-3 h-3" /> Total Collected
+            <CheckCircle className="w-3 h-3" /> Collected · this page
           </p>
-          <p className="text-2xl font-bold text-foreground">₦{totals.paid.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-foreground">{loading ? '—' : totals.paid}</p>
         </div>
         <div className="bg-card border border-border p-6 rounded-xl shadow-soft">
           <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1 flex items-center gap-1.5">
-            <Clock className="w-3 h-3" /> Total Outstanding
+            <Clock className="w-3 h-3" /> Outstanding · this page
           </p>
-          <p className="text-2xl font-bold text-foreground">₦{totals.balance.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-foreground">{loading ? '—' : totals.balance}</p>
         </div>
       </div>
 
@@ -116,13 +87,16 @@ export default function InvoicesTable() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search invoice, customer or email..."
+              aria-label="Search invoice contents"
+              maxLength={300}
+              placeholder="Search items, descriptions, notes, customer or reference…"
               className="w-full pl-9 pr-4 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:ring-2 focus:ring-ring transition-all"
             />
           </div>
           <select
+            aria-label="Invoice status"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
             className="px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground font-medium focus:ring-2 focus:ring-ring"
           >
             <option value="">Filter Status</option>
@@ -133,11 +107,11 @@ export default function InvoicesTable() {
             <option value="OVERDUE">Overdue</option>
           </select>
           <button 
-            onClick={fetchInvoices} 
+            onClick={refresh}
             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-md text-sm font-bold hover:bg-muted transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Apply
+            Refresh
           </button>
         </div>
         
@@ -149,6 +123,8 @@ export default function InvoicesTable() {
           Create Invoice
         </Link>
       </div>
+
+      <p className="text-sm text-muted-foreground">Search all invoices, including line items and notes. Use quotation marks for an exact phrase.</p>
 
       {/* 3. Main Data Table */}
       <div className="bg-card border border-border rounded-lg shadow-soft overflow-hidden">
@@ -259,6 +235,7 @@ export default function InvoicesTable() {
             </tbody>
           </table>
         </div>
+        <DocumentPagination pagination={pagination} busy={loading || Boolean(error)} onPage={setPage} />
       </div>
     </div>
   );
