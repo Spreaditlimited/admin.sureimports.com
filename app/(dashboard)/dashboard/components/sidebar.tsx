@@ -206,6 +206,7 @@ const financials: MenuItem[] = [
 ];
 
 const marketing: MenuItem[] = [
+  { title: "WhatsApp Performance", icon: BarChart3, path: "/dashboard/whatsapp", serviceKey: "whatsapp_performance" },
   {
     title: "Marketing",
     icon: BarChart3,

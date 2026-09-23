@@ -7,6 +7,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/partners/requests": "Partner Procurement Requests",
   "/dashboard/admin/add": "Add Admin",
   "/dashboard/admin/view": "Manage Admins",
+  "/dashboard/whatsapp": "WhatsApp Performance",
   "/dashboard/admin/whatsapp": "Public WhatsApp Contacts",
   "/dashboard/blog/categories": "Blog Categories",
   "/dashboard/blog/create": "Create Blog Post",

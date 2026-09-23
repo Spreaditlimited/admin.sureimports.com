@@ -2717,3 +2717,45 @@ model partner_adjustment_refunds {
   @@index([adjustmentId,status],map:"partner_adjustment_refund_parent")
   @@index([provider,captureReference],map:"partner_adjustment_refund_capture")
 }
+
+model whatsapp_clicks {
+  id          String @id @db.VarChar(36)
+  site        String @db.VarChar(30)
+  path        String @db.VarChar(250)
+  destination String @db.VarChar(80)
+  placement   String @db.VarChar(20)
+  device      String @db.VarChar(10)
+  sessionId   String? @db.VarChar(36)
+  source      String @default("") @db.VarChar(80)
+  campaign    String @default("") @db.VarChar(80)
+  service     String @db.VarChar(50)
+  audience    String @db.VarChar(10)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  lead        whatsapp_leads?
+  @@index([createdAt, site, audience], map: "whatsapp_click_period")
+  @@index([sessionId, createdAt], map: "whatsapp_click_session")
+}
+
+model whatsapp_leads {
+  id          String @id @db.VarChar(36)
+  phone       String @db.VarChar(16)
+  name        String @db.VarChar(120)
+  site        String @db.VarChar(30)
+  status      String @default("NEW") @db.VarChar(20)
+  clickId     String? @unique(map: "whatsapp_lead_click") @db.VarChar(36)
+  click       whatsapp_clicks? @relation(fields: [clickId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "whatsapp_lead_click_fk")
+  notes       String @default("") @db.VarChar(1000)
+  receivedAt  DateTime @db.DateTime(3)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  updatedAt   DateTime @default(now()) @db.DateTime(3)
+  createdBy   String @db.VarChar(191)
+  updatedBy   String @db.VarChar(191)
+  @@unique([site, phone], map: "whatsapp_lead_phone")
+  @@index([receivedAt, site, status], map: "whatsapp_lead_period")
+}
+
+model whatsapp_rate_limits {
+  scopeHash   String @id @db.Char(64)
+  windowStart DateTime @db.DateTime(3)
+  attempts    Int @default(1)
+}
