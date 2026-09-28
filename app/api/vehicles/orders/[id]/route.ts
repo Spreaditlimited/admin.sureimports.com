@@ -129,7 +129,7 @@ export async function POST(
             priceSnapshot: {
               ...price,
               rates,
-              markup: 1.2,
+              markup: 1 + (rates.markupPercent ?? 20) / 100,
               variant,
               notes: quoteNotes,
             },

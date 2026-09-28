@@ -1102,6 +1102,7 @@ model exchange_rate {
   exYuanToDollar             String?
   exNairaToYuan              String?
   quotationSeaRateNgnPerCbm  String?   @default("500000")
+  vehicleMarkupPercent       Decimal   @default(20) @db.Decimal(10, 2)
   procurementMinimumOrderNgn Int       @default(50000)
   procurementVatForeign      String    @default("20")
   exGbpPerUsd                String?

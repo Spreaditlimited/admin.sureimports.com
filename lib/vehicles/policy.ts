@@ -1,4 +1,13 @@
-export const VEHICLE_MARKUP = 1.2;
+export const DEFAULT_VEHICLE_MARKUP_PERCENT = 20;
+export function validVehicleMarkup(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 99999999.99 &&
+    Math.abs(value * 100 - Math.round(value * 100)) < 0.000001
+  );
+}
 export const VEHICLE_STAGES = [
   "ORDER_CONFIRMED",
   "SUPPLIER_ORDERED",
@@ -55,7 +64,11 @@ export type VehicleModel = {
   variants: VehicleSpec[];
   published: boolean;
 };
-export type Rates = { ngnPerRmb: number; ngnPerCbm: number };
+export type Rates = {
+  ngnPerRmb: number;
+  ngnPerCbm: number;
+  markupPercent?: number;
+};
 export function cbm(v: Pick<VehicleSpec, "lengthMm" | "widthMm" | "heightMm">) {
   const dimensions = [v.lengthMm, v.widthMm, v.heightMm];
   if (dimensions.some((n) => n === null || !Number.isFinite(n) || n <= 0))
@@ -65,6 +78,8 @@ export function cbm(v: Pick<VehicleSpec, "lengthMm" | "widthMm" | "heightMm">) {
 export function priceVehicle(v: VehicleSpec, rates: Rates, quantity = 1) {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100)
     throw new Error("Choose between 1 and 100 vehicles.");
+  const markupPercent = rates.markupPercent ?? DEFAULT_VEHICLE_MARKUP_PERCENT;
+  if (!validVehicleMarkup(markupPercent)) return null;
   const volume = cbm(v);
   if (
     volume === null ||
@@ -77,7 +92,9 @@ export function priceVehicle(v: VehicleSpec, rates: Rates, quantity = 1) {
     rates.ngnPerCbm <= 0
   )
     return null;
-  const vehicleKobo = Math.round(v.manufacturerRmb * 120 * rates.ngnPerRmb);
+  const vehicleKobo = Math.round(
+    v.manufacturerRmb * (100 + markupPercent) * rates.ngnPerRmb,
+  );
   const shippingKobo = Math.round(volume * rates.ngnPerCbm * 100);
   if (!Number.isSafeInteger((vehicleKobo + shippingKobo) * quantity))
     throw new Error("Price exceeds the supported amount.");

@@ -76,6 +76,8 @@ export default function VehicleAdminWorkspace() {
   const [models, setModels] = useState<VehicleModel[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [rates, setRates] = useState<Rates>({ ngnPerRmb: 0, ngnPerCbm: 0 });
+  const [markup, setMarkup] = useState("20");
+  const [canEditPricing, setCanEditPricing] = useState(false);
   const [edit, setEdit] = useState<VehicleModel | null>(null);
   const [orderId, setOrderId] = useState("");
   const order = orders.find((o) => o.id === orderId);
@@ -96,6 +98,8 @@ export default function VehicleAdminWorkspace() {
         throw new Error(c.message || o.message || "Unable to load vehicles.");
       setModels(c.models);
       setRates(c.rates);
+      setMarkup(String(c.rates.markupPercent ?? 20));
+      setCanEditPricing(c.canEditPricing === true);
       setOrders(o.orders);
     } catch (e) {
       setError((e as Error).message);
@@ -218,7 +222,7 @@ export default function VehicleAdminWorkspace() {
           </strong>
         </div>
         <div>
-          <small>Manufacturer × 1.2 × RMB rate</small>
+          <small>Manufacturer + {rates.markupPercent ?? 20}% × RMB rate</small>
           <strong>₦{rates.ngnPerRmb}/RMB</strong>
           <Link href="/dashboard/exchange-rates">Manage central rates ↗</Link>
         </div>
@@ -248,6 +252,50 @@ export default function VehicleAdminWorkspace() {
         </p>
       )}
       {loading && <p>Loading vehicle workspace…</p>}
+      <form
+        className="va-panel"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void action("/api/vehicles/settings", {
+            markupPercent: Number(markup),
+          });
+        }}
+      >
+        <h2>Vehicle pricing</h2>
+        <p>
+          Apply this markup to the manufacturer’s RMB price before converting to
+          Naira. Shipping is calculated separately. Changes apply to catalogue
+          estimates and new quotations; issued quotations and invoices keep
+          their agreed prices.
+        </p>
+        <label htmlFor="vehicle-markup">
+          Price markup (%)
+          <input
+            id="vehicle-markup"
+            type="number"
+            min="0"
+            max="99999999.99"
+            step="0.01"
+            required
+            value={markup}
+            onChange={(event) => setMarkup(event.target.value)}
+            disabled={busy || loading || !canEditPricing}
+          />
+        </label>
+        <button
+          className="va-primary"
+          type="submit"
+          disabled={
+            busy ||
+            loading ||
+            !canEditPricing ||
+            markup === "" ||
+            Number(markup) === (rates.markupPercent ?? 20)
+          }
+        >
+          Save markup
+        </button>
+      </form>
       {tab === "catalogue" && (
         <>
           <div className="va-toolbar">

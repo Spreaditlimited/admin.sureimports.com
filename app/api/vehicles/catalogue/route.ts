@@ -13,7 +13,7 @@ export async function GET() {
     vehicleRates(),
   ]);
   return Response.json(
-    { models, rates },
+    { models, rates, canEditPricing: !!(await vehicleAdmin(true, true)) },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }
@@ -110,8 +110,7 @@ export async function POST(request: Request) {
       m.images.length > 30 ||
       !m.images.every(
         (u) =>
-          typeof u === "string" &&
-          /^https:\/\/res\.cloudinary\.com\//.test(u),
+          typeof u === "string" && /^https:\/\/res\.cloudinary\.com\//.test(u),
       )
     )
       throw new Error("Use Cloudinary image URLs or upload photos here.");

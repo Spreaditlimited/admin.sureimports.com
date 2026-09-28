@@ -31,9 +31,14 @@ export async function vehicleRates(): Promise<Rates> {
     return { ngnPerRmb: 0, ngnPerCbm: 0 };
   const row = await prisma.exchange_rate.findUnique({
     where: { id: 1 },
-    select: { exNairaToYuan: true, quotationSeaRateNgnPerCbm: true },
+    select: {
+      exNairaToYuan: true,
+      quotationSeaRateNgnPerCbm: true,
+      vehicleMarkupPercent: true,
+    },
   });
   return {
+    markupPercent: Number(row?.vehicleMarkupPercent ?? 20),
     ngnPerRmb: Number(row?.exNairaToYuan || 0),
     ngnPerCbm: Number(row?.quotationSeaRateNgnPerCbm || 0),
   };
