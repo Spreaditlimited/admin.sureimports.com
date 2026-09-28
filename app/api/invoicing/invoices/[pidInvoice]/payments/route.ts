@@ -42,6 +42,7 @@ export async function POST(
     }
 
     const invoice = await prisma.invoices.findUnique({ where: { pidInvoice } });
+    if (invoice?.linkedRequestId?.startsWith('vehicle:')) return NextResponse.json({ message: 'Review and confirm vehicle payment claims from the Vehicles workspace.' }, { status: 409 });
     if (!invoice) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
     }

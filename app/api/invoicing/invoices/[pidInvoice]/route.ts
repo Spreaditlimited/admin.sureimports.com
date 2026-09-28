@@ -182,6 +182,7 @@ export async function PATCH(
     const body = await request.json();
 
     const existing = await prisma.invoices.findUnique({ where: { pidInvoice }, include: { items: true } });
+    if (existing?.linkedRequestId?.startsWith('vehicle:')) return NextResponse.json({ message: 'Vehicle quotations are fixed order snapshots. Manage this order in the Vehicles workspace.' }, { status: 409 });
     if (!existing) {
       return NextResponse.json({ statusx: 'ERROR', message: 'Invoice not found' }, { status: 404 });
     }

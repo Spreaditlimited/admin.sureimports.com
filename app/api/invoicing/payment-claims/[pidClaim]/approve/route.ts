@@ -1,3 +1,6 @@
+import { vehicleAdmin } from '@/lib/vehicles/access';
+import { vehicleEvent } from '@/lib/vehicles/events';
+import { sameOrigin } from '@/lib/vehicles/http';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {
@@ -33,6 +36,10 @@ export async function POST(
     });
 
     if (!claim) return NextResponse.json({ statusx: 'ERROR', message: 'Claim not found' }, { status: 404 });
+    if (claim.invoice.linkedRequestId?.startsWith('vehicle:')) {
+      sameOrigin(_request);
+      if (!await vehicleAdmin(true, true)) return unauthorized();
+    }
     if (claim.status !== 'PENDING_CONFIRMATION') {
       return NextResponse.json({ statusx: 'ERROR', message: `Claim is already ${claim.status}` }, { status: 400 });
     }
@@ -52,7 +59,13 @@ export async function POST(
     const receiptNumber = await createUniqueReceiptNumber();
 
     const result = await prisma.$transaction(async (tx) => {
+      if (claim.invoice.linkedRequestId?.startsWith('vehicle:')) {
+        const vehicleOrderId = claim.invoice.linkedRequestId.slice(8);
+        await tx.$queryRaw`SELECT id FROM vehicle_orders WHERE id = ${vehicleOrderId} FOR UPDATE`;
+      }
       await tx.$queryRaw`SELECT id FROM invoices WHERE pidInvoice = ${claim.pidInvoice} FOR UPDATE`;
+      const freshClaim = await tx.invoice_payment_claims.findUniqueOrThrow({ where: { pidClaim } });
+      if (freshClaim.status !== 'PENDING_CONFIRMATION') throw new Error('This payment was already reviewed.');
       const currentInvoice = await tx.invoices.findUniqueOrThrow({ where: { pidInvoice: claim.pidInvoice } });
       if (currentInvoice.updatedAt.getTime() !== claim.invoice.updatedAt.getTime()) {
         throw new Error('The invoice changed while approving this claim. Refresh and check its payments before retrying.');
@@ -161,7 +174,17 @@ export async function POST(
         },
       });
 
+      if (claim.invoice.linkedRequestId?.startsWith('vehicle:')) {
+        const orderId = claim.invoice.linkedRequestId.slice(8);
+        if (newStatus === 'PAID') await tx.vehicle_orders.updateMany({ where: { id: orderId, status: 'QUOTED' }, data: { status: 'ORDER_CONFIRMED' } });
+        await vehicleEvent(tx, orderId, newStatus === 'PAID' ? 'ORDER_CONFIRMED' : 'PAYMENT_CONFIRMED', `Payment of NGN ${amountNum.toLocaleString('en-NG')} confirmed. Balance remaining: NGN ${newBalance.toLocaleString('en-NG')}. Receipt ${receiptNumber}.`, admin.pidUser);
+      }
       return { payment, updatedInvoice, receipt, updatedClaim, affiliateCommission };
+    }, {
+      // Bank credit, receipt, audit and vehicle outbox writes must commit together.
+      // The remote database round trips can exceed Prisma's five-second default.
+      maxWait: 10000,
+      timeout: 30000,
     });
 
     if (result.affiliateCommission) {
@@ -220,6 +243,8 @@ export async function POST(
 
     return NextResponse.json({ statusx: 'SUCCESS', data: result });
   } catch (error: any) {
+    console.error('Invoice claim approval failed', error);
+    if (error?.code === 'P2028') return NextResponse.json({ statusx: 'ERROR', message: 'Payment approval timed out and was rolled back. Refresh the claim and retry.' }, { status: 503 });
     return NextResponse.json({ statusx: 'ERROR', message: 'Failed to approve claim', error: error.message }, { status: 500 });
   }
 }

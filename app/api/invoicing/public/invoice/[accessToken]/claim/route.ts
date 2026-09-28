@@ -24,6 +24,8 @@ export async function POST(
       return NextResponse.json({ statusx: 'ERROR', message: 'Invalid or expired invoice link' }, { status: 404 });
     }
 
+    if (token.invoice.linkedRequestId?.startsWith('vehicle:')) return NextResponse.json({ message: 'Submit payment proof from your vehicle order dashboard.' }, { status: 409 });
+
     if (token.invoice.status === 'PAID' || token.invoice.status === 'CANCELLED') {
       return NextResponse.json({ statusx: 'ERROR', message: `Invoice is ${token.invoice.status}` }, { status: 400 });
     }

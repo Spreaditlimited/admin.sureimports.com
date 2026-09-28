@@ -1,6 +1,7 @@
 export const SHIPPING_ONLY_LINK_PREFIX = 'shipping-only:';
 
 export type InvoiceLinkedService =
+  | { type: 'vehicle'; id: string }
   | { type: 'shipping-only'; id: string }
   | { type: 'corporate-gift'; id: string }
   | { type: 'none'; id: '' };
@@ -12,6 +13,8 @@ export function encodeShippingOnlyLinkedRequestId(pidShippingOnly: string): stri
 export function parseInvoiceLinkedRequestId(linkedRequestId: unknown): InvoiceLinkedService {
   const raw = String(linkedRequestId || '').trim();
   if (!raw) return { type: 'none', id: '' };
+
+  if (raw.startsWith('vehicle:')) return { type: 'vehicle', id: raw.slice(8) };
 
   if (raw.startsWith(SHIPPING_ONLY_LINK_PREFIX)) {
     const id = raw.slice(SHIPPING_ONLY_LINK_PREFIX.length).trim();

@@ -52,6 +52,7 @@ const dashboardItem: MenuItem = {
 };
 
 const features: MenuItem[] = [
+  { title: "Vehicles", icon: Store, path: "/dashboard/vehicles", serviceKey: "store_mgt" },
   {
     title: "Procurement",
     icon: ShoppingCart,

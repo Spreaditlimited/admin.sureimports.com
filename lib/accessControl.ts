@@ -41,6 +41,7 @@ export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: Se
   { prefix: "/dashboard/shipping-only", serviceKey: "shipping_only" },
   { prefix: "/dashboard/verify-supplier", serviceKey: "verify_supplier" },
   { prefix: "/dashboard/pay-small-small", serviceKey: "pay_small_small" },
+  { prefix: "/dashboard/vehicles", serviceKey: "store_mgt" },
   { prefix: "/dashboard/store", serviceKey: "store_mgt" },
   { prefix: "/dashboard/store-sales", serviceKey: "store_mgt" },
   { prefix: "/dashboard/customer-accounts", serviceKey: "customer_accounts" },
