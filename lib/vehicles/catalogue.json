@@ -17,7 +17,7 @@
     "variants": [
       {
         "id": "freight-50",
-        "name": "Freight \u00b7 50.18 kWh",
+        "name": "Freight · 50.18 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5130,
         "widthMm": 1860,
@@ -29,11 +29,11 @@
         "cargoM3": 7.7,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "EC75/\u8d27\u8fd0\u7248 Freight/EC75 Freight Spec.xlsx"
+        "source": "EC75/货运版 Freight/EC75 Freight Spec.xlsx"
       },
       {
         "id": "freight-62",
-        "name": "Freight \u00b7 61.94 kWh",
+        "name": "Freight · 61.94 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5130,
         "widthMm": 1860,
@@ -45,11 +45,11 @@
         "cargoM3": 7.7,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "EC75/\u8d27\u8fd0\u7248 Freight/EC75 Freight Spec.xlsx"
+        "source": "EC75/货运版 Freight/EC75 Freight Spec.xlsx"
       },
       {
         "id": "passenger-6",
-        "name": "Passenger \u00b7 6 seats \u00b7 61.94 kWh",
+        "name": "Passenger · 6 seats · 61.94 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5130,
         "widthMm": 1860,
@@ -61,11 +61,11 @@
         "cargoM3": null,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "EC75/\u5ba2\u8fd0\u7248 Passenger/EC75 Passenger Spec.xlsx"
+        "source": "EC75/客运版 Passenger/EC75 Passenger Spec.xlsx"
       },
       {
         "id": "passenger-9",
-        "name": "Passenger \u00b7 9 seats \u00b7 61.94 kWh",
+        "name": "Passenger · 9 seats · 61.94 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5130,
         "widthMm": 1860,
@@ -77,11 +77,11 @@
         "cargoM3": null,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "EC75/\u5ba2\u8fd0\u7248 Passenger/EC75 Passenger Spec.xlsx"
+        "source": "EC75/客运版 Passenger/EC75 Passenger Spec.xlsx"
       },
       {
         "id": "refrigerated",
-        "name": "Refrigerated \u00b7 52.16 kWh",
+        "name": "Refrigerated · 52.16 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5130,
         "widthMm": 1860,
@@ -93,7 +93,7 @@
         "cargoM3": 6.3,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "EC75/\u51b7\u85cf\u7248 Rrefrigerate/EC75 Refrigerated Van.docx"
+        "source": "EC75/冷藏版 Rrefrigerate/EC75 Refrigerated Van.docx"
       }
     ],
     "published": true
@@ -105,13 +105,18 @@
     "powertrain": "Electric",
     "description": "An electric van with freight and passenger configurations, multiple battery options and room to build a fleet.",
     "images": [
-      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598256/sureimports/vehicles/ruichi-r5-1-e663e253.webp"
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598256/sureimports/vehicles/ruichi-r5-1-e663e253.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668832/sureimports/vehicles/catalogue-20260929/ruichi-r5-104f1d029bad.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668833/sureimports/vehicles/catalogue-20260929/ruichi-r5-ebc2f04b6332.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668834/sureimports/vehicles/catalogue-20260929/ruichi-r5-04bedce9eb53.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668835/sureimports/vehicles/catalogue-20260929/ruichi-r5-50dc18e6c3d4.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668836/sureimports/vehicles/catalogue-20260929/ruichi-r5-d53b95ab3aab.webp"
     ],
     "youtubeUrls": [],
     "variants": [
       {
         "id": "freight-50",
-        "name": "Freight \u00b7 50.18 kWh",
+        "name": "Freight · 50.18 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5170,
         "widthMm": 1860,
@@ -123,11 +128,11 @@
         "cargoM3": 7.7,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "R5/\u8d27\u8fd0\u7248 Freight/R5 Freight Spec.xlsx"
+        "source": "R5/货运版 Freight/R5 Freight Spec.xlsx"
       },
       {
         "id": "freight-62",
-        "name": "Freight \u00b7 61.94 kWh",
+        "name": "Freight · 61.94 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5170,
         "widthMm": 1860,
@@ -139,11 +144,11 @@
         "cargoM3": 7.7,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "R5/\u8d27\u8fd0\u7248 Freight/R5 Freight Spec.xlsx"
+        "source": "R5/货运版 Freight/R5 Freight Spec.xlsx"
       },
       {
         "id": "passenger-6",
-        "name": "Passenger \u00b7 6 seats \u00b7 58.24 kWh",
+        "name": "Passenger · 6 seats · 58.24 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5170,
         "widthMm": 1860,
@@ -155,11 +160,11 @@
         "cargoM3": null,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "R5/\u5ba2\u8fd0\u7248 Passenger/R5 Passenger Spec.xlsx"
+        "source": "R5/客运版 Passenger/R5 Passenger Spec.xlsx"
       },
       {
         "id": "passenger-9",
-        "name": "Passenger \u00b7 9 seats \u00b7 61.94 kWh",
+        "name": "Passenger · 9 seats · 61.94 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5170,
         "widthMm": 1860,
@@ -171,7 +176,7 @@
         "cargoM3": null,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "R5/\u5ba2\u8fd0\u7248 Passenger/R5 Passenger Spec.xlsx"
+        "source": "R5/客运版 Passenger/R5 Passenger Spec.xlsx"
       }
     ],
     "published": true
@@ -185,13 +190,17 @@
     "images": [
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598257/sureimports/vehicles/ruichi-ec35-1-5deb77b1.webp",
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598258/sureimports/vehicles/ruichi-ec35-2-13775484.webp",
-      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598259/sureimports/vehicles/ruichi-ec35-3-6bee3ee1.webp"
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598259/sureimports/vehicles/ruichi-ec35-3-6bee3ee1.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668978/sureimports/vehicles/catalogue-20260929/ruichi-ec35-11b0e2cab174.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668979/sureimports/vehicles/catalogue-20260929/ruichi-ec35-5a093925c11e.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668980/sureimports/vehicles/catalogue-20260929/ruichi-ec35-015f25637824.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668980/sureimports/vehicles/catalogue-20260929/ruichi-ec35-b86ce8e09185.webp"
     ],
     "youtubeUrls": [],
     "variants": [
       {
         "id": "two-seat",
-        "name": "EC35 II Pioneer I \u00b7 2 seats",
+        "name": "EC35 II Pioneer I · 2 seats",
         "manufacturerRmb": 79900,
         "lengthMm": 4500,
         "widthMm": 1680,
@@ -207,7 +216,7 @@
       },
       {
         "id": "five-seat",
-        "name": "EC35 II Pioneer I \u00b7 5 seats",
+        "name": "EC35 II Pioneer I · 5 seats",
         "manufacturerRmb": null,
         "lengthMm": 4500,
         "widthMm": 1680,
@@ -233,13 +242,17 @@
     "images": [
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598260/sureimports/vehicles/ruichi-c3-1-64fbf031.webp",
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598261/sureimports/vehicles/ruichi-c3-2-8284fbfd.webp",
-      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598262/sureimports/vehicles/ruichi-c3-3-26bc0081.webp"
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598262/sureimports/vehicles/ruichi-c3-3-26bc0081.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668861/sureimports/vehicles/catalogue-20260929/ruichi-c3-e33d640571cb.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668865/sureimports/vehicles/catalogue-20260929/ruichi-c3-95a4708f7509.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668868/sureimports/vehicles/catalogue-20260929/ruichi-c3-356f2dcf88d6.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668871/sureimports/vehicles/catalogue-20260929/ruichi-c3-0d60a6616e0d.webp"
     ],
     "youtubeUrls": [],
     "variants": [
       {
         "id": "flatbed",
-        "name": "Flatbed \u00b7 Pioneer",
+        "name": "Flatbed · Pioneer",
         "manufacturerRmb": 119900,
         "lengthMm": 5330,
         "widthMm": 1785,
@@ -251,11 +264,11 @@
         "cargoM3": null,
         "priceConfirmed": true,
         "specificationsConfirmed": true,
-        "source": "C3/\u5e73\u677f Flatbed/Ruichi C3-Flatbed.pdf"
+        "source": "C3/平板 Flatbed/Ruichi C3-Flatbed.pdf"
       },
       {
         "id": "box",
-        "name": "Box \u00b7 Pioneer",
+        "name": "Box · Pioneer",
         "manufacturerRmb": 123900,
         "lengthMm": 5330,
         "widthMm": 1790,
@@ -267,11 +280,11 @@
         "cargoM3": null,
         "priceConfirmed": true,
         "specificationsConfirmed": true,
-        "source": "C3/\u7bb1\u8d27 Box/Ruichi C3-Box.pdf"
+        "source": "C3/箱货 Box/Ruichi C3-Box.pdf"
       },
       {
         "id": "fence",
-        "name": "High-sided \u00b7 Pioneer",
+        "name": "High-sided · Pioneer",
         "manufacturerRmb": 122900,
         "lengthMm": 5330,
         "widthMm": 1785,
@@ -283,11 +296,11 @@
         "cargoM3": null,
         "priceConfirmed": true,
         "specificationsConfirmed": true,
-        "source": "C3/\u9ad8\u680f Fence/Ruichi C3-Fence.pdf"
+        "source": "C3/高栏 Fence/Ruichi C3-Fence.pdf"
       },
       {
         "id": "refrigerated",
-        "name": "Refrigerated \u00b7 Zhixing Pioneer",
+        "name": "Refrigerated · Zhixing Pioneer",
         "manufacturerRmb": 166900,
         "lengthMm": 5330,
         "widthMm": 1790,
@@ -299,7 +312,7 @@
         "cargoM3": null,
         "priceConfirmed": true,
         "specificationsConfirmed": true,
-        "source": "C3/\u51b7\u85cf\u7248 Rrefrigerate/C3 REF.xlsx"
+        "source": "C3/冷藏版 Rrefrigerate/C3 REF.xlsx"
       }
     ],
     "published": true
@@ -313,13 +326,16 @@
     "images": [
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598263/sureimports/vehicles/ruichi-c5-1-8083447d.webp",
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598264/sureimports/vehicles/ruichi-c5-2-773961b7.webp",
-      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598265/sureimports/vehicles/ruichi-c5-3-457c25d3.webp"
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598265/sureimports/vehicles/ruichi-c5-3-457c25d3.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668856/sureimports/vehicles/catalogue-20260929/ruichi-c5-2ceb91d78f26.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668857/sureimports/vehicles/catalogue-20260929/ruichi-c5-0175a94e4959.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668857/sureimports/vehicles/catalogue-20260929/ruichi-c5-d209e59f1404.webp"
     ],
     "youtubeUrls": [],
     "variants": [
       {
         "id": "flatbed",
-        "name": "Flatbed \u00b7 Pioneer",
+        "name": "Flatbed · Pioneer",
         "manufacturerRmb": 129900,
         "lengthMm": 5990,
         "widthMm": 1880,
@@ -331,11 +347,11 @@
         "cargoM3": null,
         "priceConfirmed": true,
         "specificationsConfirmed": true,
-        "source": "C5/C5 \u7eaf\u7535 C5 Pure electricity/\u5e73\u677f Flatbed/Ruichi C5-Flatbed.pdf"
+        "source": "C5/C5 纯电 C5 Pure electricity/平板 Flatbed/Ruichi C5-Flatbed.pdf"
       },
       {
         "id": "box",
-        "name": "Box \u00b7 Pioneer",
+        "name": "Box · Pioneer",
         "manufacturerRmb": 134900,
         "lengthMm": 5950,
         "widthMm": 1930,
@@ -347,11 +363,11 @@
         "cargoM3": null,
         "priceConfirmed": true,
         "specificationsConfirmed": true,
-        "source": "C5/C5 \u7eaf\u7535 C5 Pure electricity/\u7bb1\u8d27 Box/Ruichi C5 Box.pdf"
+        "source": "C5/C5 纯电 C5 Pure electricity/箱货 Box/Ruichi C5 Box.pdf"
       },
       {
         "id": "fence",
-        "name": "High-sided \u00b7 Pioneer",
+        "name": "High-sided · Pioneer",
         "manufacturerRmb": 133900,
         "lengthMm": 5990,
         "widthMm": 1880,
@@ -363,7 +379,7 @@
         "cargoM3": null,
         "priceConfirmed": true,
         "specificationsConfirmed": true,
-        "source": "C5/C5 \u7eaf\u7535 C5 Pure electricity/\u9ad8\u680f Fence/Ruichi C5 Fence.pdf"
+        "source": "C5/C5 纯电 C5 Pure electricity/高栏 Fence/Ruichi C5 Fence.pdf"
       }
     ],
     "published": true
@@ -386,7 +402,7 @@
     "variants": [
       {
         "id": "flatbed",
-        "name": "Flatbed \u00b7 70.92 kWh",
+        "name": "Flatbed · 70.92 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5995,
         "widthMm": 1920,
@@ -402,7 +418,7 @@
       },
       {
         "id": "fence",
-        "name": "High-sided \u00b7 70.92 kWh",
+        "name": "High-sided · 70.92 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5995,
         "widthMm": 1920,
@@ -418,7 +434,7 @@
       },
       {
         "id": "box",
-        "name": "Box \u00b7 70.92 kWh",
+        "name": "Box · 70.92 kWh",
         "manufacturerRmb": null,
         "lengthMm": 5995,
         "widthMm": 1920,
@@ -444,13 +460,17 @@
     "images": [
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598273/sureimports/vehicles/ruichi-c9-1-0e7d3a20.webp",
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598274/sureimports/vehicles/ruichi-c9-2-736241f9.webp",
-      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598275/sureimports/vehicles/ruichi-c9-3-5cf1a7f8.webp"
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598275/sureimports/vehicles/ruichi-c9-3-5cf1a7f8.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668882/sureimports/vehicles/catalogue-20260929/ruichi-c9-b2305d81840e.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668887/sureimports/vehicles/catalogue-20260929/ruichi-c9-d598251c806e.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668891/sureimports/vehicles/catalogue-20260929/ruichi-c9-de7729529210.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668897/sureimports/vehicles/catalogue-20260929/ruichi-c9-6a14eb6aced0.webp"
     ],
     "youtubeUrls": [],
     "variants": [
       {
         "id": "pioneer",
-        "name": "Box \u00b7 Pioneer",
+        "name": "Box · Pioneer",
         "manufacturerRmb": null,
         "lengthMm": 5995,
         "widthMm": 2170,
@@ -462,7 +482,7 @@
         "cargoM3": null,
         "priceConfirmed": false,
         "specificationsConfirmed": true,
-        "source": "C9/C9 \u914d\u7f6e\u8868 C9 Specification.xlsx"
+        "source": "C9/C9 配置表 C9 Specification.xlsx"
       }
     ],
     "published": true
@@ -476,7 +496,11 @@
     "images": [
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598276/sureimports/vehicles/ruichi-ec31s-1-523337fb.webp",
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598276/sureimports/vehicles/ruichi-ec31s-2-7f696890.webp",
-      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598278/sureimports/vehicles/ruichi-ec31s-3-71f9bd3c.webp"
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598278/sureimports/vehicles/ruichi-ec31s-3-71f9bd3c.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669544/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-fcd61f39d68b.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669547/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-4e27b1eede56.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669550/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-b8764d7b61c2.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669553/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-d5b6d452cb77.webp"
     ],
     "youtubeUrls": [],
     "variants": [
@@ -508,13 +532,18 @@
     "images": [
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598279/sureimports/vehicles/ruichi-ed71s-1-aea5e436.webp",
       "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598280/sureimports/vehicles/ruichi-ed71s-2-98278c90.webp",
-      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598281/sureimports/vehicles/ruichi-ed71s-3-70ed1e69.webp"
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790598281/sureimports/vehicles/ruichi-ed71s-3-70ed1e69.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668873/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-8264617c88ee.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668874/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-edf3e8cc154c.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668875/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-7fd1c4375a6c.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668876/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-62a25e9c39f8.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668877/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-a872364d3a37.webp"
     ],
     "youtubeUrls": [],
     "variants": [
       {
         "id": "box",
-        "name": "Box \u00b7 Pioneer",
+        "name": "Box · Pioneer",
         "manufacturerRmb": 124900,
         "lengthMm": 5995,
         "widthMm": 1880,
@@ -530,7 +559,7 @@
       },
       {
         "id": "fence",
-        "name": "High-sided \u00b7 Pioneer",
+        "name": "High-sided · Pioneer",
         "manufacturerRmb": 123900,
         "lengthMm": 5995,
         "widthMm": 1870,
@@ -565,7 +594,7 @@
     "variants": [
       {
         "id": "camper",
-        "name": "6-seat camper \u00b7 58.24 kWh",
+        "name": "6-seat camper · 58.24 kWh",
         "manufacturerRmb": 169900,
         "lengthMm": 5170,
         "widthMm": 1860,
@@ -581,5 +610,412 @@
       }
     ],
     "published": true
+  },
+  {
+    "slug": "byd-han",
+    "name": "BYD Han EV",
+    "category": "Sedans",
+    "powertrain": "Electric",
+    "description": "A fully electric executive sedan for comfortable family travel and business journeys. Compare the available battery and equipment options before choosing your China-market configuration.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668762/sureimports/vehicles/catalogue-20260929/byd-han-cff25a74aafd.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668763/sureimports/vehicles/catalogue-20260929/byd-han-ea4badaea6cd.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668764/sureimports/vehicles/catalogue-20260929/byd-han-8b9dc603b3e4.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668765/sureimports/vehicles/catalogue-20260929/byd-han-9bfa3aa60a4e.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668766/sureimports/vehicles/catalogue-20260929/byd-han-42cce6a94da2.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668767/sureimports/vehicles/catalogue-20260929/byd-han-56a0b034a5e7.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 31313,
+        "manufacturerUsdMax": 44746,
+        "referenceOnly": true,
+        "lengthMm": 4995,
+        "widthMm": 1910,
+        "heightMm": 1495,
+        "dimensionsSource": "https://www.byd.com/material/byd-site/eu/pdfs/han/HAN-0224-BPS-EN-V5-web.pdf",
+        "dimensionsNote": "BYD European Han body reference. Chinese-market model year and configuration must be confirmed.",
+        "batteryKwh": null,
+        "rangeKm": 715,
+        "rangeStandard": "Supplier: 506–715 km; test cycle unconfirmed",
+        "seats": 5,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "byd-tang",
+    "name": "BYD Tang EV",
+    "category": "SUVs",
+    "powertrain": "Electric",
+    "description": "A seven-seat electric SUV for families and business transport. This listing covers the battery-electric Tang, with the exact battery, drivetrain and equipment confirmed in your quotation.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668768/sureimports/vehicles/catalogue-20260929/byd-tang-ca5dcd231d01.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668769/sureimports/vehicles/catalogue-20260929/byd-tang-45d8bfead7cf.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668771/sureimports/vehicles/catalogue-20260929/byd-tang-ba2256514a09.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668771/sureimports/vehicles/catalogue-20260929/byd-tang-3ff89b5382db.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668772/sureimports/vehicles/catalogue-20260929/byd-tang-d2ba0c934122.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668773/sureimports/vehicles/catalogue-20260929/byd-tang-022bf33e6457.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 37284,
+        "manufacturerUsdMax": 46239,
+        "referenceOnly": true,
+        "lengthMm": 4970,
+        "widthMm": 1955,
+        "heightMm": 1745,
+        "dimensionsSource": "https://www.byd.com/material/byd-site/eu/pdfs/tang/TANG-0524-BPS-EN-V6-web.pdf",
+        "dimensionsNote": "BYD 2024 European Tang body reference. Chinese-market model year and configuration must be confirmed.",
+        "batteryKwh": null,
+        "rangeKm": 730,
+        "rangeStandard": "Supplier: 600–730 km; test cycle unconfirmed",
+        "seats": 7,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "byd-e2",
+    "name": "BYD E2",
+    "category": "Hatchbacks",
+    "powertrain": "Electric",
+    "description": "A compact electric hatchback for everyday commuting and urban journeys. Its manageable footprint makes it an option for buyers exploring their first electric car.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668774/sureimports/vehicles/catalogue-20260929/byd-e2-b1aec613b720.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668775/sureimports/vehicles/catalogue-20260929/byd-e2-99a98f887633.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668776/sureimports/vehicles/catalogue-20260929/byd-e2-2efffe6bd330.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668777/sureimports/vehicles/catalogue-20260929/byd-e2-b6741e44959b.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668778/sureimports/vehicles/catalogue-20260929/byd-e2-a1d26fde3984.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668778/sureimports/vehicles/catalogue-20260929/byd-e2-1a924bde81f0.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 13403,
+        "manufacturerUsdMax": 16388,
+        "referenceOnly": true,
+        "lengthMm": 4260,
+        "widthMm": 1760,
+        "heightMm": 1530,
+        "dimensionsSource": "https://byd-samarkand.uz/uploads/docs/e2_Brochure.pdf",
+        "dimensionsNote": "BYD E2 405 km Luxe brochure dimensions, published by the Samarkand distributor. Confirm the supplied trim before shipping.",
+        "batteryKwh": null,
+        "rangeKm": 405,
+        "rangeStandard": "Supplier: 405–405 km; test cycle unconfirmed",
+        "seats": 5,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "byd-yuan-plus",
+    "name": "BYD Yuan Plus (Atto 3)",
+    "category": "SUVs",
+    "powertrain": "Electric",
+    "description": "The Yuan Plus, known internationally as Atto 3, is a fully electric SUV for daily driving and family use. Confirm the Chinese-market battery, charging equipment and features for your order.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668780/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-37eac0acdfb9.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668781/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-0cd300a221a1.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668782/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-6fdba15fec3d.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668783/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-f61413f86c74.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668784/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-91e862dfdb32.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668787/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-02e780ed9a0e.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 17284,
+        "manufacturerUsdMax": 22373,
+        "referenceOnly": true,
+        "lengthMm": 4455,
+        "widthMm": 1875,
+        "heightMm": 1615,
+        "dimensionsSource": "https://www.byd.com/content/dam/byd-site/id/brochure/ATTO3-BROCHURE.pdf",
+        "dimensionsNote": "Atto 3 body dimensions are used as the Yuan Plus reference. Chinese-market equipment and battery options may differ.",
+        "batteryKwh": null,
+        "rangeKm": 630,
+        "rangeStandard": "Supplier: 430–630 km; test cycle unconfirmed",
+        "seats": 5,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "byd-yuan-up",
+    "name": "BYD Yuan Up",
+    "category": "SUVs",
+    "powertrain": "Electric",
+    "description": "A compact electric SUV suited to city driving and everyday family use. Select your preferred range and equipment with our team before a final quotation is issued.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668788/sureimports/vehicles/catalogue-20260929/byd-yuan-up-26beca3c5f7e.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668789/sureimports/vehicles/catalogue-20260929/byd-yuan-up-5ab012f41102.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668790/sureimports/vehicles/catalogue-20260929/byd-yuan-up-380e4d953998.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668790/sureimports/vehicles/catalogue-20260929/byd-yuan-up-772e7d56eb47.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668791/sureimports/vehicles/catalogue-20260929/byd-yuan-up-31eae4a08398.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 11164,
+        "manufacturerUsdMax": 17881,
+        "referenceOnly": true,
+        "lengthMm": 4310,
+        "widthMm": 1830,
+        "heightMm": 1675,
+        "dimensionsSource": "https://www.byd.com/material/byd-site/co/byd-yuan-up/flyer/YUAN-UP-CO.pdf",
+        "dimensionsNote": "BYD Yuan Up published body dimensions. Exact model year and equipment are confirmed before quotation.",
+        "batteryKwh": null,
+        "rangeKm": 401,
+        "rangeStandard": "Supplier: 301–401 km; test cycle unconfirmed",
+        "seats": 5,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "gac-aion-y",
+    "name": "GAC Aion Y",
+    "category": "SUVs",
+    "powertrain": "Electric",
+    "description": "A fully electric family crossover with a practical cabin layout. Photos and shipping dimensions illustrate the Aion Y Plus body; confirm whether the supplier offers this version or an earlier Aion Y before ordering.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668823/sureimports/vehicles/catalogue-20260929/gac-aion-y-74ceec5d9ce6.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668824/sureimports/vehicles/catalogue-20260929/gac-aion-y-49f84f2045a1.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668825/sureimports/vehicles/catalogue-20260929/gac-aion-y-3cf2ebce9058.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668827/sureimports/vehicles/catalogue-20260929/gac-aion-y-7ad1f30c5c45.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668828/sureimports/vehicles/catalogue-20260929/gac-aion-y-3bee0da91322.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668831/sureimports/vehicles/catalogue-20260929/gac-aion-y-635c079f05f7.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 15610,
+        "manufacturerUsdMax": 22180,
+        "referenceOnly": true,
+        "lengthMm": 4535,
+        "widthMm": 1870,
+        "heightMm": 1650,
+        "dimensionsSource": "https://www.gacgroup.com/uz-uz/configuration/aion-y/2024",
+        "dimensionsNote": "Aion Y Plus / 2024 export body reference (4,535 mm). The supplier lists Aion Y without a model year; earlier Y bodies differ. Final shipping volume depends on the confirmed version.",
+        "batteryKwh": null,
+        "rangeKm": 600,
+        "rangeStandard": "Supplier: 410–600 km; test cycle unconfirmed",
+        "seats": 5,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "changan-lumin",
+    "name": "Changan Lumin",
+    "category": "City cars",
+    "powertrain": "Electric",
+    "description": "A small four-seat electric city car for short trips and urban commuting. Compare battery choices against your daily distance and charging routine before ordering.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668792/sureimports/vehicles/catalogue-20260929/changan-lumin-431ed9005bc2.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668794/sureimports/vehicles/catalogue-20260929/changan-lumin-9c79fff7efb7.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668797/sureimports/vehicles/catalogue-20260929/changan-lumin-e53230c8ffef.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668795/sureimports/vehicles/catalogue-20260929/changan-lumin-83815edae8f3.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668796/sureimports/vehicles/catalogue-20260929/changan-lumin-4058bb040bf1.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 7448,
+        "manufacturerUsdMax": 10433,
+        "referenceOnly": true,
+        "lengthMm": 3270,
+        "widthMm": 1700,
+        "heightMm": 1545,
+        "dimensionsSource": "https://www.changan.ge/car/lumin",
+        "dimensionsNote": "Changan Lumin published body dimensions. Battery and trim vary across the supplier range.",
+        "batteryKwh": null,
+        "rangeKm": 301,
+        "rangeStandard": "Supplier: 155–301 km; test cycle unconfirmed",
+        "seats": 4,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "chery-qq-ice-cream",
+    "name": "Chery QQ Ice Cream",
+    "category": "City cars",
+    "powertrain": "Electric",
+    "description": "A compact four-seat electric runabout for local trips and city use. The supplier lists 120–170 km versions; confirm the battery, model year and equipment before a final quotation.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668799/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-56510413ec60.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668801/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-e26762667bc5.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668803/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-1cf661570ff2.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668805/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-76bf3479225c.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668807/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-e8a789c7d52c.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 7448,
+        "manufacturerUsdMax": 9985,
+        "referenceOnly": true,
+        "lengthMm": 3030,
+        "widthMm": 1496,
+        "heightMm": 1637,
+        "dimensionsSource": "https://qq.chery.cn/vehicles/bingqilin/",
+        "dimensionsNote": "Standard 3,030 mm body reference. The manufacturer gallery includes newer colours and styling; the supplier’s 120–170 km versions and final appearance require confirmation.",
+        "batteryKwh": null,
+        "rangeKm": 170,
+        "rangeStandard": "Supplier: 120–170 km; test cycle unconfirmed",
+        "seats": 4,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "avatr-11",
+    "name": "Avatr 11",
+    "category": "SUVs",
+    "powertrain": "Electric",
+    "description": "A premium fully electric SUV for buyers seeking a distinctive design and a spacious cabin. This enquiry is for the battery-electric version only; range-extender versions are excluded.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668809/sureimports/vehicles/catalogue-20260929/avatr-11-cd0ac6ef0ecc.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668809/sureimports/vehicles/catalogue-20260929/avatr-11-34fa82047d72.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668810/sureimports/vehicles/catalogue-20260929/avatr-11-2b99f00b1d85.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668812/sureimports/vehicles/catalogue-20260929/avatr-11-6c85b7994a16.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668813/sureimports/vehicles/catalogue-20260929/avatr-11-78d03cdb11d4.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668814/sureimports/vehicles/catalogue-20260929/avatr-11-40183267f750.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 38776,
+        "manufacturerUsdMax": 59672,
+        "referenceOnly": true,
+        "lengthMm": 4880,
+        "widthMm": 1970,
+        "heightMm": 1601,
+        "dimensionsSource": "https://avatrkuwait.com/avatr-11/",
+        "dimensionsNote": "Original 4,880 mm Avatr 11 body reference from the regional distributor. Newer versions can differ. Only the battery-electric version is offered in this listing.",
+        "batteryKwh": null,
+        "rangeKm": 730,
+        "rangeStandard": "Supplier: 580–730 km; test cycle unconfirmed",
+        "seats": 5,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
+  },
+  {
+    "slug": "avatr-12",
+    "name": "Avatr 12",
+    "category": "Sedans",
+    "powertrain": "Electric",
+    "description": "A premium electric grand touring sedan with a coupe-style profile. Choose the battery-electric configuration, then confirm its model year, battery and equipment with our team.",
+    "images": [
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668815/sureimports/vehicles/catalogue-20260929/avatr-12-53208d8b01d9.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668817/sureimports/vehicles/catalogue-20260929/avatr-12-f1d612e54d22.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668817/sureimports/vehicles/catalogue-20260929/avatr-12-23f477cfe202.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668818/sureimports/vehicles/catalogue-20260929/avatr-12-6e702baeff35.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668820/sureimports/vehicles/catalogue-20260929/avatr-12-2302cc384eac.webp",
+      "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668821/sureimports/vehicles/catalogue-20260929/avatr-12-699fe009fd51.webp"
+    ],
+    "youtubeUrls": [],
+    "published": true,
+    "variants": [
+      {
+        "id": "bev-reference",
+        "name": "Battery electric · configuration to be confirmed",
+        "manufacturerRmb": null,
+        "priceCurrency": "USD",
+        "manufacturerUsd": 43254,
+        "manufacturerUsdMax": 65642,
+        "referenceOnly": true,
+        "lengthMm": 5020,
+        "widthMm": 1999,
+        "heightMm": 1460,
+        "dimensionsSource": "https://avatrkuwait.com/avatr-12/",
+        "dimensionsNote": "Original 5,020 mm Avatr 12 body reference from the regional distributor. Newer versions can differ. Confirm the exact battery-electric model year and body before quotation.",
+        "batteryKwh": null,
+        "rangeKm": 700,
+        "rangeStandard": "Supplier: 650–700 km; test cycle unconfirmed",
+        "seats": 5,
+        "cargoM3": null,
+        "priceConfirmed": false,
+        "specificationsConfirmed": false,
+        "source": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx"
+      }
+    ]
   }
 ]

@@ -41,6 +41,12 @@ export type VehicleSpec = {
   id: string;
   name: string;
   manufacturerRmb: number | null;
+  priceCurrency?: "RMB" | "USD";
+  manufacturerUsd?: number | null;
+  manufacturerUsdMax?: number | null;
+  referenceOnly?: boolean;
+  dimensionsSource?: string;
+  dimensionsNote?: string;
   lengthMm: number | null;
   widthMm: number | null;
   heightMm: number | null;
@@ -66,6 +72,7 @@ export type VehicleModel = {
 };
 export type Rates = {
   ngnPerRmb: number;
+  ngnPerUsd?: number;
   ngnPerCbm: number;
   markupPercent?: number;
 };
@@ -81,20 +88,24 @@ export function priceVehicle(v: VehicleSpec, rates: Rates, quantity = 1) {
   const markupPercent = rates.markupPercent ?? DEFAULT_VEHICLE_MARKUP_PERCENT;
   if (!validVehicleMarkup(markupPercent)) return null;
   const volume = cbm(v);
+  if (v.priceCurrency && !["RMB", "USD"].includes(v.priceCurrency)) return null;
+  const usd = v.priceCurrency === "USD";
+  const amount = usd ? v.manufacturerUsd : v.manufacturerRmb;
+  const exchange = usd ? rates.ngnPerUsd : rates.ngnPerRmb;
   if (
+    v.referenceOnly ||
     volume === null ||
-    !v.manufacturerRmb ||
-    !Number.isFinite(v.manufacturerRmb) ||
-    v.manufacturerRmb <= 0 ||
-    !Number.isFinite(rates.ngnPerRmb) ||
+    !amount ||
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    !exchange ||
+    !Number.isFinite(exchange) ||
+    exchange <= 0 ||
     !Number.isFinite(rates.ngnPerCbm) ||
-    rates.ngnPerRmb <= 0 ||
     rates.ngnPerCbm <= 0
   )
     return null;
-  const vehicleKobo = Math.round(
-    v.manufacturerRmb * (100 + markupPercent) * rates.ngnPerRmb,
-  );
+  const vehicleKobo = Math.round(amount * (100 + markupPercent) * exchange);
   const shippingKobo = Math.round(volume * rates.ngnPerCbm * 100);
   if (!Number.isSafeInteger((vehicleKobo + shippingKobo) * quantity))
     throw new Error("Price exceeds the supported amount.");
@@ -104,6 +115,44 @@ export function priceVehicle(v: VehicleSpec, rates: Rates, quantity = 1) {
     shippingNgn: (shippingKobo * quantity) / 100,
     totalNgn: ((vehicleKobo + shippingKobo) * quantity) / 100,
     quantity,
+  };
+}
+// Model-level supplier ranges are budget estimates, never invoiceable trim prices.
+export function referenceVehiclePrice(v: VehicleSpec, rates: Rates) {
+  if (!v.referenceOnly || v.priceCurrency !== "USD") return null;
+  const min = v.manufacturerUsd;
+  const max = v.manufacturerUsdMax;
+  const rate = rates.ngnPerUsd;
+  const markup = rates.markupPercent ?? DEFAULT_VEHICLE_MARKUP_PERCENT;
+  if (
+    !min ||
+    !max ||
+    !rate ||
+    !Number.isFinite(min) ||
+    !Number.isFinite(max) ||
+    !Number.isFinite(rate) ||
+    min <= 0 ||
+    max < min ||
+    rate <= 0 ||
+    !validVehicleMarkup(markup)
+  )
+    return null;
+  const low = Math.round(min * (100 + markup) * rate);
+  const high = Math.round(max * (100 + markup) * rate);
+  if (!Number.isSafeInteger(low) || !Number.isSafeInteger(high)) return null;
+  const volume = cbm(v);
+  const shippingKobo =
+    volume !== null && Number.isFinite(rates.ngnPerCbm) && rates.ngnPerCbm > 0
+      ? Math.round(volume * rates.ngnPerCbm * 100)
+      : null;
+  if (shippingKobo !== null && !Number.isSafeInteger(high + shippingKobo))
+    return null;
+  return {
+    minNgn: low / 100,
+    maxNgn: high / 100,
+    shippingNgn: shippingKobo === null ? null : shippingKobo / 100,
+    landedMinNgn: shippingKobo === null ? null : (low + shippingKobo) / 100,
+    landedMaxNgn: shippingKobo === null ? null : (high + shippingKobo) / 100,
   };
 }
 export function canQuote(v: VehicleSpec, rates: Rates) {

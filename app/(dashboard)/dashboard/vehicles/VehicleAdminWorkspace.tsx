@@ -7,6 +7,7 @@ import {
   type VehicleSpec,
   type Rates,
   priceVehicle,
+  referenceVehiclePrice,
   STAGE_LABELS,
   VEHICLE_STAGES,
   naira,
@@ -222,8 +223,10 @@ export default function VehicleAdminWorkspace() {
           </strong>
         </div>
         <div>
-          <small>Manufacturer + {rates.markupPercent ?? 20}% × RMB rate</small>
-          <strong>₦{rates.ngnPerRmb}/RMB</strong>
+          <small>Supplier price + {rates.markupPercent ?? 20}% markup</small>
+          <strong>
+            ₦{rates.ngnPerRmb}/RMB · ₦{rates.ngnPerUsd || 0}/USD
+          </strong>
           <Link href="/dashboard/exchange-rates">Manage central rates ↗</Link>
         </div>
       </div>
@@ -263,10 +266,10 @@ export default function VehicleAdminWorkspace() {
       >
         <h2>Vehicle pricing</h2>
         <p>
-          Apply this markup to the manufacturer’s RMB price before converting to
-          Naira. Shipping is calculated separately. Changes apply to catalogue
-          estimates and new quotations; issued quotations and invoices keep
-          their agreed prices.
+          Apply this markup to the supplier’s RMB or USD price before converting
+          to Naira. Shipping is calculated separately. Changes apply to
+          catalogue estimates and new quotations; issued quotations and invoices
+          keep their agreed prices.
         </p>
         <label htmlFor="vehicle-markup">
           Price markup (%)
@@ -310,7 +313,7 @@ export default function VehicleAdminWorkspace() {
                 action("/api/vehicles/catalogue", { action: "import" })
               }
             >
-              Import supplied Ruichi catalogue
+              Import supplied vehicle catalogue
             </button>
             <button
               className="va-primary"
@@ -473,6 +476,7 @@ export default function VehicleAdminWorkspace() {
               </label>
               <h2>Configurations</h2>
               {edit.variants.map((v, i) => {
+                const reference = referenceVehiclePrice(v, rates);
                 let price = null;
                 try {
                   price = priceVehicle(v, rates);
@@ -492,6 +496,78 @@ export default function VehicleAdminWorkspace() {
                         }
                       />
                     </label>
+                    <label>
+                      Supplier price currency
+                      <select
+                        value={v.priceCurrency || "RMB"}
+                        onChange={(e) =>
+                          updateVariant(i, {
+                            priceCurrency: e.target.value as "RMB" | "USD",
+                            priceConfirmed: false,
+                            referenceOnly: false,
+                          })
+                        }
+                      >
+                        <option value="RMB">RMB (Chinese yuan)</option>
+                        <option value="USD">USD (US dollar)</option>
+                      </select>
+                    </label>
+                    {v.priceCurrency === "USD" && (
+                      <>
+                        <label>
+                          Supplier price (USD)
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={v.manufacturerUsd ?? ""}
+                            onChange={(e) =>
+                              updateVariant(i, {
+                                manufacturerUsd:
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value),
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="va-check">
+                          <input
+                            type="checkbox"
+                            checked={v.referenceOnly || false}
+                            onChange={(e) =>
+                              updateVariant(i, {
+                                referenceOnly: e.target.checked,
+                                manufacturerUsdMax: e.target.checked
+                                  ? v.manufacturerUsdMax
+                                  : null,
+                                priceConfirmed: false,
+                              })
+                            }
+                          />
+                          Indicative supplier range — exact trim price pending
+                        </label>
+                        {v.referenceOnly && (
+                          <label>
+                            Upper supplier price (USD)
+                            <input
+                              type="number"
+                              min={v.manufacturerUsd || 0.01}
+                              step="0.01"
+                              value={v.manufacturerUsdMax ?? ""}
+                              onChange={(e) =>
+                                updateVariant(i, {
+                                  manufacturerUsdMax:
+                                    e.target.value === ""
+                                      ? null
+                                      : Number(e.target.value),
+                                })
+                              }
+                            />
+                          </label>
+                        )}
+                      </>
+                    )}
                     <div className="va-fields">
                       {(
                         [
@@ -504,25 +580,31 @@ export default function VehicleAdminWorkspace() {
                           ["seats", "Seats"],
                           ["cargoM3", "Interior cargo capacity (m³)"],
                         ] as const
-                      ).map(([key, label]) => (
-                        <label key={key}>
-                          {label}
-                          <input
-                            type="number"
-                            min="0.01"
-                            step="any"
-                            value={v[key] ?? ""}
-                            onChange={(e) =>
-                              updateVariant(i, {
-                                [key]:
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value),
-                              })
-                            }
-                          />
-                        </label>
-                      ))}
+                      )
+                        .filter(
+                          ([key]) =>
+                            key !== "manufacturerRmb" ||
+                            v.priceCurrency !== "USD",
+                        )
+                        .map(([key, label]) => (
+                          <label key={key}>
+                            {label}
+                            <input
+                              type="number"
+                              min="0.01"
+                              step="any"
+                              value={v[key] ?? ""}
+                              onChange={(e) =>
+                                updateVariant(i, {
+                                  [key]:
+                                    e.target.value === ""
+                                      ? null
+                                      : Number(e.target.value),
+                                })
+                              }
+                            />
+                          </label>
+                        ))}
                       <label>
                         Range test standard
                         <input
@@ -542,15 +624,39 @@ export default function VehicleAdminWorkspace() {
                         />
                       </label>
                     </div>
+                    <div className="va-fields">
+                      <label>
+                        Dimension reference URL
+                        <input
+                          type="url"
+                          value={v.dimensionsSource || ""}
+                          onChange={(e) =>
+                            updateVariant(i, {
+                              dimensionsSource: e.target.value,
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        Dimension / model-year note
+                        <textarea
+                          value={v.dimensionsNote || ""}
+                          onChange={(e) =>
+                            updateVariant(i, { dimensionsNote: e.target.value })
+                          }
+                        />
+                      </label>
+                    </div>
                     <label className="va-check">
                       <input
                         type="checkbox"
                         checked={v.priceConfirmed}
+                        disabled={v.referenceOnly === true}
                         onChange={(e) =>
                           updateVariant(i, { priceConfirmed: e.target.checked })
                         }
                       />
-                      Manufacturer price confirmed
+                      Exact supplier price confirmed
                     </label>
                     <label className="va-check">
                       <input
@@ -567,7 +673,9 @@ export default function VehicleAdminWorkspace() {
                     <p className="va-price-preview">
                       {price
                         ? `${price.cbm.toFixed(3)} CBM · Vehicle ${naira(price.vehicleNgn)} + shipping ${naira(price.shippingNgn)} = ${naira(price.totalNgn)} estimated landed`
-                        : "Complete the manufacturer price, exterior dimensions and central rates to calculate a price."}
+                        : reference
+                          ? `Indicative vehicle: ${naira(reference.minNgn)} – ${naira(reference.maxNgn)}. Shipping: ${reference.shippingNgn == null ? "pending dimensions/rate" : naira(reference.shippingNgn)}. Confirm an exact configuration before invoicing.`
+                          : "Complete the supplier price, exterior dimensions and central rates to calculate a price."}
                     </p>
                   </fieldset>
                 );

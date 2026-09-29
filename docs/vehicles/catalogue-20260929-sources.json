@@ -1,0 +1,1074 @@
+{
+  "supplierWorkbook": "Tormays car export_West_Africa_LHD_Vehicle_Catalog_English Final 2.xlsx",
+  "researchedAt": "2026-09-29",
+  "models": [
+    {
+      "slug": "byd-han",
+      "usdMin": 31313,
+      "usdMax": 44746,
+      "dimensionsMm": [
+        4995,
+        1910,
+        1495
+      ],
+      "dimensionsSource": "https://www.byd.com/material/byd-site/eu/pdfs/han/HAN-0224-BPS-EN-V5-web.pdf",
+      "dimensionsNote": "BYD European Han body reference. Chinese-market model year and configuration must be confirmed."
+    },
+    {
+      "slug": "byd-tang",
+      "usdMin": 37284,
+      "usdMax": 46239,
+      "dimensionsMm": [
+        4970,
+        1955,
+        1745
+      ],
+      "dimensionsSource": "https://www.byd.com/material/byd-site/eu/pdfs/tang/TANG-0524-BPS-EN-V6-web.pdf",
+      "dimensionsNote": "BYD 2024 European Tang body reference. Chinese-market model year and configuration must be confirmed."
+    },
+    {
+      "slug": "byd-e2",
+      "usdMin": 13403,
+      "usdMax": 16388,
+      "dimensionsMm": [
+        4260,
+        1760,
+        1530
+      ],
+      "dimensionsSource": "https://byd-samarkand.uz/uploads/docs/e2_Brochure.pdf",
+      "dimensionsNote": "BYD E2 405 km Luxe brochure dimensions, published by the Samarkand distributor. Confirm the supplied trim before shipping."
+    },
+    {
+      "slug": "byd-yuan-plus",
+      "usdMin": 17284,
+      "usdMax": 22373,
+      "dimensionsMm": [
+        4455,
+        1875,
+        1615
+      ],
+      "dimensionsSource": "https://www.byd.com/content/dam/byd-site/id/brochure/ATTO3-BROCHURE.pdf",
+      "dimensionsNote": "Atto 3 body dimensions are used as the Yuan Plus reference. Chinese-market equipment and battery options may differ."
+    },
+    {
+      "slug": "byd-yuan-up",
+      "usdMin": 11164,
+      "usdMax": 17881,
+      "dimensionsMm": [
+        4310,
+        1830,
+        1675
+      ],
+      "dimensionsSource": "https://www.byd.com/material/byd-site/co/byd-yuan-up/flyer/YUAN-UP-CO.pdf",
+      "dimensionsNote": "BYD Yuan Up published body dimensions. Exact model year and equipment are confirmed before quotation."
+    },
+    {
+      "slug": "gac-aion-y",
+      "usdMin": 15610,
+      "usdMax": 22180,
+      "dimensionsMm": [
+        4535,
+        1870,
+        1650
+      ],
+      "dimensionsSource": "https://www.gacgroup.com/uz-uz/configuration/aion-y/2024",
+      "dimensionsNote": "Aion Y Plus / 2024 export body reference (4,535 mm). The supplier lists Aion Y without a model year; earlier Y bodies differ. Final shipping volume depends on the confirmed version."
+    },
+    {
+      "slug": "changan-lumin",
+      "usdMin": 7448,
+      "usdMax": 10433,
+      "dimensionsMm": [
+        3270,
+        1700,
+        1545
+      ],
+      "dimensionsSource": "https://www.changan.ge/car/lumin",
+      "dimensionsNote": "Changan Lumin published body dimensions. Battery and trim vary across the supplier range."
+    },
+    {
+      "slug": "chery-qq-ice-cream",
+      "usdMin": 7448,
+      "usdMax": 9985,
+      "dimensionsMm": [
+        3030,
+        1496,
+        1637
+      ],
+      "dimensionsSource": "https://qq.chery.cn/vehicles/bingqilin/",
+      "dimensionsNote": "Standard 3,030 mm body reference. The manufacturer gallery includes newer colours and styling; the supplier’s 120–170 km versions and final appearance require confirmation."
+    },
+    {
+      "slug": "avatr-11",
+      "usdMin": 38776,
+      "usdMax": 59672,
+      "dimensionsMm": [
+        4880,
+        1970,
+        1601
+      ],
+      "dimensionsSource": "https://avatrkuwait.com/avatr-11/",
+      "dimensionsNote": "Original 4,880 mm Avatr 11 body reference from the regional distributor. Newer versions can differ. Only the battery-electric version is offered in this listing."
+    },
+    {
+      "slug": "avatr-12",
+      "usdMin": 43254,
+      "usdMax": 65642,
+      "dimensionsMm": [
+        5020,
+        1999,
+        1460
+      ],
+      "dimensionsSource": "https://avatrkuwait.com/avatr-12/",
+      "dimensionsNote": "Original 5,020 mm Avatr 12 body reference from the regional distributor. Newer versions can differ. Confirm the exact battery-electric model year and body before quotation."
+    }
+  ],
+  "images": [
+    {
+      "slug": "byd-han",
+      "index": 1,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/han",
+      "source": "https://www.byd.com/material/byd-site/eu/product/han/F04.jpg",
+      "sha256": "cff25a74aafdb5de4e8a860570d97b771fb2f26846e4fab9a3a2a4def2442758",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668762/sureimports/vehicles/catalogue-20260929/byd-han-cff25a74aafd.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-han-cff25a74aafd",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-han",
+      "index": 2,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/han",
+      "source": "https://www.byd.com/material/byd-site/eu/product/han/F04-Sub01-pc20221102.jpg",
+      "sha256": "ea4badaea6cdf0daf8ba273b282406caeca5ba2ce7de11204590e032c63f87e1",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668763/sureimports/vehicles/catalogue-20260929/byd-han-ea4badaea6cd.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-han-ea4badaea6cd",
+      "width": 1080,
+      "height": 470
+    },
+    {
+      "slug": "byd-han",
+      "index": 3,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/han",
+      "source": "https://www.byd.com/material/byd-site/eu/product/han/F04-Sub02.jpg",
+      "sha256": "8b9dc603b3e43b907888a3e8011e898980b2c0f3162fabd7914e2d138e117af9",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668764/sureimports/vehicles/catalogue-20260929/byd-han-8b9dc603b3e4.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-han-8b9dc603b3e4",
+      "width": 1080,
+      "height": 470
+    },
+    {
+      "slug": "byd-han",
+      "index": 4,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/han",
+      "source": "https://www.byd.com/material/byd-site/eu/product/han/F04-Sub03.jpg",
+      "sha256": "9bfa3aa60a4e03dfb03904d598e4135d6f02cf85be89ec42b0ac0cf1ac9739e8",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668765/sureimports/vehicles/catalogue-20260929/byd-han-9bfa3aa60a4e.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-han-9bfa3aa60a4e",
+      "width": 1080,
+      "height": 470
+    },
+    {
+      "slug": "byd-han",
+      "index": 5,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/han",
+      "source": "https://www.byd.com/material/byd-site/eu/product/han/F05.jpg",
+      "sha256": "42cce6a94da26fc9dbd202140ee0ac19de8d25a9c1bfb359383f8b914827baa9",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668766/sureimports/vehicles/catalogue-20260929/byd-han-42cce6a94da2.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-han-42cce6a94da2",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-han",
+      "index": 0,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/han",
+      "source": "https://www.byd.com/material/byd-site/eu/product/han/banner-pc-20221102.jpg",
+      "sha256": "56a0b034a5e75291522eafc463138be89336569335efb127e78e9375d12bd664",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668767/sureimports/vehicles/catalogue-20260929/byd-han-56a0b034a5e7.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-han-56a0b034a5e7",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-tang",
+      "index": 1,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/tang",
+      "source": "https://www.byd.com/material/byd-site/eu/product/tang-2024/xl/Tang2024-exterior-01-xl.jpg",
+      "sha256": "ca5dcd231d01f124ec8dfbded210e5394483f3e71d2b831b2cddccbfff8d2119",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668768/sureimports/vehicles/catalogue-20260929/byd-tang-ca5dcd231d01.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-tang-ca5dcd231d01",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "byd-tang",
+      "index": 0,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/tang",
+      "source": "https://www.byd.com/material/byd-site/eu/product/tang-2024/xl/Tang2024-1stBanner-xl.jpg",
+      "sha256": "45d8bfead7cf343243aa145b36c1348d021aa1dda761cb495957e31de9a49e63",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668769/sureimports/vehicles/catalogue-20260929/byd-tang-45d8bfead7cf.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-tang-45d8bfead7cf",
+      "width": 1800,
+      "height": 736
+    },
+    {
+      "slug": "byd-tang",
+      "index": 2,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/tang",
+      "source": "https://www.byd.com/material/byd-site/eu/product/tang-2024/xl/Tang2024-exterior-02-xl.jpg",
+      "sha256": "ba2256514a09d5a70c78ff9d0ea68c7b02cc9347130445389f2d9efda7d2f784",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668771/sureimports/vehicles/catalogue-20260929/byd-tang-ba2256514a09.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-tang-ba2256514a09",
+      "width": 960,
+      "height": 1280
+    },
+    {
+      "slug": "byd-tang",
+      "index": 3,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/tang",
+      "source": "https://www.byd.com/material/byd-site/eu/product/tang-2024/xl/Tang2024-exterior-03-xl.jpg",
+      "sha256": "3ff89b5382db023363d9cc18e6c04f0dd812fa1804fa91360facb3613b9cd23a",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668771/sureimports/vehicles/catalogue-20260929/byd-tang-3ff89b5382db.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-tang-3ff89b5382db",
+      "width": 960,
+      "height": 1280
+    },
+    {
+      "slug": "byd-tang",
+      "index": 5,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/tang",
+      "source": "https://www.byd.com/material/byd-site/eu/product/tang-2024/xl/Tang2024-interior-02-xl.jpg",
+      "sha256": "d2ba0c934122c4b90808de2c869344cb14c2f95a9a586310d383e0be30991dae",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668772/sureimports/vehicles/catalogue-20260929/byd-tang-d2ba0c934122.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-tang-d2ba0c934122",
+      "width": 1800,
+      "height": 901
+    },
+    {
+      "slug": "byd-tang",
+      "index": 6,
+      "sourcePage": "https://www.byd.com/eu/electric-cars/tang",
+      "source": "https://www.byd.com/material/byd-site/eu/product/tang-2024/xl/Tang2024-interior-03-xl.jpg",
+      "sha256": "022bf33e64576f3d39a9328ad0453aaae597d3d146ccc68056e77005424ff97f",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668773/sureimports/vehicles/catalogue-20260929/byd-tang-022bf33e6457.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-tang-022bf33e6457",
+      "width": 928,
+      "height": 641
+    },
+    {
+      "slug": "byd-e2",
+      "index": 0,
+      "sourcePage": "https://www.byd.com/uz/car/byd-e2",
+      "source": "https://www.byd.com/material/byd-site/uz/product/e2/pc/Section-1-0-pc.jpg",
+      "sha256": "b1aec613b720b650c2bbc8b6697533aa9be13ccbe1d572ae2187037fdd697951",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668774/sureimports/vehicles/catalogue-20260929/byd-e2-b1aec613b720.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-e2-b1aec613b720",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-e2",
+      "index": 1,
+      "sourcePage": "https://www.byd.com/uz/car/byd-e2",
+      "source": "https://www.byd.com/material/byd-site/uz/product/e2/pc/Section-1-1-pc.jpg",
+      "sha256": "99a98f8876332adafb75ff7d5f830eac9d389b1267fd1002ab472ffd262b1d5b",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668775/sureimports/vehicles/catalogue-20260929/byd-e2-99a98f887633.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-e2-99a98f887633",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-e2",
+      "index": 2,
+      "sourcePage": "https://www.byd.com/uz/car/byd-e2",
+      "source": "https://www.byd.com/material/byd-site/uz/product/e2/pc/Section-1-2-pc.jpg",
+      "sha256": "2efffe6bd3306f87cf11cb13003d66e3e55ef78ff1c63aa117eed02ad9c9c7e6",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668776/sureimports/vehicles/catalogue-20260929/byd-e2-2efffe6bd330.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-e2-2efffe6bd330",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "byd-e2",
+      "index": 3,
+      "sourcePage": "https://www.byd.com/uz/car/byd-e2",
+      "source": "https://www.byd.com/material/byd-site/uz/product/e2/pc/Section-1-3-pc.jpg",
+      "sha256": "b6741e44959b60a576e84abf139848110045082133b979c81066c634f9e10e06",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668777/sureimports/vehicles/catalogue-20260929/byd-e2-b6741e44959b.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-e2-b6741e44959b",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "byd-e2",
+      "index": 4,
+      "sourcePage": "https://www.byd.com/uz/car/byd-e2",
+      "source": "https://www.byd.com/material/byd-site/uz/product/e2/pc/Section-1-5-pc.jpg",
+      "sha256": "a1d26fde398454e2b0abe4054df697829f809f4337047be66bd85a7f5e5790bd",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668778/sureimports/vehicles/catalogue-20260929/byd-e2-a1d26fde3984.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-e2-a1d26fde3984",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "byd-e2",
+      "index": 5,
+      "sourcePage": "https://www.byd.com/uz/car/byd-e2",
+      "source": "https://www.byd.com/material/byd-site/uz/product/e2/pc/Section-1-6-pc.jpg",
+      "sha256": "1a924bde81f0014ed0ae749e4a746a96ad10ae3ceaac336a2c500603e2077a2c",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668778/sureimports/vehicles/catalogue-20260929/byd-e2-1a924bde81f0.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-e2-1a924bde81f0",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "byd-yuan-plus",
+      "index": 0,
+      "sourcePage": "https://www.byd.com/en/car/atto3",
+      "source": "https://www.byd.com/material/byd-site/en/product/atto3/Banner1.jpg",
+      "sha256": "37eac0acdfb92042dd73eb3f9bbb60e023de7425d4383cce5000d04e2eb6bd97",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668780/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-37eac0acdfb9.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-plus-37eac0acdfb9",
+      "width": 1800,
+      "height": 853
+    },
+    {
+      "slug": "byd-yuan-plus",
+      "index": 1,
+      "sourcePage": "https://www.byd.com/en/car/atto3",
+      "source": "https://www.byd.com/material/byd-site/en/product/atto3/F01-2.jpg",
+      "sha256": "0cd300a221a1a63efeb7d6b9b7849995247d583caf7abd186731853a26a9cbed",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668781/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-0cd300a221a1.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-plus-0cd300a221a1",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-yuan-plus",
+      "index": 2,
+      "sourcePage": "https://www.byd.com/en/car/atto3",
+      "source": "https://www.byd.com/material/byd-site/en/product/atto3/F01-3.jpg",
+      "sha256": "6fdba15fec3d797c182a2992d5e91bed49684490b3a3f771725965cde21e1dfa",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668782/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-6fdba15fec3d.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-plus-6fdba15fec3d",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-yuan-plus",
+      "index": 3,
+      "sourcePage": "https://www.byd.com/en/car/atto3",
+      "source": "https://www.byd.com/material/byd-site/en/product/atto3/F02-1.jpg",
+      "sha256": "f61413f86c7491a4aea7d310e735c1f44e906144148282526a28884428e9fb02",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668783/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-f61413f86c74.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-plus-f61413f86c74",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-yuan-plus",
+      "index": 4,
+      "sourcePage": "https://www.byd.com/en/car/atto3",
+      "source": "https://www.byd.com/material/byd-site/en/product/atto3/F02-Sub01.jpg",
+      "sha256": "91e862dfdb32cca1b38597ad9842afc01bae9b33fa6a36a1024b1840ff93a78c",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668784/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-91e862dfdb32.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-plus-91e862dfdb32",
+      "width": 1080,
+      "height": 470
+    },
+    {
+      "slug": "byd-yuan-plus",
+      "index": 5,
+      "sourcePage": "https://www.byd.com/en/car/atto3",
+      "source": "https://www.byd.com/material/byd-site/en/product/atto3/F02-Sub02.jpg",
+      "sha256": "02e780ed9a0e39cf71edaca954a11ba4e94a62da522c73776ec05e21b89ad418",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668787/sureimports/vehicles/catalogue-20260929/byd-yuan-plus-02e780ed9a0e.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-plus-02e780ed9a0e",
+      "width": 1080,
+      "height": 470
+    },
+    {
+      "slug": "byd-yuan-up",
+      "index": 0,
+      "sourcePage": "https://www.byd.com/uz/car/byd-yuan-up",
+      "source": "https://www.byd.com/material/byd-site/uz/product/yuan-up/pc/Section-1-1-pc-jpg.jpg",
+      "sha256": "26beca3c5f7e4fe390bcdcee370eeb71b2bd21312c1a04622debc6a6dbf5447f",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668788/sureimports/vehicles/catalogue-20260929/byd-yuan-up-26beca3c5f7e.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-up-26beca3c5f7e",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "byd-yuan-up",
+      "index": 1,
+      "sourcePage": "https://www.byd.com/uz/car/byd-yuan-up",
+      "source": "https://www.byd.com/material/byd-site/uz/product/yuan-up/pc/Section-1-2-pc-jpg.jpg",
+      "sha256": "5ab012f411025f45fc8813bc505a415da2827845dcacbefc530d4619e7987f29",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668789/sureimports/vehicles/catalogue-20260929/byd-yuan-up-5ab012f41102.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-up-5ab012f41102",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "byd-yuan-up",
+      "index": 2,
+      "sourcePage": "https://www.byd.com/uz/car/byd-yuan-up",
+      "source": "https://www.byd.com/material/byd-site/uz/product/yuan-up/pc/Section-1-3-pc-jpg.jpg",
+      "sha256": "380e4d953998ebe4fc0fcdec454d80584f5bf4fcb89852b8e708784cdaa25968",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668790/sureimports/vehicles/catalogue-20260929/byd-yuan-up-380e4d953998.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-up-380e4d953998",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "byd-yuan-up",
+      "index": 3,
+      "sourcePage": "https://www.byd.com/uz/car/byd-yuan-up",
+      "source": "https://www.byd.com/material/byd-site/uz/product/yuan-up/pc/Section-1-4-pc-jpg.jpg",
+      "sha256": "772e7d56eb4770d11747663fe72eb474c9c3a3afa86a9d2bb52023b7b9725139",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668790/sureimports/vehicles/catalogue-20260929/byd-yuan-up-772e7d56eb47.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-up-772e7d56eb47",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "byd-yuan-up",
+      "index": 4,
+      "sourcePage": "https://www.byd.com/uz/car/byd-yuan-up",
+      "source": "https://www.byd.com/material/byd-site/uz/product/yuan-up/pc/Section-1-5-pc-jpg.jpg",
+      "sha256": "31eae4a0839833dcda149033017cdc774ce2805ab765611d83613da52bd2a625",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668791/sureimports/vehicles/catalogue-20260929/byd-yuan-up-31eae4a08398.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/byd-yuan-up-31eae4a08398",
+      "width": 1440,
+      "height": 800
+    },
+    {
+      "slug": "changan-lumin",
+      "index": 4,
+      "sourcePage": "https://www.changan.ph/vehicles/changan-philippines/lumin/",
+      "source": "https://www.changan.ph/media/1bwjwri4/14-2.png",
+      "sha256": "431ed9005bc285e18d35c2e3f068ef72e5adb5b7bd033f09b8fa43a868e65ae4",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668792/sureimports/vehicles/catalogue-20260929/changan-lumin-431ed9005bc2.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/changan-lumin-431ed9005bc2",
+      "width": 1555,
+      "height": 670
+    },
+    {
+      "slug": "changan-lumin",
+      "index": 0,
+      "sourcePage": "https://www.changan.ph/vehicles/changan-philippines/lumin/",
+      "source": "https://www.changan.ph/media/2aab24od/lumin-842x480px.png",
+      "sha256": "9c79fff7efb700ef4288dea62c396ba201d4c7473454974e0f73379f905f1e72",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668794/sureimports/vehicles/catalogue-20260929/changan-lumin-9c79fff7efb7.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/changan-lumin-9c79fff7efb7",
+      "width": 842,
+      "height": 480
+    },
+    {
+      "slug": "changan-lumin",
+      "index": 5,
+      "sourcePage": "https://www.changan.ph/vehicles/changan-philippines/lumin/",
+      "source": "https://www.changan.ph/media/dhgnhrll/13-3.png",
+      "sha256": "e53230c8ffefb62d639e2683793dc2cb1eaee04c214d515e83d2fb8c5fd105bb",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668797/sureimports/vehicles/catalogue-20260929/changan-lumin-e53230c8ffef.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/changan-lumin-e53230c8ffef",
+      "width": 1555,
+      "height": 670
+    },
+    {
+      "slug": "chery-qq-ice-cream",
+      "index": 0,
+      "sourcePage": "https://qq.chery.cn/vehicles/bingqilin/",
+      "source": "https://material.chery.cn/media/k2en2tdu/香芋紫-1x.png",
+      "sha256": "56510413ec6047a75c2c082865fba148149464bce4d2ecb3834fbb6c2b187259",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668799/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-56510413ec60.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-56510413ec60",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "chery-qq-ice-cream",
+      "index": 1,
+      "sourcePage": "https://qq.chery.cn/vehicles/bingqilin/",
+      "source": "https://material.chery.cn/media/ncilyujx/浅藕粉-1x.png",
+      "sha256": "e26762667bc5752093816576b52a3a858f322a940ee6c1ba7a4da2202465b3c4",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668801/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-e26762667bc5.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-e26762667bc5",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "chery-qq-ice-cream",
+      "index": 2,
+      "sourcePage": "https://qq.chery.cn/vehicles/bingqilin/",
+      "source": "https://material.chery.cn/media/eu5nhew1/椰子白-1x.png",
+      "sha256": "1cf661570ff25cb4ecd132cf70a6c3c3a5c4d0efe97526cb4f4ca71f618144c2",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668803/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-1cf661570ff2.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-1cf661570ff2",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "chery-qq-ice-cream",
+      "index": 3,
+      "sourcePage": "https://qq.chery.cn/vehicles/bingqilin/",
+      "source": "https://material.chery.cn/media/3tigrt1k/榛果米-1x.png",
+      "sha256": "76bf3479225c50290257f0402ecb0505a86d4ef2676866d18d9778996f1f5281",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668805/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-76bf3479225c.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-76bf3479225c",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "chery-qq-ice-cream",
+      "index": 4,
+      "sourcePage": "https://qq.chery.cn/vehicles/bingqilin/",
+      "source": "https://material.chery.cn/media/kgch1n1f/抹茶青-1x.png",
+      "sha256": "e8a789c7d52c808469cf117e7d1bed17ddebf4f26ba496396087a3900422da95",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668807/sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-e8a789c7d52c.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/chery-qq-ice-cream-e8a789c7d52c",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "avatr-11",
+      "index": 0,
+      "sourcePage": "https://www.avatr.com/en",
+      "source": "https://static.avatr.com/pc-website/images/home3.0/e11-color/car11_01.jpg",
+      "sha256": "cd0ac6ef0ecc9538fa1de1459d18f872f02e9eb6ff88796aa1d58b886d207c49",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668809/sureimports/vehicles/catalogue-20260929/avatr-11-cd0ac6ef0ecc.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-11-cd0ac6ef0ecc",
+      "width": 1800,
+      "height": 659
+    },
+    {
+      "slug": "avatr-11",
+      "index": 1,
+      "sourcePage": "https://www.avatr.com/en",
+      "source": "https://static.avatr.com/pc-website/images/home3.0/e11-color/car11_03.jpg",
+      "sha256": "34fa82047d725a0d8efc6015996eb01d684821dccb66f5195bdd9b9af2b272b3",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668809/sureimports/vehicles/catalogue-20260929/avatr-11-34fa82047d72.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-11-34fa82047d72",
+      "width": 1800,
+      "height": 659
+    },
+    {
+      "slug": "avatr-11",
+      "index": 2,
+      "sourcePage": "https://www.avatr.com/en",
+      "source": "https://static.avatr.com/pc-website/images/home3.0/e11-color/car11_04.jpg",
+      "sha256": "2b99f00b1d85bea32246324e2810b601294a288c6a4a5771e414f345c26d2f9e",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668810/sureimports/vehicles/catalogue-20260929/avatr-11-2b99f00b1d85.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-11-2b99f00b1d85",
+      "width": 1800,
+      "height": 659
+    },
+    {
+      "slug": "avatr-11",
+      "index": 3,
+      "sourcePage": "https://www.avatr.com/en",
+      "source": "https://static.avatr.com/pc-website/images/reev11/v1/pc/design-content_02.jpg?v=3",
+      "sha256": "6c85b7994a16c14a8fd53c22922bad887515c32602e1e3743867f4b97ab6564b",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668812/sureimports/vehicles/catalogue-20260929/avatr-11-6c85b7994a16.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-11-6c85b7994a16",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "avatr-11",
+      "index": 4,
+      "sourcePage": "https://www.avatr.com/en",
+      "source": "https://static.avatr.com/pc-website/images/reev11/v1/pc/luxury-cockpit.jpg?v=2",
+      "sha256": "78d03cdb11d424917136ae16b6fe3fe74efada4e3226e4a61ad567bb2c425f90",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668813/sureimports/vehicles/catalogue-20260929/avatr-11-78d03cdb11d4.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-11-78d03cdb11d4",
+      "width": 1800,
+      "height": 1000
+    },
+    {
+      "slug": "avatr-11",
+      "index": 5,
+      "sourcePage": "https://www.avatr.com/en",
+      "source": "https://static.avatr.com/pc-website/images/reev11/v1/pc/luxury-seat_01.jpg?v=4",
+      "sha256": "40183267f750c51a131d984f6894025b17ad7c973f6160fd998ab806b24b6514",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668814/sureimports/vehicles/catalogue-20260929/avatr-11-40183267f750.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-11-40183267f750",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "avatr-12",
+      "index": 3,
+      "sourcePage": "https://www.avatr.com/en/12",
+      "source": "https://static.avatr.com/pc-website/images/car12/v5/pc/color-white.png?v=v6",
+      "sha256": "53208d8b01d9608f0a98d0488ca81156364d5af2e5f1f866345115ef3d17e9d5",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668815/sureimports/vehicles/catalogue-20260929/avatr-12-53208d8b01d9.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-12-53208d8b01d9",
+      "width": 1800,
+      "height": 589
+    },
+    {
+      "slug": "avatr-12",
+      "index": 0,
+      "sourcePage": "https://www.avatr.com/en/12",
+      "source": "https://static.avatr.com/pc-website/images/car12/v5/pc/design-list_01.jpg?width=1280&height=640&v=v6",
+      "sha256": "f1d612e54d226e4c724aa7e65dfe91ad89ab829124256896e7fb7a24d1a71668",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668817/sureimports/vehicles/catalogue-20260929/avatr-12-f1d612e54d22.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-12-f1d612e54d22",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "avatr-12",
+      "index": 1,
+      "sourcePage": "https://www.avatr.com/en/12",
+      "source": "https://static.avatr.com/pc-website/images/car12/v5/pc/design-list_02.jpg?width=1280&height=640&v=v6",
+      "sha256": "23f477cfe20216ebd7a2fafd1995252d7c40701180eca0c32db804e8f19b3f15",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668817/sureimports/vehicles/catalogue-20260929/avatr-12-23f477cfe202.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-12-23f477cfe202",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "avatr-12",
+      "index": 2,
+      "sourcePage": "https://www.avatr.com/en/12",
+      "source": "https://static.avatr.com/pc-website/images/car12/v5/pc/design-list_03.jpg?width=1280&height=640&v=v6",
+      "sha256": "6e702baeff3533294b033f741d241a29380aa7f0fddb681b0aa622066236a39a",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668818/sureimports/vehicles/catalogue-20260929/avatr-12-6e702baeff35.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-12-6e702baeff35",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "avatr-12",
+      "index": 4,
+      "sourcePage": "https://www.avatr.com/en/12",
+      "source": "https://static.avatr.com/pc-website/images/car12/v5/pc/cabin-list_01.jpg?width=1280&height=640&v=v6",
+      "sha256": "2302cc384eaccad38ee25e80cd1cf8bc4eb5ff15ed6f3a9a2b59462fc865de80",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668820/sureimports/vehicles/catalogue-20260929/avatr-12-2302cc384eac.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-12-2302cc384eac",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "avatr-12",
+      "index": 5,
+      "sourcePage": "https://www.avatr.com/en/12",
+      "source": "https://static.avatr.com/pc-website/images/car12/v5/pc/cabin-list_02.jpg?width=1280&height=640&v=v6",
+      "sha256": "699fe009fd51caa1aee143885b61602d6efc95fc30e099e0b76e22b55b7a3f51",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668821/sureimports/vehicles/catalogue-20260929/avatr-12-699fe009fd51.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/avatr-12-699fe009fd51",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "gac-aion-y",
+      "index": 6,
+      "sourcePage": "https://www.gacgroup.com/uz-uz/suv/aion-y",
+      "source": "https://ru-www-resouce-cdn.gacgroup.com/static/UZ/tenant/cms/common/202504/669a9502-e867-4383-a8a1-b7e7a40df946.jpg",
+      "sha256": "74ceec5d9ce61bed020fdcb7f4126d106eb86a38dc8b879de127ed1df719b9a4",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668823/sureimports/vehicles/catalogue-20260929/gac-aion-y-74ceec5d9ce6.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/gac-aion-y-74ceec5d9ce6",
+      "width": 1200,
+      "height": 900
+    },
+    {
+      "slug": "gac-aion-y",
+      "index": 5,
+      "sourcePage": "https://www.gacgroup.com/uz-uz/suv/aion-y",
+      "source": "https://ru-www-resouce-cdn.gacgroup.com/static/UZ/tenant/cms/common/202504/70119879-9e36-411e-a5d6-ac7b6aebf199.jpg",
+      "sha256": "49f84f2045a17a9131f7885389677571f3d33229440a94ef0b877b3683b894af",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668824/sureimports/vehicles/catalogue-20260929/gac-aion-y-49f84f2045a1.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/gac-aion-y-49f84f2045a1",
+      "width": 1800,
+      "height": 1350
+    },
+    {
+      "slug": "gac-aion-y",
+      "index": 9,
+      "sourcePage": "https://www.gacgroup.com/uz-uz/suv/aion-y",
+      "source": "https://ru-www-resouce-cdn.gacgroup.com/static/UZ/tenant/cms/common/202504/9c7a0253-138d-45e9-9be7-a4619d76d7e9.jpg",
+      "sha256": "3cf2ebce9058fa2a9331db88c77f5c1f6951e4aa6fccff927c864b475715cd61",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668825/sureimports/vehicles/catalogue-20260929/gac-aion-y-3cf2ebce9058.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/gac-aion-y-3cf2ebce9058",
+      "width": 1800,
+      "height": 1400
+    },
+    {
+      "slug": "gac-aion-y",
+      "index": 10,
+      "sourcePage": "https://www.gacgroup.com/uz-uz/suv/aion-y",
+      "source": "https://ru-www-resouce-cdn.gacgroup.com/static/UZ/tenant/cms/common/202504/3b506101-4726-4a0f-89b1-34534531ae7e.jpg",
+      "sha256": "7ad1f30c5c45af4a123c779121effa5824cbb39cbd1551f9f2680dd86fa79d0e",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668827/sureimports/vehicles/catalogue-20260929/gac-aion-y-7ad1f30c5c45.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/gac-aion-y-7ad1f30c5c45",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "gac-aion-y",
+      "index": 11,
+      "sourcePage": "https://www.gacgroup.com/uz-uz/suv/aion-y",
+      "source": "https://ru-www-resouce-cdn.gacgroup.com/static/UZ/tenant/cms/common/202504/f490d48e-456f-42a9-af51-0e388aefb4b5.webp",
+      "sha256": "3bee0da913221e0e6734612c1eea8b0cdc78e2d69413137914bfda2e1b127e5d",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668828/sureimports/vehicles/catalogue-20260929/gac-aion-y-3bee0da91322.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/gac-aion-y-3bee0da91322",
+      "width": 1800,
+      "height": 900
+    },
+    {
+      "slug": "gac-aion-y",
+      "index": 14,
+      "sourcePage": "https://www.gacgroup.com/uz-uz/suv/aion-y",
+      "source": "https://ru-www-resouce-cdn.gacgroup.com/static/UZ/tenant/cms/common/202504/fc8ce832-8ceb-4ebc-9e11-2968aa719d14.jpg",
+      "sha256": "635c079f05f708262d0ab9b28a6de343aed6c5150533e458c7f822fb674c4692",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668831/sureimports/vehicles/catalogue-20260929/gac-aion-y-635c079f05f7.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/gac-aion-y-635c079f05f7",
+      "width": 1800,
+      "height": 1013
+    },
+    {
+      "slug": "ruichi-r5",
+      "index": 1,
+      "sourcePage": "https://www.rc-ev.com/cms/a/R5KYB.html",
+      "source": "https://www.rc-ev.com/uploads/20250827/c569f1e637f16ea9cf14c31690d77b6d.jpg",
+      "sha256": "104f1d029bad80b502880bffc3c4c401317d8d11cac674c0b80d30736e64bc5a",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668832/sureimports/vehicles/catalogue-20260929/ruichi-r5-104f1d029bad.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-r5-104f1d029bad",
+      "width": 800,
+      "height": 450
+    },
+    {
+      "slug": "ruichi-r5",
+      "index": 2,
+      "sourcePage": "https://www.rc-ev.com/cms/a/R5KYB.html",
+      "source": "https://www.rc-ev.com/uploads/20250827/3a8fd87b567fab80646e69628c093026.jpg",
+      "sha256": "ebc2f04b633242a2e3b2e468e294a2a6a4c70b9005ff41f0f69b28b85db0bfbb",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668833/sureimports/vehicles/catalogue-20260929/ruichi-r5-ebc2f04b6332.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-r5-ebc2f04b6332",
+      "width": 800,
+      "height": 450
+    },
+    {
+      "slug": "ruichi-r5",
+      "index": 3,
+      "sourcePage": "https://www.rc-ev.com/cms/a/R5KYB.html",
+      "source": "https://www.rc-ev.com/uploads/20250827/11e81c5140d6ed59bdd83fe717c1433a.jpg",
+      "sha256": "04bedce9eb5377007e02d1622540fca19f2aa39a84f7b6cdd10b234ddef44f97",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668834/sureimports/vehicles/catalogue-20260929/ruichi-r5-04bedce9eb53.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-r5-04bedce9eb53",
+      "width": 800,
+      "height": 450
+    },
+    {
+      "slug": "ruichi-r5",
+      "index": 4,
+      "sourcePage": "https://www.rc-ev.com/cms/a/R5KYB.html",
+      "source": "https://www.rc-ev.com/uploads/20250827/428b4098db9f3e68c02b01e661b5e9c3.jpg",
+      "sha256": "50dc18e6c3d44ff0c4cc9f9c46b5f7422a64c76a9cb8bb9609ce8da7da13efcb",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668835/sureimports/vehicles/catalogue-20260929/ruichi-r5-50dc18e6c3d4.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-r5-50dc18e6c3d4",
+      "width": 800,
+      "height": 450
+    },
+    {
+      "slug": "ruichi-r5",
+      "index": 5,
+      "sourcePage": "https://www.rc-ev.com/cms/a/R5KYB.html",
+      "source": "https://www.rc-ev.com/uploads/20250827/23faaa52482bdbca4903cb96aaadaeec.jpg",
+      "sha256": "d53b95ab3aab90c9902f5107d5a90adfc6ad1a2a1fde1a16954c481bee6c1043",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668836/sureimports/vehicles/catalogue-20260929/ruichi-r5-d53b95ab3aab.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-r5-d53b95ab3aab",
+      "width": 800,
+      "height": 450
+    },
+    {
+      "slug": "ruichi-c5",
+      "index": 0,
+      "sourcePage": "https://www.rc-ev.com/cms/a/C5CD.html",
+      "source": "https://www.rc-ev.com/uploads/20250827/a3986913fadf2ebfe882ec594d118912.jpg",
+      "sha256": "2ceb91d78f265e335c1769b0bb671992c807d6ab562bb31f06fd126ff535c016",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668856/sureimports/vehicles/catalogue-20260929/ruichi-c5-2ceb91d78f26.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c5-2ceb91d78f26",
+      "width": 800,
+      "height": 450
+    },
+    {
+      "slug": "ruichi-c5",
+      "index": 2,
+      "sourcePage": "https://www.rc-ev.com/cms/a/C5CD.html",
+      "source": "https://www.rc-ev.com/uploads/20250827/76cc0ae6a6dabdf6826d9a215fb1e1f3.jpg",
+      "sha256": "0175a94e49595b16dc21b2e5ceb399ffe8dff6771896ebdfa11ed2101a726e30",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668857/sureimports/vehicles/catalogue-20260929/ruichi-c5-0175a94e4959.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c5-0175a94e4959",
+      "width": 800,
+      "height": 450
+    },
+    {
+      "slug": "ruichi-c5",
+      "index": 3,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C5/C5 纯电 C5 Pure electricity/平板 Flatbed/微信图片_20260921171127335_8.jpg",
+      "sha256": "d209e59f1404590ad228968b8789984dd8cec546f5277f95a440b0e63aaeadc0",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668857/sureimports/vehicles/catalogue-20260929/ruichi-c5-d209e59f1404.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c5-d209e59f1404",
+      "width": 1280,
+      "height": 960
+    },
+    {
+      "slug": "ruichi-c3",
+      "index": 3,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C3/箱货 Box/瑞驰C3-箱货-4.JPG",
+      "sha256": "e33d640571cb6666e1d388d0df8f4b740f0daa27e47079e57bba16be76c1472c",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668861/sureimports/vehicles/catalogue-20260929/ruichi-c3-e33d640571cb.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c3-e33d640571cb",
+      "width": 1800,
+      "height": 1350
+    },
+    {
+      "slug": "ruichi-c3",
+      "index": 4,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C3/箱货 Box/瑞驰C3-箱货-5.JPG",
+      "sha256": "95a4708f7509b297aa3b2eb93c987b13ab4c79afcb3f9f326b5885815908267d",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668865/sureimports/vehicles/catalogue-20260929/ruichi-c3-95a4708f7509.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c3-95a4708f7509",
+      "width": 1800,
+      "height": 1350
+    },
+    {
+      "slug": "ruichi-c3",
+      "index": 5,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C3/箱货 Box/瑞驰C3-箱货-6.JPG",
+      "sha256": "356f2dcf88d65e39665206491bc0657f629ba6e2317acbc2340f95d91fb58901",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668868/sureimports/vehicles/catalogue-20260929/ruichi-c3-356f2dcf88d6.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c3-356f2dcf88d6",
+      "width": 1800,
+      "height": 1350
+    },
+    {
+      "slug": "ruichi-c3",
+      "index": 6,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C3/箱货 Box/瑞驰C3-箱货-7.JPG",
+      "sha256": "0d60a6616e0d8065c138221566cc7af79cfac96008dd62235c27388ffdebe5f2",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668871/sureimports/vehicles/catalogue-20260929/ruichi-c3-0d60a6616e0d.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c3-0d60a6616e0d",
+      "width": 1800,
+      "height": 1350
+    },
+    {
+      "slug": "ruichi-ed71s",
+      "index": 4,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/ED71S/箱货 Box/微信图片_202609240920155832_16.jpg",
+      "sha256": "8264617c88ee90c0a59b231fd66380f6b6d6daf6cf6c160012b2f1ceb0ac0c8c",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668873/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-8264617c88ee.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ed71s-8264617c88ee",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-ed71s",
+      "index": 5,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/ED71S/箱货 Box/微信图片_202609240920155832_17.jpg",
+      "sha256": "edf3e8cc154c96be6b826aaef08cc9490c1070b90038accb20b68f4c1294c143",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668874/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-edf3e8cc154c.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ed71s-edf3e8cc154c",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-ed71s",
+      "index": 7,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/ED71S/箱货 Box/微信图片_202609240920155832_19.jpg",
+      "sha256": "7fd1c4375a6cb55093cbacc446b1688c38c197fb981a1c0e5d8f0c086325df9e",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668875/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-7fd1c4375a6c.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ed71s-7fd1c4375a6c",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-ed71s",
+      "index": 8,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/ED71S/箱货 Box/微信图片_202609240920155832_20.jpg",
+      "sha256": "62a25e9c39f8e74f48828f07421da671424c9e3432d68e85a7df48fdd9660d8c",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668876/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-62a25e9c39f8.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ed71s-62a25e9c39f8",
+      "width": 1707,
+      "height": 1280
+    },
+    {
+      "slug": "ruichi-ed71s",
+      "index": 10,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/ED71S/箱货 Box/微信图片_202609240920155832_22.jpg",
+      "sha256": "a872364d3a37b93a1ce93edd78696e897badda60b204558844699782cb63e5df",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668877/sureimports/vehicles/catalogue-20260929/ruichi-ed71s-a872364d3a37.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ed71s-a872364d3a37",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-c9",
+      "index": 3,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C9/4.jpg",
+      "sha256": "b2305d81840efdfb571db9598e38b0ecce55308ab583a304ba1ff7313ec63a65",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668882/sureimports/vehicles/catalogue-20260929/ruichi-c9-b2305d81840e.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c9-b2305d81840e",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-c9",
+      "index": 4,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C9/5.jpg",
+      "sha256": "d598251c806e38a133d674c31726457d551f9bc150b192123a973ae7c5d23bcc",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668887/sureimports/vehicles/catalogue-20260929/ruichi-c9-d598251c806e.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c9-d598251c806e",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-c9",
+      "index": 7,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C9/8.jpg",
+      "sha256": "de772952921012e27db239e038e1e94da85faa6c66207d1ba7b52f2f6fafbd3b",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668891/sureimports/vehicles/catalogue-20260929/ruichi-c9-de7729529210.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c9-de7729529210",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-c9",
+      "index": 8,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/C9/9.jpg",
+      "sha256": "6a14eb6aced03ae09dcbbf430fc5a83a65da40e7b8ad6d92057a9c3807f79a02",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668897/sureimports/vehicles/catalogue-20260929/ruichi-c9-6a14eb6aced0.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-c9-6a14eb6aced0",
+      "width": 1050,
+      "height": 1400
+    },
+    {
+      "slug": "changan-lumin",
+      "index": 3,
+      "sourcePage": "https://www.changan.ph/vehicles/changan-philippines/lumin/",
+      "source": "https://www.changan.ph/media/wnafaaxn/24-2.png",
+      "sha256": "83815edae8f3d03383b415dbfcd68664a46fedfb8d3c23654646018876a2705b",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668795/sureimports/vehicles/catalogue-20260929/changan-lumin-83815edae8f3.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/changan-lumin-83815edae8f3",
+      "width": 486,
+      "height": 540
+    },
+    {
+      "slug": "changan-lumin",
+      "index": 2,
+      "sourcePage": "https://www.changan.ph/vehicles/changan-philippines/lumin/",
+      "source": "https://www.changan.ph/media/khzf4g5b/23-1.png",
+      "sha256": "4058bb040bf1a109a79a338eaa24e7513a61b25649ddddcb94899c56008d5821",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668796/sureimports/vehicles/catalogue-20260929/changan-lumin-4058bb040bf1.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/changan-lumin-4058bb040bf1",
+      "width": 486,
+      "height": 540
+    },
+    {
+      "slug": "ruichi-ec35",
+      "index": 3,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC35/两座版 2seats/482f60c7-edd0-466a-8bf4-0c9a1fa0568e.png",
+      "sha256": "11b0e2cab1742aca631f7a6dcc96ff6e8db2e36e46d52d8bae4933b3e3544aaa",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668978/sureimports/vehicles/catalogue-20260929/ruichi-ec35-11b0e2cab174.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec35-11b0e2cab174",
+      "width": 560,
+      "height": 420
+    },
+    {
+      "slug": "ruichi-ec35",
+      "index": 4,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC35/两座版 2seats/68da942d-abab-4bf1-9dd9-7d2de475406e.png",
+      "sha256": "5a093925c11e3ad5b03cbe9f306acc3f3957af49bfa58daf2be7ee5bd21f1579",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668979/sureimports/vehicles/catalogue-20260929/ruichi-ec35-5a093925c11e.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec35-5a093925c11e",
+      "width": 560,
+      "height": 420
+    },
+    {
+      "slug": "ruichi-ec35",
+      "index": 5,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC35/两座版 2seats/9558f2f2-4708-4881-8df2-54293ac87f08.png",
+      "sha256": "015f25637824614285eed674e94bb6aec622a52ba47a16d3d171ea90dbe1cce0",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668980/sureimports/vehicles/catalogue-20260929/ruichi-ec35-015f25637824.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec35-015f25637824",
+      "width": 560,
+      "height": 420
+    },
+    {
+      "slug": "ruichi-ec35",
+      "index": 6,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC35/两座版 2seats/b56781b2-604e-4d0b-a006-21afef6d787b.png",
+      "sha256": "b86ce8e091857d29d980e5c10b6d1127e41b34dd5b8c7c98a539969d6e0deba7",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790668980/sureimports/vehicles/catalogue-20260929/ruichi-ec35-b86ce8e09185.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec35-b86ce8e09185",
+      "width": 560,
+      "height": 420
+    },
+    {
+      "slug": "ruichi-ec31s",
+      "index": 3,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC31S/箱货 Box/12.heic",
+      "sha256": "fcd61f39d68b5ee6839489888974d9090ba6a1b16b0df85479bfd9e1ca6b19a2",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669544/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-fcd61f39d68b.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec31s-fcd61f39d68b",
+      "width": 1400,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-ec31s",
+      "index": 6,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC31S/箱货 Box/4.heic",
+      "sha256": "4e27b1eede566ca760ae7f18e6fdc1666c3ddb585bca9fa104b2d2286d361cd0",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669547/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-4e27b1eede56.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec31s-4e27b1eede56",
+      "width": 1400,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-ec31s",
+      "index": 7,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC31S/箱货 Box/5.heic",
+      "sha256": "b8764d7b61c2b3404040fe9fd2a966168b5c506c50b29e39d8df51ff4c9e9bba",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669550/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-b8764d7b61c2.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec31s-b8764d7b61c2",
+      "width": 1400,
+      "height": 1400
+    },
+    {
+      "slug": "ruichi-ec31s",
+      "index": 10,
+      "sourcePage": "Supplier-provided Ruichi V2609 photos",
+      "source": "Downloads/瑞驰 Ruichi V2609/EC31S/箱货 Box/8.heic",
+      "sha256": "d5b6d452cb77eb32968e330f9cbea9f478a049af699a46c3a3fd11f978888884",
+      "url": "https://res.cloudinary.com/djprcwnsz/image/upload/v1790669553/sureimports/vehicles/catalogue-20260929/ruichi-ec31s-d5b6d452cb77.webp",
+      "publicId": "sureimports/vehicles/catalogue-20260929/ruichi-ec31s-d5b6d452cb77",
+      "width": 1400,
+      "height": 1400
+    }
+  ]
+}
