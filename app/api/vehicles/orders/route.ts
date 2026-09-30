@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+import { getVehiclePlans } from "@/lib/vehicles/plans";
 import { prisma } from "@/lib/prisma";
 import { vehicleAdmin } from "@/lib/vehicles/access";
 export async function GET() {
@@ -32,10 +34,18 @@ export async function GET() {
     },
     include: { paymentClaims: true },
   });
+  const plans = await getVehiclePlans(orders.map((o) => o.id));
+  const reversals = plans.length
+    ? await prisma.$queryRaw<
+        { orderId: string; claimId: string; status: string; reason: string }[]
+      >`SELECT orderId,claimId,status,reason FROM vehicle_credit_reversals WHERE orderId IN (${Prisma.join(plans.map((p) => p.orderId))})`
+    : [];
   return Response.json(
     {
       orders: orders.map((o) => ({
+        plan: plans.find((p) => p.orderId === o.id) || null,
         ...o,
+        reversals: reversals.filter((r) => r.orderId === o.id),
         invoice: invoices.find((i) => i.pidInvoice === o.pidInvoice) || null,
       })),
     },

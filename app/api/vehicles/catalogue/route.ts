@@ -1,3 +1,4 @@
+import { getPlanSettings } from "@/lib/vehicles/plans";
 import { prisma } from "@/lib/prisma";
 import { vehicleAdmin } from "@/lib/vehicles/access";
 import { vehicleCatalogue, vehicleRates } from "@/lib/vehicles/data";
@@ -13,7 +14,12 @@ export async function GET() {
     vehicleRates(),
   ]);
   return Response.json(
-    { models, rates, canEditPricing: !!(await vehicleAdmin(true, true)) },
+    {
+      models,
+      rates,
+      planSettings: await getPlanSettings(),
+      canEditPricing: !!(await vehicleAdmin(true, true)),
+    },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }

@@ -1,0 +1,553 @@
+{
+  "document": "Quotation for RUICHI(2026.09) 2.pdf",
+  "sha256": "9f0f007273177f9797371a20cbf5a026b581a80e4fa3a32f7ab19542d3a7d8bf",
+  "documentDate": "2026-08-28",
+  "quotationMonth": "2026-09",
+  "currency": "USD",
+  "basis": "1–10 units EXW Guangzhou; admin USD/NGN rate and markup; exterior CBM × admin shipping rate",
+  "bulkNote": "10+ column retained for reference only. Exactly 10 overlaps the supplier tier labels; bulk pricing requires supplier confirmation and is not auto-applied.",
+  "rangeNote": "Quoted supplier ranges; the quotation does not specify test cycles. Cargo volumes derived from enclosed cargo dimensions, rounded to 0.001 m³; not exterior shipping CBM. Open-bed cargo volumes left unknown.",
+  "excluded": "Upcoming C5 RV / C9 RV range-extender models; ambiguous 11/14-seat upgrades and extra equipment combinations require supplier confirmation. English/Chinese Beyond trim numerals disagree, so displayed as Beyond Zhixing.",
+  "variants": [
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "freight-50",
+      "page": 1,
+      "row": "van 19",
+      "usd1To10": 12960,
+      "usdBulkQuoted": 12660,
+      "cargoDimensionsMm": [2830, 1740, 1400],
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "freight-50-zhixing",
+      "page": 1,
+      "row": "van 20",
+      "usd1To10": 13300,
+      "usdBulkQuoted": 13000,
+      "cargoDimensionsMm": [2830, 1740, 1400],
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "freight-50-beyond-zhixing",
+      "page": 1,
+      "row": "van 21",
+      "usd1To10": 13960,
+      "usdBulkQuoted": 13660,
+      "cargoDimensionsMm": [2830, 1740, 1400],
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "freight-62",
+      "page": 1,
+      "row": "van 23",
+      "usd1To10": 13950,
+      "usdBulkQuoted": 13650,
+      "cargoDimensionsMm": [3025, 1750, 1455],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "freight-62-zhixing",
+      "page": 1,
+      "row": "van 24",
+      "usd1To10": 14290,
+      "usdBulkQuoted": 13990,
+      "cargoDimensionsMm": [3025, 1750, 1455],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "freight-62-beyond-zhixing",
+      "page": 1,
+      "row": "van 25",
+      "usd1To10": 14800,
+      "usdBulkQuoted": 14500,
+      "cargoDimensionsMm": [3025, 1750, 1455],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "freight-41",
+      "page": 1,
+      "row": "van 15",
+      "usd1To10": 11450,
+      "usdBulkQuoted": 11150,
+      "cargoDimensionsMm": [2830, 1740, 1400],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-6-41",
+      "page": 1,
+      "row": "van 3",
+      "usd1To10": 11950,
+      "usdBulkQuoted": 11650,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-6-50",
+      "page": 1,
+      "row": "van 7",
+      "usd1To10": 13600,
+      "usdBulkQuoted": 13300,
+      "cargoDimensionsMm": null,
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-6-50-zhixing",
+      "page": 1,
+      "row": "van 8",
+      "usd1To10": 13950,
+      "usdBulkQuoted": 13650,
+      "cargoDimensionsMm": null,
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-6-50-beyond-zhixing",
+      "page": 1,
+      "row": "van 9",
+      "usd1To10": 14530,
+      "usdBulkQuoted": 14230,
+      "cargoDimensionsMm": null,
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-6",
+      "page": 1,
+      "row": "van 12",
+      "usd1To10": 14440,
+      "usdBulkQuoted": 14140,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-6-zhixing",
+      "page": 1,
+      "row": "van 13",
+      "usd1To10": 14790,
+      "usdBulkQuoted": 14490,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-6-beyond-zhixing",
+      "page": 1,
+      "row": "van 14",
+      "usd1To10": 15370,
+      "usdBulkQuoted": 15070,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-9",
+      "page": 1,
+      "row": "van 12",
+      "usd1To10": 14740,
+      "usdBulkQuoted": 14440,
+      "cargoDimensionsMm": null,
+      "notes": "Includes quoted USD 300 nine-seat option, available only with 61.94 kWh battery."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-9-zhixing",
+      "page": 1,
+      "row": "van 13",
+      "usd1To10": 15090,
+      "usdBulkQuoted": 14790,
+      "cargoDimensionsMm": null,
+      "notes": "Includes quoted USD 300 nine-seat option, available only with 61.94 kWh battery."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "passenger-9-beyond-zhixing",
+      "page": 1,
+      "row": "van 14",
+      "usd1To10": 15670,
+      "usdBulkQuoted": 15370,
+      "cargoDimensionsMm": null,
+      "notes": "Includes quoted USD 300 nine-seat option, available only with 61.94 kWh battery."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "freight-50",
+      "page": 2,
+      "row": "van 33",
+      "usd1To10": 13180,
+      "usdBulkQuoted": 12880,
+      "cargoDimensionsMm": [2830, 1740, 1400],
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "freight-50-zhixing",
+      "page": 2,
+      "row": "van 34",
+      "usd1To10": 13520,
+      "usdBulkQuoted": 13220,
+      "cargoDimensionsMm": [2830, 1740, 1400],
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "freight-50-beyond-zhixing",
+      "page": 2,
+      "row": "van 35",
+      "usd1To10": 14170,
+      "usdBulkQuoted": 13870,
+      "cargoDimensionsMm": [2830, 1740, 1400],
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "freight-62",
+      "page": 2,
+      "row": "van 36",
+      "usd1To10": 14160,
+      "usdBulkQuoted": 13860,
+      "cargoDimensionsMm": [3025, 1750, 1455],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "freight-62-zhixing",
+      "page": 2,
+      "row": "van 37",
+      "usd1To10": 14500,
+      "usdBulkQuoted": 14200,
+      "cargoDimensionsMm": [3025, 1750, 1455],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "freight-62-beyond-zhixing",
+      "page": 2,
+      "row": "van 38",
+      "usd1To10": 15010,
+      "usdBulkQuoted": 14710,
+      "cargoDimensionsMm": [3025, 1750, 1455],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-6-50",
+      "page": 1,
+      "row": "van 27",
+      "usd1To10": 13820,
+      "usdBulkQuoted": 13520,
+      "cargoDimensionsMm": null,
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-6-50-zhixing",
+      "page": 1,
+      "row": "van 28",
+      "usd1To10": 14160,
+      "usdBulkQuoted": 13860,
+      "cargoDimensionsMm": null,
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-6-50-beyond-zhixing",
+      "page": 1,
+      "row": "van 29",
+      "usd1To10": 14740,
+      "usdBulkQuoted": 14440,
+      "cargoDimensionsMm": null,
+      "notes": "CATL 50.1/50.18 kWh supplier alternatives; exact pack confirmed with quotation."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-6",
+      "page": 1,
+      "row": "van 30",
+      "usd1To10": 14660,
+      "usdBulkQuoted": 14360,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-6-zhixing",
+      "page": 1,
+      "row": "van 31",
+      "usd1To10": 15000,
+      "usdBulkQuoted": 14700,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-6-beyond-zhixing",
+      "page": 1,
+      "row": "van 32",
+      "usd1To10": 15580,
+      "usdBulkQuoted": 15280,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-9",
+      "page": 1,
+      "row": "van 30",
+      "usd1To10": 14960,
+      "usdBulkQuoted": 14660,
+      "cargoDimensionsMm": null,
+      "notes": "Includes quoted USD 300 nine-seat option, available only with 61.94 kWh battery."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-9-zhixing",
+      "page": 1,
+      "row": "van 31",
+      "usd1To10": 15300,
+      "usdBulkQuoted": 15000,
+      "cargoDimensionsMm": null,
+      "notes": "Includes quoted USD 300 nine-seat option, available only with 61.94 kWh battery."
+    },
+    {
+      "slug": "ruichi-r5",
+      "variantId": "passenger-9-beyond-zhixing",
+      "page": 1,
+      "row": "van 32",
+      "usd1To10": 15880,
+      "usdBulkQuoted": 15580,
+      "cargoDimensionsMm": null,
+      "notes": "Includes quoted USD 300 nine-seat option, available only with 61.94 kWh battery."
+    },
+    {
+      "slug": "ruichi-ec75",
+      "variantId": "refrigerated",
+      "page": 1,
+      "row": "van 26",
+      "usd1To10": 17720,
+      "usdBulkQuoted": 17420,
+      "cargoDimensionsMm": [2740, 1680, 1380],
+      "notes": "PVC-encapsulated refrigerated cargo box; quoted refrigeration temperature −18°C."
+    },
+    {
+      "slug": "ruichi-ec35",
+      "variantId": "two-seat",
+      "page": 1,
+      "row": "van 1",
+      "usd1To10": 10100,
+      "usdBulkQuoted": 9800,
+      "cargoDimensionsMm": [2530, 1440, 1270],
+      "notes": "Ganfeng or CALB battery as quoted; pack supplier confirmed with order."
+    },
+    {
+      "slug": "ruichi-ec35",
+      "variantId": "five-seat",
+      "page": 1,
+      "row": "van 2",
+      "usd1To10": 10240,
+      "usdBulkQuoted": 9940,
+      "cargoDimensionsMm": [1630, 1440, 1270],
+      "notes": "Ganfeng or CALB battery as quoted; pack supplier confirmed with order."
+    },
+    {
+      "slug": "ruichi-ec31s",
+      "variantId": "flatbed",
+      "page": 2,
+      "row": "truck 1",
+      "usd1To10": 10100,
+      "usdBulkQuoted": 9800,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec31s",
+      "variantId": "fence",
+      "page": 2,
+      "row": "truck 2",
+      "usd1To10": 10380,
+      "usdBulkQuoted": 10080,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ec31s",
+      "variantId": "box",
+      "page": 2,
+      "row": "truck 3",
+      "usd1To10": 10530,
+      "usdBulkQuoted": 10230,
+      "cargoDimensionsMm": [3060, 1600, 1620],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ed71s",
+      "variantId": "fence",
+      "page": 2,
+      "row": "truck 4",
+      "usd1To10": 12310,
+      "usdBulkQuoted": 12010,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-ed71s",
+      "variantId": "box",
+      "page": 2,
+      "row": "truck 5",
+      "usd1To10": 12310,
+      "usdBulkQuoted": 12010,
+      "cargoDimensionsMm": [3802, 1780, 1760],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-c5l",
+      "variantId": "flatbed",
+      "page": 2,
+      "row": "truck 6",
+      "usd1To10": 14130,
+      "usdBulkQuoted": 13830,
+      "cargoDimensionsMm": null,
+      "notes": "Quotation lists identical exterior dimensions for all three bodies; these supersede the earlier specification sheet for estimates and require supplier confirmation for the ordered body."
+    },
+    {
+      "slug": "ruichi-c5l",
+      "variantId": "fence",
+      "page": 2,
+      "row": "truck 7",
+      "usd1To10": 14700,
+      "usdBulkQuoted": 14400,
+      "cargoDimensionsMm": null,
+      "notes": "Quotation lists identical exterior dimensions for all three bodies; these supersede the earlier specification sheet for estimates and require supplier confirmation for the ordered body."
+    },
+    {
+      "slug": "ruichi-c5l",
+      "variantId": "box",
+      "page": 2,
+      "row": "truck 8",
+      "usd1To10": 14840,
+      "usdBulkQuoted": 14540,
+      "cargoDimensionsMm": [3802, 1780, 1760],
+      "notes": "Quotation lists identical exterior dimensions for all three bodies; these supersede the earlier specification sheet for estimates and require supplier confirmation for the ordered body."
+    },
+    {
+      "slug": "ruichi-c5",
+      "variantId": "flatbed",
+      "page": 2,
+      "row": "truck 9",
+      "usd1To10": 13800,
+      "usdBulkQuoted": 13500,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-c5",
+      "variantId": "fence",
+      "page": 2,
+      "row": "truck 10",
+      "usd1To10": 14370,
+      "usdBulkQuoted": 14070,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-c5",
+      "variantId": "box",
+      "page": 2,
+      "row": "truck 11",
+      "usd1To10": 14520,
+      "usdBulkQuoted": 14220,
+      "cargoDimensionsMm": [3600, 1780, 1610],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-c3",
+      "variantId": "flatbed",
+      "page": 2,
+      "row": "truck 15",
+      "usd1To10": 12310,
+      "usdBulkQuoted": 12010,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-c3",
+      "variantId": "fence",
+      "page": 2,
+      "row": "truck 16",
+      "usd1To10": 12730,
+      "usdBulkQuoted": 12430,
+      "cargoDimensionsMm": null,
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-c3",
+      "variantId": "box",
+      "page": 2,
+      "row": "truck 17",
+      "usd1To10": 12880,
+      "usdBulkQuoted": 12580,
+      "cargoDimensionsMm": [3130, 1725, 1700],
+      "notes": ""
+    },
+    {
+      "slug": "ruichi-c3",
+      "variantId": "refrigerated",
+      "page": 2,
+      "row": "truck 18",
+      "usd1To10": 16580,
+      "usdBulkQuoted": 16280,
+      "cargoDimensionsMm": [3030, 1625, 1560],
+      "notes": "Quoted refrigeration temperature −18°C to +12°C."
+    },
+    {
+      "slug": "ruichi-c9",
+      "variantId": "pioneer",
+      "page": 2,
+      "row": "truck 20 + optional box",
+      "usd1To10": 24210,
+      "usdBulkQuoted": 23910,
+      "cargoDimensionsMm": null,
+      "notes": "USD 22,710 chassis plus USD 1,500 standard box. Box exterior dimensions/seats retained from C9 specification; quotation repeats the exterior dimensions. Confirm final built body before invoicing."
+    },
+    {
+      "slug": "ruichi-c9",
+      "variantId": "chassis-100",
+      "page": 2,
+      "row": "truck 19",
+      "usd1To10": 21290,
+      "usdBulkQuoted": 20990,
+      "cargoDimensionsMm": null,
+      "notes": "Class II chassis only; cargo body is extra. Supplier-listed exterior dimensions; final transport dimensions require confirmation."
+    },
+    {
+      "slug": "ruichi-c9",
+      "variantId": "chassis-120",
+      "page": 2,
+      "row": "truck 20",
+      "usd1To10": 22710,
+      "usdBulkQuoted": 22410,
+      "cargoDimensionsMm": null,
+      "notes": "Class II chassis only; cargo body is extra. Supplier-listed exterior dimensions; final transport dimensions require confirmation."
+    },
+    {
+      "slug": "ruichi-vala-home",
+      "variantId": "camper",
+      "page": 2,
+      "row": "RV 1",
+      "usd1To10": 27990,
+      "usdBulkQuoted": 27690,
+      "cargoDimensionsMm": null,
+      "notes": "Six-seat layout retained from previous VALA Home specification; quotation supplies updated price, body dimensions, battery and range."
+    }
+  ]
+}

@@ -1,4 +1,12 @@
 "use client";
+import { VehiclePlanAdmin, VehiclePlanSettings } from "./VehiclePlanAdmin";
+import {
+  DEFAULT_PLAN_SETTINGS,
+  planSchedule,
+  moneyMinor,
+  type PlanSettings,
+  type VehiclePlan,
+} from "@/lib/vehicles/installments";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, RefreshCcw, ExternalLink, Package } from "lucide-react";
@@ -15,6 +23,8 @@ import {
 import "./vehicles-admin.css";
 
 type Order = {
+  plan: VehiclePlan | null;
+  reversals: { claimId: string; status: string; reason: string }[];
   id: string;
   vehicleName: string;
   quantity: number;
@@ -30,6 +40,7 @@ type Order = {
     invoiceNumber: string;
     grandTotal: string;
     balanceDue: string;
+    amountPaid: string;
     paymentClaims: {
       pidClaim: string;
       claimedAmount: string;
@@ -71,12 +82,16 @@ const freshVariant = (): VehicleSpec => ({
 });
 export default function VehicleAdminWorkspace() {
   const [search, setSearch] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const [status, setStatus] = useState("");
   const [filter, setFilter] = useState({ search: "", status: "" });
   const [tab, setTab] = useState("orders");
   const [models, setModels] = useState<VehicleModel[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [rates, setRates] = useState<Rates>({ ngnPerRmb: 0, ngnPerCbm: 0 });
+  const [planSettings, setPlanSettings] = useState<PlanSettings>(
+    DEFAULT_PLAN_SETTINGS,
+  );
   const [markup, setMarkup] = useState("20");
   const [canEditPricing, setCanEditPricing] = useState(false);
   const [edit, setEdit] = useState<VehicleModel | null>(null);
@@ -99,6 +114,7 @@ export default function VehicleAdminWorkspace() {
         throw new Error(c.message || o.message || "Unable to load vehicles.");
       setModels(c.models);
       setRates(c.rates);
+      setPlanSettings(c.planSettings || DEFAULT_PLAN_SETTINGS);
       setMarkup(String(c.rates.markupPercent ?? 20));
       setCanEditPricing(c.canEditPricing === true);
       setOrders(o.orders);
@@ -174,6 +190,26 @@ export default function VehicleAdminWorkspace() {
   const filteredOrders = orders.filter(
     (o) =>
       (!filter.status || o.status === filter.status) &&
+      (!paymentFilter ||
+        (paymentFilter === "plans"
+          ? !!o.plan
+          : paymentFilter === "review"
+            ? [
+                "CANCELLATION_REQUESTED",
+                "REFUND_PENDING",
+                "PAYMENT_REVIEW",
+              ].includes(o.plan?.status || "")
+            : paymentFilter === "overdue"
+              ? !!o.plan?.terms &&
+                o.plan.status === "ACTIVE" &&
+                planSchedule(
+                  o.plan.terms,
+                  o.plan.activatedAt,
+                  moneyMinor(String(o.invoice?.amountPaid || 0)),
+                ).some(
+                  (r) => !r.paid && r.dueAt && new Date(r.dueAt) < new Date(),
+                )
+              : o.plan?.status === paymentFilter)) &&
       `${o.id} ${o.vehicleName} ${o.customerName} ${o.email}`
         .toLowerCase()
         .includes(filter.search.toLowerCase().trim()),
@@ -299,6 +335,12 @@ export default function VehicleAdminWorkspace() {
           Save markup
         </button>
       </form>
+      <VehiclePlanSettings
+        settings={planSettings}
+        busy={busy}
+        canEdit={canEditPricing}
+        action={action}
+      />
       {tab === "catalogue" && (
         <>
           <div className="va-toolbar">
@@ -728,12 +770,29 @@ export default function VehicleAdminWorkspace() {
               >
                 <option value="">All stages</option>
                 {Object.entries(STAGE_LABELS)
-                  .filter(([key]) => key !== "UPDATE")
+                  .filter(
+                    ([key]) => key !== "UPDATE" && !key.startsWith("PLAN_"),
+                  )
                   .map(([key, label]) => (
                     <option key={key} value={key}>
                       {label}
                     </option>
                   ))}
+              </select>
+            </label>
+            <label>
+              <span className="sr-only">Filter payment plans</span>
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+              >
+                <option value="">All payment methods</option>
+                <option value="plans">Pay Small Small</option>
+                <option value="ACCEPTED">Awaiting deposit</option>
+                <option value="ACTIVE">Active plans</option>
+                <option value="overdue">Overdue instalments</option>
+                <option value="review">Finance review / refunds</option>
+                <option value="COMPLETED">Fully funded plans</option>
               </select>
             </label>
             <button type="submit" className="va-primary">
@@ -775,7 +834,10 @@ export default function VehicleAdminWorkspace() {
                   aria-pressed={o.id === orderId}
                   onClick={() => setOrderId(o.id)}
                 >
-                  <small>{STAGE_LABELS[o.status] || o.status}</small>
+                  <small>
+                    {STAGE_LABELS[o.status] || o.status}
+                    {o.plan ? " · Pay Small Small" : ""}
+                  </small>
                   <strong>{o.vehicleName}</strong>
                   <span>
                     {o.customerName} · {o.quantity} vehicle(s)
@@ -786,6 +848,15 @@ export default function VehicleAdminWorkspace() {
             </div>
             {order && (
               <div>
+                {order.plan && (
+                  <VehiclePlanAdmin
+                    plan={order.plan}
+                    paid={String(order.invoice?.amountPaid || 0)}
+                    busy={busy}
+                    canEdit={canEditPricing}
+                    action={action}
+                  />
+                )}
                 <section className="va-panel">
                   <p className="va-kicker">{order.id}</p>
                   <h2>{order.vehicleName}</h2>
@@ -805,7 +876,30 @@ export default function VehicleAdminWorkspace() {
                         });
                       }}
                     >
-                      <h3>Issue a Naira quotation</h3>
+                      <h3>
+                        Issue a Naira quotation
+                        {order.plan ? " · Pay Small Small" : ""}
+                      </h3>
+                      {order.plan && (
+                        <>
+                          <p>
+                            Includes a {planSettings.feePercent}% fee and{" "}
+                            {planSettings.depositPercent}% deposit, payable
+                            within {planSettings.durationDays} days. Procurement
+                            starts after full payment.
+                          </p>
+                          <label className="va-check">
+                            <input
+                              type="checkbox"
+                              name="priceRiskConfirmed"
+                              required
+                            />
+                            I confirm supplier availability and approve this
+                            fixed landed price including currency and
+                            supplier-price exposure for the full payment period.
+                          </label>
+                        </>
+                      )}
                       <p>
                         Uses confirmed catalogue prices and current central
                         rates. Values are frozen on this order.
@@ -867,6 +961,95 @@ export default function VehicleAdminWorkspace() {
                               Download private payment proof ↗
                             </a>
                           )}
+                          {order.plan && c.status === "APPROVED" && (
+                            <div>
+                              {order.reversals?.find(
+                                (r) => r.claimId === c.pidClaim,
+                              )?.status === "CONFIRMED" ? (
+                                <p>
+                                  Bank credit reversed. The original receipt
+                                  remains in the audit history.
+                                </p>
+                              ) : (
+                                <form
+                                  onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const f = new FormData(e.currentTarget);
+                                    const pending =
+                                      order.reversals?.find(
+                                        (r) => r.claimId === c.pidClaim,
+                                      )?.status === "REQUESTED";
+                                    void action(
+                                      `/api/vehicles/orders/${order.id}/reversal`,
+                                      {
+                                        action: pending ? "confirm" : "request",
+                                        claimId: c.pidClaim,
+                                        reason: f.get("reason"),
+                                        reference: f.get("reference"),
+                                        bankReversalConfirmed:
+                                          f.get("confirmed") === "on",
+                                      },
+                                    );
+                                  }}
+                                >
+                                  {order.reversals?.find(
+                                    (r) => r.claimId === c.pidClaim,
+                                  )?.status === "REQUESTED" ? (
+                                    <>
+                                      <p>
+                                        A different finance reviewer must
+                                        confirm this reversal.
+                                      </p>
+                                      <label>
+                                        Actual bank reversal reference
+                                        <input
+                                          name="reference"
+                                          required
+                                          minLength={6}
+                                          maxLength={191}
+                                        />
+                                      </label>
+                                      <label className="va-check">
+                                        <input
+                                          type="checkbox"
+                                          name="confirmed"
+                                          required
+                                        />
+                                        I independently verified the bank
+                                        reversal.
+                                      </label>
+                                      <button
+                                        className="va-secondary"
+                                        disabled={busy || !canEditPricing}
+                                      >
+                                        Confirm bank reversal
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <details>
+                                      <summary>
+                                        Correct a reversed bank credit
+                                      </summary>
+                                      <label>
+                                        Reason for reversal
+                                        <textarea
+                                          name="reason"
+                                          required
+                                          maxLength={2000}
+                                        />
+                                      </label>
+                                      <button
+                                        className="va-secondary"
+                                        disabled={busy || !canEditPricing}
+                                      >
+                                        Request second-reviewer verification
+                                      </button>
+                                    </details>
+                                  )}
+                                </form>
+                              )}
+                            </div>
+                          )}
                           {c.status === "PENDING_CONFIRMATION" && (
                             <form
                               onSubmit={(e) => {
@@ -877,7 +1060,18 @@ export default function VehicleAdminWorkspace() {
                                 ).submitter?.getAttribute("value");
                                 void action(
                                   `/api/invoicing/payment-claims/${c.pidClaim}/${decision}`,
-                                  { reviewNote: form.get("reviewNote") },
+                                  {
+                                    reviewNote: form.get("reviewNote"),
+                                    bankCreditConfirmed:
+                                      form.get("bankCreditConfirmed") === "on",
+                                    bankReference: form.get("bankReference"),
+                                    receivedAmount: form.get("receivedAmount"),
+                                    creditedAt: form.get("creditedAt")
+                                      ? new Date(
+                                          String(form.get("creditedAt")),
+                                        ).toISOString()
+                                      : null,
+                                  },
                                 );
                               }}
                             >
@@ -885,9 +1079,41 @@ export default function VehicleAdminWorkspace() {
                                 Review note / rejection reason
                                 <input name="reviewNote" maxLength={2000} />
                               </label>
+                              <label>
+                                Actual bank credit amount (NGN)
+                                <input
+                                  name="receivedAmount"
+                                  type="number"
+                                  min="0.01"
+                                  step="0.01"
+                                  required
+                                />
+                              </label>
+                              <label>
+                                Actual bank transaction identifier
+                                <input
+                                  name="bankReference"
+                                  minLength={6}
+                                  maxLength={150}
+                                  required
+                                />
+                              </label>
+                              <label>
+                                Bank credit date/time (your device timezone)
+                                <input
+                                  name="creditedAt"
+                                  type="datetime-local"
+                                  required
+                                />
+                              </label>
                               <label className="va-check">
-                                <input type="checkbox" required />I have checked
-                                this payment against the bank statement.
+                                <input
+                                  type="checkbox"
+                                  name="bankCreditConfirmed"
+                                  required
+                                />
+                                I have checked this payment against the bank
+                                statement.
                               </label>
                               <div className="va-toolbar">
                                 <button
@@ -901,6 +1127,7 @@ export default function VehicleAdminWorkspace() {
                                   className="va-secondary"
                                   disabled={busy}
                                   value="reject"
+                                  formNoValidate
                                 >
                                   Reject with reason
                                 </button>
@@ -913,51 +1140,55 @@ export default function VehicleAdminWorkspace() {
                   )}
                 </section>
                 <section className="va-panel">
-                  {["ENQUIRY", "QUOTED"].includes(order.status) && (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const f = new FormData(e.currentTarget);
-                        const actionName = (
-                          e.nativeEvent as SubmitEvent
-                        ).submitter?.getAttribute("value");
-                        void action(`/api/vehicles/orders/${order.id}`, {
-                          action: actionName,
-                          message: f.get("message"),
-                        });
-                      }}
-                    >
-                      <h2>Quotation management</h2>
-                      <label>
-                        Reason / confirmation of unchanged price and
-                        availability
-                        <textarea name="message" required maxLength={2000} />
-                      </label>
-                      <div className="va-toolbar">
-                        {order.status === "QUOTED" && (
-                          <button
-                            value="extend"
-                            className="va-secondary"
-                            disabled={busy}
-                          >
-                            Extend original quote by 24 hours
-                          </button>
-                        )}
-                        <button
-                          value="cancel"
-                          className="va-secondary"
-                          disabled={busy}
-                        >
-                          Cancel unpaid request
-                        </button>
-                      </div>
-                      <p>
-                        Received or pending payments must be reconciled before
-                        cancellation. Extending a quote keeps its original
-                        price.
-                      </p>
-                    </form>
-                  )}
+                  {["ENQUIRY", "QUOTED"].includes(order.status) &&
+                    (!order.plan ||
+                      ["OFFERED", "ACCEPTED"].includes(order.plan.status)) && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const f = new FormData(e.currentTarget);
+                          const actionName = (
+                            e.nativeEvent as SubmitEvent
+                          ).submitter?.getAttribute("value");
+                          void action(`/api/vehicles/orders/${order.id}`, {
+                            action: actionName,
+                            message: f.get("message"),
+                          });
+                        }}
+                      >
+                        <h2>Quotation management</h2>
+                        <label>
+                          Reason / confirmation of unchanged price and
+                          availability
+                          <textarea name="message" required maxLength={2000} />
+                        </label>
+                        <div className="va-toolbar">
+                          {order.status === "QUOTED" && (
+                            <button
+                              value="extend"
+                              className="va-secondary"
+                              disabled={busy}
+                            >
+                              Extend original quote by 24 hours
+                            </button>
+                          )}
+                          {!order.plan && (
+                            <button
+                              value="cancel"
+                              className="va-secondary"
+                              disabled={busy}
+                            >
+                              Cancel unpaid request
+                            </button>
+                          )}
+                        </div>
+                        <p>
+                          Received or pending payments must be reconciled before
+                          cancellation. Extending a quote keeps its original
+                          price.
+                        </p>
+                      </form>
+                    )}
                   <h2>Customer updates</h2>
                   {!["DELIVERED", "CANCELLED"].includes(order.status) && (
                     <form

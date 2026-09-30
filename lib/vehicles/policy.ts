@@ -20,6 +20,16 @@ export const VEHICLE_STAGES = [
   "DELIVERED",
 ] as const;
 export const STAGE_LABELS: Record<string, string> = {
+  PLAN_PAYMENT_REVIEW: 'Bank payment under review',
+  PLAN_PAYMENT_REVERSED: 'Bank payment reversed',
+  PLAN_ACCEPTED: "Payment plan accepted",
+  PLAN_ACTIVATED: "Payment plan activated",
+  PLAN_COMPLETED: "Payment plan fully paid",
+  PLAN_REMINDER: "Payment reminder",
+  PLAN_CANCELLATION: "Cancellation requested",
+  PLAN_CANCELLED: "Payment plan cancelled",
+  PLAN_REFUND_PENDING: "Refund pending",
+  PLAN_REFUNDED: "Refund completed",
   ENQUIRY: "Quotation requested",
   QUOTED: "Awaiting payment",
   PAYMENT_SUBMITTED: "Payment submitted",

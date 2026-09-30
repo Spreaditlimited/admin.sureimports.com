@@ -1,8 +1,13 @@
-import { vehicleAdmin } from '@/lib/vehicles/access';
-import { vehicleEvent } from '@/lib/vehicles/events';
-import { sameOrigin } from '@/lib/vehicles/http';
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import {
+  verifyVehicleCredit,
+  applyPlanCredit,
+} from "@/lib/vehicles/planFinance";
+import { moneyMinor, moneyDecimal } from "@/lib/vehicles/installments";
+import { vehicleAdmin } from "@/lib/vehicles/access";
+import { vehicleEvent } from "@/lib/vehicles/events";
+import { sameOrigin } from "@/lib/vehicles/http";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import {
   createOrGetInvoiceAccessToken,
   createUniqueReceiptNumber,
@@ -12,13 +17,16 @@ import {
   requireAdmin,
   toMoneyInput,
   unauthorized,
-} from '../../../_lib/invoicing';
-import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
-import { getCustomerInvoiceBaseUrl } from '../../../_lib/customerInvoiceBaseUrl';
-import { sendReceiptNotification } from '@/lib/notifications/invoicing';
-import { appendBusinessName, getUserBusinessName } from '@/lib/userBusinessName';
-import { recordPaidShippingCommission } from '@/lib/affiliate/shippingCommissions';
-import { sendAffiliateAccountNotification } from '@/lib/affiliate/emailNotifications';
+} from "../../../_lib/invoicing";
+import { parseInvoiceLinkedRequestId } from "@/lib/invoiceLinkedService";
+import { getCustomerInvoiceBaseUrl } from "../../../_lib/customerInvoiceBaseUrl";
+import { sendReceiptNotification } from "@/lib/notifications/invoicing";
+import {
+  appendBusinessName,
+  getUserBusinessName,
+} from "@/lib/userBusinessName";
+import { recordPaidShippingCommission } from "@/lib/affiliate/shippingCommissions";
+import { sendAffiliateAccountNotification } from "@/lib/affiliate/emailNotifications";
 
 export async function POST(
   _request: NextRequest,
@@ -35,180 +43,290 @@ export async function POST(
       include: { invoice: true },
     });
 
-    if (!claim) return NextResponse.json({ statusx: 'ERROR', message: 'Claim not found' }, { status: 404 });
-    if (claim.invoice.linkedRequestId?.startsWith('vehicle:')) {
+    if (!claim)
+      return NextResponse.json(
+        { statusx: "ERROR", message: "Claim not found" },
+        { status: 404 },
+      );
+    if (claim.invoice.linkedRequestId?.startsWith("vehicle:")) {
       sameOrigin(_request);
-      if (!await vehicleAdmin(true, true)) return unauthorized();
+      if (!(await vehicleAdmin(true, true))) return unauthorized();
     }
-    if (claim.status !== 'PENDING_CONFIRMATION') {
-      return NextResponse.json({ statusx: 'ERROR', message: `Claim is already ${claim.status}` }, { status: 400 });
+    if (claim.status === "APPROVED")
+      return NextResponse.json({
+        ok: true,
+        message: "This bank credit was already approved.",
+      });
+    if (claim.status !== "PENDING_CONFIRMATION") {
+      return NextResponse.json(
+        { statusx: "ERROR", message: `Claim is already ${claim.status}` },
+        { status: 400 },
+      );
     }
 
+    const verification = claim.invoice.linkedRequestId?.startsWith("vehicle:")
+      ? await _request.json()
+      : {};
     const amountNum = Number(claim.claimedAmount);
     const grandTotal = Number(claim.invoice.grandTotal);
-    const currentPaid = Number(claim.invoice.amountPaid);
-    const newPaid = currentPaid + amountNum;
+    const newPaid = Number(
+      moneyDecimal(
+        moneyMinor(String(claim.invoice.amountPaid)) +
+          moneyMinor(String(claim.claimedAmount)),
+      ),
+    );
 
     if (newPaid - grandTotal > 0.0001) {
-      return NextResponse.json({ statusx: 'ERROR', message: 'Claimed amount exceeds outstanding balance' }, { status: 400 });
+      return NextResponse.json(
+        {
+          statusx: "ERROR",
+          message: "Claimed amount exceeds outstanding balance",
+        },
+        { status: 400 },
+      );
     }
 
-    const newBalance = Math.max(grandTotal - newPaid, 0);
+    const newBalance = Number(
+      moneyDecimal(
+        Math.max(
+          moneyMinor(String(claim.invoice.grandTotal)) -
+            moneyMinor(String(newPaid)),
+          0,
+        ),
+      ),
+    );
     const newStatus = derivePaymentStatus(newPaid, grandTotal);
-    const pidInvoicePayment = generatePid('IVP');
+    const pidInvoicePayment = generatePid("IVP");
     const receiptNumber = await createUniqueReceiptNumber();
 
-    const result = await prisma.$transaction(async (tx) => {
-      if (claim.invoice.linkedRequestId?.startsWith('vehicle:')) {
-        const vehicleOrderId = claim.invoice.linkedRequestId.slice(8);
-        await tx.$queryRaw`SELECT id FROM vehicle_orders WHERE id = ${vehicleOrderId} FOR UPDATE`;
-      }
-      await tx.$queryRaw`SELECT id FROM invoices WHERE pidInvoice = ${claim.pidInvoice} FOR UPDATE`;
-      const freshClaim = await tx.invoice_payment_claims.findUniqueOrThrow({ where: { pidClaim } });
-      if (freshClaim.status !== 'PENDING_CONFIRMATION') throw new Error('This payment was already reviewed.');
-      const currentInvoice = await tx.invoices.findUniqueOrThrow({ where: { pidInvoice: claim.pidInvoice } });
-      if (currentInvoice.updatedAt.getTime() !== claim.invoice.updatedAt.getTime()) {
-        throw new Error('The invoice changed while approving this claim. Refresh and check its payments before retrying.');
-      }
-      const payment = await tx.invoice_payments.create({
-        data: {
-          pidInvoicePayment,
-          pidInvoice: claim.pidInvoice,
-          pidUser: claim.invoice.pidUser,
-          amount: toMoneyInput(amountNum),
-          currency: claim.currency,
-          paymentMethod: 'CUSTOMER_CLAIM',
-          reference: claim.paymentReference || null,
-          note: claim.note || null,
-          paidAt: claim.claimedAt,
-          recordedByPidUser: admin.pidUser,
-        },
-      });
-      await tx.payments.create({
-        data: {
-          pidPayment: generatePid('PMT'),
-          pidUser: claim.invoice.pidUser,
-          payerName: claim.invoice.customerName || 'Invoice Customer',
-          payerEmail: claim.invoice.customerEmail || null,
-          txID: pidInvoicePayment,
-          txRef: claim.paymentReference || pidInvoicePayment,
-          // An approved claim is a completed payment even when a balance
-          // remains on the invoice itself.
-          paymentStatus: 'PAID',
-          paymentType: 'CUSTOMER_CLAIM',
-          currency: claim.currency,
-          amount: amountNum,
-          serviceID: claim.pidInvoice,
-          serviceName: 'Invoice Payment Claim',
-          serviceDescription: `Claim approved for invoice ${claim.invoice.invoiceNumber}`,
-          txDateProcesser: claim.claimedAt.toISOString(),
-          txDateServer: new Date().toISOString(),
-          xStatus: 'active',
-        },
-      });
-
-      const updatedInvoice = await tx.invoices.update({
-        where: { pidInvoice: claim.pidInvoice },
-        data: {
-          amountPaid: toMoneyInput(newPaid),
-          balanceDue: toMoneyInput(newBalance),
-          status: newStatus,
-          paidAt: newStatus === 'PAID' ? new Date() : null,
-          updatedByPidUser: admin.pidUser,
-        },
-      });
-
-      if (newStatus === 'PAID') {
-        const linkedService = parseInvoiceLinkedRequestId(claim.invoice.linkedRequestId);
-        if (linkedService.type === 'corporate-gift') {
-          await tx.corporate_gift_request.updateMany({
-            where: { pidRequest: linkedService.id },
-            data: { status: 'Paid' },
-          });
+    const result = await prisma.$transaction(
+      async (tx) => {
+        if (claim.invoice.linkedRequestId?.startsWith("vehicle:")) {
+          const vehicleOrderId = claim.invoice.linkedRequestId.slice(8);
+          await tx.$queryRaw`SELECT id FROM vehicle_orders WHERE id = ${vehicleOrderId} FOR UPDATE`;
         }
-        if (linkedService.type === 'shipping-only') {
-          await tx.shipping_only.updateMany({
-            where: { pidShippingOnly: linkedService.id },
-            data: { status: 'paid', updatedAt: new Date() },
-          });
+        await tx.$queryRaw`SELECT id FROM invoices WHERE pidInvoice = ${claim.pidInvoice} FOR UPDATE`;
+        const freshClaim = await tx.invoice_payment_claims.findUniqueOrThrow({
+          where: { pidClaim },
+        });
+        if (freshClaim.status !== "PENDING_CONFIRMATION")
+          throw new Error("This payment was already reviewed.");
+        const currentInvoice = await tx.invoices.findUniqueOrThrow({
+          where: { pidInvoice: claim.pidInvoice },
+        });
+        if (
+          currentInvoice.updatedAt.getTime() !==
+          claim.invoice.updatedAt.getTime()
+        ) {
+          throw new Error(
+            "The invoice changed while approving this claim. Refresh and check its payments before retrying.",
+          );
         }
-      }
+        const verified = claim.invoice.linkedRequestId?.startsWith("vehicle:")
+          ? await verifyVehicleCredit(tx, {
+              orderId: claim.invoice.linkedRequestId.slice(8),
+              claimId: pidClaim,
+              bankId: claim.selectedBankAccountId,
+              claimedAmount: String(claim.claimedAmount),
+              adminId: admin.pidUser,
+              verification,
+            })
+          : null;
+        if (["CANCELLED", "PAID"].includes(currentInvoice.status))
+          throw new Error("This invoice is closed.");
+        const payment = await tx.invoice_payments.create({
+          data: {
+            pidInvoicePayment,
+            pidInvoice: claim.pidInvoice,
+            pidUser: claim.invoice.pidUser,
+            amount: toMoneyInput(amountNum),
+            currency: claim.currency,
+            paymentMethod: "CUSTOMER_CLAIM",
+            reference: verified?.reference || claim.paymentReference || null,
+            note: claim.note || null,
+            paidAt: verified?.creditedAt || claim.claimedAt,
+            recordedByPidUser: admin.pidUser,
+          },
+        });
+        await tx.payments.create({
+          data: {
+            pidPayment: generatePid("PMT"),
+            pidUser: claim.invoice.pidUser,
+            payerName: claim.invoice.customerName || "Invoice Customer",
+            payerEmail: claim.invoice.customerEmail || null,
+            txID: pidInvoicePayment,
+            txRef: claim.paymentReference || pidInvoicePayment,
+            // An approved claim is a completed payment even when a balance
+            // remains on the invoice itself.
+            paymentStatus: "PAID",
+            paymentType: "CUSTOMER_CLAIM",
+            currency: claim.currency,
+            amount: amountNum,
+            serviceID: claim.pidInvoice,
+            serviceName: "Invoice Payment Claim",
+            serviceDescription: `Claim approved for invoice ${claim.invoice.invoiceNumber}`,
+            txDateProcesser: claim.claimedAt.toISOString(),
+            txDateServer: new Date().toISOString(),
+            xStatus: "active",
+          },
+        });
 
-      const affiliateCommission = newStatus === 'PAID'
-        ? await recordPaidShippingCommission(tx, { pidInvoice: claim.pidInvoice, grossAmount: updatedInvoice.grandTotal })
-        : null;
+        const updatedInvoice = await tx.invoices.update({
+          where: { pidInvoice: claim.pidInvoice },
+          data: {
+            amountPaid: toMoneyInput(newPaid),
+            balanceDue: toMoneyInput(newBalance),
+            status: newStatus,
+            paidAt: newStatus === "PAID" ? new Date() : null,
+            updatedByPidUser: admin.pidUser,
+          },
+        });
 
-      const receipt = await tx.receipts.create({
-        data: {
-          pidReceipt: generatePid('RCT'),
-          receiptNumber,
-          pidInvoice: claim.pidInvoice,
-          pidInvoicePayment,
-          amount: toMoneyInput(amountNum),
-          balanceAfter: toMoneyInput(newBalance),
-          issuedAt: new Date(),
-          deliveryStatus: 'PENDING',
-          createdByPidUser: admin.pidUser,
-        },
-      });
+        if (newStatus === "PAID") {
+          const linkedService = parseInvoiceLinkedRequestId(
+            claim.invoice.linkedRequestId,
+          );
+          if (linkedService.type === "corporate-gift") {
+            await tx.corporate_gift_request.updateMany({
+              where: { pidRequest: linkedService.id },
+              data: { status: "Paid" },
+            });
+          }
+          if (linkedService.type === "shipping-only") {
+            await tx.shipping_only.updateMany({
+              where: { pidShippingOnly: linkedService.id },
+              data: { status: "paid", updatedAt: new Date() },
+            });
+          }
+        }
 
-      const updatedClaim = await tx.invoice_payment_claims.update({
-        where: { pidClaim },
-        data: {
-          status: 'APPROVED',
-          reviewedByPidUser: admin.pidUser,
-          reviewedAt: new Date(),
-          approvedInvoicePaymentPid: pidInvoicePayment,
-        },
-      });
+        const affiliateCommission =
+          newStatus === "PAID"
+            ? await recordPaidShippingCommission(tx, {
+                pidInvoice: claim.pidInvoice,
+                grossAmount: updatedInvoice.grandTotal,
+              })
+            : null;
 
-      await tx.invoice_audit_logs.create({
-        data: {
-          pidAuditLog: generatePid('IAL'),
-          pidInvoice: claim.pidInvoice,
-          pidUser: admin.pidUser,
-          action: 'CUSTOMER_PAYMENT_CLAIM_APPROVED',
-          oldStatus: claim.invoice.status,
-          newStatus,
-          metadata: JSON.stringify({ pidClaim, pidInvoicePayment, amount: amountNum, receiptNumber }),
-        },
-      });
+        const receipt = await tx.receipts.create({
+          data: {
+            pidReceipt: generatePid("RCT"),
+            receiptNumber,
+            pidInvoice: claim.pidInvoice,
+            pidInvoicePayment,
+            amount: toMoneyInput(amountNum),
+            balanceAfter: toMoneyInput(newBalance),
+            issuedAt: new Date(),
+            deliveryStatus: "PENDING",
+            createdByPidUser: admin.pidUser,
+          },
+        });
 
-      if (claim.invoice.linkedRequestId?.startsWith('vehicle:')) {
-        const orderId = claim.invoice.linkedRequestId.slice(8);
-        if (newStatus === 'PAID') await tx.vehicle_orders.updateMany({ where: { id: orderId, status: 'QUOTED' }, data: { status: 'ORDER_CONFIRMED' } });
-        await vehicleEvent(tx, orderId, newStatus === 'PAID' ? 'ORDER_CONFIRMED' : 'PAYMENT_CONFIRMED', `Payment of NGN ${amountNum.toLocaleString('en-NG')} confirmed. Balance remaining: NGN ${newBalance.toLocaleString('en-NG')}. Receipt ${receiptNumber}.`, admin.pidUser);
-      }
-      return { payment, updatedInvoice, receipt, updatedClaim, affiliateCommission };
-    }, {
-      // Bank credit, receipt, audit and vehicle outbox writes must commit together.
-      // The remote database round trips can exceed Prisma's five-second default.
-      maxWait: 10000,
-      timeout: 30000,
-    });
+        const updatedClaim = await tx.invoice_payment_claims.update({
+          where: { pidClaim },
+          data: {
+            status: "APPROVED",
+            reviewedByPidUser: admin.pidUser,
+            reviewedAt: new Date(),
+            approvedInvoicePaymentPid: pidInvoicePayment,
+          },
+        });
+
+        await tx.invoice_audit_logs.create({
+          data: {
+            pidAuditLog: generatePid("IAL"),
+            pidInvoice: claim.pidInvoice,
+            pidUser: admin.pidUser,
+            action: "CUSTOMER_PAYMENT_CLAIM_APPROVED",
+            oldStatus: claim.invoice.status,
+            newStatus,
+            metadata: JSON.stringify({
+              pidClaim,
+              pidInvoicePayment,
+              amount: amountNum,
+              receiptNumber,
+            }),
+          },
+        });
+
+        if (claim.invoice.linkedRequestId?.startsWith("vehicle:")) {
+          const orderId = claim.invoice.linkedRequestId.slice(8);
+          await applyPlanCredit(
+            tx,
+            orderId,
+            moneyMinor(String(updatedInvoice.amountPaid)),
+            admin.pidUser,
+          );
+          if (
+            newStatus === "PAID" &&
+            verified?.plan?.status !== "CANCELLATION_REQUESTED"
+          )
+            await tx.vehicle_orders.updateMany({
+              where: { id: orderId, status: "QUOTED" },
+              data: { status: "ORDER_CONFIRMED" },
+            });
+          await vehicleEvent(
+            tx,
+            orderId,
+            newStatus === "PAID" &&
+              verified?.plan?.status !== "CANCELLATION_REQUESTED"
+              ? "ORDER_CONFIRMED"
+              : "PAYMENT_CONFIRMED",
+            `Payment of NGN ${amountNum.toLocaleString("en-NG")} confirmed. Balance remaining: NGN ${newBalance.toLocaleString("en-NG")}. Receipt ${receiptNumber}.`,
+            admin.pidUser,
+          );
+        }
+        return {
+          payment,
+          updatedInvoice,
+          receipt,
+          updatedClaim,
+          affiliateCommission,
+        };
+      },
+      {
+        // Bank credit, receipt, audit and vehicle outbox writes must commit together.
+        // The remote database round trips can exceed Prisma's five-second default.
+        maxWait: 10000,
+        timeout: 30000,
+      },
+    );
 
     if (result.affiliateCommission) {
       const entry = result.affiliateCommission;
       await sendAffiliateAccountNotification({
         affiliateId: entry.snapshot.affiliateId,
         eventKey: `commission:recorded:${entry.conversion.pidConversion}`,
-        eventType: 'COMMISSION_RECORDED',
-        subject: 'A shipping commission was recorded', title: 'Ship with Us commission recorded',
-        message: 'A shipping request you own has been fully paid. Your unit-based commission is now pending review.',
+        eventType: "COMMISSION_RECORDED",
+        subject: "A shipping commission was recorded",
+        title: "Ship with Us commission recorded",
+        message:
+          "A shipping request you own has been fully paid. Your unit-based commission is now pending review.",
         facts: [
-          { label: 'Invoice', value: claim.invoice.invoiceNumber },
-          { label: 'Quantity', value: `${Number(entry.snapshot.eligibleQuantity)} ${entry.snapshot.billingUnit}` },
-          { label: 'Commission', value: `${entry.snapshot.commissionCurrency} ${Number(entry.snapshot.commissionAmount).toLocaleString()}` },
-        ], actionLabel: 'View commission ledger', actionPath: '/dashboard/earnings',
+          { label: "Invoice", value: claim.invoice.invoiceNumber },
+          {
+            label: "Quantity",
+            value: `${Number(entry.snapshot.eligibleQuantity)} ${entry.snapshot.billingUnit}`,
+          },
+          {
+            label: "Commission",
+            value: `${entry.snapshot.commissionCurrency} ${Number(entry.snapshot.commissionAmount).toLocaleString()}`,
+          },
+        ],
+        actionLabel: "View commission ledger",
+        actionPath: "/dashboard/earnings",
       });
     }
 
     if (claim.invoice.customerEmail) {
       const businessName = await getUserBusinessName(claim.invoice.pidUser);
-      const customerName = appendBusinessName(
-        claim.invoice.customerName || 'Customer',
-        businessName,
-      ) || claim.invoice.customerName || 'Customer';
+      const customerName =
+        appendBusinessName(
+          claim.invoice.customerName || "Customer",
+          businessName,
+        ) ||
+        claim.invoice.customerName ||
+        "Customer";
       const token = await createOrGetInvoiceAccessToken({
         pidInvoice: claim.pidInvoice,
         createdByPidUser: admin.pidUser,
@@ -225,7 +343,7 @@ export async function POST(
         amountReceived: amountNum,
         totalPaid: newPaid,
         balanceAfter: newBalance,
-        paymentMethod: 'CUSTOMER_CLAIM',
+        paymentMethod: "CUSTOMER_CLAIM",
         paymentReference: claim.paymentReference || null,
         paidAt: result.payment.paidAt,
         receiptLink,
@@ -236,15 +354,30 @@ export async function POST(
       if (sent) {
         await prisma.receipts.update({
           where: { pidReceipt: result.receipt.pidReceipt },
-          data: { deliveryStatus: 'SENT', sentAt: new Date() },
+          data: { deliveryStatus: "SENT", sentAt: new Date() },
         });
       }
     }
 
-    return NextResponse.json({ statusx: 'SUCCESS', data: result });
+    return NextResponse.json({ statusx: "SUCCESS", data: result });
   } catch (error: any) {
-    console.error('Invoice claim approval failed', error);
-    if (error?.code === 'P2028') return NextResponse.json({ statusx: 'ERROR', message: 'Payment approval timed out and was rolled back. Refresh the claim and retry.' }, { status: 503 });
-    return NextResponse.json({ statusx: 'ERROR', message: 'Failed to approve claim', error: error.message }, { status: 500 });
+    console.error("Invoice claim approval failed", error);
+    if (error?.code === "P2028")
+      return NextResponse.json(
+        {
+          statusx: "ERROR",
+          message:
+            "Payment approval timed out and was rolled back. Refresh the claim and retry.",
+        },
+        { status: 503 },
+      );
+    return NextResponse.json(
+      {
+        statusx: "ERROR",
+        message: "Failed to approve claim",
+        error: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

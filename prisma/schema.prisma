@@ -2789,6 +2789,9 @@ model vehicle_models {
 }
 
 model vehicle_orders {
+  paymentPlan vehicle_payment_plans?
+  bankCredits vehicle_bank_credits[]
+  planReminders vehicle_plan_reminders[]
   id              String                   @id @db.VarChar(50)
   pidUser         String                   @db.VarChar(191)
   requestKey      String                   @unique @db.VarChar(100)
@@ -2857,4 +2860,95 @@ model vehicle_notifications {
 
   @@unique([eventId, channel])
   @@index([status, nextAttemptAt])
+}
+
+model bank_profile_verifications {
+  pidUser String @id @db.VarChar(191)
+  fingerprint String @db.Char(64)
+  verifiedAt DateTime @db.DateTime(3)
+  method String @db.VarChar(40)
+}
+
+model vehicle_plan_settings {
+  id Int @id
+  enabled Boolean @default(false)
+  depositPercent Decimal @default(30) @db.Decimal(5,2)
+  feePercent Decimal @default(5) @db.Decimal(5,2)
+  refundBusinessDays Int @default(7)
+  refundHolidays Json?
+  durationDays Int @default(90)
+  revision Int @default(1)
+  updatedBy String? @db.VarChar(191)
+  updatedAt DateTime @default(now()) @db.DateTime(3)
+}
+
+model vehicle_payment_plans {
+  orderId String @id @db.VarChar(50)
+  status String @default("REQUESTED") @db.VarChar(40)
+  terms Json?
+  acceptedAt DateTime? @db.DateTime(3)
+  activatedAt DateTime? @db.DateTime(3)
+  expiresAt DateTime? @db.DateTime(3)
+  cancellationRequestedAt DateTime? @db.DateTime(3)
+  refundDueAt DateTime? @db.DateTime(3)
+  refundBusinessDays Int?
+  refundGrossMinor BigInt?
+  refundFeeMinor BigInt?
+  refundBankFingerprint String? @db.Char(64)
+  cancellationReason String? @db.Text
+  previousStatus String? @db.VarChar(40)
+  refundProposedBy String? @db.VarChar(191)
+  refundMinor BigInt?
+  refundAccount String? @db.VarChar(1000)
+  refundReference String? @unique(map: "refundReference") @db.VarChar(191)
+  refundedBy String? @db.VarChar(191)
+  refundedAt DateTime? @db.DateTime(3)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  updatedAt DateTime @default(now()) @db.DateTime(3)
+  order vehicle_orders @relation(fields:[orderId],references:[id],onDelete:Restrict,onUpdate:Restrict,map:"vehicle_plan_order")
+  @@index([status,updatedAt],map:"vehicle_plan_status")
+}
+
+model vehicle_bank_credits {
+  id String @id @db.VarChar(50)
+  claimId String @unique(map:"claimId") @db.VarChar(191)
+  orderId String @db.VarChar(50)
+  bankAccountId String @db.VarChar(191)
+  creditKey String @unique(map:"creditKey") @db.Char(64)
+  bankReference String @db.VarChar(191)
+  amountMinor BigInt
+  creditedAt DateTime @db.DateTime(3)
+  verifiedBy String @db.VarChar(191)
+  verifiedAt DateTime @default(now()) @db.DateTime(3)
+  order vehicle_orders @relation(fields:[orderId],references:[id],onDelete:Restrict,onUpdate:Restrict,map:"vehicle_credit_order_fk")
+  @@unique([bankAccountId,bankReference],map:"vehicle_credit_account_reference")
+  @@index([orderId,creditedAt],map:"vehicle_credit_order")
+}
+
+model vehicle_plan_reminders {
+  reminderKey String @id @db.VarChar(191)
+  orderId String @db.VarChar(50)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  order vehicle_orders @relation(fields:[orderId],references:[id],onDelete:Restrict,onUpdate:Restrict,map:"vehicle_reminder_order")
+}
+
+model vehicle_plan_settings_audit {
+  id String @id @db.VarChar(50)
+  revision Int @unique(map:"revision")
+  settings Json
+  actor String @db.VarChar(191)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+}
+
+model vehicle_credit_reversals {
+  claimId String @id @db.VarChar(191)
+  orderId String @db.VarChar(50)
+  status String @default("REQUESTED") @db.VarChar(20)
+  reason String @db.Text
+  proposedBy String @db.VarChar(191)
+  confirmedBy String? @db.VarChar(191)
+  bankReference String? @unique(map:"bankReference") @db.VarChar(191)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  confirmedAt DateTime? @db.DateTime(3)
+  @@index([orderId,status],map:"vehicle_reversal_order")
 }

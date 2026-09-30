@@ -43,7 +43,7 @@ export default function VehicleInvoiceSummary({
           </div>
         ))}
         <p className="mt-5">
-          Estimated landed total: <strong>{money(invoice.grandTotal)}</strong>
+          Invoiced total: <strong>{money(invoice.grandTotal)}</strong>
         </p>
         <p>Confirmed payments: {money(invoice.amountPaid)}</p>
         <p>

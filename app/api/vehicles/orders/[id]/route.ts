@@ -1,3 +1,9 @@
+import { getVehiclePlan, getPlanSettings } from "@/lib/vehicles/plans";
+import {
+  planTerms,
+  moneyDecimal,
+  planAllowsFulfilment,
+} from "@/lib/vehicles/installments";
 import { prisma } from "@/lib/prisma";
 import { vehicleAdmin } from "@/lib/vehicles/access";
 import { vehicleRates } from "@/lib/vehicles/data";
@@ -37,6 +43,7 @@ export async function POST(
       const order = await tx.vehicle_orders.findUniqueOrThrow({
         where: { id },
       });
+      const plan = await getVehiclePlan(id, tx);
       if (body.action === "quote") {
         if (order.status !== "ENQUIRY" || order.pidInvoice)
           throw new Error("This request already has a quotation.");
@@ -55,6 +62,17 @@ export async function POST(
             "Confirm this configuration’s manufacturer price and specifications in the catalogue first.",
           );
         const price = priceVehicle(variant, rates, order.quantity)!;
+        if (plan && plan.status !== "REQUESTED")
+          throw new Error("This payment plan cannot be quoted.");
+        const settings = plan ? await getPlanSettings(tx) : null;
+        if (plan && (!settings?.enabled || body.priceRiskConfirmed !== "on"))
+          throw new Error(
+            "Enable Pay Small Small and confirm the fixed landed price risk before issuing this offer.",
+          );
+        const terms = settings ? planTerms(price.totalNgn, settings) : null;
+        const invoiceTotal = terms
+          ? Number(moneyDecimal(terms.totalMinor))
+          : price.totalNgn;
         const eta = inputText(body.eta, "estimated delivery window", 160);
         const validityHours = Number(body.validityHours || 24);
         if (
@@ -79,17 +97,29 @@ export async function POST(
             customerEmail: order.email,
             customerPhone: order.phone,
             currency: "NGN",
-            subtotal: price.totalNgn,
-            grandTotal: price.totalNgn,
-            balanceDue: price.totalNgn,
+            subtotal: invoiceTotal,
+            grandTotal: invoiceTotal,
+            balanceDue: invoiceTotal,
             status: "ISSUED",
             issuedAt: new Date(),
-            dueAt,
+            dueAt: terms ? null : dueAt,
             linkedRequestId: `vehicle:${id}`,
             createdByPidUser: admin.pidUser,
-            customerNotes: `${quoteNotes}\nEstimated shipping to Lagos includes clearing, all duties and taxes. Estimated Lagos arrival: ${eta}. The customer arranges collection and onward delivery from Lagos; last-mile delivery is not included.`,
+            customerNotes: `${terms ? terms.termsText + "\n" : ""}${quoteNotes}\nEstimated shipping to Lagos includes clearing, all duties and taxes. Estimated Lagos arrival: ${eta}. The customer arranges collection and onward delivery from Lagos; last-mile delivery is not included.`,
             items: {
               create: [
+                ...(terms
+                  ? [
+                      {
+                        pidInvoiceItem: vehicleId("II"),
+                        lineNo: 3,
+                        description: `Pay Small Small fee (${terms.feePercent}% of landed cost)`,
+                        quantity: 1,
+                        unitPrice: Number(moneyDecimal(terms.feeMinor)),
+                        lineTotal: Number(moneyDecimal(terms.feeMinor)),
+                      },
+                    ]
+                  : []),
                 {
                   pidInvoiceItem: vehicleId("II"),
                   lineNo: 1,
@@ -119,6 +149,8 @@ export async function POST(
             },
           },
         });
+        if (terms)
+          await tx.$executeRaw`UPDATE vehicle_payment_plans SET status='OFFERED',terms=${JSON.stringify(terms)},expiresAt=${dueAt},updatedAt=NOW(3) WHERE orderId=${id}`;
         await tx.vehicle_orders.update({
           where: { id },
           data: {
@@ -150,11 +182,17 @@ export async function POST(
           "confirmation of the original price and availability",
           2000,
         );
+        if (plan && !["OFFERED", "ACCEPTED"].includes(plan.status))
+          throw new Error(
+            "An active or closed payment plan cannot use quotation extension.",
+          );
         const dueAt = new Date(Date.now() + 24 * 3600000);
+        if (plan)
+          await tx.$executeRaw`UPDATE vehicle_payment_plans SET expiresAt=${dueAt},updatedAt=NOW(3) WHERE orderId=${id}`;
         await tx.$queryRaw`SELECT id FROM invoices WHERE pidInvoice = ${order.pidInvoice} FOR UPDATE`;
         await tx.invoices.update({
           where: { pidInvoice: order.pidInvoice },
-          data: { dueAt, updatedByPidUser: admin.pidUser },
+          data: { dueAt: plan ? null : dueAt, updatedByPidUser: admin.pidUser },
         });
         await tx.vehicle_orders.update({
           where: { id },
@@ -177,6 +215,10 @@ export async function POST(
           admin.pidUser,
         );
       } else if (body.action === "cancel") {
+        if (plan)
+          throw new Error(
+            "Use Pay Small Small cancellation reconciliation for this order.",
+          );
         if (!["ENQUIRY", "QUOTED"].includes(order.status))
           throw new Error(
             "Only unpaid orders can be cancelled here. Paid orders require refund reconciliation.",
@@ -227,7 +269,10 @@ export async function POST(
         if (next !== order.status) {
           if (!canAdvance(order.status, next))
             throw new Error("Choose the next fulfilment stage.");
-          if (!invoice || Number(invoice.balanceDue) > 0)
+          if (
+            !invoice ||
+            !planAllowsFulfilment(plan, String(invoice.balanceDue))
+          )
             throw new Error(
               "Confirm full payment before progressing this order.",
             );
