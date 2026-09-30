@@ -447,7 +447,7 @@ model users {
   userImage            String?
   userFile             String?
   userExt1             String?
-  userExt2             String?
+  userExt2             String? @db.Text
   xStatus              String?
   createdAt            DateTime?                @default(now())
   updatedAt            DateTime?
