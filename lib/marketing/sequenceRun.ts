@@ -22,7 +22,8 @@ function nextSendDate(currentDelayDays: number, nextDelayDays: number) {
 }
 
 export async function processMarketingSequence() {
-  if (getMarketingProvider() !== 'hostinger') {
+  const provider = getMarketingProvider();
+  if (provider === 'ses') {
     return { enabled: false, provider: getMarketingProvider(), enrolled: 0, due: 0, sent: 0, failed: 0 };
   }
 
@@ -30,7 +31,7 @@ export async function processMarketingSequence() {
     (await prisma.marketing_sequences.findUnique({
       where: { pidSequence: 'SEQ-CHINA-IMPORT-52-WEEKS' },
       include: { steps: { orderBy: { stepNumber: 'asc' } } },
-    })) || (await seedChinaImportSequence('SYSTEM-HOSTINGER'));
+    })) || (await seedChinaImportSequence('SYSTEM-MARKETING'));
   if (sequence.status !== 'ACTIVE') {
     await prisma.marketing_sequences.update({
       where: { id: sequence.id },
@@ -38,7 +39,7 @@ export async function processMarketingSequence() {
     });
   }
   const eligibleContacts = await prisma.marketing_contacts.findMany({
-    where: { status: 'ACTIVE', consentStatus: 'OPTED_IN' },
+    where: { status: 'ACTIVE', consentStatus: 'OPTED_IN', consentAt: { not: null }, unsubscribedAt: null, bouncedAt: null, complainedAt: null },
     select: { id: true },
   });
 
@@ -83,12 +84,12 @@ export async function processMarketingSequence() {
 
   const rollingWindow = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const attempted = await prisma.marketing_deliveries.count({
-    where: { provider: 'HOSTINGER', attemptedAt: { gte: rollingWindow } },
+    where: { mode: 'PRODUCTION', attemptedAt: { gte: rollingWindow } },
   });
   const remaining = Math.max(getMarketingDailySendLimit() - attempted, 0);
   const take = Math.min(getMarketingBatchSize(), remaining);
   if (!take) {
-    return { enabled: true, provider: 'hostinger', enrolled, due: 0, sent: 0, failed: 0, dailyRemaining: 0 };
+    return { enabled: true, provider, enrolled, due: 0, sent: 0, failed: 0, dailyRemaining: 0 };
   }
 
   const due = await prisma.marketing_enrollments.findMany({
@@ -96,7 +97,7 @@ export async function processMarketingSequence() {
       sequenceId: sequence.id,
       status: ACTIVE_STATUS,
       nextSendAt: { lte: new Date() },
-      contact: { status: 'ACTIVE', consentStatus: 'OPTED_IN' },
+      contact: { status: 'ACTIVE', consentStatus: 'OPTED_IN', consentAt: { not: null }, unsubscribedAt: null, bouncedAt: null, complainedAt: null },
     },
     orderBy: [{ nextSendAt: 'asc' }, { id: 'asc' }],
     take,
@@ -121,8 +122,8 @@ export async function processMarketingSequence() {
       },
     });
     if (!step || step.status !== 'ACTIVE') {
-      await prisma.marketing_enrollments.update({
-        where: { id: enrollment.id },
+      await prisma.marketing_enrollments.updateMany({
+        where: { id: enrollment.id, status: SENDING_STATUS },
         data: { status: COMPLETED_STATUS, nextSendAt: null, completedAt: new Date() },
       });
       continue;
@@ -145,8 +146,8 @@ export async function processMarketingSequence() {
           },
         },
       });
-      await prisma.marketing_enrollments.update({
-        where: { id: enrollment.id },
+      await prisma.marketing_enrollments.updateMany({
+        where: { id: enrollment.id, status: SENDING_STATUS },
         data: nextStep
           ? {
               status: ACTIVE_STATUS,
@@ -164,13 +165,13 @@ export async function processMarketingSequence() {
       });
       sent += 1;
     } catch (error) {
-      console.error('Hostinger marketing sequence send failed', {
+      console.error('Marketing sequence send failed', {
         enrollment: enrollment.pidEnrollment,
         recipient: enrollment.contact.email,
         error,
       });
-      await prisma.marketing_enrollments.update({
-        where: { id: enrollment.id },
+      await prisma.marketing_enrollments.updateMany({
+        where: { id: enrollment.id, status: SENDING_STATUS },
         data: { status: ACTIVE_STATUS, nextSendAt: new Date(Date.now() + RETRY_DELAY_MS) },
       });
       failed += 1;
@@ -179,7 +180,7 @@ export async function processMarketingSequence() {
 
   return {
     enabled: true,
-    provider: 'hostinger',
+    provider,
     enrolled,
     due: due.length,
     sent,

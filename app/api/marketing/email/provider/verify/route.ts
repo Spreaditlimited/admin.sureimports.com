@@ -3,12 +3,17 @@ import { NextResponse } from 'next/server';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 import { getMarketingProvider, getMarketingProviderLabel } from '@/lib/marketing/config';
 import { verifyHostingerMarketingTransport } from '@/lib/marketing/hostinger';
+import { verifyBrevoMarketing } from '@/lib/marketing/brevoClient';
 
 export async function POST() {
   const access = await requireAdminServiceAccess('admin_mgt', 'edit');
   if (!access.ok) return access.response;
 
   try {
+    if (getMarketingProvider() === 'brevo') {
+      const verified = await verifyBrevoMarketing();
+      return NextResponse.json({ statusx: 'SUCCESS', message: 'Brevo sender, domain authentication and Sure Imports list verified.', ...verified });
+    }
     if (getMarketingProvider() !== 'hostinger') {
       return NextResponse.json({
         statusx: 'SUCCESS',

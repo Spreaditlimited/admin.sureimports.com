@@ -10,7 +10,7 @@ export default function EmailOperations({
   provider,
 }: {
   steps: Step[];
-  provider: 'hostinger' | 'ses';
+  provider: 'brevo' | 'hostinger' | 'ses';
 }) {
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -39,7 +39,7 @@ export default function EmailOperations({
       <section className="rounded-xl border border-border bg-card p-6 shadow-soft">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-lg bg-primary/10 p-2 text-primary"><Send className="h-4 w-4" /></div>
-          <div><h2 className="font-bold">Internal {provider === 'hostinger' ? 'Hostinger' : 'SES'} test</h2><p className="text-xs text-muted-foreground">Send a real sequence email to an address you control before activating a campaign.</p></div>
+          <div><h2 className="font-bold">Internal {provider === 'brevo' ? 'Brevo' : provider === 'hostinger' ? 'Hostinger' : 'SES'} test</h2><p className="text-xs text-muted-foreground">Send a real sequence email to an address you control before activating a campaign.</p></div>
         </div>
         <div className="grid gap-4">
           <label className="grid gap-1.5 text-xs font-semibold">Recipient email
@@ -65,7 +65,7 @@ export default function EmailOperations({
           <div><h2 className="font-bold">Operations</h2><p className="text-xs text-muted-foreground">Safe administrative controls.</p></div>
         </div>
         <div className="grid gap-3">
-          {provider === 'hostinger' ? <button type="button" disabled={busy} onClick={() => call('/api/marketing/email/provider/verify')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><ShieldCheck className="h-4 w-4" /> Verify Hostinger connection</button> : null}
+          {provider !== 'ses' ? <button type="button" disabled={busy} onClick={() => call('/api/marketing/email/provider/verify')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><ShieldCheck className="h-4 w-4" /> Verify {provider === 'brevo' ? 'Brevo' : 'Hostinger'} connection</button> : null}
           <button disabled={busy} onClick={() => call('/api/marketing/email/sequence/seed')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><RefreshCw className="h-4 w-4" /> Import or refresh 53 emails</button>
           {provider === 'ses' ? <button type="button" disabled={busy} onClick={() => call('/api/marketing/email/events/process')} className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"><RefreshCw className="h-4 w-4" /> Process SES events now</button> : null}
         </div>

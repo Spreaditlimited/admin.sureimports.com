@@ -11,7 +11,7 @@ export const MARKETING_REPLY_TO =
   process.env.SES_MARKETING_REPLY_TO || 'hello@sureimports.com';
 export const MARKETING_FROM_NAME = process.env.SES_MARKETING_FROM_NAME || 'Sure Imports';
 
-export type MarketingProvider = 'hostinger' | 'ses';
+export type MarketingProvider = 'brevo' | 'hostinger' | 'ses';
 
 function hasHostingerMarketingConfig() {
   return Boolean(
@@ -24,6 +24,7 @@ function hasHostingerMarketingConfig() {
 
 export function getMarketingProvider(): MarketingProvider {
   const configured = process.env.MARKETING_EMAIL_PROVIDER?.trim().toLowerCase();
+  if (configured === 'brevo') return 'brevo';
   if (configured === 'ses') return 'ses';
   if (configured === 'hostinger') {
     if (!hasHostingerMarketingConfig()) {
@@ -35,6 +36,7 @@ export function getMarketingProvider(): MarketingProvider {
 }
 
 export function getMarketingProviderLabel() {
+  if (getMarketingProvider() === 'brevo') return 'Brevo';
   return getMarketingProvider() === 'hostinger' ? 'Hostinger SMTP' : 'Amazon SES';
 }
 

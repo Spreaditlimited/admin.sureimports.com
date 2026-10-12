@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { getMarketingProvider, getMarketingSendMode } from './config';
 import { sendMarketingEmail } from './delivery';
 import { createMarketingUnsubscribeUrl } from './preferences';
+import { syncBrevoMarketingContact } from './brevoContacts';
+import { hasConfirmedMarketingConsent } from './brevoConsent';
 
 export async function sendSequenceStep(input: {
   stepId: number;
@@ -54,10 +56,16 @@ export async function sendSequenceStep(input: {
     throw new Error('This contact is not eligible to receive marketing email.');
   }
 
+  if (getMarketingProvider() === 'brevo' && contact.consentStatus !== 'TEST_ONLY') {
+    if (!hasConfirmedMarketingConsent(contact) || !(await syncBrevoMarketingContact(email))) {
+      throw new Error('This contact does not have active, confirmed marketing consent or is suppressed in Brevo.');
+    }
+  }
+
   const delivery = existing
     ? await prisma.marketing_deliveries.update({
         where: { id: existing.id },
-        data: { status: 'SENDING', errorMessage: null, attemptedAt: new Date() },
+        data: { status: 'SENDING', errorMessage: null, attemptedAt: new Date(), provider: getMarketingProvider().toUpperCase(), mode: getMarketingProvider() === 'ses' ? getMarketingSendMode().toUpperCase() : 'PRODUCTION' },
       })
     : await prisma.marketing_deliveries.create({
         data: {
@@ -67,7 +75,7 @@ export async function sendSequenceStep(input: {
           enrollmentId: input.enrollmentId || null,
           provider: getMarketingProvider().toUpperCase(),
           mode:
-            getMarketingProvider() === 'hostinger'
+            getMarketingProvider() !== 'ses'
               ? 'PRODUCTION'
               : getMarketingSendMode().toUpperCase(),
           status: 'SENDING',
@@ -81,6 +89,7 @@ export async function sendSequenceStep(input: {
   try {
     const sent = await sendMarketingEmail({
       recipientEmail: email,
+      testOnly: input.testOnly,
       firstName: input.firstName,
       subject: step.subject,
       bodyTitle: step.title,

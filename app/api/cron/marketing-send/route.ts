@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   try {
     return NextResponse.json(
-      getMarketingProvider() === 'hostinger'
+      getMarketingProvider() !== 'ses'
         ? await processMarketingSequence()
         : await processFiveDaySandboxTest(),
     );

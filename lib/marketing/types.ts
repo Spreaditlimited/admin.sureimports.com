@@ -10,11 +10,12 @@ export type MarketingEmailInput = {
   topicName?: string;
   tags?: Record<string, string>;
   unsubscribeUrl?: string | null;
+  testOnly?: boolean;
 };
 
 export type MarketingSendResult = {
   messageId: string;
   recipientEmail: string;
-  provider: 'hostinger' | 'ses';
+  provider: 'brevo' | 'hostinger' | 'ses';
   mode: 'production' | 'sandbox';
 };

@@ -138,7 +138,7 @@ export default function EmailRecords({
           <div>
             <h2 className="font-bold">Post-cutover email contacts</h2>
             <p className="text-xs text-muted-foreground">
-              Pending contacts have received a confirmation request. Only confirmed contacts can enter a future SES sequence. All times are shown in WAT.
+              Pending contacts have received a confirmation request. Only confirmed contacts can enter the marketing sequence. All times are shown in WAT.
             </p>
           </div>
           <SearchField

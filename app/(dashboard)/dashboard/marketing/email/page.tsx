@@ -50,7 +50,7 @@ export default async function MarketingEmailPage() {
     : [];
   const provider = getMarketingProvider();
   const providerLabel = getMarketingProviderLabel();
-  const mode = provider === 'hostinger' ? 'production' : getMarketingSendMode();
+  const mode = provider !== 'ses' ? 'production' : getMarketingSendMode();
   const steps = (sequence?.steps || []).map(({ pidStep, stepNumber, title, subject }) => ({ pidStep, stepNumber, title, subject }));
   const joinedAtByEmail = new Map(
     postCutoverUsers.map((user) => [user.userEmail.trim().toLowerCase(), user.createdAt?.toISOString() || null]),
@@ -76,7 +76,7 @@ export default async function MarketingEmailPage() {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {[['Contacts', contacts], ['Sequence emails', steps.length], ['Deliveries', deliveries], ['Provider events', events]].map(([label, value]) => <div key={label} className="rounded-xl border border-border bg-card p-5 shadow-soft"><p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold">{value}</p></div>)}
     </div>
-    <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm leading-relaxed"><strong>The channel cutover is active.</strong> Existing Flodesk contacts remain there. New contacts receive a branded Sure Imports confirmation through Hostinger and are not eligible until they explicitly confirm.</div>
+    <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm leading-relaxed"><strong>The channel cutover is active.</strong> Only contacts who explicitly confirm Sure Imports marketing consent are eligible. Confirmed contacts sync to the selected provider; pending and internal test contacts are excluded from the marketing list.</div>
     <EmailOperations steps={steps} provider={provider} />
     <EmailRecords contacts={contactRows} steps={steps} sequenceName={sequence?.name || null} />
   </main>;
