@@ -1,3 +1,4 @@
+import CancellationPanel from '@/components/procurement/CancellationPanel';
 import Loader from "@/app/uix/Loader";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -773,9 +774,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
           {(status == 'on-hold') && (
              <>
-             <button type="submit" value="cancelled" onClick={() => setActionType('cancelled')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-destructive text-destructive-foreground hover:bg-destructive/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-               Cancel Order (Refund)
-             </button>
+
              <button type="submit" value="pending" onClick={() => setActionType('pending')} disabled={!confirmAction} className="w-full sm:w-1/2 bg-primary text-primary-foreground hover:bg-primary/90 py-2.5 px-4 rounded-md text-sm font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                Move back to Pending
              </button>
@@ -806,6 +805,8 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
         </div>
       </form>
+
+      {['pending', 'approved', 'on-hold'].includes(status) && <CancellationPanel pidOrder={pidOrder} admin />}
 
       {isActionConfirmOpen && pendingAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">

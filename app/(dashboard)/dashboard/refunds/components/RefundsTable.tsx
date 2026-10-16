@@ -104,6 +104,14 @@ function statusBadge(status: string | null) {
   );
 }
 
+function CancellationFeeDetail({ refund }: { refund: RefundRecord }) {
+  if (refund.ext1 !== 'PROCUREMENT_CANCELLATION') return null;
+  try {
+    const details = JSON.parse(refund.ext2 || '{}');
+    return <span className="mt-1 block text-xs font-normal text-muted-foreground">Cancelled by {details.actorKind === 'admin' ? 'admin' : 'customer'} · Fee {details.feePercent}% ({refund.currency} {details.fee}) · Before fee {refund.currency} {details.gross}</span>;
+  } catch { return null; }
+}
+
 export default function RefundsTable() {
   const [externalReviews, setExternalReviews] = useState<Array<{ id: string; providerReference: string; captureId: string; amount: string; currency: string; providerStatus: string }>>([]);
   const [settlementSummary, setSettlementSummary] = useState<SettlementSummary[]>([]);
@@ -472,7 +480,7 @@ export default function RefundsTable() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-xs text-muted-foreground">
-                        {refund.serviceType || "N/A"}
+                        {refund.serviceType || "N/A"}<CancellationFeeDetail refund={refund} />
                       </td>
                       <td className="px-6 py-4 font-bold">
                         {formatCurrency(

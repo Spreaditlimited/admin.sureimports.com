@@ -1,3 +1,4 @@
+import { POST_APPROVED_STAGES } from '@/lib/procurement/cancellation-policy';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 import { partnerOperationalTransition } from '@/lib/partners/operational-transition';
 import { AdjustmentError } from '@/lib/partners/adjustments';
@@ -12,7 +13,6 @@ import { generateSlug } from '@/utils/slugGenerator';
 import xMail from '@/lib/email/xMail2';
 import { sendApprovedWhatsAppStatusTemplate } from '@/lib/notifications/whatsappTemplate';
 import { reconcileManualProcurementBankPayment } from '@/lib/procurement/manualBankPayment';
-import { reverseAffiliateConversions } from '@/lib/affiliate/reversals';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   if (request.headers.get('origin') !== new URL(request.url).origin || request.headers.get('sec-fetch-site') === 'cross-site') return NextResponse.json({message:'Refresh your dashboard and try again.'},{status:403});
   //GET FORM DATA
   const formData = await request.formData();
+  if (formData.get('newStatus') === 'cancelled') return NextResponse.json({ statusx: 'ACTION_FAILED', message: 'Use Review cancellation and refund to confirm the fee and refund credit.' }, { status: 409 });
   try { const result = await partnerOperationalTransition(formData,access.admin.pidUser); if(result) return NextResponse.json(result); } catch(error) { return NextResponse.json({statusx:'ACTION_FAILED',message:error instanceof AdjustmentError?error.message:'Unable to update this order. Refresh before trying again.'},{status:error instanceof AdjustmentError?error.status:503}); }
   const pidUser = formData.get('pidUser') as string;
   const pidOrder = formData.get('pidOrder') as string;
@@ -43,7 +44,6 @@ export async function POST(request: Request) {
     'pay-for-shipping',
     'in-transit',
     'ready-for-pickup',
-    'cancelled',
     'completed',
   ]);
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     'pay-for-shipping': ['message', 'revert_to_approved'],
     'in-transit': ['on-hold', 'ready-for-pickup', 'tracking-number-update'],
     'ready-for-pickup': ['on-hold', 'completed'],
-    'on-hold': ['cancelled', 'pending'],
+    'on-hold': ['pending'],
     'bank-pending-saved-orders': ['saved', 'pending'],
     'bank-pending-shipping-orders': ['pay-for-shipping', 'in-transit'],
     saved: ['message'],
@@ -272,6 +272,11 @@ export async function POST(request: Request) {
 
 
   const updatex = await prisma.$transaction(async (tx) => {
+    const [locked] = await tx.$queryRaw<Array<{ status: string }>>`SELECT status FROM orders WHERE pidOrder=${pidOrder} FOR UPDATE`;
+    if (!locked || locked.status !== recordStatus) throw new Error('Order changed. Refresh before trying again.');
+    if (POST_APPROVED_STAGES.includes(recordStatus) || POST_APPROVED_STAGES.includes(newStatus)) {
+      await tx.$executeRaw`UPDATE orders SET cancellationLockedAt=COALESCE(cancellationLockedAt,NOW(3)) WHERE pidOrder=${pidOrder}`;
+    }
     await tx.messages.create({
       data: {
         pidMessage,
@@ -289,7 +294,7 @@ export async function POST(request: Request) {
 
     const updatedOrder = await tx.orders.update({
       where: { pidUser, pidOrder },
-      data: { status: newStatus, updatedAt: new Date() },
+      data: { status: newStatus === 'revert_to_approved' ? 'approved' : newStatus, updatedAt: new Date() },
     });
 
     await reconcileManualProcurementBankPayment(tx, {
@@ -303,14 +308,6 @@ export async function POST(request: Request) {
 
     return updatedOrder;
   });
-
-  if (newStatus === 'cancelled') {
-    await reverseAffiliateConversions({
-      externalOrderReference: `procurement:${pidOrder}`,
-      reason: `Procurement order ${pidOrder} was cancelled by an administrator.`,
-      reversalReference: `admin-cancellation:${pidOrder}`,
-    });
-  }
 
     if (newStatus !== 'revert_to_approved') {
       await Promise.allSettled([
@@ -338,18 +335,6 @@ export async function POST(request: Request) {
 
             // .................... REVERT TO APPROVED (REVERT) STAGE ....................//
             if(newStatus == "revert_to_approved"){
-
-              //UPDATE SERVICE STATUS 
-              const updatex = await prisma.orders.update({
-                where: {  
-                          pidUser: pidUser, 
-                          pidOrder: pidOrder 
-                      },
-                data: {
-                  status: 'approved',
-                  updatedAt: new Date(),
-                },
-              });
 
               //success update
               return NextResponse.json(
@@ -672,41 +657,6 @@ export async function POST(request: Request) {
                     { status: 200 },
                   );
                 }
-
-
-
-
-
-
-
-            // .................... CANCELLED STAGE MAIL ....................//
-            if(newStatus == "cancelled"){
-              const xEmail = user?.userEmail as string;
-              const xTitle = `Order is Ready for PickUp`;
-              const xBodyTitle = `Order is now Ready for PickUp`;
-              const xBody1 = `Hello ` + user?.userFirstname + `,` +
-              `<p>Unfortunately, your order with ID :<b>`+pidOrder+`</b> has been <b>Cancelled</b>.</p>
-              <p>You will be getting a refund for this order within 48hours.</p>
-              <p>Log into your SureImports account, go to <b>Cancelled Orders</b> to view this order.</p>` +
-              `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
-              const xBody2 = ``;
-              const xButtonTitle = '';
-              const xButtonLink = '';
-              await xMail({
-                xEmail,
-                xTitle,
-                xBodyTitle,
-                xBody1,
-                xBody2,
-                xButtonTitle,
-                xButtonLink,
-              });
-                //success update
-                return NextResponse.json(
-                  { statusx: 'SUCCESS', message: 'Order has been successfully moved to Cancelled Order.' },
-                  { status: 200 },
-                );
-              }
 
 
 

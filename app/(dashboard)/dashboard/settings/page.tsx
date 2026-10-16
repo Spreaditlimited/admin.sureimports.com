@@ -1,3 +1,4 @@
+import CancellationSettings from '@/components/procurement/CancellationSettings';
 import Link from 'next/link';
 import { BadgeDollarSign, HandCoins, Landmark, MessageCircle, Ship, UserCog } from 'lucide-react';
 import { cookies } from 'next/headers';
@@ -31,6 +32,7 @@ export default async function SettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">System Settings</h1>
         <p className="text-sm text-muted-foreground">Manage team access, logistics and financial configuration.</p>
       </div>
+      <CancellationSettings />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {sections.map((section) => (
           <Link key={section.title} href={section.href} className="rounded-xl border border-border bg-card p-5 shadow-soft transition-colors hover:border-primary/40">

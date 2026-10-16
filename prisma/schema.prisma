@@ -590,6 +590,7 @@ model orders {
   mergedIntoOrderId         String?    @db.VarChar(191)
   mergedAt                  DateTime?
   assistanceRevision        Int        @default(0)
+  cancellationLockedAt      DateTime? @db.DateTime(3)
   status                    String?
   ext1                      String?
   ext2                      String?
@@ -1022,7 +1023,7 @@ model refund_records {
   refundStatus String?
   serviceType  String?
   ext1         String?
-  ext2         String?
+  ext2         String? @db.Text
   xStatus      String?
   createdAt    DateTime? @default(now())
   updatedAt    DateTime?
@@ -2951,4 +2952,11 @@ model vehicle_credit_reversals {
   createdAt DateTime @default(now()) @db.DateTime(3)
   confirmedAt DateTime? @db.DateTime(3)
   @@index([orderId,status],map:"vehicle_reversal_order")
+}
+
+model procurement_cancellation_settings {
+  id Int @id
+  feePercent Decimal @default(2.00) @db.Decimal(5, 2)
+  updatedBy String? @db.VarChar(191)
+  updatedAt DateTime @default(now()) @db.DateTime(3)
 }
