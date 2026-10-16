@@ -204,7 +204,7 @@ export default function CancellationPanel({
               </button>
             </div>
           )}
-          <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
+          <div className="grid grid-cols-2 items-stretch gap-3 border-t border-border pt-5 sm:grid-cols-[repeat(2,minmax(0,12rem))] sm:justify-end">
             <button
               type="button"
               disabled={busy}
@@ -217,7 +217,7 @@ export default function CancellationPanel({
               type="button"
               disabled={!quote || !confirmed || busy}
               onClick={cancel}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-transparent bg-destructive px-4 py-2.5 text-center text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {busy ? "Cancelling…" : "Confirm cancellation"}
             </button>
