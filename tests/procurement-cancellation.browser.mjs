@@ -102,9 +102,7 @@ page.on("pageerror", (e) => errors.push(e.message));
 try {
   const origin = `http://127.0.0.1:${server.address().port}`;
   await page.goto(origin);
-  await page
-    .getByRole("button", { name: "Review cancellation and refund" })
-    .click();
+  await page.getByRole("button", { name: "Review cancellation" }).click();
   await page.getByText("980.00", { exact: false }).waitFor();
   const confirm = page.getByRole("button", {
     name: "Confirm cancellation",
@@ -133,11 +131,9 @@ try {
         await page.locator('section[aria-label="Cancel order"]').count(),
         1,
       );
-      await page
-        .locator('section[aria-label="Cancel order"]')
-        .screenshot({
-          path: `/private/tmp/sureimports-cancellation/screenshots/customer-${theme}-${width}.png`,
-        });
+      await page.locator('section[aria-label="Cancel order"]').screenshot({
+        path: `/private/tmp/sureimports-cancellation/screenshots/customer-${theme}-${width}.png`,
+      });
     }
   await page.getByRole("checkbox").check();
   await confirm.click();
@@ -150,9 +146,7 @@ try {
     "/dashboard/refunds",
   );
   await page.goto(origin + "?admin");
-  await page
-    .getByRole("button", { name: "Review cancellation and refund" })
-    .click();
+  await page.getByRole("button", { name: "Review cancellation" }).click();
   await page.getByText("Cancellation fee (0%)").waitFor();
   await page
     .getByRole("checkbox", { name: "Charge the configured cancellation fee" })
