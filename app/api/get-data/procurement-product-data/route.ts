@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       productsGetAll: lifecycle.products,
+      deviceShipping: lifecycle.deviceShipping,
       productsTotalPrice: lifecycle.productsTotalUsd,
       directRmbToNgn: lifecycle.directRmbToNgn,
       productsTotalCount: lifecycle.productsCount,

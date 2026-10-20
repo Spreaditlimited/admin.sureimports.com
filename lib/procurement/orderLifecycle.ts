@@ -1,3 +1,5 @@
+import { orderDeviceRates, deviceShippingBreakdown } from './deviceShipping';
+import { getDeviceShippingSettings } from './deviceShippingSettings';
 import { prisma } from '@/lib/prisma';
 import { procurementProductValue } from './productPricing';
 
@@ -80,17 +82,9 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
   const productPricingVersion = useLatestEstimate ? 2 : order.productPricingVersion ?? 1;
   const productValue = procurementProductValue(productsTotalRaw, order.currencyType || 'USD', country?.countryName || '', { ngnPerUsd, cnyPerUsd, ngnPerCny }, productPricingVersion);
   const productsTotalUsd = productValue.usd;
-  const totalMeasurement = products.reduce(
-    (total, product) =>
-      total +
-      finite(product.productQuantity) *
-        finite(
-          usesMeasurementPricing
-            ? product.shippingMeasurePerUnit
-            : product.productWeight,
-        ),
-    0,
-  );
+  const deviceRates = order.status === 'saved' && country?.countryName?.trim().toLowerCase() === 'nigeria' ? await getDeviceShippingSettings() : orderDeviceRates(order, country?.countryName || '');
+  const deviceShipping = deviceShippingBreakdown(products, deviceRates, order.shippingPricingVersion);
+  const totalMeasurement = deviceShipping.measurement;
 
   const shippingRate = usesMeasurementPricing
     ? finite(order.shippingRateSnapshot)
@@ -109,7 +103,7 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
     : 'USD';
 
   const domesticShippingCostUsd = 5;
-  const dynamicInternationalShippingCostUsd = shippingCostInUsd(
+  const dynamicInternationalShippingCostUsd = deviceShipping.totalNgn / ngnPerUsd + shippingCostInUsd(
     totalMeasurement,
     shippingRate,
     shippingRateCurrency,
@@ -140,8 +134,8 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
     : finite(order.orderTotalCost, dynamicGrandTotalUsd);
   const actualMeasurement = finite(order.orderWeight);
   const actualDomesticShippingCostUsd = finite(order.shippingCost1) / cnyPerUsd;
-  const actualInternationalShippingCostUsd = shippingCostInUsd(
-    actualMeasurement,
+  const actualInternationalShippingCostUsd = deviceShipping.totalNgn / ngnPerUsd + shippingCostInUsd(
+    deviceShipping.enabled && deviceShipping.otherLines === 0 ? 0 : actualMeasurement,
     shippingRate,
     shippingRateCurrency,
     ngnPerUsd,
@@ -151,6 +145,7 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
 
   return {
     order,
+    deviceShipping,
     products,
     destinationCountry: country?.countryName || '',
     shippingPlanName: plan?.shippingPlanName || '',

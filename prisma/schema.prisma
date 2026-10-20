@@ -563,6 +563,8 @@ model orders {
   shippingPricingVersion    Int?
   productPricingVersion     Int?
   shippingMeasurementUnit   String?
+  devicePhoneRateNgn       Float?
+  deviceLaptopRateNgn      Float?
   shippingRateSnapshot      Float?
   shippingRateCurrency      String?
   orderTotalCostOld         String?

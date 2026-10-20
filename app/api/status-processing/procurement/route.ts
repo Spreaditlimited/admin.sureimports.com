@@ -1,3 +1,4 @@
+import { getProcurementOrderLifecycle } from '@/lib/procurement/orderLifecycle';
 import { POST_APPROVED_STAGES } from '@/lib/procurement/cancellation-policy';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 import { partnerOperationalTransition } from '@/lib/partners/operational-transition';
@@ -141,10 +142,12 @@ export async function POST(request: Request) {
   }
 
   if (recordStatus === 'approved' && newStatus === 'pay-for-shipping') {
+    const deviceLifecycle = await getProcurementOrderLifecycle(pidOrder);
+    const deviceOnly = deviceLifecycle.deviceShipping.enabled && deviceLifecycle.deviceShipping.otherLines === 0;
     const actualWeightValue = Number(actualWeight);
     const actualDomesticShippingCostValue = Number(actualDomesticShippingCost);
 
-    if (!Number.isFinite(actualWeightValue) || actualWeightValue <= 0 || !Number.isFinite(actualDomesticShippingCostValue) || actualDomesticShippingCostValue <= 0) {
+    if (!Number.isFinite(actualWeightValue) || (deviceOnly ? actualWeightValue !== 0 : actualWeightValue <= 0) || !Number.isFinite(actualDomesticShippingCostValue) || actualDomesticShippingCostValue <= 0) {
       return NextResponse.json(
         {
           statusx: 'ACTION_FAILED',

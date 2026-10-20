@@ -1,3 +1,5 @@
+import { goodsCategories, isShippingPlanAllowed, shippingEligibilityMessage } from '@/lib/procurement/shippingEligibility';
+import { validDeviceType, usesDeviceFlatFee } from '@/lib/procurement/deviceShipping';
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminServiceAccess } from "@/app/api/_lib/adminAccess";
@@ -174,7 +176,11 @@ export async function PATCH(
         access.admin.pidUser,
         "canEditOrder",
       );
-      await ensureCaseOrder(pidCase, body.pidOrder, item.pidUser);
+      const order = await ensureCaseOrder(pidCase, body.pidOrder, item.pidUser);
+      const plan = order.shippingPlan ? await prisma.shippingplan.findUnique({ where: { pidShippingPlan: order.shippingPlan } }) : null;
+      const category = body.orderCategory ?? order.orderCategory;
+      if (!goodsCategories.some(value => value === category)) throw new Error('Choose a valid goods category.');
+      if (!isShippingPlanAllowed(category, plan?.shippingPlanName)) throw new Error(shippingEligibilityMessage + ' The customer can update the plan in their saved order details.');
       const allowed = [
         "orderName",
         "orderCategory",
@@ -225,6 +231,8 @@ export async function PATCH(
       });
       if (!plan?.shippingPlanRate || !plan.country.countryName)
         throw new Error("Choose a valid destination and shipping plan.");
+      if (!goodsCategories.some(value => value === (body.orderCategory || 'Other Goods'))) throw new Error('Choose a valid goods category.');
+      if (!isShippingPlanAllowed(body.orderCategory, plan.shippingPlanName)) throw new Error(shippingEligibilityMessage);
       const isNigeriaSea =
         plan.country.countryName.toLowerCase().includes("nigeria") &&
         String(plan.shippingPlanName).toLowerCase().includes("sea");
@@ -288,19 +296,21 @@ export async function PATCH(
         "canManageProducts",
       );
       const order = await ensureCaseOrder(pidCase, body.pidOrder, item.pidUser);
+      const destination = order.destinationCountry ? await prisma.country.findUnique({ where: { pidCountry: order.destinationCountry }, select: { countryName: true } }) : null;
+      const flatFee = usesDeviceFlatFee(destination?.countryName, body.productCategory);
       const productLink = normalizeProductUrl(body.productLink);
       const price = Number(body.productPrice),
         quantity = Number(body.productQuantity),
-        measure = Number(body.productWeight);
+        measure = flatFee ? 0 : Number(body.productWeight);
       if (
+        !validDeviceType(body.productCategory ?? 'OTHER') ||
         !body.productName?.trim() ||
         !productLink ||
         !Number.isFinite(price) ||
         price < 0 ||
-        !Number.isFinite(quantity) ||
+        (!Number.isFinite(quantity) || (body.productCategory && body.productCategory !== 'OTHER' && !Number.isSafeInteger(quantity))) ||
         quantity < 1 ||
-        !Number.isFinite(measure) ||
-        measure <= 0
+        (!flatFee && (!Number.isFinite(measure) || measure <= 0))
       )
         throw new Error(
           "Enter a valid product name, link, price, quantity and weight/CBM.",
@@ -313,6 +323,7 @@ export async function PATCH(
           productName: body.productName.trim().slice(0, 500),
           productLink,
           productPrice: price,
+          productCategory: body.productCategory ?? 'OTHER',
           productQuantity: quantity,
           productWeight: order.shippingPricingVersion === 2 ? null : measure,
           shippingMeasurePerUnit:

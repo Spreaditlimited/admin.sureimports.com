@@ -7,6 +7,7 @@ import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { normalizeProductUrl } from '@/lib/productUrl';
 
 // (Assuming PrismaClient is used in an API route, not directly here since this is 'use client', 
+import DeviceShippingSummary, { type DeviceShippingSummaryData } from '@/components/DeviceShippingSummary';
 // but leaving your imports intact as requested)
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
@@ -88,6 +89,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
   const [vat, setVat] = useState<number>(0);
   const [vatValue, setVatValue] = useState<number>(0);
 
+  const [deviceShipping, setDeviceShipping] = useState<DeviceShippingSummaryData | null>(null);
   const [actualWeightValue, setActualWeightValue] = useState<number>(0);
   const [actualDomesticShippingCostValue, setActualDomesticShippingCostValue] = useState<number>(0);
 
@@ -141,6 +143,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         setProductsTotalCount(replaceNullWithZero(data.productsTotalCount));
         setProductsTotalWeight(replaceNullWithZero(data.productsTotalWeight));
 
+        setDeviceShipping(data.deviceShipping || null);
         setActualWeightValue(replaceNullWithZero(data.actualWeight));
         setActualDomesticShippingCostValue(replaceNullWithZero(data.actualDomesticShippingCost));
         setActualInternationalShippingCost(replaceNullWithZero(data.actualInternationalShippingCost));
@@ -306,6 +309,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   return (
     <div className="w-full mt-4 space-y-6">
+      <DeviceShippingSummary value={deviceShipping} />
       
       {/* Order Info */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card border border-border rounded-lg p-5 shadow-sm">
@@ -377,6 +381,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             )}
             {currencyType == 'CNY' && (
               <>
+
                 <span className="font-bold text-primary text-xl">
                   ¥{((productsTotalPrice as number) * (directRmbToNgn && exNairaToYuan > 0 ? exNairaToDollar / exNairaToYuan : exYuanToDollar)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} Yuan
                 </span>
@@ -520,7 +525,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
             <h3 className="text-sm font-bold text-foreground mb-4 pb-3 border-b border-border">Actual Shipping Details</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Actual {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'}:</span>
+                <span className="text-muted-foreground">{deviceShipping?.enabled ? 'Actual measurement of OTHER goods only — exclude phones and laptops. Enter 0 for device-only orders.' : 'Actual'} {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'}:</span>
                 <span className="font-medium text-foreground">{((actualWeightValue as number)/1).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} {shippingPlanUnit}</span>
               </div>
               <div className="flex justify-between">
@@ -620,7 +625,7 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
         {status == 'approved' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
             <div>
-              <label htmlFor="actualWeight" className="block text-sm font-medium text-foreground mb-1">Actual {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'} ({shippingPlanUnit})</label>
+              <label htmlFor="actualWeight" className="block text-sm font-medium text-foreground mb-1">{deviceShipping?.enabled ? 'Actual measurement of OTHER goods only — exclude phones and laptops. Enter 0 for device-only orders.' : 'Actual'} {shippingPlanUnit === 'CBM' ? 'Volume' : 'Weight'} ({shippingPlanUnit})</label>
               <input
                 name="actualWeight"
                 type="number"

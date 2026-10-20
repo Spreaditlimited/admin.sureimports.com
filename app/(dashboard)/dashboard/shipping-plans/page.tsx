@@ -1,3 +1,4 @@
+import NigeriaDeviceRates from './components/NigeriaDeviceRates';
 import { Metadata } from 'next';
 import React from 'react';
 import ViewShippingPlan from './components/ViewShippingPlan';
@@ -28,6 +29,7 @@ const Page = async () => {
 
             {/* 2. Global Overview / Plan Configuration */}
             <ViewShippingPlan />
+            <NigeriaDeviceRates />
 
             {/* 3. Regional Breakdown & Country Management */}
             <div className="pt-2">

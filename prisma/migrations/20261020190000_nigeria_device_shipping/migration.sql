@@ -1,0 +1,10 @@
+CREATE TABLE nigeria_device_shipping_settings (
+ id INT NOT NULL PRIMARY KEY,
+ phoneNgn DECIMAL(12,2) NOT NULL DEFAULT 25000,
+ laptopNgn DECIMAL(12,2) NOT NULL DEFAULT 50000,
+ revision INT NOT NULL DEFAULT 0,
+ updatedBy VARCHAR(191) NULL,
+ updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+);
+INSERT INTO nigeria_device_shipping_settings (id) VALUES (1);
+ALTER TABLE orders ADD COLUMN devicePhoneRateNgn DOUBLE NULL, ADD COLUMN deviceLaptopRateNgn DOUBLE NULL;
