@@ -1,0 +1,15 @@
+.root {
+ --si-ink:hsl(var(--foreground));
+ --si-muted:hsl(var(--muted-foreground));
+ --si-surface:hsl(var(--card));
+ --si-inset:hsl(var(--muted));
+ --si-border:hsl(var(--border));
+ --si-primary:hsl(var(--primary));
+ --si-accent:hsl(var(--primary));
+ --si-on-primary:hsl(var(--primary-foreground));
+ --si-soft:hsl(var(--secondary));
+ display:grid;gap:24px;padding-bottom:48px;min-width:0;font-size:14px;
+}
+.root > main {padding:0;}
+.root h1 {font-size:26px;font-weight:700;letter-spacing:-.03em;}
+.root > section {margin-bottom:0;}

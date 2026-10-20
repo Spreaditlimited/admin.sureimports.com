@@ -1,6 +1,7 @@
 export const ALL_SERVICE_KEYS = [
   "dashboard",
   "whatsapp_performance",
+  "customer_support",
   "procurement",
   "corporate_gifts",
   "pay_supplier",
@@ -26,6 +27,7 @@ export const ALL_SERVICE_KEYS = [
 export type ServiceKey = (typeof ALL_SERVICE_KEYS)[number];
 
 export const DASHBOARD_ROUTE_SERVICE_MAP: Array<{ prefix: string; serviceKey: ServiceKey }> = [
+  { prefix: "/dashboard/support", serviceKey: "customer_support" },
   { prefix: "/dashboard/whatsapp", serviceKey: "whatsapp_performance" },
   { prefix: "/dashboard/invoicing/bank-accounts", serviceKey: "system_settings" },
   { prefix: "/dashboard/invoicing/payment-claims", serviceKey: "invoicing" },
@@ -97,6 +99,7 @@ export function getRequiredServiceForPath(pathname: string): ServiceKey | null {
 const SERVICE_DEFAULT_ROUTE_MAP: Record<ServiceKey, string> = {
   dashboard: "/dashboard",
   whatsapp_performance: "/dashboard/whatsapp",
+  customer_support: "/dashboard/support",
   procurement: "/dashboard/procurement?status=pending",
   corporate_gifts: "/dashboard/corporate-sourcing",
   pay_supplier: "/dashboard/pay-supplier",
@@ -136,6 +139,7 @@ export function getFirstAllowedDashboardRoute(
 
 export const ADMIN_SERVICE_OPTIONS = [
   { key: 'dashboard', label: 'Dashboard & Payments' },
+  { key: 'customer_support', label: 'Customer Support' },
   { key: 'whatsapp_performance', label: 'WhatsApp Performance & Leads' },
   { key: 'procurement', label: 'Procurement' },
   { key: 'corporate_gifts', label: 'Corporate Sourcing' },

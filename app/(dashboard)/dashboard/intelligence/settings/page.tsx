@@ -1,3 +1,4 @@
+import UsdPricingSettings from '@/components/intelligence/UsdPricingSettings';
 import IntelligencePlanSettingsForm from './IntelligencePlanSettingsForm';
 
 export default function IntelligenceSettingsPage() {
@@ -16,6 +17,7 @@ export default function IntelligenceSettingsPage() {
         </p>
       </div>
 
+      <UsdPricingSettings />
       <IntelligencePlanSettingsForm />
     </main>
   );

@@ -1,0 +1,8 @@
+CREATE TABLE website_video_settings (
+ settingKey VARCHAR(80) NOT NULL PRIMARY KEY,
+ videoUrl VARCHAR(2048) NOT NULL,
+ metadataJson LONGTEXT NULL,
+ revision INT NOT NULL DEFAULT 0,
+ updatedBy VARCHAR(191) NULL,
+ updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

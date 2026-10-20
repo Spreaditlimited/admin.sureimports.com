@@ -91,7 +91,7 @@ test("ten supplied BEVs have Cloudinary galleries and sourced reference dimensio
     ),
   );
   const usd = models.filter((m) =>
-    m.variants.some((v) => v.priceCurrency === "USD"),
+    m.variants.every((v) => v.referenceOnly && v.priceCurrency === "USD"),
   );
   assert.equal(usd.length, 10);
   assert.equal(models.length, 20);

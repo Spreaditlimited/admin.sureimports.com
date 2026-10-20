@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     const providerLegs = foreignIds.length ? await prisma.$queryRaw<Array<{ id: string; refundId: string; currency: string; amount: string; status: string; providerReference: string | null; firstAttemptAt: Date | null }>>`SELECT id,refundId,currency,amount,status,providerReference,firstAttemptAt FROM refund_provider_legs WHERE refundId IN (${Prisma.join(foreignIds)}) ORDER BY id` : [];
     const settlementMap = new Map(settlements.map(s => {
       const { destinationCiphertext, ...safe } = s;
-      return [s.refundId, { ...safe, destination: s.method === 'BANK' ? readRefundDestination(destinationCiphertext, s.refundId) : {} }];
+      return [s.refundId, { ...safe, destination: ['BANK', 'PAYPAL_MANUAL'].includes(s.method) ? readRefundDestination(destinationCiphertext, s.refundId) : {} }];
     }));
     const userMap = new Map(users.map((user) => [user.pidUser, user]));
     const data = refunds.map((refund) => ({

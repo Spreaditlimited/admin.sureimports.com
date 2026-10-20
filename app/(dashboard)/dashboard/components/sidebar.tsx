@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Megaphone,
   Camera,
+  MessageCircle,
 } from "lucide-react";
 import type React from "react";
 import {
@@ -52,6 +53,7 @@ const dashboardItem: MenuItem = {
 };
 
 const features: MenuItem[] = [
+  { title: "Customer Support", icon: MessageCircle, path: "/dashboard/support", serviceKey: "customer_support" },
   { title: "Vehicles", icon: Store, path: "/dashboard/vehicles", serviceKey: "store_mgt" },
   {
     title: "Procurement",
@@ -239,6 +241,7 @@ const systemSettings: MenuItem[] = [
     serviceKey: "system_settings",
     submenu: [
       { title: "Settings Overview", path: "/dashboard/settings" },
+      { title: "Website Videos", path: "/dashboard/settings#website-videos" },
       { title: "Manage Admins", path: "/dashboard/admin/view" },
       {
         title: "Public WhatsApp Contacts",

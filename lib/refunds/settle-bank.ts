@@ -2,7 +2,7 @@ import 'server-only';
 import { prisma } from '@/lib/prisma';
 import { decimalUnits } from './money';
 
-/** Records an independently completed bank transfer; never initiates a transfer. */
+/** Records an independently completed manual payment; never initiates a transfer. */
 export async function confirmForeignBankRefund(input: {
   refundId: string;
   reference: string;
@@ -17,7 +17,7 @@ export async function confirmForeignBankRefund(input: {
     input.reference.length > 191
   )
     throw new Error(
-      'Verify the account owner and enter the actual bank transfer reference.',
+      'Verify the account owner and enter the actual bank or PayPal transaction reference.',
     );
   return prisma.$transaction(async (tx) => {
     const [refund] = await tx.$queryRaw<
@@ -44,10 +44,10 @@ export async function confirmForeignBankRefund(input: {
       !['USD', 'NGN'].includes(refund.currency) ||
       refund.refundStatus !== 'requested' ||
       settlement.status !== 'REQUESTED' ||
-      settlement.method !== 'BANK'
+      !['BANK', 'PAYPAL_MANUAL'].includes(settlement.method)
     )
       throw new Error(
-        'This refund is not awaiting bank settlement. Refresh its status.',
+        'This refund is not awaiting manual settlement. Refresh its status.',
       );
     if (
       decimalUnits(String(refund.amount), 2) !==
@@ -65,6 +65,8 @@ export async function confirmForeignBankRefund(input: {
       throw new Error(
         'The transferred amount and currency must match the locked settlement.',
       );
+    const providerLegs = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM refund_provider_legs WHERE refundId=${input.refundId} LIMIT 1`;
+    if (providerLegs.length) throw new Error('This refund has an original-payment settlement. Review it before recording a manual payment.');
     await tx.$executeRaw`UPDATE refund_settlements SET status='SETTLED',reference=${input.reference},approvedBy=${input.adminId},settledAt=NOW(3),updatedAt=NOW(3) WHERE refundId=${input.refundId}`;
     await tx.refund_records.update({
       where: { pidRefund: input.refundId },

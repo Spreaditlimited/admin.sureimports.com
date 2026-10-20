@@ -1,0 +1,8 @@
+{
+  "version": "1.1.0",
+  "source": "sureimports.com/design-system",
+  "files": {
+    "design-system/tokens.css": "f9fdd15eadd7b4a22c9d69ade38e8f00bcdca96327a86cd996af0166a4700cc0",
+    "design-system/components.css": "87a78f38c71af21f7c17d936d935ce857e27d5a8dda869a91b67a1a8fec932fa"
+  }
+}

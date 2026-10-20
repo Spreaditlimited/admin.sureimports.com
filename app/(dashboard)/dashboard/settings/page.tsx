@@ -1,3 +1,5 @@
+import WebsiteVideoSettings from '@/components/settings/WebsiteVideoSettings';
+import DashboardFeatureSettings from '@/components/settings/DashboardFeatureSettings';
 import CancellationSettings from '@/components/procurement/CancellationSettings';
 import Link from 'next/link';
 import { BadgeDollarSign, HandCoins, Landmark, MessageCircle, Ship, UserCog } from 'lucide-react';
@@ -32,6 +34,8 @@ export default async function SettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">System Settings</h1>
         <p className="text-sm text-muted-foreground">Manage team access, logistics and financial configuration.</p>
       </div>
+      <WebsiteVideoSettings />
+      <DashboardFeatureSettings />
       <CancellationSettings />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {sections.map((section) => (

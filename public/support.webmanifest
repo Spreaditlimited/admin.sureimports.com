@@ -1,0 +1,17 @@
+{
+  "id": "/support",
+  "name": "Sure Imports Admin",
+  "short_name": "SI Support",
+  "start_url": "/dashboard/support",
+  "scope": "/dashboard/",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#48439b",
+  "icons": [
+    {
+      "src": "/assets/images/logos/favicon.png",
+      "sizes": "300x300",
+      "type": "image/png"
+    }
+  ]
+}

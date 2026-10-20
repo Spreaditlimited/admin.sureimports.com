@@ -2960,3 +2960,197 @@ model procurement_cancellation_settings {
   updatedBy String? @db.VarChar(191)
   updatedAt DateTime @default(now()) @db.DateTime(3)
 }
+
+model dashboard_feature_settings {
+  id Int @id @default(1)
+  rulesJson String @db.LongText
+  revision Int @default(0)
+  updatedBy String? @db.VarChar(191)
+  updatedAt DateTime @default(now()) @db.DateTime(3)
+}
+
+model customer_payout_profiles {
+  pidUser String @id @db.VarChar(191)
+  destinationCiphertext String? @db.Text
+  country String? @db.VarChar(191)
+  revision Int @default(0)
+  challengeJson String? @db.Text
+  updatedAt DateTime @default(now()) @db.DateTime(3)
+}
+
+model intelligence_usd_pricing {
+  planKey String @id @db.VarChar(40)
+  priceUsdCents Int @default(0)
+  extraCreditPriceUsdCents Int @default(0)
+  revision Int @default(0)
+  updatedAt DateTime @default(now()) @db.DateTime(3)
+}
+model intelligence_paypal_plans {
+  cacheKey String @id @db.VarChar(80)
+  providerPlanId String @db.VarChar(80)
+  environment String @db.VarChar(10)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+}
+model intelligence_paypal_checkouts {
+  id String @id @db.VarChar(80)
+  pidUser String @db.VarChar(191)
+  pidSubscription String? @db.VarChar(80)
+  kind String @db.VarChar(20)
+  planKey String @db.VarChar(40)
+  providerReference String? @db.VarChar(80)
+  providerPlanId String? @db.VarChar(80)
+  environment String @db.VarChar(10)
+  amountMinor Int
+  credits Int
+  status String @default("PENDING") @db.VarChar(40)
+  approvalUrl String? @db.Text
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  updatedAt DateTime @default(now()) @db.DateTime(3)
+  @@unique([environment,providerReference],map:"intelligence_paypal_reference")
+  @@index([pidUser,kind,status],map:"intelligence_paypal_customer")
+}
+model intelligence_paypal_payments {
+  paymentReference String @id @db.VarChar(120)
+  checkoutId String @db.VarChar(80)
+  amountMinor Int
+  credits Int
+  status String @db.VarChar(40)
+  paidAt DateTime @db.DateTime(3)
+  periodEnd DateTime? @db.DateTime(3)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  @@index([checkoutId],map:"intelligence_paypal_payment_checkout")
+}
+model consultation_paypal_checkouts {
+  reference String @id @db.VarChar(140)
+  pidBooking String @unique(map:"consultation_paypal_booking") @db.VarChar(80)
+  providerReference String @db.VarChar(80)
+  environment String @db.VarChar(10)
+  captureReference String? @db.VarChar(80)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  @@unique([environment,providerReference],map:"consultation_paypal_order")
+}
+
+// Shared support pilot. Schema ownership and migrations live in Sure Imports.
+model support_conversations {
+  reads support_reads[]
+  @@index([assignedTo, updatedAt], map: "support_assignment_inbox")
+  pushDeliveries support_push_deliveries[]
+  id String @id @db.Char(32)
+  brand String @db.VarChar(32)
+  ownerKind String @default("CUSTOMER") @db.VarChar(16)
+  orderId String? @db.VarChar(191)
+  notifications support_notifications[]
+  customerId String @db.VarChar(191)
+  requestKey String @db.VarChar(80)
+  subject String @db.VarChar(120)
+  country String? @db.VarChar(191)
+  status String @default("OPEN") @db.VarChar(24)
+  assignedTo String? @db.VarChar(191)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  updatedAt DateTime @default(now()) @db.DateTime(3)
+  firstResponseAt DateTime? @db.DateTime(3)
+  resolvedAt DateTime? @db.DateTime(3)
+  messages support_messages[]
+  @@unique([brand, customerId, requestKey], map: "support_create_retry")
+  @@index([brand, customerId, updatedAt], map: "support_customer_inbox")
+  @@index([status, updatedAt], map: "support_team_inbox")
+  @@index([createdAt], map: "support_created_at")
+}
+model support_messages {
+  attachmentAsset String? @db.VarChar(191)
+  attachmentName String? @db.VarChar(180)
+  attachmentSize Int?
+  attachmentHash String? @db.Char(64)
+  @@index([attachmentAsset], map: "support_message_asset")
+  id Int @id @default(autoincrement())
+  conversationId String @db.Char(32)
+  authorId String @db.VarChar(191)
+  authorKind String @db.VarChar(16)
+  requestKey String @db.VarChar(80)
+  body String @db.Text
+  internal Boolean @default(false)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  conversation support_conversations @relation(fields: [conversationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "support_message_conversation")
+  @@unique([conversationId, authorKind, authorId, requestKey], map: "support_message_retry")
+  @@index([conversationId, id], map: "support_message_history")
+}
+model support_rate_limits {
+  actorKey String @id @db.Char(64)
+  windowStart DateTime @db.DateTime(3)
+  messageCount Int @default(0)
+}
+
+model support_guests {
+ id String @id @db.Char(32)
+ tokenHash String @unique @db.Char(64)
+ expiresAt DateTime @db.DateTime(3)
+ claimedBy String? @db.VarChar(191)
+ createdAt DateTime @default(now()) @db.DateTime(3)
+ @@index([expiresAt], map: "support_guest_expiry")
+}
+model support_notifications {
+  receipts support_email_receipts[]
+ id Int @id @default(autoincrement())
+ conversationId String @db.Char(32)
+ audience String @db.VarChar(16)
+ revision Int @default(1)
+ attempts Int @default(0)
+ availableAt DateTime @db.DateTime(3)
+ leaseUntil DateTime? @db.DateTime(3)
+ leaseToken String? @db.Char(32)
+ conversation support_conversations @relation(fields: [conversationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "support_notification_conversation")
+ @@unique([conversationId, audience], map: "support_notification_audience")
+ @@index([availableAt, leaseUntil], map: "support_notification_ready")
+}
+
+model support_push_subscriptions {
+ id String @id @db.Char(32)
+ adminId String @db.VarChar(191)
+ endpointHash String @unique @db.Char(64)
+ endpoint String @db.Text
+ p256dh String @db.VarChar(100)
+ auth String @db.VarChar(40)
+ active Boolean @default(true)
+ expiresAt DateTime @db.DateTime(3)
+ createdAt DateTime @default(now()) @db.DateTime(3)
+ updatedAt DateTime @default(now()) @db.DateTime(3)
+ deliveries support_push_deliveries[]
+ @@index([adminId, active], map: "support_push_admin")
+}
+model support_push_deliveries {
+ id Int @id @default(autoincrement())
+ conversationId String @db.Char(32)
+ subscriptionId String @db.Char(32)
+ revision Int @default(1)
+ attempts Int @default(0)
+ availableAt DateTime @db.DateTime(3)
+ leaseUntil DateTime? @db.DateTime(3)
+ leaseToken String? @db.Char(32)
+ conversation support_conversations @relation(fields:[conversationId],references:[id],onDelete:Restrict,onUpdate:Restrict,map:"support_push_conversation")
+ subscription support_push_subscriptions @relation(fields:[subscriptionId],references:[id],onDelete:Cascade,onUpdate:Restrict,map:"support_push_device")
+ @@unique([conversationId,subscriptionId],map:"support_push_pending")
+ @@index([availableAt,leaseUntil],map:"support_push_ready")
+}
+
+model support_files {
+  asset String @id @db.VarChar(191)
+  expiresAt DateTime @db.DateTime(3)
+  @@index([expiresAt], map: "support_file_expiry")
+}
+
+model support_reads {
+ conversationId String @db.Char(32)
+ adminId String @db.VarChar(191)
+ lastReadMessageId Int @default(0)
+ updatedAt DateTime @default(now()) @db.DateTime(3)
+ conversation support_conversations @relation(fields:[conversationId], references:[id], onDelete:Cascade, map:"support_read_conversation")
+ @@id([conversationId,adminId])
+}
+model support_email_receipts {
+ noticeId Int
+ revision Int
+ recipientHash String @db.Char(64)
+ sentAt DateTime @default(now()) @db.DateTime(3)
+ notice support_notifications @relation(fields:[noticeId], references:[id], onDelete:Cascade, map:"support_email_notice")
+ @@id([noticeId,revision,recipientHash])
+}

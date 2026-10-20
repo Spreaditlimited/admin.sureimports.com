@@ -1,12 +1,16 @@
 import type { Metadata } from "next"
 import { Suspense, type ReactNode } from "react"
 import "./globals.css"
+import '../design-system/tokens.css';
+import '../design-system/components.css';
 import { AlertProvider } from "./context/AlertContext"
 import Head from "next/head"
 
 export const metadata: Metadata = {
   title: "Sure Imports | Admin Dashboard",
   description: "Admin dashboard",
+  manifest: "/support.webmanifest",
+  appleWebApp: { capable: true, title: "Sure Imports Admin", statusBarStyle: "default" },
 }
 
 export default function RootLayout({
@@ -15,7 +19,7 @@ export default function RootLayout({
   children: ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html data-si-foundation="1" lang="en" suppressHydrationWarning>
 
       <Head>
         <link rel="icon" href="/favicon.ico" />

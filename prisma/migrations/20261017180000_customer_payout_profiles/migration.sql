@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS customer_payout_profiles (
+ pidUser VARCHAR(191) NOT NULL PRIMARY KEY,
+ destinationCiphertext TEXT NULL,
+ country VARCHAR(191) NULL,
+ revision INT NOT NULL DEFAULT 0,
+ challengeJson TEXT NULL,
+ updatedAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

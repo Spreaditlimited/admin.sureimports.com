@@ -1,0 +1,209 @@
+/* Shared foundations. Product layouts own positioning; this file owns control appearance. */
+html[data-si-foundation] body {
+  background-color: var(--si-canvas);
+  color: var(--si-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+html[data-si-foundation] :where(button, input, select, textarea) { font-family: inherit; }
+html[data-si-foundation] :where(h1, h2, h3) { text-wrap: balance; }
+/* Public headlines share the approved hero typography across applications.
+   Page layouts retain their own size and alignment (including product/detail pages). */
+html[data-si-foundation] body :is(.public-site-theme, .public-site) h1:not([data-si-unstyled]) {
+  font-weight: var(--si-headline-weight);
+  letter-spacing: var(--si-headline-tracking);
+}
+html[data-si-foundation] body :is(.public-site-theme, .public-site) h1:not([data-si-unstyled]) :is(span, strong, b) {
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+html[data-si-foundation] :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--si-accent);
+  outline-offset: 3px;
+}
+/* Existing native fields participate without changing values, handlers or form submission.
+   Hidden inputs, upload controls, checkboxes, editor internals and custom composites retain geometry. */
+html[data-si-foundation] body :is(
+  input:not([type]),
+  input:is([type='text'], [type='email'], [type='password'], [type='number'], [type='tel'], [type='url'], [type='search'], [type='date'], [type='datetime-local'], [type='time']),
+  textarea,
+  select:not([multiple]):not([size]),
+  [data-si-control='select']
+):not([hidden]):not([aria-hidden='true']):not(.searchable-select-native):not([data-si-unstyled]):not(.ql-editor *) {
+  min-height: var(--si-control-height);
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--si-control-border);
+  border-radius: var(--si-radius-control);
+  background-color: var(--si-surface);
+  color: var(--si-ink);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  transition: border-color var(--si-duration), box-shadow var(--si-duration);
+}
+html[data-si-foundation] body :where(input, textarea)::placeholder { color: var(--si-muted); opacity: 1; }
+html[data-si-foundation] body :where(input, textarea, select):disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+html[data-si-foundation] body :where(input, textarea, select)[aria-invalid='true'] {
+  border-color: var(--si-danger);
+  outline-color: var(--si-danger);
+}
+html[data-si-foundation] body select:not([multiple]):not([size]):not([hidden]):not(.searchable-select-native):not([data-si-unstyled]) {
+  appearance: none;
+  padding-inline-start: 14px;
+  padding-inline-end: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23526078' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+}
+html[data-si-foundation].dark body select:not([multiple]):not([size]):not([data-si-unstyled]) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23adb2c0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+html[data-si-foundation][dir='rtl'] body select { background-position: left 16px center; }
+html[data-si-foundation] [data-si-control='select'] { padding-inline: 14px; gap: 12px; }
+html[data-si-foundation] [data-si-control='select'] > svg { flex-shrink: 0; }
+html[data-si-foundation] [data-si-select-content] {
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius-control);
+  background: var(--si-raised);
+  color: var(--si-ink);
+  box-shadow: var(--si-shadow);
+}
+/* Semantic classes also work on links rendered through Radix Slot or buttonVariants(). */
+html[data-si-foundation] .si-button {
+  border-radius: var(--si-radius-control);
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+  transition: background-color var(--si-duration), color var(--si-duration), box-shadow var(--si-duration);
+}
+html[data-si-foundation] .si-button-default,
+html[data-si-foundation] .si-button-lg { min-height: var(--si-control-height); }
+html[data-si-foundation] .si-button-sm { min-height: 36px; }
+html[data-si-foundation] .si-button-icon { min-height: 44px; min-width: 44px; }
+html[data-si-foundation] :is(.si-button-primary, .button-primary) {
+  background: var(--si-primary);
+  color: var(--si-on-primary);
+  border-color: transparent;
+}
+html[data-si-foundation] :is(.si-button-secondary, .button-secondary) {
+  background: var(--si-soft);
+  color: var(--si-accent);
+  border-color: var(--si-border);
+}
+html[data-si-foundation] .si-button-outline { background: var(--si-surface); color: var(--si-ink); border-color: var(--si-control-border); }
+html[data-si-foundation] .si-button-destructive { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
+html[data-si-foundation] .si-button-link { color: var(--si-accent); }
+html[data-si-foundation] .si-button:disabled { opacity: .5; cursor: not-allowed; }
+@media (hover: hover) {
+  html[data-si-foundation] :is(.si-button-primary, .button-primary):hover:not(:disabled) { filter: brightness(.93); }
+  html[data-si-foundation] :is(.si-button-secondary, .si-button-outline, .si-button-ghost):hover:not(:disabled) { background: var(--si-inset); }
+}
+html[data-si-foundation] [data-si-card] {
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius-card);
+  background: var(--si-surface);
+  color: var(--si-ink);
+  box-shadow: var(--si-shadow);
+}
+html[data-si-foundation] [data-si-notice] { padding: 16px; border: 1px solid currentColor; border-radius: var(--si-radius-control); font-size: 14px; line-height: 1.6; }
+html[data-si-foundation] [data-si-notice='info'] { color: var(--si-info); background: var(--si-info-soft); }
+html[data-si-foundation] [data-si-notice='warning'] { color: var(--si-warning); background: var(--si-warning-soft); }
+html[data-si-foundation] [data-si-notice='success'] { color: var(--si-success); background: var(--si-success-soft); }
+html[data-si-foundation] [data-si-notice='error'] { color: var(--si-danger); background: var(--si-danger-soft); }
+@media (prefers-reduced-motion: reduce) {
+  html[data-si-foundation] { --si-duration: 0ms; scroll-behavior: auto; }
+}
+@media (forced-colors: active) {
+  html[data-si-foundation] body select:not([multiple]):not([size]) { appearance: auto; background-image: none; }
+  html[data-si-foundation] .si-button { border: 1px solid ButtonText; }
+}
+/* Transitional adapters for existing utility-based actions. New controls use si-button.
+   Status/destructive/provider buttons are deliberately not matched by this list. */
+html[data-si-foundation] body button:is([class~='bg-indigo-600'], [class~='bg-indigo-700'], [class~='bg-indigo-800'], [class~='bg-blue-600'], [class~='bg-brand-orange']):not([data-si-unstyled]) {
+  background-color: var(--si-primary);
+  color: var(--si-on-primary);
+  border-radius: var(--si-radius-control);
+  font-weight: 600;
+}
+/* Workspace typography uses a calmer hierarchy; editorial and marketing heroes keep their scale. */
+html[data-si-foundation] :is(.dashboard, .admin-theme-surface, .ls-internal-content) h1 {
+  font-size: clamp(28px, 2.5vw, 36px);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -.025em;
+}
+html[data-si-foundation] :is(.dashboard, .admin-theme-surface, .ls-internal-content) :is(h2, h3) {
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -.02em;
+}
+html[data-si-foundation] :is(.dashboard, .admin-theme-surface, .ls-internal-content) table {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Search fields: comfortable text insets, no nested border or focus ring.
+   Composite controls own their icon spacing; plain fields receive a 16px inset. */
+html[data-si-foundation] body :is(input[type='search'], input[placeholder^='search' i], input[cmdk-input]) {
+  min-width: 0;
+  padding-block: 10px;
+  caret-color: var(--si-accent);
+}
+html[data-si-foundation] body :not(:has(> svg)) > :is(input[type='search'], input[placeholder^='search' i]):not([class*='pl-']):not([class*='px-']):not([data-si-unstyled]) {
+  padding-inline: 16px;
+}
+html[data-si-foundation] body :is(input[type='search'], input[placeholder^='search' i], input[cmdk-input]):focus {
+  border-color: var(--si-control-border) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* A background change indicates keyboard focus without drawing a border. */
+html[data-si-foundation] body :is(input[type='search'], input[placeholder^='search' i], input[cmdk-input]):focus-visible {
+  background-color: var(--si-inset) !important;
+}
+html[data-si-foundation] body [data-si-search-field] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: var(--si-control-height);
+  padding: 0 16px;
+  border: 1px solid var(--si-control-border);
+  border-radius: var(--si-radius-control);
+  background: var(--si-surface);
+  color: var(--si-muted);
+}
+html[data-si-foundation] body [data-si-search-field] > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+html[data-si-foundation] body [data-si-search-field] > input,
+html[data-si-foundation] body [data-si-search-field] > input:focus {
+  flex: 1;
+  width: 100%;
+  padding-inline: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none !important;
+}
+html[data-si-foundation] body [data-si-search-field]:has(> input:focus-visible) {
+  background-color: var(--si-inset);
+}
+html[data-si-foundation] body [data-si-search-field] > input:focus-visible {
+  background: transparent !important;
+}
+@media (forced-colors: active) {
+  html[data-si-foundation] body :is(input[type='search'], input[placeholder^='search' i], input[cmdk-input]):focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 2px;
+  }
+}
