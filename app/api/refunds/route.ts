@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
-    const where: Prisma.refund_recordsWhereInput = {};
+    const archived = searchParams.get('archived') === 'true';
+    const where: Prisma.refund_recordsWhereInput = archived ? {xStatus:'TEST_ARCHIVED'} : {AND:[{OR:[{xStatus:null},{xStatus:{not:'TEST_ARCHIVED'}}]}]};
     if (status) where.refundStatus = status;
     if (serviceType) where.serviceType = serviceType;
     if (search) {
@@ -92,6 +93,7 @@ export async function GET(request: NextRequest) {
     const foreignIds = refunds.map(r => r.pidRefund);
     const settlements = foreignIds.length ? await prisma.$queryRaw<Array<Record<string, any>>>`SELECT * FROM refund_settlements WHERE refundId IN (${Prisma.join(foreignIds)})` : [];
     const providerLegs = foreignIds.length ? await prisma.$queryRaw<Array<{ id: string; refundId: string; currency: string; amount: string; status: string; providerReference: string | null; firstAttemptAt: Date | null }>>`SELECT id,refundId,currency,amount,status,providerReference,firstAttemptAt FROM refund_provider_legs WHERE refundId IN (${Prisma.join(foreignIds)}) ORDER BY id` : [];
+    const auditEvents = foreignIds.length ? await prisma.$queryRaw<Array<{refundId:string;eventType:string;actorPid:string;detailsJson:string;createdAt:Date}>>`SELECT refundId,eventType,actorPid,detailsJson,createdAt FROM refund_events WHERE refundId IN (${Prisma.join(foreignIds)}) AND eventType IN ('TEST_ARCHIVED','MANUAL_PAYMENT_RECORDED') ORDER BY createdAt DESC` : [];
     const settlementMap = new Map(settlements.map(s => {
       const { destinationCiphertext, ...safe } = s;
       return [s.refundId, { ...safe, destination: ['BANK', 'PAYPAL_MANUAL'].includes(s.method) ? readRefundDestination(destinationCiphertext, s.refundId) : {} }];
@@ -99,13 +101,14 @@ export async function GET(request: NextRequest) {
     const userMap = new Map(users.map((user) => [user.pidUser, user]));
     const data = refunds.map((refund) => ({
       ...refund,
+      audit: auditEvents.filter(event=>event.refundId===refund.pidRefund).map(event=>({...event,details:JSON.parse(event.detailsJson)})),
       settlement: settlementMap.get(refund.pidRefund) || null,
       providerLegs: providerLegs.filter(leg => leg.refundId === refund.pidRefund),
       currency: refund.currency || 'UNSPECIFIED',
       customer: refund.pidUser ? userMap.get(refund.pidUser) || null : null,
     }));
 
-    const settlementSummary = await prisma.$queryRaw<Array<{ settlementCurrency: string; method: string; settledAmount: string; outstandingAmount: string; count: bigint }>>`SELECT settlementCurrency,method,SUM(CASE WHEN status='SETTLED' THEN settlementAmount ELSE 0 END) settledAmount,SUM(CASE WHEN status<>'SETTLED' THEN settlementAmount ELSE 0 END) outstandingAmount,COUNT(*) count FROM (SELECT settlementCurrency,method,settlementAmount,status FROM refund_settlements UNION ALL SELECT currency settlementCurrency,CONCAT('PARTNER_',provider) method,amountMinor/100 settlementAmount,status FROM partner_adjustment_refunds WHERE status<>'SUPERSEDED') combined GROUP BY settlementCurrency,method ORDER BY settlementCurrency,method`;
+    const settlementSummary = await prisma.$queryRaw<Array<{ settlementCurrency: string; method: string; settledAmount: string; outstandingAmount: string; count: bigint }>>`SELECT settlementCurrency,method,SUM(CASE WHEN status='SETTLED' THEN settlementAmount ELSE 0 END) settledAmount,SUM(CASE WHEN status<>'SETTLED' THEN settlementAmount ELSE 0 END) outstandingAmount,COUNT(*) count FROM (SELECT settlementCurrency,method,settlementAmount,status FROM refund_settlements WHERE status<>'CANCELLED' UNION ALL SELECT currency settlementCurrency,CONCAT('PARTNER_',provider) method,amountMinor/100 settlementAmount,status FROM partner_adjustment_refunds WHERE status<>'SUPERSEDED') combined GROUP BY settlementCurrency,method ORDER BY settlementCurrency,method`;
     const externalReviews = await prisma.$queryRaw<Array<{ id: string; detailsJson: string; createdAt: Date }>>`SELECT e.id,e.detailsJson,e.createdAt FROM refund_events e WHERE e.eventType='EXTERNAL_PAYPAL_REFUND' AND NOT EXISTS (SELECT 1 FROM refund_events resolved WHERE resolved.id=CONCAT('RESOLVED:',e.id)) ORDER BY e.createdAt DESC LIMIT 100`;
     const totalsByCurrency = allForTotal.reduce<Record<string, number>>((totals, item) => {
       const currency = (item.currency || 'UNSPECIFIED').toUpperCase();
@@ -115,6 +118,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       statusx: 'SUCCESS',
+      canEdit: (await requireAdminServiceAccess(REFUNDS_SERVICE_KEY, 'edit')).ok,
       externalReviews: externalReviews.map(row => ({ id: row.id, createdAt: row.createdAt, ...JSON.parse(row.detailsJson) })),
       data,
       totalCount,

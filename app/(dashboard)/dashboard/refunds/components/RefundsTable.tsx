@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
+import RefundRecordAction from './RefundRecordAction';
 import { toast } from "sonner";
 
 interface SettlementSummary { settlementCurrency: string; method: string; settledAmount: number; outstandingAmount: number; count: number }
@@ -26,6 +27,7 @@ interface Customer {
 }
 
 interface RefundRecord {
+  audit?: Array<{eventType:string;actorPid:string;createdAt:string;details:{reason?:string;reference?:string}}>;
   providerLegs?: Array<{ id: string; currency: string; amount: string; status: string; providerReference: string | null; firstAttemptAt: string | null }>;
   id: number;
   pidRefund: string;
@@ -113,6 +115,9 @@ function CancellationFeeDetail({ refund }: { refund: RefundRecord }) {
 }
 
 export default function RefundsTable() {
+  const [canEdit,setCanEdit]=useState(false);
+  const [showArchived,setShowArchived]=useState(false);
+  const [archiveRefund,setArchiveRefund]=useState<RefundRecord|null>(null);
   const [externalReviews, setExternalReviews] = useState<Array<{ id: string; providerReference: string; captureId: string; amount: string; currency: string; providerStatus: string }>>([]);
   const [settlementSummary, setSettlementSummary] = useState<SettlementSummary[]>([]);
   const [refunds, setRefunds] = useState<RefundRecord[]>([]);
@@ -127,6 +132,7 @@ export default function RefundsTable() {
     Record<string, number>
   >({});
   const [search, setSearch] = useState("");
+  useEffect(()=>{setSearch(new URLSearchParams(window.location.search).get("search") || "");},[]);
   const [status, setStatus] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
@@ -143,6 +149,7 @@ export default function RefundsTable() {
         page: String(page),
         limit: String(itemsPerPage),
         ...(search && { search }),
+        ...(showArchived && {archived:"true"}),
         ...(status && { status }),
         ...(serviceType && { serviceType }),
       });
@@ -152,6 +159,7 @@ export default function RefundsTable() {
 
       if (data.statusx === "SUCCESS") {
         setRefunds(data.data || []);
+        setCanEdit(data.canEdit === true);
         setTotalPages(data.totalPages || 1);
         setTotalCount(data.totalCount || 0);
         setTotalsByCurrency(data.totalsByCurrency || {});
@@ -167,7 +175,7 @@ export default function RefundsTable() {
     } finally {
       setLoading(false);
     }
-  }, [page, itemsPerPage, search, status, serviceType]);
+  }, [page, itemsPerPage, search, status, serviceType, showArchived]);
 
   useEffect(() => {
     const handler = setTimeout(fetchRefunds, 300);
@@ -256,10 +264,13 @@ export default function RefundsTable() {
   };
 
   const canMarkPaid = (refund: RefundRecord) =>
-    String(refund.refundStatus || "").toLowerCase() === "requested";
+    canEdit && refund.xStatus !== 'TEST_ARCHIVED' && ['pending','requested'].includes(String(refund.refundStatus || '').toLowerCase());
+  const canArchive = (refund:RefundRecord) => canEdit && refund.xStatus !== 'TEST_ARCHIVED' && ['pending','requested','cancelled','rejected'].includes(refund.refundStatus || '') && !refund.providerLegs?.length && (!refund.settlement || ['REQUESTED','CANCELLED','FAILED'].includes(refund.settlement.status) && !refund.settlement.reference);
 
   return (
     <div className="space-y-6">
+      <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={showArchived} onChange={event=>{setShowArchived(event.target.checked);setPage(1);setForeignSettlement(null);setArchiveRefund(null);}} />Show archived test refunds</label>
+      {archiveRefund && <section className="rounded-xl border border-border bg-card p-5"><RefundRecordAction key={archiveRefund.pidRefund} refund={archiveRefund} mode="archive" onCancel={()=>setArchiveRefund(null)} onDone={()=>{setArchiveRefund(null);setSelectedRefund(null);void fetchRefunds();}} /></section>}
       {foreignSettlement && <section className="rounded-xl border border-border bg-card p-6 shadow-soft" ref={settlementPanel} tabIndex={-1} aria-label="Review refund settlement">
         <div className="flex items-center justify-between gap-4"><h2 className="text-lg font-semibold">Confirm refund settlement</h2><button onClick={() => setForeignSettlement(null)} type="button" className="rounded-md border border-border px-3 py-2">Close</button></div>
         <p className="my-4 text-sm text-muted-foreground">{foreignSettlement.settlement?.method === "PAYPAL" ? (foreignSettlement.providerLegs?.some(leg => !leg.firstAttemptAt) ? "Approving sends this refund back through PayPal. This action moves money and cannot be undone." : "This refund has already been submitted. Check its existing status below; do not create another refund for the same amount.") : "This records a bank or PayPal payment you have already completed. It does not send money. Verify the recipient, payout currency and completed transaction in your payment provider first."}</p>
@@ -269,8 +280,8 @@ export default function RefundsTable() {
           {foreignSettlement.settlement.method !== "PAYPAL" && <div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-2">Amount actually transferred<input name="amount" required inputMode="decimal" className="rounded-md border border-border bg-background p-3" /></label><label className="grid gap-2">Bank / PayPal transaction reference<input name="reference" required minLength={6} maxLength={191} className="rounded-md border border-border bg-background p-3" /></label></div>}
           {settlementError && <p role="alert" className="text-destructive">{settlementError}</p>}
           {(foreignSettlement.settlement.method !== 'PAYPAL' || foreignSettlement.providerLegs?.some(leg => !leg.firstAttemptAt)) && <><label className="flex items-start gap-3"><input type="checkbox" name="verified" required className="mt-1" /> {foreignSettlement.settlement.method === "PAYPAL" ? "I approve refunding this amount to the original payment method." : "I verified the recipient owns this account, checked the original payment for previous refunds, and confirmed this manual payment completed."}</label>
-          <button disabled={Boolean(settlingId)} className="rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50">{settlingId ? 'Confirming…' : foreignSettlement.settlement.method === 'PAYPAL' ? 'Approve original-payment refund' : 'Confirm completed refund'}</button></>}
-        </form> : <form onSubmit={reopenLegacy} className="space-y-4"><p>This older request has no locked settlement record. Review the bank and payment-provider history before reopening it. The customer can then submit the appropriate settlement details.</p><label className="flex items-start gap-3"><input className="mt-1" type="checkbox" name="confirmedUnpaid" required />I checked the bank and provider records and confirm no refund was sent for this request.</label>{settlementError ? <p role="alert" className="text-destructive">{settlementError}</p> : null}<button type="submit" disabled={Boolean(settlingId)} className="rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50">{settlingId ? 'Reopening…' : 'Reopen for customer settlement details'}</button></form>}
+          <button disabled={Boolean(settlingId)} className="rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50">{settlingId ? 'Confirming…' : foreignSettlement.settlement.method === 'PAYPAL' ? 'Approve original-payment refund' : 'Mark refund as paid'}</button></>}
+        </form> : <><RefundRecordAction key={foreignSettlement.pidRefund} refund={foreignSettlement} mode="payment" onDone={()=>{setForeignSettlement(null);setSelectedRefund(null);void fetchRefunds();}} /><details className="mt-6 border-t border-border pt-4"><summary className="cursor-pointer text-sm font-semibold">Payment not made? Request customer settlement details</summary><form onSubmit={reopenLegacy} className="space-y-4"><p>This older request has no locked settlement record. Review the bank and payment-provider history before reopening it. The customer can then submit the appropriate settlement details.</p><label className="flex items-start gap-3"><input className="mt-1" type="checkbox" name="confirmedUnpaid" required />I checked the bank and provider records and confirm no refund was sent for this request.</label>{settlementError ? <p role="alert" className="text-destructive">{settlementError}</p> : null}<button type="submit" disabled={Boolean(settlingId)} className="rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground disabled:opacity-50">{settlingId ? 'Reopening…' : 'Reopen for customer settlement details'}</button></form></details></>}
       {foreignSettlement.settlement?.method === 'PAYPAL' && <div className="mt-6 space-y-4 border-t border-border pt-5">
           <h3 className="font-semibold">Check or recover PayPal status</h3><p className="text-sm text-muted-foreground">These checks do not send another refund. If a response was lost, enter the refund reference shown in PayPal for the matching payment part.</p>
           <form onSubmit={checkPayPal}><button disabled={Boolean(settlingId)} className="rounded-md border border-border px-4 py-3 font-semibold">Check existing refund status</button></form>
@@ -492,26 +503,28 @@ export default function RefundsTable() {
                         {statusBadge(refund.refundStatus)}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex min-w-max flex-nowrap items-center justify-end gap-2">
                           <button
                             onClick={() => setSelectedRefund(refund)}
-                            className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+                            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
                           >
-                            <Eye className="h-3.5 w-3.5" />
+                            <Eye className="h-3.5 w-3.5 shrink-0" />
                             View
                           </button>
+                          {canArchive(refund) && <button type="button" onClick={()=>{setArchiveRefund(refund);setForeignSettlement(null);window.scrollTo({top:0,behavior:'smooth'});}} className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted">Clear test refund</button>}
+                          {refund.xStatus === 'TEST_ARCHIVED' && <span className="whitespace-nowrap text-xs text-muted-foreground">Archived test</span>}
                           {canMarkPaid(refund) && (
                             <button
-                              onClick={() => markPaid(refund)}
+                              onClick={() => {setArchiveRefund(null);markPaid(refund);}}
                               disabled={settlingId === refund.pidRefund}
-                              className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+                              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
                             >
                               {settlingId === refund.pidRefund ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
                               ) : (
-                                <CheckCircle className="h-3.5 w-3.5" />
+                                <CheckCircle className="h-3.5 w-3.5 shrink-0" />
                               )}
-                              Review refund
+                              {refund.settlement?.method === 'PAYPAL' ? 'Review PayPal refund' : 'Mark as paid'}
                             </button>
                           )}
                         </div>
@@ -551,7 +564,7 @@ export default function RefundsTable() {
 
       {selectedRefund && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-lg border border-border bg-card p-6 shadow-soft">
+          <div className="max-h-[90dvh] overflow-y-auto w-full max-w-2xl rounded-lg border border-border bg-card p-6 shadow-soft">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-bold text-foreground">
@@ -569,6 +582,7 @@ export default function RefundsTable() {
               </button>
             </div>
 
+            {canMarkPaid(selectedRefund) && <button type="button" onClick={()=>{markPaid(selectedRefund);setSelectedRefund(null);}} className="mb-5 min-h-11 w-full rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground">{selectedRefund.settlement?.method==='PAYPAL'?'Review PayPal refund':'Mark refund as paid'}</button>}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Detail
                 label="Customer"
@@ -597,6 +611,7 @@ export default function RefundsTable() {
                 label="Wallet Reference"
                 value={selectedRefund.ext1 || "N/A"}
               />
+              {selectedRefund.audit?.map((event,index)=><Detail key={index} label={`${event.eventType.replaceAll('_',' ')} · ${formatDate(event.createdAt)}`} value={`${event.details.reason || event.details.reference || ''} · Admin: ${event.actorPid}`} wide />)}
               <Detail
                 label="Settlement Metadata"
                 value={selectedRefund.ext2 || "N/A"}

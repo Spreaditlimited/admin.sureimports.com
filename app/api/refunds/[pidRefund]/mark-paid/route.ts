@@ -1,3 +1,4 @@
+import { recordLegacyManualRefund, archiveTestRefund } from '@/lib/refunds/admin-actions';
 import { prepareFailedPayPalRetry } from '@/lib/refunds/retry-paypal';
 import { linkExternalPayPalRefund } from '@/lib/refunds/external-paypal';
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,6 +17,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const text = await request.text();
     if (text.length > 4000) return NextResponse.json({ message: 'Request too large.' }, { status: 413 });
     const body = JSON.parse(text);
+    if (body.action === 'ARCHIVE_TEST') return NextResponse.json({statusx:'SUCCESS', ...await archiveTestRefund({refundId:pidRefund,adminId:access.admin.pidUser,reason:String(body.reason||'').trim(),confirmed:body.confirmed===true})});
+    if (body.action === 'RECORD_LEGACY_PAYMENT') return NextResponse.json({statusx:'SUCCESS', ...await recordLegacyManualRefund({refundId:pidRefund,adminId:access.admin.pidUser,reference:String(body.reference||'').trim(),amount:String(body.confirmedAmount||'').trim(),currency:String(body.confirmedCurrency||'').trim(),recipient:String(body.recipient||'').trim(),reason:String(body.reason||'').trim(),confirmed:body.confirmed===true})});
     if (body.action === 'LINK_EXTERNAL_PAYPAL') {
       if (body.confirmed !== true) return NextResponse.json({ message: 'Confirm that this is the existing refund for this PayPal payment.' }, { status: 400 });
       const result = await linkExternalPayPalRefund(String(body.providerReference || '').trim(), pidRefund, access.admin.pidUser);

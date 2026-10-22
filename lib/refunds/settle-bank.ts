@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import 'server-only';
 import { prisma } from '@/lib/prisma';
 import { decimalUnits } from './money';
@@ -13,6 +14,7 @@ export async function confirmForeignBankRefund(input: {
 }) {
   if (
     !input.destinationVerified ||
+    !/^\d+(\.\d{1,2})?$/.test(input.confirmedAmount) ||
     input.reference.length < 6 ||
     input.reference.length > 191
   )
@@ -41,7 +43,7 @@ export async function confirmForeignBankRefund(input: {
     if (
       !refund ||
       !settlement ||
-      !['USD', 'NGN'].includes(refund.currency) ||
+      !['USD', 'NGN', 'GBP'].includes(refund.currency) ||
       refund.refundStatus !== 'requested' ||
       settlement.status !== 'REQUESTED' ||
       !['BANK', 'PAYPAL_MANUAL'].includes(settlement.method)
@@ -76,6 +78,9 @@ export async function confirmForeignBankRefund(input: {
         updatedAt: new Date(),
       },
     });
+    const eventId=randomUUID(), details=JSON.stringify({reference:input.reference,amount:String(settlement.settlementAmount),currency:settlement.settlementCurrency,method:settlement.method});
+    await tx.$executeRaw`INSERT INTO refund_events (id,refundId,eventType,actorPid,detailsJson) VALUES (${eventId},${input.refundId},'MANUAL_PAYMENT_RECORDED',${input.adminId},${details})`;
+    await tx.$executeRaw`INSERT IGNORE INTO refund_notifications (refundId,eventType) VALUES (${input.refundId},'SETTLED')`;
     return {
       amount: String(settlement.settlementAmount),
       currency: settlement.settlementCurrency,

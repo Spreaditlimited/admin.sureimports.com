@@ -1,3 +1,5 @@
+import { paidRefundLedgerRows } from '@/lib/refunds/ledger';
+import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { parseInvoiceLinkedRequestId } from '@/lib/invoiceLinkedService';
@@ -16,14 +18,15 @@ function legacyStatus(value: string | null): FinancialPaymentRow['status'] {
 
 type FinancialPaymentRow = {
   id: string;
-  source: 'legacy_payments' | 'invoice_payments' | 'invoice_payment_claims' | 'payment_ledger';
+  source: 'legacy_payments' | 'invoice_payments' | 'invoice_payment_claims' | 'payment_ledger' | 'refunds';
+  direction?: 'IN' | 'OUT';
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'REVERSED' | 'DISPUTED' | 'CHARGEBACK' | 'CANCELLED';
   amount: number;
   currency: string;
   paymentMethod: string;
   reference: string;
   serviceName: string;
-  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'LINESCOUT' | 'OTHER';
+  serviceType: 'CORPORATE_GIFT' | 'INVOICE' | 'ORDER' | 'PAY_SUPPLIER' | 'LINESCOUT' | 'OTHER' | 'REFUND';
   links: Array<{ label: string; href: string }>;
   customer: {
     pidUser: string;
@@ -47,6 +50,8 @@ function ledgerStatus(value: string): FinancialPaymentRow['status'] {
 }
 
 export async function GET(request: NextRequest) {
+  const access = await requireAdminServiceAccess('dashboard','view');
+  if (!access.ok) return access.response;
   try {
     const { searchParams } = new URL(request.url);
     const period = (searchParams.get('period') || 'all').toLowerCase();
@@ -326,7 +331,8 @@ export async function GET(request: NextRequest) {
       createdAt: row.occurredAt.toISOString(),
     }));
 
-    const allRows = [...legacyRows, ...invoiceRows, ...pendingClaimRows, ...ledgerRows];
+    const refundRows = await paidRefundLedgerRows();
+    const allRows: FinancialPaymentRow[] = [...legacyRows, ...invoiceRows, ...pendingClaimRows, ...ledgerRows, ...refundRows];
     const rows = allRows
       .filter((row) => {
         const ts = new Date(row.createdAt).getTime();

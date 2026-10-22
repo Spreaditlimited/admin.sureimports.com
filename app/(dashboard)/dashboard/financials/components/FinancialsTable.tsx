@@ -8,7 +8,9 @@ type Row = {
     | "legacy_payments"
     | "invoice_payments"
     | "invoice_payment_claims"
-    | "payment_ledger";
+    | "payment_ledger"
+    | "refunds";
+  direction?: "IN" | "OUT";
   status:
     | "PENDING"
     | "COMPLETED"
@@ -29,7 +31,8 @@ type Row = {
     | "ORDER"
     | "PAY_SUPPLIER"
     | "LINESCOUT"
-    | "OTHER";
+    | "OTHER"
+    | "REFUND";
   links: Array<{ label: string; href: string }>;
   customer: {
     pidUser: string;
@@ -95,11 +98,10 @@ export default function FinancialsTable() {
     return () => controller.abort();
   }, [period, startDate, endDate]);
 
-  const fmtMoney = (amount: number, currency: string) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "USD",
-    }).format(amount || 0);
+  const fmtMoney = (amount: number, currency: string) => {
+    try { return new Intl.NumberFormat('en-US', {style:'currency',currency}).format(amount || 0); }
+    catch { return `${currency || 'UNSPECIFIED'} ${(amount || 0).toFixed(2)}`; }
+  };
 
   const sourceLabel = useMemo(
     () => ({
@@ -107,6 +109,7 @@ export default function FinancialsTable() {
       invoice_payments: "Invoice",
       invoice_payment_claims: "Invoice Claim",
       payment_ledger: "LineScout",
+      refunds: "Refund paid",
     }),
     [],
   );
@@ -392,6 +395,7 @@ export default function FinancialsTable() {
                 <td className="px-4 py-3">{row.status}</td>
                 <td className="px-4 py-3 font-semibold">
                   {fmtMoney(row.amount, row.currency)}
+                  {row.direction === "OUT" && <div className="text-xs font-medium text-muted-foreground">Money out · refund</div>}
                 </td>
                 <td className="px-4 py-3">{row.paymentMethod}</td>
                 <td className="px-4 py-3 font-mono text-xs">{row.reference}</td>
