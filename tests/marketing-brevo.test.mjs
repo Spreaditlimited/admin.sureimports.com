@@ -106,8 +106,8 @@ test('Brevo delivers the approved branded HTML with one-click unsubscribe and tr
   const body = fixture.calls[0][2];
   assert.equal(body.sender.email, 'insights@sureimports.com');
   assert.match(body.htmlContent, /sureimports-standard-email-template/);
-  assert.match(body.htmlContent, /https:\/\/sureimports.com\/images\/logo.png/);
-  assert.match(body.htmlContent, /border-bottom:4px solid #c2410c/);
+  assert.match(body.htmlContent, /https:\/\/www.sureimports.com\/email\/sureimports-logo-light.png/);
+  assert.match(body.htmlContent, /border-top:4px solid #4c419c/);
   assert.match(body.textContent, /Hello Ada/);
   assert.doesNotMatch(body.htmlContent, /amazonSESUnsubscribeUrl/);
   assert.equal(body.headers['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');

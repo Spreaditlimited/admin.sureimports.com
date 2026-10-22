@@ -1,3 +1,4 @@
+import { processAccountWelcomes } from '@/lib/webinar/delivery';
 import { NextResponse } from 'next/server';
 
 import { getMarketingProvider } from '@/lib/marketing/config';
@@ -13,6 +14,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    await processAccountWelcomes();
     return NextResponse.json(
       getMarketingProvider() !== 'ses'
         ? await processMarketingSequence()

@@ -24,7 +24,14 @@ function nextSendDate(currentDelayDays: number, nextDelayDays: number) {
 export async function processMarketingSequence() {
   const provider = getMarketingProvider();
   if (provider === 'ses') {
-    return { enabled: false, provider: getMarketingProvider(), enrolled: 0, due: 0, sent: 0, failed: 0 };
+    return {
+      enabled: false,
+      provider: getMarketingProvider(),
+      enrolled: 0,
+      due: 0,
+      sent: 0,
+      failed: 0,
+    };
   }
 
   const sequence =
@@ -35,11 +42,21 @@ export async function processMarketingSequence() {
   if (sequence.status !== 'ACTIVE') {
     await prisma.marketing_sequences.update({
       where: { id: sequence.id },
-      data: { status: 'ACTIVE', activatedAt: sequence.activatedAt || new Date() },
+      data: {
+        status: 'ACTIVE',
+        activatedAt: sequence.activatedAt || new Date(),
+      },
     });
   }
   const eligibleContacts = await prisma.marketing_contacts.findMany({
-    where: { status: 'ACTIVE', consentStatus: 'OPTED_IN', consentAt: { not: null }, unsubscribedAt: null, bouncedAt: null, complainedAt: null },
+    where: {
+      status: 'ACTIVE',
+      consentStatus: 'OPTED_IN',
+      consentAt: { not: null },
+      unsubscribedAt: null,
+      bouncedAt: null,
+      complainedAt: null,
+    },
     select: { id: true },
   });
 
@@ -48,7 +65,12 @@ export async function processMarketingSequence() {
   });
   for (const contact of eligibleContacts) {
     await prisma.marketing_enrollments.upsert({
-      where: { contactId_sequenceId: { contactId: contact.id, sequenceId: sequence.id } },
+      where: {
+        contactId_sequenceId: {
+          contactId: contact.id,
+          sequenceId: sequence.id,
+        },
+      },
       create: {
         pidEnrollment: randomUUID(),
         contactId: contact.id,
@@ -65,7 +87,11 @@ export async function processMarketingSequence() {
         sequenceId: sequence.id,
         status: 'CANCELLED',
       },
-      data: { status: ACTIVE_STATUS, nextSendAt: new Date(), completedAt: null },
+      data: {
+        status: ACTIVE_STATUS,
+        nextSendAt: new Date(),
+        completedAt: null,
+      },
     });
   }
   const enrollmentCountAfter = await prisma.marketing_enrollments.count({
@@ -89,7 +115,15 @@ export async function processMarketingSequence() {
   const remaining = Math.max(getMarketingDailySendLimit() - attempted, 0);
   const take = Math.min(getMarketingBatchSize(), remaining);
   if (!take) {
-    return { enabled: true, provider, enrolled, due: 0, sent: 0, failed: 0, dailyRemaining: 0 };
+    return {
+      enabled: true,
+      provider,
+      enrolled,
+      due: 0,
+      sent: 0,
+      failed: 0,
+      dailyRemaining: 0,
+    };
   }
 
   const due = await prisma.marketing_enrollments.findMany({
@@ -97,7 +131,14 @@ export async function processMarketingSequence() {
       sequenceId: sequence.id,
       status: ACTIVE_STATUS,
       nextSendAt: { lte: new Date() },
-      contact: { status: 'ACTIVE', consentStatus: 'OPTED_IN', consentAt: { not: null }, unsubscribedAt: null, bouncedAt: null, complainedAt: null },
+      contact: {
+        status: 'ACTIVE',
+        consentStatus: 'OPTED_IN',
+        consentAt: { not: null },
+        unsubscribedAt: null,
+        bouncedAt: null,
+        complainedAt: null,
+      },
     },
     orderBy: [{ nextSendAt: 'asc' }, { id: 'asc' }],
     take,
@@ -108,7 +149,11 @@ export async function processMarketingSequence() {
   let failed = 0;
   for (const enrollment of due) {
     const claimed = await prisma.marketing_enrollments.updateMany({
-      where: { id: enrollment.id, status: ACTIVE_STATUS, currentStep: enrollment.currentStep },
+      where: {
+        id: enrollment.id,
+        status: ACTIVE_STATUS,
+        currentStep: enrollment.currentStep,
+      },
       data: { status: SENDING_STATUS },
     });
     if (!claimed.count) continue;
@@ -124,13 +169,17 @@ export async function processMarketingSequence() {
     if (!step || step.status !== 'ACTIVE') {
       await prisma.marketing_enrollments.updateMany({
         where: { id: enrollment.id, status: SENDING_STATUS },
-        data: { status: COMPLETED_STATUS, nextSendAt: null, completedAt: new Date() },
+        data: {
+          status: COMPLETED_STATUS,
+          nextSendAt: null,
+          completedAt: new Date(),
+        },
       });
       continue;
     }
 
     try {
-      await sendSequenceStep({
+      const delivered = await sendSequenceStep({
         stepId: step.id,
         email: enrollment.contact.email,
         firstName: enrollment.contact.firstName,
@@ -153,7 +202,17 @@ export async function processMarketingSequence() {
               status: ACTIVE_STATUS,
               currentStep: nextStep.stepNumber,
               lastSentAt: new Date(),
-              nextSendAt: nextSendDate(step.delayDays, nextStep.delayDays),
+              nextSendAt:
+                delivered.status === 'SKIPPED' && delivered.sentAt
+                  ? new Date(
+                      Math.max(
+                        Date.now(),
+                        new Date(delivered.sentAt).getTime() +
+                          Math.max(nextStep.delayDays - step.delayDays, 1) *
+                            86400000,
+                      ),
+                    )
+                  : nextSendDate(step.delayDays, nextStep.delayDays),
             }
           : {
               status: COMPLETED_STATUS,
@@ -172,7 +231,10 @@ export async function processMarketingSequence() {
       });
       await prisma.marketing_enrollments.updateMany({
         where: { id: enrollment.id, status: SENDING_STATUS },
-        data: { status: ACTIVE_STATUS, nextSendAt: new Date(Date.now() + RETRY_DELAY_MS) },
+        data: {
+          status: ACTIVE_STATUS,
+          nextSendAt: new Date(Date.now() + RETRY_DELAY_MS),
+        },
       });
       failed += 1;
     }

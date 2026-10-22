@@ -19,7 +19,18 @@ export function personalizeMarketingText(
 export function marketingTextToHtml(text: string) {
   return text
     .split(/\n\s*\n/)
-    .map((paragraph) => `<p style="margin:0 0 18px;line-height:1.7">${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
+    .map(
+      (paragraph) =>
+        `<p style="margin:0 0 18px;line-height:1.7">${paragraph
+          .split(/(https?:\/\/[^\s<>"']+)/g)
+          .map((part) =>
+            /^https?:\/\//.test(part)
+              ? `<a href="${escapeHtml(part)}" style="color:#50449d;word-break:break-word">${escapeHtml(part)}</a>`
+              : escapeHtml(part),
+          )
+          .join('')
+          .replace(/\n/g, '<br>')}</p>`,
+    )
     .join('');
 }
 

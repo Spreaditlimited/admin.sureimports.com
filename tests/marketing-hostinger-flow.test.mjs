@@ -43,8 +43,8 @@ test('the hourly runner enrolls only opted-in contacts and respects send limits'
 
 test('the welcome email links to a real resource without promising an unattached guide', () => {
   const welcome = sequence.steps[0];
-  assert.equal(welcome.subject, 'Welcome to Sure Imports Insights');
-  assert.equal(welcome.ctaUrl, 'https://www.sureimports.com/import-from-china-to-nigeria');
-  assert.equal(welcome.ctaLabel, 'Visit Import Hub');
+  assert.equal(welcome.subject, 'Your free webinar: How to buy from 1688, Taobao and Pinduoduo');
+  assert.equal(welcome.ctaUrl, 'https://www.sureimports.com/buy-from-chinese-websites/video');
+  assert.equal(welcome.ctaLabel, 'Watch the Free Webinar');
   assert.doesNotMatch(`${welcome.subject} ${welcome.previewText} ${welcome.bodyText}`, /guide is ready|start with the guide/i);
 });
