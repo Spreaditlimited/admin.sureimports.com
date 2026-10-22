@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma"; // Assuming you have Prisma setup
 
 export async function GET(request: NextRequest) {
+  const pidOrder = request.nextUrl.searchParams.get("pidOrder")?.trim();
   const status = request.nextUrl.searchParams.get("status") || "";
   const search =
     request.nextUrl.searchParams.get("search")?.trim().slice(0, 160) || "";
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
   const orderALL = await prisma.orders.findMany({
     take: search ? 100 : 50,
     where: {
-      status,
+      ...(pidOrder ? { pidOrder } : { status }),
       ...(searchTerms.length
         ? {
             AND: searchTerms.map((term) => ({

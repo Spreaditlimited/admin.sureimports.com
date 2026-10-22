@@ -26,16 +26,7 @@ export async function GET(request: Request) {
         orders: {
           orderBy: { createdAt: 'desc' },
           take: 10,
-          select: {
-            id: true,
-            pidOrder: true,
-            orderName: true,
-            destinationCountry: true,
-            orderStatus: true,
-            orderTotalCost: true,
-            currencyType: true,
-            createdAt: true,
-          },
+          include: { products: { orderBy: { createdAt: 'asc' } } },
         },
         wallets: {
           select: {

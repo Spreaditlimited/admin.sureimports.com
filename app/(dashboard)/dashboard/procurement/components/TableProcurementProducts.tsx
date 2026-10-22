@@ -7,7 +7,7 @@ import { useNavigationWithAlert } from '@/app/hooks/useNavigationWithAlert';
 import { normalizeProductUrl } from '@/lib/productUrl';
 
 // (Assuming PrismaClient is used in an API route, not directly here since this is 'use client', 
-import DeviceShippingSummary, { type DeviceShippingSummaryData } from '@/components/DeviceShippingSummary';
+import type { DeviceShippingSummaryData } from '@/components/DeviceShippingSummary';
 // but leaving your imports intact as requested)
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
@@ -309,7 +309,6 @@ const TableProcurementProducts: React.FC<ProductProps> = ({pidOrder, pidUser, or
 
   return (
     <div className="w-full mt-4 space-y-6">
-      <DeviceShippingSummary value={deviceShipping} />
       
       {/* Order Info */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card border border-border rounded-lg p-5 shadow-sm">

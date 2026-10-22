@@ -2,7 +2,7 @@
 import OrderAdjustmentPanel from '@/components/OrderAdjustmentPanel';
 
 import React, { useDeferredValue, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Check,
   Clock3,
@@ -163,7 +163,11 @@ export default function OrdersBoxProcurement() {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery.trim());
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const status = useSearchParams().get("status") || "saved";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const status = searchParams.get("status") || "saved";
+  const linkedOrderId = searchParams.get("pidOrder") || "";
+  const openedLink = useRef("");
   const { user } = useAuth();
   const canRunCleanup =
     user?.userStatus === "superadmin" || user?.userStatus === "L1";
@@ -174,6 +178,7 @@ export default function OrdersBoxProcurement() {
   async function fetchOrders() {
     try {
       const params = new URLSearchParams({ status });
+      if (linkedOrderId) params.set("pidOrder", linkedOrderId);
       if (deferredSearchQuery) params.set("search", deferredSearchQuery);
       const response = await fetch(`/api/get-data/order-many?${params}`, {
         cache: "no-store",
@@ -199,7 +204,14 @@ export default function OrdersBoxProcurement() {
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [status, deferredSearchQuery]);
+  }, [status, deferredSearchQuery, linkedOrderId]);
+
+  useEffect(() => {
+    if (linkedOrderId && openedLink.current !== linkedOrderId && orders.some((order) => order.pidOrder === linkedOrderId)) {
+      openedLink.current = linkedOrderId;
+      setSelectedOrderId(linkedOrderId);
+    }
+  }, [linkedOrderId, orders]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -210,6 +222,11 @@ export default function OrdersBoxProcurement() {
 
   const closeWorkspace = () => {
     setSelectedOrderId("");
+    if (linkedOrderId) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("pidOrder");
+      router.replace(`/dashboard/procurement?${params}`, { scroll: false });
+    }
     if (dialogRef.current?.open) dialogRef.current.close();
   };
 
@@ -437,8 +454,8 @@ export default function OrdersBoxProcurement() {
 
       <dialog
         ref={dialogRef}
-        onClose={() => setSelectedOrderId("")}
-        onCancel={() => setSelectedOrderId("")}
+        onClose={closeWorkspace}
+        onCancel={closeWorkspace}
         onClick={(event) => {
           if (event.target === event.currentTarget) closeWorkspace();
         }}
@@ -538,7 +555,7 @@ export default function OrdersBoxProcurement() {
                     </div>
                   </section>
 
-                  {status === "pending" ? (
+                  {selectedOrder.status === "pending" ? (
                     <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:min-w-72 sm:p-5">
                       {selectedOrder.claimedByAdmin ? (
                         <div className="flex items-start gap-3">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import CustomerOrderDetails, { type CustomerOrder } from './CustomerOrderDetails';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -49,16 +50,7 @@ interface CustomerData {
   bank_account_name: string | null;
   createdAt: string | null;
   updatedAt: string | null;
-  orders: Array<{
-    id: number;
-    pidOrder: string;
-    orderName: string | null;
-    destinationCountry: string | null;
-    orderStatus: string | null;
-    orderTotalCost: string | null;
-    currencyType: string | null;
-    createdAt: string | null;
-  }>;
+  orders: CustomerOrder[];
   wallets: Array<{
     id: string;
     name: string;
@@ -378,30 +370,7 @@ function CustomerDetailsContent() {
             ) : (
               <div className="space-y-3">
                 {customer.orders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-muted/30 border border-border rounded-md hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-background border border-border rounded-md shrink-0 mt-0.5">
-                        <Package className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-foreground truncate max-w-[200px] sm:max-w-[300px]">
-                          {order.orderName || order.pidOrder}
-                        </span>
-                        <span className="text-xs font-medium text-muted-foreground mt-0.5">
-                          {formatDate(order.createdAt)} • {order.destinationCountry || 'No Destination'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 w-full sm:w-auto">
-                      <span className="text-sm font-bold text-foreground">
-                        {order.currencyType} {order.orderTotalCost || '0.00'}
-                      </span>
-                      {getOrderStatusBadge(order.orderStatus)}
-                    </div>
-                  </div>
+                  <CustomerOrderDetails key={order.id} order={order} />
                 ))}
               </div>
             )}
