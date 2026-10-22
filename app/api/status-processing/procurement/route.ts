@@ -1,3 +1,4 @@
+import { dispatchProcurementReviewEmails } from '@/lib/procurement/reviewEmail';
 import { getProcurementOrderLifecycle } from '@/lib/procurement/orderLifecycle';
 import { POST_APPROVED_STAGES } from '@/lib/procurement/cancellation-policy';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
@@ -309,6 +310,9 @@ export async function POST(request: Request) {
       customerEmail: user.userEmail,
     });
 
+    if (newStatus === 'completed') {
+      await tx.$executeRaw`INSERT INTO procurement_review_emails (pidOrder,note) VALUES (${pidOrder},${message || null}) ON DUPLICATE KEY UPDATE pidOrder=VALUES(pidOrder)`;
+    }
     return updatedOrder;
   });
 
@@ -669,25 +673,10 @@ export async function POST(request: Request) {
 
             // .................... COMPLETED STAGE MAIL ....................//
             if(newStatus == "completed"){
-                const xEmail = user?.userEmail as string;
-                const xTitle = `Order process is Completed!`;
-                const xBodyTitle = `Order Process has been Completed Successfully!`;
-                const xBody1 = `Hello ` + user?.userFirstname + `,` +
-                `<p>Thank you for your business, your order with ID :<b>`+pidOrder+`</b> has completed it\'s process successfully!.</p>` +
-                `<br /><br /> <b>::::: Admin Message :::::</b><br />`+ (message != ''  ? message : 'No message available.');
-                const xBody2 = ``;
-                const xButtonTitle = '';
-                const xButtonLink = '';
-                await xMail({
-                  xEmail,
-                  xTitle,
-                  xBodyTitle,
-                  xBody1,
-                  xBody2,
-                  xButtonTitle,
-                  xButtonLink,
-                });
-                ////////////////////// SEND REGISTRATION EMAIL BLOCK ENDS //////////////////////
+                // Completion and the notification job were committed atomically above.
+                // Delivery failure must not make a successfully completed order look failed.
+                try { await dispatchProcurementReviewEmails(pidOrder); }
+                catch (error) { console.error('Completion email remains queued', error); }
                   //success update
                   return NextResponse.json(
                     { statusx: 'SUCCESS', message: 'Order has been successfully moved to Completed.' },
