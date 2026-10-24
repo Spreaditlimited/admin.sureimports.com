@@ -2,6 +2,7 @@ import { orderDeviceRates, deviceShippingBreakdown } from './deviceShipping';
 import { getDeviceShippingSettings } from './deviceShippingSettings';
 import { prisma } from '@/lib/prisma';
 import { procurementProductValue } from './productPricing';
+import { destinationVatPercent } from './destinationVat';
 
 const EDITABLE_ESTIMATE_STATUSES = new Set(['saved', 'on-hold']);
 
@@ -36,7 +37,7 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
   const order = await prisma.orders.findUnique({ where: { pidOrder } });
   if (!order) throw new Error('Order not found.');
 
-  const [products, country, plan, financial] = await Promise.all([
+  const [products, country, plan, financial, vatSettings] = await Promise.all([
     prisma.products.findMany({
       where: { pidOrder },
       orderBy: { id: 'asc' },
@@ -58,6 +59,7 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
         })
       : null,
     prisma.exchange_rate.findUnique({ where: { id: 1 } }),
+    prisma.$queryRaw<{ procurementVatForeign: string }[]>`SELECT procurementVatForeign FROM exchange_rate WHERE id = 1`,
   ]);
   if (!financial) throw new Error('Financial configuration was not found.');
 
@@ -114,9 +116,14 @@ export async function getProcurementOrderLifecycle(pidOrder: string) {
   const serviceChargePercent = useLatestEstimate
     ? finite(financial.service_charge, 15)
     : finite(order.serviceCharge, finite(financial.service_charge, 15));
+  const configuredVat = destinationVatPercent(
+    country?.countryName || '',
+    financial.vat,
+    vatSettings[0]?.procurementVatForeign,
+  );
   const vatPercent = useLatestEstimate
-    ? finite(financial.vat, 7)
-    : finite(order.vat, finite(financial.vat, 7));
+    ? configuredVat
+    : finite(order.vat, configuredVat);
   const serviceChargeValueUsd =
     productsTotalUsd * (serviceChargePercent / 100);
   const vatValueUsd = serviceChargeValueUsd * (vatPercent / 100);
