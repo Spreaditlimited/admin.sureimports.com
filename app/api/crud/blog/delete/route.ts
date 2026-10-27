@@ -1,25 +1,28 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
-import { destroyCloudinaryAsset } from '@/lib/cloudinary/destroy';
-import { normalizeBlogImagePublicId } from '@/lib/blogImage';
+import { requireAdminServiceAccess } from "@/app/api/_lib/adminAccess";
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { destroyCloudinaryAsset } from "@/lib/cloudinary/destroy";
+import { normalizeBlogImagePublicId } from "@/lib/blogImage";
 
 const prisma = new PrismaClient();
 
 export async function DELETE(request: Request) {
   try {
+    const access = await requireAdminServiceAccess("blog_management", "edit");
+    if (!access.ok) return access.response;
     const { searchParams } = new URL(request.url);
-    const pidBlog = searchParams.get('pidBlog');
+    const pidBlog = searchParams.get("pidBlog");
 
     if (!pidBlog) {
       return NextResponse.json(
         {
           responsex: {
-            message: 'Blog ID is required',
-            status: 'VALIDATION_ERROR',
+            message: "Blog ID is required",
+            status: "VALIDATION_ERROR",
           },
           successx: false,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,21 +35,23 @@ export async function DELETE(request: Request) {
       return NextResponse.json(
         {
           responsex: {
-            message: 'Blog not found',
-            status: 'NOT_FOUND',
+            message: "Blog not found",
+            status: "NOT_FOUND",
           },
           successx: false,
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Delete image from Cloudinary if exists
     if (existingBlog.blogImage) {
       try {
-        await destroyCloudinaryAsset(normalizeBlogImagePublicId(existingBlog.blogImage));
+        await destroyCloudinaryAsset(
+          normalizeBlogImagePublicId(existingBlog.blogImage),
+        );
       } catch (error) {
-        console.error('Error deleting image from Cloudinary:', error);
+        console.error("Error deleting image from Cloudinary:", error);
       }
     }
 
@@ -58,25 +63,25 @@ export async function DELETE(request: Request) {
     return NextResponse.json(
       {
         responsex: {
-          message: 'Blog post was successfully deleted',
-          status: 'SUCCESS',
+          message: "Blog post was successfully deleted",
+          status: "SUCCESS",
         },
         successx: true,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
-    console.error('Error deleting blog:', error);
+    console.error("Error deleting blog:", error);
     return NextResponse.json(
       {
         responsex: {
-          message: 'Failed to delete blog post',
-          status: 'ACTION_FAILED',
+          message: "Failed to delete blog post",
+          status: "ACTION_FAILED",
         },
         successx: false,
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

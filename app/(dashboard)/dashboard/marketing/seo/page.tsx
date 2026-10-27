@@ -1,8 +1,8 @@
-import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import { Prisma } from "@prisma/client"
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
 import {
   Activity,
   AlertTriangle,
@@ -16,17 +16,17 @@ import {
   Target,
   TrendingUp,
   XCircle,
-} from "lucide-react"
+} from "lucide-react";
 
-import { isSuperAdminStatus } from "@/lib/accessControl"
-import { verifyToken } from "@/lib/jwt"
-import { prisma } from "@/lib/prisma"
-import { generateSeoDraftForOpportunity } from "@/lib/seo/opportunityDrafts"
-import GenerateDraftButton from "./components/GenerateDraftButton"
-import GscImportControl from "./components/GscImportControl"
+import { isSuperAdminStatus } from "@/lib/accessControl";
+import { verifyToken } from "@/lib/jwt";
+import { prisma } from "@/lib/prisma";
+import { generateSeoDraftForOpportunity } from "@/lib/seo/opportunityDrafts";
+import GenerateDraftButton from "./components/GenerateDraftButton";
+import GscImportControl from "./components/GscImportControl";
 
-type OpportunityStatus = "open" | "reviewing" | "dismissed" | "applied"
-type OpportunityType = "all" | "low_ctr" | "ranking_push"
+type OpportunityStatus = "open" | "reviewing" | "dismissed" | "applied";
+type OpportunityType = "all" | "low_ctr" | "ranking_push";
 type OpportunityPageType =
   | "all"
   | "blog"
@@ -35,64 +35,68 @@ type OpportunityPageType =
   | "linescout_home"
   | "white_label_catalog"
   | "white_label_product"
-  | "public_page"
+  | "public_page";
 
 interface SeoOpportunity {
-  pidOpportunity: string
-  pageUrl: string
-  pageType: string
-  blogSlug: string | null
-  blogTitle: string | null
-  pidBlog: string | null
-  opportunityType: string
-  primaryQuery: string | null
-  clicks: number
-  impressions: number
-  ctr: unknown
-  position: unknown
-  confidence: unknown
-  status: string
-  recommendation: string | null
-  recommendedCta: string | null
-  sourceStartDate: Date | null
-  sourceEndDate: Date | null
-  latestChangeId: string | null
-  latestChangeStatus: string | null
-  latestChangeCreatedAt: Date | null
-  createdAt: Date | null
+  pidOpportunity: string;
+  pageUrl: string;
+  pageType: string;
+  blogSlug: string | null;
+  blogTitle: string | null;
+  pidBlog: string | null;
+  opportunityType: string;
+  primaryQuery: string | null;
+  clicks: number;
+  impressions: number;
+  ctr: unknown;
+  position: unknown;
+  confidence: unknown;
+  status: string;
+  recommendation: string | null;
+  recommendedCta: string | null;
+  sourceStartDate: Date | null;
+  sourceEndDate: Date | null;
+  latestChangeId: string | null;
+  latestChangeStatus: string | null;
+  latestChangeCreatedAt: Date | null;
+  createdAt: Date | null;
 }
 
 interface OpportunityStats {
-  totalOpen: bigint | number
-  totalReviewing: bigint | number
-  totalDismissed: bigint | number
-  importedRows: bigint | number
-  latestImportAt: Date | null
+  totalOpen: bigint | number;
+  totalReviewing: bigint | number;
+  totalDismissed: bigint | number;
+  importedRows: bigint | number;
+  latestImportAt: Date | null;
+  latestDataDate: Date | null;
 }
 
 interface GscImportRunSummary {
-  pidRun: string
-  startDate: Date
-  endDate: Date
-  rowCount: number
-  status: string
-  errorMessage: string | null
-  startedAt: Date | null
-  completedAt: Date | null
+  pidRun: string;
+  startDate: Date;
+  endDate: Date;
+  rowCount: number;
+  status: string;
+  errorMessage: string | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
 }
 
-const statusOptions: Array<{ label: string; value: OpportunityStatus | "all" }> = [
+const statusOptions: Array<{
+  label: string;
+  value: OpportunityStatus | "all";
+}> = [
   { label: "Open", value: "open" },
   { label: "Reviewing", value: "reviewing" },
   { label: "Dismissed", value: "dismissed" },
   { label: "All", value: "all" },
-]
+];
 
 const typeOptions: Array<{ label: string; value: OpportunityType }> = [
   { label: "All Types", value: "all" },
   { label: "Low CTR", value: "low_ctr" },
   { label: "Ranking Push", value: "ranking_push" },
-]
+];
 
 const pageTypeOptions: Array<{ label: string; value: OpportunityPageType }> = [
   { label: "All Pages", value: "all" },
@@ -101,38 +105,45 @@ const pageTypeOptions: Array<{ label: string; value: OpportunityPageType }> = [
   { label: "White Label Hub", value: "white_label_catalog" },
   { label: "Products", value: "white_label_product" },
   { label: "Other Public", value: "public_page" },
-]
+];
 
 async function requireSuperAdminPageAccess() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("token")?.value
-  if (!token) redirect("/auth/login")
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) redirect("/auth/login");
 
-  const payload = verifyToken(token) as { pidUser?: string } | null
-  if (!payload?.pidUser) redirect("/auth/login")
+  const payload = verifyToken(token) as { pidUser?: string } | null;
+  if (!payload?.pidUser) redirect("/auth/login");
 
   const admin = await prisma.admin.findUnique({
     where: { pidUser: payload.pidUser },
     select: { userStatus: true },
-  })
+  });
 
   if (!admin || !isSuperAdminStatus(admin.userStatus)) {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 }
 
 async function updateOpportunityStatus(formData: FormData) {
-  "use server"
+  "use server";
 
-  await requireSuperAdminPageAccess()
+  await requireSuperAdminPageAccess();
 
-  const pidOpportunity = String(formData.get("pidOpportunity") || "").trim()
-  const nextStatus = String(formData.get("status") || "").trim() as OpportunityStatus
-  const allowed: OpportunityStatus[] = ["open", "reviewing", "dismissed", "applied"]
+  const pidOpportunity = String(formData.get("pidOpportunity") || "").trim();
+  const nextStatus = String(
+    formData.get("status") || "",
+  ).trim() as OpportunityStatus;
+  const allowed: OpportunityStatus[] = [
+    "open",
+    "reviewing",
+    "dismissed",
+    "applied",
+  ];
 
-  if (!pidOpportunity || !allowed.includes(nextStatus)) return
+  if (!pidOpportunity || !allowed.includes(nextStatus)) return;
 
-  const now = new Date()
+  const now = new Date();
   const updates = [
     prisma.$executeRaw(
       Prisma.sql`
@@ -142,7 +153,7 @@ async function updateOpportunityStatus(formData: FormData) {
         WHERE pidOpportunity = ${pidOpportunity}
       `,
     ),
-  ]
+  ];
 
   if (["open", "reviewing", "applied"].includes(nextStatus)) {
     updates.push(
@@ -160,23 +171,25 @@ async function updateOpportunityStatus(formData: FormData) {
             )
         `,
       ),
-    )
+    );
   }
 
-  await prisma.$transaction(updates)
+  await prisma.$transaction(updates);
 
-  revalidatePath("/dashboard/marketing/seo")
+  revalidatePath("/dashboard/marketing/seo");
 }
 
 async function generateDraftAction(formData: FormData) {
-  "use server"
+  "use server";
 
-  await requireSuperAdminPageAccess()
+  await requireSuperAdminPageAccess();
 
-  const pidOpportunity = String(formData.get("pidOpportunity") || "").trim()
-  if (!pidOpportunity) return
+  const pidOpportunity = String(formData.get("pidOpportunity") || "").trim();
+  if (!pidOpportunity) return;
 
-  const [existingDraft] = await prisma.$queryRaw<Array<{ pidChange: string; status: string }>>(
+  const [existingDraft] = await prisma.$queryRaw<
+    Array<{ pidChange: string; status: string }>
+  >(
     Prisma.sql`
       SELECT changeLog.pidChange, changeLog.status
       FROM seo_opportunities selected
@@ -189,75 +202,82 @@ async function generateDraftAction(formData: FormData) {
       ORDER BY changeLog.createdAt DESC
       LIMIT 1
     `,
-  )
+  );
 
   if (existingDraft?.pidChange) {
-    redirect(`/dashboard/marketing/seo/changes/${encodeURIComponent(existingDraft.pidChange)}`)
+    redirect(
+      `/dashboard/marketing/seo/changes/${encodeURIComponent(existingDraft.pidChange)}`,
+    );
   }
 
-  let nextUrl = "/dashboard/marketing/seo?status=reviewing&draft=created"
+  let nextUrl = "/dashboard/marketing/seo?status=reviewing&draft=created";
   try {
-    const result = await generateSeoDraftForOpportunity(pidOpportunity)
-    revalidatePath("/dashboard/marketing/seo")
-    nextUrl = `/dashboard/marketing/seo/changes/${encodeURIComponent(result.pidChange)}?draft=created`
+    const result = await generateSeoDraftForOpportunity(pidOpportunity);
+    revalidatePath("/dashboard/marketing/seo");
+    nextUrl = `/dashboard/marketing/seo/changes/${encodeURIComponent(result.pidChange)}?draft=created`;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Draft generation failed."
-    nextUrl = `/dashboard/marketing/seo?draftError=${encodeURIComponent(message)}`
+    const message =
+      error instanceof Error ? error.message : "Draft generation failed.";
+    nextUrl = `/dashboard/marketing/seo?draftError=${encodeURIComponent(message)}`;
   }
 
-  redirect(nextUrl)
+  redirect(nextUrl);
 }
 
 function formatNumber(value: unknown) {
-  return new Intl.NumberFormat("en-US").format(Number(value || 0))
+  return new Intl.NumberFormat("en-US").format(Number(value || 0));
 }
 
 function formatPercent(value: unknown) {
-  return `${(Number(value || 0) * 100).toFixed(2)}%`
+  return `${(Number(value || 0) * 100).toFixed(2)}%`;
 }
 
 function formatPosition(value: unknown) {
-  return Number(value || 0).toFixed(1)
+  return Number(value || 0).toFixed(1);
 }
 
 function formatDate(value?: Date | null) {
-  if (!value) return "Unknown"
+  if (!value) return "Unknown";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(value)
+  }).format(value);
 }
 
 function typeLabel(value: string) {
-  if (value === "low_ctr") return "Low CTR"
-  if (value === "ranking_push") return "Ranking Push"
+  if (value === "low_ctr") return "Low CTR";
+  if (value === "ranking_push") return "Ranking Push";
   return value.replace(/_/g, " ");
 }
 
 function ctaLabel(value?: string | null) {
-  if (!value) return "General procurement"
-  if (value === "linescout_white_label") return "LineScout white label"
-  if (value === "linescout_machine_sourcing") return "LineScout machine sourcing"
-  if (value === "linescout_bulk_sourcing") return "LineScout bulk sourcing"
+  if (!value) return "General procurement";
+  if (value === "linescout_white_label") return "LineScout white label";
+  if (value === "linescout_machine_sourcing")
+    return "LineScout machine sourcing";
+  if (value === "linescout_bulk_sourcing") return "LineScout bulk sourcing";
   return value
     .split("_")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ")
+    .join(" ");
 }
 
 function statusClass(status: string) {
-  if (status === "reviewing") return "border-blue-500/20 bg-blue-500/10 text-blue-600"
-  if (status === "dismissed") return "border-slate-500/20 bg-slate-500/10 text-slate-500"
-  if (status === "applied") return "border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
-  return "border-amber-500/20 bg-amber-500/10 text-amber-600"
+  if (status === "reviewing")
+    return "border-blue-500/20 bg-blue-500/10 text-blue-600";
+  if (status === "dismissed")
+    return "border-slate-500/20 bg-slate-500/10 text-slate-500";
+  if (status === "applied")
+    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-600";
+  return "border-amber-500/20 bg-amber-500/10 text-amber-600";
 }
 
 function opportunityIcon(type: string) {
-  if (type === "low_ctr") return Target
-  if (type === "ranking_push") return TrendingUp
-  return Lightbulb
+  if (type === "low_ctr") return Target;
+  if (type === "ranking_push") return TrendingUp;
+  return Lightbulb;
 }
 
 function MetricCard({
@@ -266,17 +286,21 @@ function MetricCard({
   note,
   icon: Icon,
 }: {
-  label: string
-  value: unknown
-  note: string
-  icon: any
+  label: string;
+  value: unknown;
+  note: string;
+  icon: any;
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-soft">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-          <p className="mt-1 font-mono text-2xl font-bold tracking-tight text-foreground">{formatNumber(value)}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-1 font-mono text-2xl font-bold tracking-tight text-foreground">
+            {formatNumber(value)}
+          </p>
         </div>
         <div className="shrink-0 rounded-lg bg-primary/10 p-2.5 text-primary">
           <Icon className="h-5 w-5" />
@@ -286,17 +310,17 @@ function MetricCard({
         {note}
       </p>
     </div>
-  )
+  );
 }
 
 async function getSeoOpportunities(input: {
-  status: OpportunityStatus | "all"
-  type: OpportunityType
-  pageType: OpportunityPageType
+  status: OpportunityStatus | "all";
+  type: OpportunityType;
+  pageType: OpportunityPageType;
 }) {
-  const statusFilter = input.status === "all" ? null : input.status
-  const typeFilter = input.type === "all" ? null : input.type
-  const pageTypeFilter = input.pageType === "all" ? null : input.pageType
+  const statusFilter = input.status === "all" ? null : input.status;
+  const typeFilter = input.type === "all" ? null : input.type;
+  const pageTypeFilter = input.pageType === "all" ? null : input.pageType;
 
   const [statsRows, opportunityRows, importRunRows] = await Promise.all([
     prisma.$queryRaw<OpportunityStats[]>(
@@ -306,7 +330,8 @@ async function getSeoOpportunities(input: {
           SUM(CASE WHEN status = 'reviewing' THEN 1 ELSE 0 END) AS totalReviewing,
           SUM(CASE WHEN status = 'dismissed' THEN 1 ELSE 0 END) AS totalDismissed,
           (SELECT COUNT(*) FROM search_console_query_stats) AS importedRows,
-          (SELECT completedAt FROM search_console_import_runs WHERE status = 'completed' ORDER BY completedAt DESC LIMIT 1) AS latestImportAt
+          (SELECT completedAt FROM search_console_import_runs WHERE status = 'completed' ORDER BY completedAt DESC LIMIT 1) AS latestImportAt,
+          (SELECT MAX(date) FROM search_console_query_stats) AS latestDataDate
         FROM seo_opportunities
       `,
     ),
@@ -370,7 +395,7 @@ async function getSeoOpportunities(input: {
         LIMIT 20
       `,
     ),
-  ])
+  ]);
 
   return {
     stats: statsRows[0] || {
@@ -379,30 +404,44 @@ async function getSeoOpportunities(input: {
       totalDismissed: 0,
       importedRows: 0,
       latestImportAt: null,
+      latestDataDate: null,
     },
     opportunities: opportunityRows,
     importRuns: importRunRows,
-  }
+  };
 }
 
-export default async function SeoOpportunitiesPage(
-  props: {
-    searchParams?: Promise<{ status?: string; type?: string; pageType?: string; draft?: string; draftError?: string }>
-  }
-) {
+export default async function SeoOpportunitiesPage(props: {
+  searchParams?: Promise<{
+    status?: string;
+    type?: string;
+    pageType?: string;
+    draft?: string;
+    draftError?: string;
+  }>;
+}) {
   const searchParams = await props.searchParams;
-  await requireSuperAdminPageAccess()
+  await requireSuperAdminPageAccess();
 
-  const resolvedSearchParams = searchParams ? await searchParams : {}
-  const status = (resolvedSearchParams.status || "open") as OpportunityStatus | "all"
-  const type = (resolvedSearchParams.type || "all") as OpportunityType
-  const pageType = (resolvedSearchParams.pageType || "all") as OpportunityPageType
-  const draftError = resolvedSearchParams.draftError
-  const draftCreated = resolvedSearchParams.draft === "created"
-  const { stats, opportunities, importRuns } = await getSeoOpportunities({ status, type, pageType })
-  const activeImport = importRuns.find((run) => run.status === "started") || null
-  const latestCompletedImport = importRuns.find((run) => run.status === "completed") || null
-  const visibleImport = activeImport || importRuns[0] || null
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const status = (resolvedSearchParams.status || "open") as
+    | OpportunityStatus
+    | "all";
+  const type = (resolvedSearchParams.type || "all") as OpportunityType;
+  const pageType = (resolvedSearchParams.pageType ||
+    "all") as OpportunityPageType;
+  const draftError = resolvedSearchParams.draftError;
+  const draftCreated = resolvedSearchParams.draft === "created";
+  const { stats, opportunities, importRuns } = await getSeoOpportunities({
+    status,
+    type,
+    pageType,
+  });
+  const activeImport =
+    importRuns.find((run) => run.status === "started") || null;
+  const latestCompletedImport =
+    importRuns.find((run) => run.status === "completed") || null;
+  const visibleImport = activeImport || importRuns[0] || null;
 
   return (
     <main className="space-y-8 pb-20 animate-in fade-in duration-500">
@@ -412,7 +451,9 @@ export default async function SeoOpportunitiesPage(
             <Search className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Search Console Opportunities</h1>
+            <h1 className="text-xl font-bold text-foreground">
+              Search Console Opportunities
+            </h1>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               SEO automation queue from SureImports search demand
             </p>
@@ -464,7 +505,7 @@ export default async function SeoOpportunitiesPage(
         <MetricCard
           label="Imported GSC Rows"
           value={stats.importedRows}
-          note={`Latest completed import: ${formatDate(stats.latestImportAt)}.`}
+          note={`Query-detail rows exclude anonymized queries and are not total site traffic. Data through ${formatDate(stats.latestDataDate)}; last import ${formatDate(stats.latestImportAt)}.`}
           icon={BarChart3}
         />
         <MetricCard
@@ -475,36 +516,68 @@ export default async function SeoOpportunitiesPage(
         />
       </div>
 
+      {(!stats.latestDataDate ||
+        Date.now() - new Date(stats.latestDataDate).getTime() >
+          7 * 86400000) && (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm"
+        >
+          Search Console data is stale. Refresh the import before prioritising
+          SEO changes; these query rows do not represent complete property
+          traffic.
+        </p>
+      )}
+
       <GscImportControl
         requireLocalServiceOrigin={process.env.NODE_ENV !== "production"}
-        latestCompletedEndDate={latestCompletedImport?.endDate.toISOString().slice(0, 10) || null}
-        initialRun={visibleImport ? {
-          pidRun: visibleImport.pidRun,
-          startDate: visibleImport.startDate.toISOString().slice(0, 10),
-          endDate: visibleImport.endDate.toISOString().slice(0, 10),
-          rowCount: Number(visibleImport.rowCount || 0),
-          status: visibleImport.status,
-          error: visibleImport.errorMessage,
-          startedAt: visibleImport.startedAt?.toISOString() || null,
-          completedAt: visibleImport.completedAt?.toISOString() || null,
-          elapsedSeconds: visibleImport.startedAt
-            ? Math.max(0, Math.floor(((visibleImport.completedAt || new Date()).getTime() - visibleImport.startedAt.getTime()) / 1000))
-            : 0,
-          percent: ["completed", "failed"].includes(visibleImport.status) ? 100 : 8,
-          stage: visibleImport.status === "completed"
-            ? "Import completed and SEO opportunities refreshed"
-            : visibleImport.status === "failed"
-              ? "Import stopped with an error"
-              : "Reconnecting to the saved import job",
-          ready: ["completed", "failed"].includes(visibleImport.status),
-        } : null}
+        latestCompletedEndDate={
+          latestCompletedImport?.endDate.toISOString().slice(0, 10) || null
+        }
+        initialRun={
+          visibleImport
+            ? {
+                pidRun: visibleImport.pidRun,
+                startDate: visibleImport.startDate.toISOString().slice(0, 10),
+                endDate: visibleImport.endDate.toISOString().slice(0, 10),
+                rowCount: Number(visibleImport.rowCount || 0),
+                status: visibleImport.status,
+                error: visibleImport.errorMessage,
+                startedAt: visibleImport.startedAt?.toISOString() || null,
+                completedAt: visibleImport.completedAt?.toISOString() || null,
+                elapsedSeconds: visibleImport.startedAt
+                  ? Math.max(
+                      0,
+                      Math.floor(
+                        ((visibleImport.completedAt || new Date()).getTime() -
+                          visibleImport.startedAt.getTime()) /
+                          1000,
+                      ),
+                    )
+                  : 0,
+                percent: ["completed", "failed"].includes(visibleImport.status)
+                  ? 100
+                  : 8,
+                stage:
+                  visibleImport.status === "completed"
+                    ? "Import completed and SEO opportunities refreshed"
+                    : visibleImport.status === "failed"
+                      ? "Import stopped with an error"
+                      : "Reconnecting to the saved import job",
+                ready: ["completed", "failed"].includes(visibleImport.status),
+              }
+            : null
+        }
       />
 
       <div className="mx-1 flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Opportunity Type</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+            Opportunity Type
+          </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Filter low-CTR metadata fixes separately from content expansion opportunities.
+            Filter low-CTR metadata fixes separately from content expansion
+            opportunities.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -554,21 +627,27 @@ export default async function SeoOpportunitiesPage(
         {opportunities.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
             <AlertTriangle className="mb-3 h-10 w-10 text-muted-foreground/30" />
-            <h3 className="text-sm font-bold text-foreground">No opportunities in this filter</h3>
+            <h3 className="text-sm font-bold text-foreground">
+              No opportunities in this filter
+            </h3>
             <p className="mt-2 max-w-md text-xs leading-relaxed text-muted-foreground">
-              Run a wider Search Console import or switch filters to inspect previously dismissed and reviewed items.
+              Run a wider Search Console import or switch filters to inspect
+              previously dismissed and reviewed items.
             </p>
           </div>
         ) : (
           <div className="divide-y divide-border">
             {opportunities.map((opportunity) => {
-              const Icon = opportunityIcon(opportunity.opportunityType)
+              const Icon = opportunityIcon(opportunity.opportunityType);
               const editHref = opportunity.pidBlog
                 ? `/dashboard/blog/edit?pidBlog=${encodeURIComponent(opportunity.pidBlog)}`
-                : `/dashboard/blog/view?search=${encodeURIComponent(opportunity.blogSlug || opportunity.primaryQuery || "")}`
+                : `/dashboard/blog/view?search=${encodeURIComponent(opportunity.blogSlug || opportunity.primaryQuery || "")}`;
 
               return (
-                <article key={opportunity.pidOpportunity} className="p-6 transition-colors hover:bg-muted/20">
+                <article
+                  key={opportunity.pidOpportunity}
+                  className="p-6 transition-colors hover:bg-muted/20"
+                >
                   <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_19rem]">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -576,7 +655,9 @@ export default async function SeoOpportunitiesPage(
                           <Icon className="h-3 w-3" />
                           {typeLabel(opportunity.opportunityType)}
                         </span>
-                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${statusClass(opportunity.status)}`}>
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${statusClass(opportunity.status)}`}
+                        >
                           {opportunity.status}
                         </span>
                         <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -585,26 +666,34 @@ export default async function SeoOpportunitiesPage(
                         <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                           {opportunity.pageType.replace(/_/g, " ")}
                         </span>
-                        {opportunity.latestChangeId && opportunity.latestChangeStatus !== "rejected" && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
-                            <Sparkles className="h-3 w-3" />
-                            Draft {opportunity.latestChangeStatus || "saved"}
-                          </span>
-                        )}
+                        {opportunity.latestChangeId &&
+                          opportunity.latestChangeStatus !== "rejected" && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                              <Sparkles className="h-3 w-3" />
+                              Draft {opportunity.latestChangeStatus || "saved"}
+                            </span>
+                          )}
                       </div>
 
                       <h3 className="mt-4 text-lg font-bold leading-tight text-foreground">
-                        {opportunity.blogTitle || opportunity.blogSlug || opportunity.pageType.replace(/_/g, " ")}
+                        {opportunity.blogTitle ||
+                          opportunity.blogSlug ||
+                          opportunity.pageType.replace(/_/g, " ")}
                       </h3>
                       <p className="mt-2 font-mono text-[11px] text-muted-foreground break-all">
                         {opportunity.pageUrl}
                       </p>
 
                       <div className="mt-4 rounded-lg border border-border bg-background p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Search Query</p>
-                        <p className="mt-1 text-sm font-bold text-foreground">{opportunity.primaryQuery || "Unknown query"}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          Search Query
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-foreground">
+                          {opportunity.primaryQuery || "Unknown query"}
+                        </p>
                         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                          {opportunity.recommendation || "Review this query and decide whether to refresh the article."}
+                          {opportunity.recommendation ||
+                            "Review this query and decide whether to refresh the article."}
                         </p>
                       </div>
                     </div>
@@ -612,41 +701,67 @@ export default async function SeoOpportunitiesPage(
                     <aside className="space-y-4 rounded-xl border border-border bg-background p-4">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Clicks</p>
-                          <p className="mt-1 font-mono text-lg font-bold text-foreground">{formatNumber(opportunity.clicks)}</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                            Clicks
+                          </p>
+                          <p className="mt-1 font-mono text-lg font-bold text-foreground">
+                            {formatNumber(opportunity.clicks)}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Impressions</p>
-                          <p className="mt-1 font-mono text-lg font-bold text-foreground">{formatNumber(opportunity.impressions)}</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                            Impressions
+                          </p>
+                          <p className="mt-1 font-mono text-lg font-bold text-foreground">
+                            {formatNumber(opportunity.impressions)}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">CTR</p>
-                          <p className="mt-1 font-mono text-lg font-bold text-foreground">{formatPercent(opportunity.ctr)}</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                            CTR
+                          </p>
+                          <p className="mt-1 font-mono text-lg font-bold text-foreground">
+                            {formatPercent(opportunity.ctr)}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Position</p>
-                          <p className="mt-1 font-mono text-lg font-bold text-foreground">{formatPosition(opportunity.position)}</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                            Position
+                          </p>
+                          <p className="mt-1 font-mono text-lg font-bold text-foreground">
+                            {formatPosition(opportunity.position)}
+                          </p>
                         </div>
                       </div>
 
                       <div className="rounded-lg border border-border bg-card p-3">
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Confidence</p>
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                          Confidence
+                        </p>
                         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
                           <div
                             className="h-full rounded-full bg-primary"
-                            style={{ width: `${Math.min(100, Math.max(4, Number(opportunity.confidence || 0) * 100))}%` }}
+                            style={{
+                              width: `${Math.min(100, Math.max(4, Number(opportunity.confidence || 0) * 100))}%`,
+                            }}
                           />
                         </div>
                         <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                          {(Number(opportunity.confidence || 0) * 100).toFixed(1)}%
+                          {(Number(opportunity.confidence || 0) * 100).toFixed(
+                            1,
+                          )}
+                          %
                         </p>
                       </div>
 
                       {opportunity.latestChangeCreatedAt && (
                         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3">
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700">Latest Draft</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700">
+                            Latest Draft
+                          </p>
                           <p className="mt-1 text-[11px] text-emerald-700">
-                            {opportunity.latestChangeStatus || "draft"} on {formatDate(opportunity.latestChangeCreatedAt)}
+                            {opportunity.latestChangeStatus || "draft"} on{" "}
+                            {formatDate(opportunity.latestChangeCreatedAt)}
                           </p>
                         </div>
                       )}
@@ -670,17 +785,29 @@ export default async function SeoOpportunitiesPage(
                           Public Page <ArrowUpRight className="h-3.5 w-3.5" />
                         </a>
 
-                        {opportunity.latestChangeId && opportunity.latestChangeStatus !== "rejected" && (
-                          <Link
-                            href={`/dashboard/marketing/seo/changes/${encodeURIComponent(opportunity.latestChangeId)}`}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/15"
-                          >
-                            Review Draft <Sparkles className="h-3.5 w-3.5" />
-                          </Link>
-                        )}
+                        {opportunity.latestChangeId &&
+                          opportunity.latestChangeStatus !== "rejected" && (
+                            <Link
+                              href={`/dashboard/marketing/seo/changes/${encodeURIComponent(opportunity.latestChangeId)}`}
+                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-700 hover:bg-emerald-500/15"
+                            >
+                              Review Draft <Sparkles className="h-3.5 w-3.5" />
+                            </Link>
+                          )}
 
-                        <form action={updateOpportunityStatus} className={opportunity.status === "reviewing" ? "grid gap-2" : "grid grid-cols-2 gap-2"}>
-                          <input type="hidden" name="pidOpportunity" value={opportunity.pidOpportunity} />
+                        <form
+                          action={updateOpportunityStatus}
+                          className={
+                            opportunity.status === "reviewing"
+                              ? "grid gap-2"
+                              : "grid grid-cols-2 gap-2"
+                          }
+                        >
+                          <input
+                            type="hidden"
+                            name="pidOpportunity"
+                            value={opportunity.pidOpportunity}
+                          />
                           {opportunity.status !== "reviewing" && (
                             <button
                               type="submit"
@@ -703,12 +830,18 @@ export default async function SeoOpportunitiesPage(
                           </button>
                         </form>
 
-                        {opportunity.pageType === "blog" && (!opportunity.latestChangeId || opportunity.latestChangeStatus === "rejected") && (
-                          <form action={generateDraftAction}>
-                            <input type="hidden" name="pidOpportunity" value={opportunity.pidOpportunity} />
-                            <GenerateDraftButton />
-                          </form>
-                        )}
+                        {opportunity.pageType === "blog" &&
+                          (!opportunity.latestChangeId ||
+                            opportunity.latestChangeStatus === "rejected") && (
+                            <form action={generateDraftAction}>
+                              <input
+                                type="hidden"
+                                name="pidOpportunity"
+                                value={opportunity.pidOpportunity}
+                              />
+                              <GenerateDraftButton />
+                            </form>
+                          )}
                       </div>
                     </aside>
                   </div>

@@ -1,44 +1,63 @@
-import { PrismaClient } from '@prisma/client';
-import getFileExt from '@/app/utils/fileExt';
-import fileFilter from '@/app/utils/fileFilter';
-import randomGenerator from '@/lib/helpers/randomGenerator';
-import { NextResponse } from 'next/server';
-import { generateSlug } from '@/app/utils/slugGenerator';
-import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
-import { BLOG_IMAGE_FOLDER } from '@/lib/blogImage';
-import { findBlogPublicationIssues } from '@/lib/blogPublicationValidation';
+import { requireAdminServiceAccess } from "@/app/api/_lib/adminAccess";
+import { PrismaClient } from "@prisma/client";
+import getFileExt from "@/app/utils/fileExt";
+import fileFilter from "@/app/utils/fileFilter";
+import randomGenerator from "@/lib/helpers/randomGenerator";
+import { NextResponse } from "next/server";
+import { generateSlug } from "@/app/utils/slugGenerator";
+import { uploadBufferToCloudinary } from "@/lib/cloudinary/upload";
+import { BLOG_IMAGE_FOLDER, getBlogImageUrl } from "@/lib/blogImage";
+import {
+  findBlogPublicationIssues,
+  verifyBlogFeatureImage,
+} from "@/lib/blogPublicationValidation";
 
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
+    const access = await requireAdminServiceAccess("blog_management", "edit");
+    if (!access.ok) return access.response;
     const formData = await request.formData();
-    
-    const pidBlog = formData.get('pidBlog') as string;
-    const blogTitle = formData.get('blogTitle') as string;
-    const blogContent = formData.get('blogContent') as string;
-    const blogBy = formData.get('blogBy') as string || 'Admin';
-    const blogPublished = formData.get('blogPublished') === 'true';
-    const blogFeatured = formData.get('blogFeatured') === 'true';
-    const blogExt1 = formData.get('blogExt1') as string || ''; // Can be used for video URL
-    const blogExt2 = formData.get('blogExt2') as string || ''; // Can be used for SEO data
-    const categoryId = formData.get('categoryId') as string || null;
-    const publisherId = formData.get('publisherId') as string || null;
-    
+
+    const pidBlog = formData.get("pidBlog") as string;
+    const blogTitle = formData.get("blogTitle") as string;
+    const blogContent = formData.get("blogContent") as string;
+    const blogBy = "Tochukwu Nkwocha";
+    const blogPublished = formData.get("blogPublished") === "true";
+    const blogFeatured = formData.get("blogFeatured") === "true";
+    const blogExt1 = (formData.get("blogExt1") as string) || ""; // Can be used for video URL
+    const blogExt2 = (formData.get("blogExt2") as string) || ""; // Can be used for SEO data
+    const categoryId = (formData.get("categoryId") as string) || null;
+    const publisherId =
+      (formData.get("publisherId") as string) || "PUB1767167254459";
+
     // Validate required fields
     if (!blogTitle || !blogContent) {
       return NextResponse.json(
         {
           responsex: {
-            message: 'Blog title and content are required',
-            status: 'VALIDATION_ERROR',
+            message: "Blog title and content are required",
+            status: "VALIDATION_ERROR",
           },
           successx: false,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
+    if (!/^BLOG\d{13}$/.test(pidBlog))
+      return NextResponse.json(
+        {
+          successx: false,
+          responsex: {
+            status: "VALIDATION_ERROR",
+            message:
+              "New blog IDs must use BLOG followed by a millisecond timestamp.",
+          },
+        },
+        { status: 400 },
+      );
     const blogSlug = generateSlug(blogTitle);
     if (blogPublished) {
       const publicationIssues = await findBlogPublicationIssues({
@@ -46,13 +65,23 @@ export async function POST(request: Request) {
         html: blogContent,
         publishAt: new Date(),
         currentSlug: blogSlug,
+        publication: {
+          title: blogTitle,
+          publisherId,
+          categoryId,
+          seoJson: blogExt2,
+          image: (formData.get("file") as File | null)?.size
+            ? "pending-upload"
+            : null,
+          newPublication: true,
+        },
       });
       if (publicationIssues.length) {
         return NextResponse.json(
           {
             responsex: {
-              message: publicationIssues.join(' '),
-              status: 'PUBLICATION_VALIDATION_ERROR',
+              message: publicationIssues.join(" "),
+              status: "PUBLICATION_VALIDATION_ERROR",
             },
             successx: false,
             issues: publicationIssues,
@@ -63,8 +92,8 @@ export async function POST(request: Request) {
     }
 
     // Get file from form
-    const file = formData.get('file') as File | null;
-    let newFileName = '';
+    const file = formData.get("file") as File | null;
+    let newFileName = "";
 
     // Handle image upload if file is provided
     if (file) {
@@ -73,7 +102,16 @@ export async function POST(request: Request) {
       const fileExt = getFileExt(originalFileName);
 
       // Check file validity
-      const allowedExt: string[] = ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG', 'webp', 'gif'];
+      const allowedExt: string[] = [
+        "png",
+        "jpg",
+        "jpeg",
+        "PNG",
+        "JPG",
+        "JPEG",
+        "webp",
+        "gif",
+      ];
       const fileOK = fileFilter(fileExt, allowedExt);
 
       if (!fileOK) {
@@ -81,11 +119,11 @@ export async function POST(request: Request) {
           {
             responsex: {
               message: `Please select only valid images. ${fileExt} is not allowed`,
-              status: 'INVALID_IMAGE_UPLOAD',
+              status: "INVALID_IMAGE_UPLOAD",
             },
             successx: false,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -107,14 +145,47 @@ export async function POST(request: Request) {
           {
             responsex: {
               message: `Image upload failed. ERROR: ${error}`,
-              status: 'IMAGE_UPLOAD_FAILED',
+              status: "IMAGE_UPLOAD_FAILED",
             },
             successx: false,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
+
+    if (blogPublished) {
+      try {
+        await verifyBlogFeatureImage(getBlogImageUrl(newFileName));
+      } catch (error) {
+        return NextResponse.json(
+          {
+            successx: false,
+            responsex: {
+              status: "PUBLICATION_VALIDATION_ERROR",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Image validation failed.",
+            },
+          },
+          { status: 400 },
+        );
+      }
+    }
+    const selectedCategory = categoryId
+      ? await prisma.blog_category.findUnique({
+          where: { pidCategory: categoryId },
+        })
+      : null;
+    const metadata = JSON.parse(blogExt2 || "{}");
+    const normalizedSeo = JSON.stringify({
+      ...metadata,
+      canonicalUrl: `https://www.sureimports.com/blog/${blogSlug}`,
+      category: selectedCategory?.categoryName || metadata.category,
+      ogImage: getBlogImageUrl(newFileName),
+      twitterImage: getBlogImageUrl(newFileName),
+    });
 
     // Create blog post in database
     const blog = await prisma.blog.create({
@@ -128,10 +199,10 @@ export async function POST(request: Request) {
         blogImage: newFileName,
         blogBy,
         blogExt1,
-        blogExt2,
+        blogExt2: normalizedSeo,
         categoryId: categoryId || null,
         publisherId: publisherId || null,
-        xStaus: 'active',
+        xStaus: "active",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -140,26 +211,26 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         responsex: {
-          message: 'Blog post was successfully published',
-          status: 'SUCCESS',
+          message: "Blog post was successfully published",
+          status: "SUCCESS",
         },
         successx: true,
         data: blog,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
-    console.error('Error creating blog:', error);
+    console.error("Error creating blog:", error);
     return NextResponse.json(
       {
         responsex: {
-          message: 'Failed to create blog post',
-          status: 'ACTION_FAILED',
+          message: "Failed to create blog post",
+          status: "ACTION_FAILED",
         },
         successx: false,
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
