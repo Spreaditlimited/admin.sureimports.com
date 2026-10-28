@@ -12,6 +12,8 @@ const headers = { 'Cache-Control': 'private, no-store', Vary: 'Cookie' };
 const customerName = `CASE WHEN c.ownerKind='CUSTOMER' THEN
   (SELECT NULLIF(TRIM(CONCAT(COALESCE(u.userFirstname,''),' ',COALESCE(u.userLastname,''))), '')
    FROM users u WHERE CONVERT(u.pidUser USING utf8mb4) COLLATE utf8mb4_unicode_ci=c.customerId COLLATE utf8mb4_unicode_ci LIMIT 1)
+  WHEN c.ownerKind='GUEST' THEN
+    (SELECT g.contactName FROM support_guests g WHERE g.id=c.customerId LIMIT 1)
   ELSE NULL END`;
 const eligible = `(a.userStatus IN ('superadmin','L1') OR EXISTS (SELECT 1 FROM admin_permissions p WHERE p.pidUser COLLATE utf8mb4_unicode_ci=a.pidUser COLLATE utf8mb4_unicode_ci AND p.serviceKey='customer_support' AND p.canView=TRUE AND p.canEdit=TRUE))`;
 const inboxSchema = z.object({

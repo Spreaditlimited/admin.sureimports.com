@@ -14,6 +14,8 @@ const fields =
 const customerName = `CASE WHEN support_conversations.ownerKind='CUSTOMER' THEN
   (SELECT NULLIF(TRIM(CONCAT(COALESCE(u.userFirstname,''),' ',COALESCE(u.userLastname,''))), '')
    FROM users u WHERE CONVERT(u.pidUser USING utf8mb4) COLLATE utf8mb4_unicode_ci=support_conversations.customerId COLLATE utf8mb4_unicode_ci LIMIT 1)
+  WHEN support_conversations.ownerKind='GUEST' THEN
+    (SELECT g.contactName FROM support_guests g WHERE g.id=support_conversations.customerId LIMIT 1)
   ELSE NULL END AS customerName`;
 // SQL fragments are constants. All request values remain bound parameters.
 export function supportStore(prisma: PrismaClient) {
