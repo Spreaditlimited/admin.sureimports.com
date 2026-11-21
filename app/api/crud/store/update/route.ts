@@ -8,11 +8,15 @@ import { NextResponse } from 'next/server';
 import { generateSlug } from '@/utils/slugGenerator';
 //import r2ImageUpload from '@/lib/helpers/r2ImageUpload';
 import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
+import { rmbPriceNgn, updateStoreWithRmbPricing } from '@/lib/shop/rmb-pricing.mjs';
+import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
 
 const prisma = new PrismaClient();
 
 
 export async function POST(request: Request) {
+        const access = await requireAdminServiceAccess('store_mgt', 'edit');
+        if (!access.ok) return access.response;
 
         const formData = await request.formData();
         const productImage = formData.get('file') as File;
@@ -33,7 +37,19 @@ export async function POST(request: Request) {
 
         const isProductVisible = formData.get('isProductVisible') as any;
 
-        console.log(formData)
+        const supplierRmb = formData.get('supplierRmb');
+        const markupRmb = formData.get('markupRmb');
+        let rmbSource: { supplierRmb: number; markupRmb: number } | undefined;
+        if (supplierRmb !== null || markupRmb !== null) {
+          try {
+            if (typeof supplierRmb !== 'string' || !supplierRmb.trim() ||
+                typeof markupRmb !== 'string' || !markupRmb.trim()) throw new Error('Both RMB fields are required.');
+            rmbPriceNgn(supplierRmb, markupRmb, 1);
+            rmbSource = { supplierRmb: Number(supplierRmb), markupRmb: Number(markupRmb) };
+          } catch {
+            return NextResponse.json({ statusx: 'INVALID_INPUT', message: 'Enter a positive RMB supplier price and a non-negative RMB markup.' }, { status: 400 });
+          }
+        }
 
   //CHECK IF PRODUCTS EXISTS
   const product = await prisma.store.findUnique({
@@ -90,10 +106,7 @@ export async function POST(request: Request) {
   }
 
   if (imageStatus == 'NO') {
-    await prisma.store.update({
-      where: { pidProduct: pidProduct,} ,
-      data: updateData,
-    });
+    await prisma.$transaction((tx) => updateStoreWithRmbPricing(tx, pidProduct, updateData, rmbSource));
 
     //RETURN SUCCESS CONTENT UPLOAD
     return NextResponse.json(
@@ -134,15 +147,12 @@ export async function POST(request: Request) {
         overwrite: true,
       });
 
-      await prisma.store.update({
-        where: { pidProduct: pidProduct, },
-        data: {
+      await prisma.$transaction((tx) => updateStoreWithRmbPricing(tx, pidProduct, {
           ...updateData,
           productImage: uploadResult.publicId,
           productImageType: fileType,
           productImageExt: fileExt,
-        },
-      });
+        }, rmbSource));
 
       //RETURN SUCCESS ON FILE UPLOAD
       return NextResponse.json(

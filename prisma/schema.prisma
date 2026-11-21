@@ -498,6 +498,14 @@ model products {
   orders                 orders    @relation(fields: [pidOrder], references: [pidOrder], onDelete: Cascade)
 }
 
+model store_rmb_pricing {
+  pidProduct  String   @id @db.VarChar(191)
+  supplierRmb Decimal  @db.Decimal(14, 2)
+  markupRmb   Decimal  @db.Decimal(14, 2)
+  source      String   @db.VarChar(191)
+  updatedAt   DateTime @default(now()) @db.DateTime(3)
+}
+
 model store {
   id                   Int               @id @default(autoincrement())
   pidProduct           String            @unique()

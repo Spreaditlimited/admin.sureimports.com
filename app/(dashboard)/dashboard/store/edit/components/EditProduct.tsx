@@ -43,9 +43,12 @@ type Product = {
 
 interface EditProductProps {
   product: Product
+  rmbPricing?: { supplierRmb: number; markupRmb: number; rate: number }
 }
 
-export const EditProductPage: React.FC<EditProductProps> = ({ product }) => {
+export const EditProductPage: React.FC<EditProductProps> = ({ product, rmbPricing }) => {
+    const [supplierRmb, setSupplierRmb] = useState(String(rmbPricing?.supplierRmb ?? ''));
+    const [markupRmb, setMarkupRmb] = useState(String(rmbPricing?.markupRmb ?? ''));
     const { user } = useAuth();
     const navigateWithAlert = useNavigationWithAlert();
     const router = useRouter();
@@ -84,6 +87,10 @@ export const EditProductPage: React.FC<EditProductProps> = ({ product }) => {
         formData.append('productCategory', productCategory);
         formData.append('productBrand', productBrand);
         formData.append('productPrice', productPrice);
+        if (rmbPricing) {
+            formData.append('supplierRmb', supplierRmb);
+            formData.append('markupRmb', markupRmb);
+        }
         formData.append('productMOQ', productMOQ);
         formData.append('productDescription', productDescription);
         formData.append('productFeatures', productFeatures);
@@ -184,11 +191,21 @@ export const EditProductPage: React.FC<EditProductProps> = ({ product }) => {
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
+                        {rmbPricing && <div className="space-y-3 rounded-md border border-input p-4">
+                            <p className="text-sm">RMB-linked pricing: the Naira price updates automatically with the system exchange rate. The latest rate is applied when you save.</p>
+                            <label className="block text-sm">Supplier price (RMB)
+                                <input type="number" min="0.01" step="0.01" required value={supplierRmb} onChange={(e) => setSupplierRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" />
+                            </label>
+                            <label className="block text-sm">Markup (RMB)
+                                <input type="number" min="0" step="0.01" required value={markupRmb} onChange={(e) => setMarkupRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" />
+                            </label>
+                        </div>}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current Listing Price (₦) *</label>
                             <input
                                 type="number" 
-                                value={productPrice}
+                                value={rmbPricing ? Math.round((Number(supplierRmb) + Number(markupRmb)) * rmbPricing.rate * 100) / 100 : productPrice}
+                                readOnly={!!rmbPricing}
                                 onChange={(e) => setProductPrice(e.target.value)}
                                 required
                                 className="w-full px-4 py-2.5 text-sm font-bold font-mono border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring"

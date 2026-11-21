@@ -23,6 +23,8 @@ export default async function EditProductPage({
   if (!product) {
     notFound()
   }
+  const pricing = await db.$queryRaw<{ supplierRmb: unknown; markupRmb: unknown }[]>`SELECT supplierRmb, markupRmb FROM store_rmb_pricing WHERE pidProduct = ${id}`
+  const rate = pricing.length ? await db.exchange_rate.findUnique({ where: { id: 1 }, select: { exNairaToYuan: true } }) : null
   
   return (
     <div className="space-y-6">
@@ -38,7 +40,10 @@ export default async function EditProductPage({
       </div>
 
       {/* Page Content */}
-      <EditProduct product={product as any} />
+      <EditProduct product={product as any} rmbPricing={pricing[0] ? {
+        supplierRmb: Number(pricing[0].supplierRmb), markupRmb: Number(pricing[0].markupRmb),
+        rate: Number(rate?.exNairaToYuan),
+      } : undefined} />
       
     </div>
   )

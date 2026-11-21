@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
+import { lockShopRate, syncRmbShopPrices } from '@/lib/shop/rmb-pricing.mjs';
 
 const prisma = new PrismaClient();
 
@@ -35,7 +36,8 @@ export async function PUT(request: Request) {
 
         try {
             //UPDATE RECORD
-            await prisma.$transaction(async (tx) => {
+            const repricedProducts = await prisma.$transaction(async (tx) => {
+            await lockShopRate(tx);
             await tx.exchange_rate.update({
               where: { id: 1},  
               data: { 
@@ -46,17 +48,18 @@ export async function PUT(request: Request) {
               },  
             });
             await tx.$executeRaw`UPDATE exchange_rate SET exGbpPerUsd = ${gbpPerUsd || null} WHERE id = 1`;
+            return syncRmbShopPrices(tx, Number(nairaToYuan));
             });
 
             return NextResponse.json(
-              { statusx: 'SUCCESS', message: 'Exchange Rate has been updated successfully!' },
+              { statusx: 'SUCCESS', message: 'Exchange rate and linked shop prices updated successfully.', repricedProducts },
               { status: 200 },
             );  
 
         } catch (error) {
             return NextResponse.json(
-              { statusx: 'FAILED', message: 'Exchange Rate update failed! Try again or contact tye ad' },
-              { status: 200 },
+              { statusx: 'FAILED', message: 'Exchange rate and shop prices could not be updated. No changes were saved.' },
+              { status: 500 },
             );
 
  
