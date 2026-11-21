@@ -9,12 +9,23 @@ import { generateSlug } from '@/app/utils/slugGenerator'
 import bcrypt from "bcryptjs"
 import { uploadBufferToCloudinary } from '@/lib/cloudinary/upload';
 
+import { createStoreWithRmbPricing, parseRmbSource } from '@/lib/shop/rmb-pricing.mjs';
+import { requireAdminServiceAccess } from '@/app/api/_lib/adminAccess';
+
 const prisma = new PrismaClient();
 
 
 export async function POST(request: Request) {
 
+        const access = await requireAdminServiceAccess('store_mgt', 'edit');
+        if (!access.ok) return access.response;
         const formData = await request.formData();
+        let rmbSource;
+        try { rmbSource = parseRmbSource(formData); }
+        catch { return NextResponse.json({ statusx: 'INVALID_INPUT', message: 'Enter a positive supplier RMB price and non-negative RMB markup.' }, { status: 400 }); }
+        if (['laptop', 'laptops'].includes(String(formData.get('productCategory')).toLowerCase()) && !rmbSource) {
+          return NextResponse.json({ statusx: 'INVALID_INPUT', message: 'Laptop supplier price and markup in RMB are required.' }, { status: 400 });
+        }
         const productImage = formData.get('file') as File;
         const pidProduct = formData.get('pidProduct') as string;
         const productName = formData.get('productName') as string;
@@ -34,7 +45,7 @@ export async function POST(request: Request) {
         const isProductVisible = formData.get('isProductVisible') as any;
 
 
-        console.log(formData)
+
 
   //GET FILE FROM FROM
   const file = formData.get('file') as File;
@@ -86,8 +97,7 @@ export async function POST(request: Request) {
       overwrite: true,
     });
 
-    const product = await prisma.store.create({
-      data: {
+    const product = await prisma.$transaction(tx => createStoreWithRmbPricing(tx, {
         pidProduct: pidProduct,
         productName: productName,
         productSlug: productSlug,
@@ -109,8 +119,7 @@ export async function POST(request: Request) {
         warrantyPeriod: warrantyPeriod,
 
         createdAt: new Date(),
-      },
-    });
+      }, rmbSource));
 
     if (product && product.id) {
       return NextResponse.json(

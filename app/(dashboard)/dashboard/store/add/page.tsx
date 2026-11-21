@@ -1,6 +1,9 @@
 import AddProduct from "./components/AddProduct"
 
-export default function DashboardPage() {
+import { db } from '@/lib/db'
+
+export default async function DashboardPage() {
+  const rate = await db.exchange_rate.findUnique({ where: { id: 1 }, select: { exNairaToYuan: true } });
   return (
     <div className="space-y-6">
       
@@ -15,7 +18,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Page Content */}
-      <AddProduct />
+      <AddProduct rate={Number(rate?.exNairaToYuan)} />
       
     </div>
   )

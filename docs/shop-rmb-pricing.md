@@ -42,3 +42,26 @@ workflow.
 - Check the public product API, product page and cart quote for the same NGN price.
 
 Never commit operational backups or customer data.
+
+## Laptop pricing and product administration
+
+New laptops require supplier cost and markup in RMB. The add form defaults the
+markup to RMB 600; it remains editable. Other categories may opt into RMB pricing.
+Existing fixed-NGN listings can be linked from the edit form. Already linked
+products cannot be switched back to fixed NGN by this form. Server-side transactions
+calculate the price with the latest locked rate, ignoring the submitted NGN amount.
+Creating a product and its pricing basis is atomic. RMB basis remains admin-only.
+
+The owner-approved laptop reconstruction is `current NGN / 210 - 600`, rounded
+half-up to two RMB decimal places. This is an approved reconstruction, not a
+verified historical supplier quote. At a rate of 220, rounding can affect the
+converted result by up to NGN 1.10.
+
+Run `node scripts/link-laptop-rmb-pricing.mjs` to generate a private dry-run plan.
+It includes hidden laptop listings without changing visibility. Review the plan
+before running `node scripts/link-laptop-rmb-pricing.mjs --apply --plan=/private/path.json`.
+Apply backs up the reviewed records, requires the exact reviewed rate and unchanged
+product records, and rejects products already linked. All writes are one transaction;
+only the targeted store prices and private RMB basis are changed. Paid order and
+checkout snapshots are untouched. Re-running the dry run skips linked products;
+it never reconstructs their base from the newly converted price. Do not commit plans.

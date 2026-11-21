@@ -43,12 +43,15 @@ type Product = {
 
 interface EditProductProps {
   product: Product
+  rate: number
   rmbPricing?: { supplierRmb: number; markupRmb: number; rate: number }
 }
 
-export const EditProductPage: React.FC<EditProductProps> = ({ product, rmbPricing }) => {
+export const EditProductPage: React.FC<EditProductProps> = ({ product, rmbPricing, rate }) => {
+    const [rmbEnabled, setRmbEnabled] = useState(Boolean(rmbPricing));
+    const useRmb = Boolean(rmbPricing) || rmbEnabled;
     const [supplierRmb, setSupplierRmb] = useState(String(rmbPricing?.supplierRmb ?? ''));
-    const [markupRmb, setMarkupRmb] = useState(String(rmbPricing?.markupRmb ?? ''));
+    const [markupRmb, setMarkupRmb] = useState(String(rmbPricing?.markupRmb ?? 600));
     const { user } = useAuth();
     const navigateWithAlert = useNavigationWithAlert();
     const router = useRouter();
@@ -71,7 +74,7 @@ export const EditProductPage: React.FC<EditProductProps> = ({ product, rmbPricin
     const [productFeatures, setProductFeatures] = useState(product.productFeature);
     const [productSpecification, setProductSpecification] = useState(product.productSpecification);
     const [imagex, setImagex] = useState(product.productImage);
-    const [isProductVisible, setIsProductVisible] = useState(product.productVisibility === 'true');
+    const [isProductVisible, setIsProductVisible] = useState(String(product.productVisibility) === 'true');
 
     const handleImageChange = (file: File) => setFile(file);
 
@@ -87,7 +90,7 @@ export const EditProductPage: React.FC<EditProductProps> = ({ product, rmbPricin
         formData.append('productCategory', productCategory);
         formData.append('productBrand', productBrand);
         formData.append('productPrice', productPrice);
-        if (rmbPricing) {
+        if (useRmb) {
             formData.append('supplierRmb', supplierRmb);
             formData.append('markupRmb', markupRmb);
         }
@@ -191,21 +194,21 @@ export const EditProductPage: React.FC<EditProductProps> = ({ product, rmbPricin
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                        {rmbPricing && <div className="space-y-3 rounded-md border border-input p-4">
-                            <p className="text-sm">RMB-linked pricing: the Naira price updates automatically with the system exchange rate. The latest rate is applied when you save.</p>
-                            <label className="block text-sm">Supplier price (RMB)
-                                <input type="number" min="0.01" step="0.01" required value={supplierRmb} onChange={(e) => setSupplierRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" />
-                            </label>
-                            <label className="block text-sm">Markup (RMB)
-                                <input type="number" min="0" step="0.01" required value={markupRmb} onChange={(e) => setMarkupRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" />
-                            </label>
-                        </div>}
+<div className="space-y-3 rounded-md border border-input p-4">
+  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={useRmb} disabled={Boolean(rmbPricing)} onChange={e => setRmbEnabled(e.target.checked)} /> Use supplier price and markup in RMB</label>
+  {useRmb && <>
+    <p className="text-sm text-muted-foreground">Current rate: ₦{rate} per RMB. The latest system rate is applied on save and future rate changes.</p>
+    <label className="block text-sm">Supplier price (RMB)<input type="number" min="0.01" step="0.01" required value={supplierRmb} onChange={e => setSupplierRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" /></label>
+    <label className="block text-sm">Markup (RMB)<input type="number" min="0" step="0.01" required value={markupRmb} onChange={e => setMarkupRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" /></label>
+  </>}
+</div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current Listing Price (₦) *</label>
                             <input
                                 type="number" 
-                                value={rmbPricing ? Math.round((Number(supplierRmb) + Number(markupRmb)) * rmbPricing.rate * 100) / 100 : productPrice}
-                                readOnly={!!rmbPricing}
+                                step="0.01"
+                                value={useRmb ? Math.round((Number(supplierRmb) + Number(markupRmb)) * rate * 100) / 100 : productPrice}
+                                readOnly={useRmb}
                                 onChange={(e) => setProductPrice(e.target.value)}
                                 required
                                 className="w-full px-4 py-2.5 text-sm font-bold font-mono border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring"

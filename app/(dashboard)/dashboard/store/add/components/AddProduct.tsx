@@ -17,7 +17,10 @@ import {
 } from 'lucide-react';
 import ImageBox2 from '@/componentsx/ImageBox2';
 
-const Page = () => {
+const Page = ({ rate }: { rate: number }) => {
+    const [rmbEnabled, setRmbEnabled] = useState(false);
+    const [supplierRmb, setSupplierRmb] = useState('');
+    const [markupRmb, setMarkupRmb] = useState('600');
     const { user } = useAuth();
     const navigateWithAlert = useNavigationWithAlert();
     const router = useRouter();
@@ -30,6 +33,8 @@ const Page = () => {
     const [pidProduct, setPidProduct] = useState(productID);
     const [productName, setProductName] = useState('');
     const [productCategory, setProductCategory] = useState('');
+    const isLaptop = ['laptop', 'laptops'].includes(productCategory.toLowerCase());
+    const useRmb = rmbEnabled || isLaptop;
     const [productBrand, setProductBrand] = useState('');
     const [productPrice, setProductPrice] = useState('');
     const [productMOQ, setProductMOQ] = useState('');
@@ -56,6 +61,7 @@ const Page = () => {
         formData.append('productCategory', productCategory);
         formData.append('productBrand', productBrand);
         formData.append('productPrice', productPrice);
+        if (useRmb) { formData.append('supplierRmb', supplierRmb); formData.append('markupRmb', markupRmb); }
         formData.append('productMOQ', productMOQ);
         formData.append('affiliatePayout', affiliatePayout);
         formData.append('superAffiliatePayout', superAffiliatePayout);
@@ -156,10 +162,20 @@ const Page = () => {
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <div className="space-y-1.5">
+                            <div className="space-y-3 rounded-md border border-input p-4">
+  <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={useRmb} disabled={isLaptop} onChange={e => setRmbEnabled(e.target.checked)} /> Use supplier price and markup in RMB</label>
+  {useRmb && <>
+    <p className="text-sm text-muted-foreground">Current rate: ₦{rate} per RMB. The latest system rate is applied on save and future rate changes.</p>
+    <label className="block text-sm">Supplier price (RMB)<input type="number" min="0.01" step="0.01" required value={supplierRmb} onChange={e => setSupplierRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" /></label>
+    <label className="block text-sm">Markup (RMB)<input type="number" min="0" step="0.01" required value={markupRmb} onChange={e => setMarkupRmb(e.target.value)} className="w-full border rounded-md p-2 bg-background" /></label>
+  </>}
+</div>
                             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Retail Price (₦) *</label>
                             <input
                                 type="number" 
-                                value={productPrice}
+                                readOnly={useRmb}
+                                step="0.01"
+                                value={useRmb ? Math.round((Number(supplierRmb) + Number(markupRmb)) * rate * 100) / 100 : productPrice}
                                 onChange={(e) => setProductPrice(e.target.value)}
                                 required
                                 placeholder="0.00"
