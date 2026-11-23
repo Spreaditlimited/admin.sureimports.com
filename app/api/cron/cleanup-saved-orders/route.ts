@@ -53,9 +53,9 @@ async function notifyOrderAutoDeletion(input: {
   await xMail({
     xEmail: input.email,
     xTitle: `Saved Order Expired - ${input.pidOrder}`,
-    xBodyTitle: 'Saved Order Automatically Removed',
-    xBody1: `Hello ${input.firstName || 'Customer'},<br />Your saved order exceeded the unpaid holding window and has been automatically removed.`,
-    xBody2: `${detailsTable}<br />If you still need this order, please create it again from your dashboard.`,
+    xBodyTitle: 'Saved Order Archived',
+    xBody1: `Hello ${input.firstName || 'Customer'},<br />Your saved order exceeded the unpaid holding window and has been archived. Its details have been retained for recovery.`,
+    xBody2: `${detailsTable}<br />If you still need this order or have already paid, contact support with this order ID before creating or paying for another order.`,
     xButtonTitle: 'Open Dashboard',
     xButtonLink: 'https://sureimports.com/dashboard',
   });
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     const staleOrders = await prisma.orders.findMany({
       where: {
         status: {
-          in: ['saved', 'bank-pending-saved-orders'],
+          in: ['saved'],
         },
         createdAt: {
           lte: cutoff,
@@ -104,41 +104,33 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const notifications = await Promise.allSettled(
-      staleOrders.map(async (order) => {
-        try {
-          const user = await prisma.users.findUnique({
-            where: { pidUser: order.pidUser },
-            select: { userEmail: true, userFirstname: true },
-          });
-
-          if (!user?.userEmail) return;
-
-          await notifyOrderAutoDeletion({
-            email: user.userEmail,
-            firstName: user.userFirstname || 'Customer',
-            pidOrder: order.pidOrder,
-            createdAt: order.createdAt,
-            productNames: (order.products || []).map((p) => p.productName || '').filter(Boolean),
-            expiryDays,
-          });
-        } catch (error) {
-          console.error(`Failed to send saved-order expiry email for ${order.pidOrder}`, error);
-        }
-      })
-    );
-
-    const deletedPids: string[] = [];
+    // Retain full records. Payment verification may arrive after the browser closes.
+    // Lock and recheck immediately before archiving; a stale candidate list is unsafe.
+    const archivedOrders: typeof staleOrders = [];
     for (const order of staleOrders) {
-      await prisma.orders.delete({ where: { pidOrder: order.pidOrder } });
-      deletedPids.push(order.pidOrder);
+      const archived = await prisma.$transaction(async tx => {
+        await tx.$queryRaw`SELECT pidOrder FROM orders WHERE pidOrder=${order.pidOrder} FOR UPDATE`;
+        const payments = await tx.payments.count({ where: { serviceID: order.pidOrder } });
+        const checkouts = await tx.$queryRaw<{reference:string}[]>`SELECT reference FROM procurement_paystack_checkouts WHERE pidOrder=${order.pidOrder} AND status IN ('PENDING','PAID','REVIEW') LIMIT 1`;
+        const partnerOrders = await tx.$queryRaw<{pidOrder:string}[]>`SELECT pidOrder FROM procurement_partner_orders WHERE pidOrder=${order.pidOrder} LIMIT 1`;
+        if (payments || checkouts.length || partnerOrders.length) return false;
+        const result = await tx.orders.updateMany({ where: { pidOrder: order.pidOrder, status: 'saved', createdAt: { lte: cutoff }, updatedAt: order.updatedAt }, data: { status: 'expired-saved', updatedAt: new Date() } });
+        return result.count === 1;
+      });
+      if (archived) archivedOrders.push(order);
     }
+    const notifications = await Promise.allSettled(archivedOrders.map(async order => {
+      const user = await prisma.users.findUnique({ where: { pidUser: order.pidUser }, select: { userEmail: true, userFirstname: true } });
+      if (!user?.userEmail) return;
+      await notifyOrderAutoDeletion({ email: user.userEmail, firstName: user.userFirstname || 'Customer', pidOrder: order.pidOrder, createdAt: order.createdAt, productNames: order.products.map(p => p.productName || '').filter(Boolean), expiryDays });
+    }));
 
     return NextResponse.json({
       statusx: 'SUCCESS',
-      message: 'Stale saved orders cleanup completed',
-      deletedCount: deletedPids.length,
-      deletedOrderIds: deletedPids,
+      message: 'Expired unpaid drafts archived; records retained',
+      deletedCount: 0,
+      archivedCount: archivedOrders.length,
+      archivedOrderIds: archivedOrders.map(order => order.pidOrder),
       notifiedCount: notifications.filter((n) => n.status === 'fulfilled').length,
     });
   } catch (error: any) {
